@@ -20,9 +20,8 @@ RSpec.describe Serega do
         check_initiate_params
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
-        auto_preload_attributes_with_delegate
-        auto_preload_attributes_with_serializer
-        auto_hide_attributes_with_preload
+        auto_preload
+        auto_hide
         to_json
         from_json
       ]
@@ -30,7 +29,21 @@ RSpec.describe Serega do
       expect(config.plugins).to eq []
       expect(config.serialize_keys).to match_array(%i[context many])
       expect(config.initiate_keys).to match_array(%i[only except with check_initiate_params])
-      expect(config.attribute_keys).to match_array(%i[method value serializer many hide const delegate default preload preload_path])
+      expect(config.attribute_keys).to match_array(
+        %i[
+          method
+          value
+          serializer
+          many
+          hide
+          const
+          delegate
+          default
+          preload
+          preload_path
+          batch
+        ]
+      )
       expect(config.check_attribute_name).to be true
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
@@ -69,6 +82,15 @@ RSpec.describe Serega do
       # Check attributes are copied to child attributes
       child = Class.new(parent)
       expect(child.attributes[:foo].class.superclass).to eq parent.attributes[:foo].class
+    end
+
+    it "inherits same batch loaders" do
+      parent = Class.new(described_class)
+      parent.batch_loader(:foo, proc { |objects| objects })
+
+      child = Class.new(parent)
+      expect(child.batch_loaders).to have_key(:foo)
+      expect(child.batch_loaders[:foo].load(1, nil)).to eq 1
     end
 
     it "inherits serialization class" do
@@ -622,56 +644,6 @@ RSpec.describe Serega do
   describe "Preloads functionality" do
     let(:serializer_class) { Class.new(described_class) }
 
-    describe "configuration" do
-      it "has preload options in attribute_keys by default" do
-        attribute_keys = serializer_class.config.attribute_keys
-        expect(attribute_keys).to include :preload
-        expect(attribute_keys).to include :preload_path
-      end
-
-      it "configures to not preload attributes with serializer by default" do
-        expect(serializer_class.config.auto_preload_attributes_with_serializer).to be false
-      end
-
-      it "configures to not preload attributes with :delegate option by default" do
-        expect(serializer_class.config.auto_preload_attributes_with_delegate).to be false
-      end
-
-      it "configures to not hide attributes with preload option by default" do
-        expect(serializer_class.config.auto_hide_attributes_with_preload).to be false
-      end
-
-      it "allows to configure to preload attributes with serializer" do
-        serializer_class.config.auto_preload_attributes_with_serializer = true
-        expect(serializer_class.config.auto_preload_attributes_with_serializer).to be true
-      end
-
-      it "allows to configure to preload attributes with :delegate option" do
-        serializer_class.config.auto_preload_attributes_with_delegate = true
-        expect(serializer_class.config.auto_preload_attributes_with_delegate).to be true
-      end
-
-      it "allows to configure to hide attributes with preloads" do
-        serializer_class.config.auto_hide_attributes_with_preload = true
-        expect(serializer_class.config.auto_hide_attributes_with_preload).to be true
-      end
-
-      it "raises error when not boolean value provided to auto_preload_attributes_with_serializer" do
-        expect { serializer_class.config.auto_preload_attributes_with_serializer = nil }
-          .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
-      end
-
-      it "raises error when not boolean value provided to auto_preload_attributes_with_delegate" do
-        expect { serializer_class.config.auto_preload_attributes_with_delegate = nil }
-          .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
-      end
-
-      it "raises error when not boolean value provided to auto_hide_attributes_with_preload" do
-        expect { serializer_class.config.auto_hide_attributes_with_preload = nil }
-          .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
-      end
-    end
-
     describe "instance methods" do
       it "adds #preloads method" do
         serializer = serializer_class.new
@@ -699,7 +671,7 @@ RSpec.describe Serega do
       end
 
       it "auto-preloads for delegate when configured" do
-        serializer_class.config.auto_preload_attributes_with_delegate = true
+        serializer_class.config.auto_preload = {has_delegate_option: true}
         serializer_class.attribute :name, delegate: {to: :profile}
         attribute = serializer_class.attributes[:name]
         expect(attribute.preloads).to eq({profile: {}})
@@ -707,14 +679,14 @@ RSpec.describe Serega do
 
       it "auto-preloads for serializer when configured" do
         other_serializer = Class.new(described_class)
-        serializer_class.config.auto_preload_attributes_with_serializer = true
+        serializer_class.config.auto_preload = {has_serializer_option: true}
         serializer_class.attribute :profile, serializer: other_serializer
         attribute = serializer_class.attributes[:profile]
         expect(attribute.preloads).to eq({profile: {}})
       end
 
       it "auto-hides attributes with preloads when configured" do
-        serializer_class.config.auto_hide_attributes_with_preload = true
+        serializer_class.config.auto_hide = {has_preload_option: true}
         serializer_class.attribute :name, preload: :user_profile
         attribute = serializer_class.attributes[:name]
         expect(attribute.hide).to be true
@@ -732,6 +704,53 @@ RSpec.describe Serega do
         expect {
           serializer_class.attribute :name, preload: :profile, const: "value"
         }.to raise_error Serega::SeregaError, "Option :preload can not be used together with option :const"
+      end
+    end
+  end
+
+  describe "Batch functionality" do
+    it "allows to specify named batch loader by providing callable value" do
+      serializer_class.batch_loader(:foo, proc { |objects| objects })
+      block_result = serializer_class.batch_loaders[:foo].load(1, 2)
+      expect(block_result).to eq 1
+    end
+
+    it "allows to specify named batch loader by providing block" do
+      serializer_class.batch_loader(:foo) { |objects, context| [objects, context] }
+      block_result = serializer_class.batch_loaders[:foo].load(1, 2)
+      expect(block_result).to eq [1, 2]
+    end
+
+    it "allows to specify named batch loader by providing block with objects and keyword ctx: parameters" do
+      serializer_class.batch_loader(:foo) { |objects, ctx:| [objects, ctx] }
+      block_result = serializer_class.batch_loaders[:foo].load(1, 2)
+      expect(block_result).to eq [1, 2]
+    end
+
+    it "checks only block or only value provided" do
+      # no block and no value
+      expect { serializer_class.batch_loader(:foo) }
+        .to raise_error(Serega::SeregaError, "Batch loader must be defined with a callable value or block")
+
+      # block and value together
+      expect { serializer_class.batch_loader(:foo, proc {}) {} }
+        .to raise_error(Serega::SeregaError, "Batch loader must be defined with a callable value or block")
+    end
+
+    context "with some error in batch loader" do
+      subject(:result) { user_serializer.to_h(user) }
+
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :first_name, batch: proc { |_user| foo } # not existing variable call
+        end
+      end
+
+      let(:user) { double }
+
+      it "raises error with specified attribute name and serializer class" do
+        expect { result }.to raise_error NameError,
+          end_with("(when serializing 'first_name' attribute in #{user_serializer})")
       end
     end
   end

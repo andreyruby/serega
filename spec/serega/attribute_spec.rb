@@ -38,6 +38,7 @@ RSpec.describe Serega::SeregaAttribute do
         default: nil,
         hide: nil,
         serializer: nil,
+        batch_loaders: nil,
         method: nil,
         value_block: nil,
         value_block_signature: nil,
@@ -50,7 +51,18 @@ RSpec.describe Serega::SeregaAttribute do
       attribute = attribute_class.new(**initials)
 
       expect(attribute.instance_variables)
-        .to include(:@name, :@default, :@value_block, :@value_block_signature, :@many, :@hide, :@serializer, :@preloads, :@preloads_path)
+        .to include(
+          :@name,
+          :@default,
+          :@value_block,
+          :@value_block_signature,
+          :@batch_loaders,
+          :@many,
+          :@hide,
+          :@serializer,
+          :@preloads,
+          :@preloads_path
+        )
     end
   end
 
@@ -80,6 +92,14 @@ RSpec.describe Serega::SeregaAttribute do
   end
 
   describe "#value" do
+    context "with no args" do
+      it "gets value" do
+        block = lambda { "NAME" }
+        attribute = attribute_class.new(name: :name, block: block)
+        expect(attribute.value(nil, nil)).to eq "NAME"
+      end
+    end
+
     context "with 1 arg" do
       it "gets value" do
         obj = double(name: "NAME")
@@ -93,7 +113,7 @@ RSpec.describe Serega::SeregaAttribute do
       it "gets value" do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
-        block = proc { |obj, ctx| [obj.name, ctx[:foo]] }
+        block = lambda { |obj, ctx| [obj.name, ctx[:foo]] }
         attribute = attribute_class.new(name: :name, block: block)
         expect(attribute.value(obj, ctx)).to eq ["NAME", "CTX"]
       end
@@ -106,6 +126,39 @@ RSpec.describe Serega::SeregaAttribute do
         block = lambda { |obj, ctx:| [obj.name, ctx[:foo]] }
         attribute = attribute_class.new(name: :name, block: block)
         expect(attribute.value(obj, ctx)).to eq ["NAME", "CTX"]
+      end
+    end
+
+    context "with 1 arg and batches keyword" do
+      it "gets value" do
+        obj = double(name: "NAME")
+        ctx = nil
+        batches = {foo: "LAZY"}
+        block = lambda { |obj, batches:| [obj.name, batches[:foo]] }
+        attribute = attribute_class.new(name: :name, block: block)
+        expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "LAZY"]
+      end
+    end
+
+    context "with 1 arg, ctx and batches keywords" do
+      it "gets value" do
+        obj = double(name: "NAME")
+        ctx = {foo: "CTX"}
+        batches = {foo: "LAZY"}
+        block = lambda { |obj, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
+        attribute = attribute_class.new(name: :name, block: block)
+        expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "CTX", "LAZY"]
+      end
+    end
+
+    context "with 2 args, ctx and batches keywords" do
+      it "gets value" do
+        obj = double(name: "NAME")
+        ctx = {foo: "CTX"}
+        batches = {foo: "LAZY"}
+        block = lambda { |obj, _context, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
+        attribute = attribute_class.new(name: :name, block: block)
+        expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "CTX", "LAZY"]
       end
     end
 

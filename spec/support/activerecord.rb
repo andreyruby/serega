@@ -23,6 +23,11 @@ conn.create_table(:comments) do |t|
   t.string :text
 end
 
+conn.create_table(:votes) do |t|
+  t.belongs_to :comment, index: false
+  t.integer :stars
+end
+
 module AR
   class User < ActiveRecord::Base
     has_many :posts
@@ -35,6 +40,11 @@ module AR
 
   class Comment < ActiveRecord::Base
     belongs_to :post
+    has_many :votes
+  end
+
+  class Vote < ActiveRecord::Base
+    belongs_to :comment
   end
 end
 

@@ -88,47 +88,47 @@ View.create!(comment: comment3, count: 3)
 View.create!(comment: comment4, count: 4)
 
 class UsersPostsLoader
-  def self.call(user_ids)
+  def self.call(users)
     Post
-      .where(user_id: user_ids)
+      .where(user: users)
       .group_by(&:user_id)
   end
 end
 
 class PostsCommentsLoader
-  def self.call(post_ids, _ctx, point)
+  def self.call(posts)
     Comment
-      .preload(point.preloads) # will preload views
-      .where(post_id: post_ids)
+      .where(post: posts)
       .group_by(&:post_id)
+  end
+end
+
+class CommentsViewsLoader
+  def self.call(comments)
+    View
+      .where(comment: comments)
+      .group(:comment_id)
+      .pluck(:count)
   end
 end
 
 # Serializers
 class AppSerializer < Serega
-  plugin :preloads,
-    auto_preload_attributes_with_serializer: true,
-    auto_preload_attributes_with_delegate: true,
-    auto_hide_attributes_with_preload: false
-
-  plugin :activerecord_preloads
-  plugin :batch, id_method: :id
 end
 
 class UserSerializer < AppSerializer
   attribute :first_name
   attribute :last_name
-  attribute :posts, serializer: "PostSerializer", many: true, batch: {loader: UsersPostsLoader}
+  attribute :posts, serializer: "PostSerializer", many: true, batch: UsersPostsLoader
 end
 
 class PostSerializer < AppSerializer
-  attribute :text
-  attribute :comments, serializer: "CommentSerializer", many: true, batch: {loader: PostsCommentsLoader}
+  attribute :comments, serializer: "CommentSerializer", many: true, batch: PostsCommentsLoader
 end
 
 class CommentSerializer < AppSerializer
   attribute :text
-  attribute :views_count, delegate: {to: :view, method: :count}, preload: :view
+  attribute :views_count, batch: CommentsViewsLoader
 end
 
 def example(message, expected_queries_count:)
@@ -155,15 +155,15 @@ ActiveSupport::Notifications.subscribe "sql.active_record" do |_name, _started, 
 end
 
 example("Single object", expected_queries_count: 3) do
-  UserSerializer.new.to_h(user1)
+  puts UserSerializer.new.to_h(user1)
 end
 
 example("Array", expected_queries_count: 3) do
   users = [user1, user2, user3]
-  UserSerializer.new.to_h(users)
+  puts UserSerializer.new.to_h(users)
 end
 
 example("Relation", expected_queries_count: 4) do
   users = User.all
-  UserSerializer.new.to_h(users).inspect
+  puts UserSerializer.new.to_h(users).inspect
 end

@@ -22,12 +22,6 @@ RSpec.describe Serega::SeregaPlugins::Formatters do
       expect(serializer.config.formatters.opts).to eq({foo: formatter})
     end
 
-    it "raises error if loaded after :batch plugin" do
-      error = "Plugin :formatters must be loaded before the :batch plugin"
-      serializer.plugin :batch
-      expect { serializer.plugin(:formatters) }.to raise_error Serega::SeregaError, error
-    end
-
     it "raises error if plugin defined with unknown option" do
       serializer = Class.new(Serega)
       expect { serializer.plugin(:formatters, foo: :bar) }

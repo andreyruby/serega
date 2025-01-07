@@ -71,7 +71,7 @@ class Serega
 
         def build_full_attribute_name(*names)
           head, *nested = *names
-          result = head.to_s # names are symbols, we need not frozen string
+          result = +head.to_s # names are symbols, we need not frozen string
           nested.each { |nested_name| result << "(" << nested_name.to_s }
           nested.each { result << ")" }
           result

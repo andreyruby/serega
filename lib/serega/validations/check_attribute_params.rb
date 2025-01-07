@@ -53,7 +53,6 @@ class Serega
         end
 
         # Patched in:
-        # - plugin :batch (checks :batch option)
         # - plugin :context_metadata (checks context metadata option which is :meta by default)
         # - plugin :formatters (checks :format option)
         # - plugin :if (checks :if, :if_value, :unless, :unless_value options)
@@ -69,6 +68,7 @@ class Serega
           Attribute::CheckOptPreloadPath.call(opts)
           Attribute::CheckOptSerializer.call(opts)
           Attribute::CheckOptValue.call(opts, block)
+          Attribute::CheckOptBatch.call(self.class.serializer_class, opts, block)
         end
 
         def check_block

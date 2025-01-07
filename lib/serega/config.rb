@@ -13,15 +13,30 @@ class Serega
     DEFAULTS = {
       plugins: [],
       initiate_keys: %i[only with except check_initiate_params].freeze,
-      attribute_keys: %i[method value serializer many hide const delegate default preload preload_path].freeze,
+      attribute_keys: %i[
+        method
+        value
+        serializer
+        many
+        hide
+        const
+        delegate
+        default
+        preload
+        preload_path
+        batch
+      ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
       check_initiate_params: true,
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 0,
-      auto_preload_attributes_with_delegate: false,
-      auto_preload_attributes_with_serializer: false,
-      auto_hide_attributes_with_preload: false,
+      auto_preload: {has_delegate_option: false, has_serializer_option: false},
+      auto_hide: {has_preload_option: false, has_batch_option: false},
+      # auto_preload_attributes_with_delegate: false,
+      # auto_preload_attributes_with_serializer: false,
+      # auto_hide_attributes_with_preload: false,
+      # hide_batch_attributes: false,
       to_json: (SeregaJSON.adapter == :oj) ? SeregaJSON::OjDump : SeregaJSON::JSONDump,
       from_json: (SeregaJSON.adapter == :oj) ? SeregaJSON::OjLoad : SeregaJSON::JSONLoad
     }.freeze
@@ -105,6 +120,46 @@ class Serega
         opts[:delegate_default_allow_nil] = value
       end
 
+      # @return [Hash] auto_hide option
+      def auto_hide
+        opts.fetch(:auto_hide)
+      end
+
+      # Validates and sets auto_hide option
+      # @return [Hash] New auto_hide option with attributes that trigger auto hide
+      def auto_hide=(value)
+        opts[:auto_hide] =
+          case value
+          when true then {has_preload_option: true, has_batch_option: true}
+          when false then {has_preload_option: false, has_batch_option: false}
+          when Hash
+            SeregaValidations::Utils::CheckAllowedKeys.call(value, %i[has_preload_option has_batch_option], "auto_hide")
+            {has_preload_option: !!value[:has_preload_option], has_batch_option: !!value[:has_batch_option]}
+          else
+            raise SeregaError, "Must have boolean value or Hash, #{value.inspect} provided"
+          end
+      end
+
+      # @return [Hash] auto_preload option
+      def auto_preload
+        opts.fetch(:auto_preload)
+      end
+
+      # Validates and sets auto_preload option
+      # @return [Hash] New auto_preload option with attributes that trigger auto preload
+      def auto_preload=(value)
+        opts[:auto_preload] =
+          case value
+          when true then {has_delegate_option: true, has_serializer_option: true}
+          when false then {has_delegate_option: false, has_serializer_option: false}
+          when Hash
+            SeregaValidations::Utils::CheckAllowedKeys.call(value, %i[has_delegate_option has_serializer_option], "auto_preload")
+            {has_delegate_option: !!value[:has_delegate_option], has_serializer_option: !!value[:has_serializer_option]}
+          else
+            raise SeregaError, "Must have boolean value or Hash, #{value.inspect} provided"
+          end
+      end
+
       # Returns :max_cached_plans_per_serializer_count config option
       # @return [Boolean] Current :max_cached_plans_per_serializer_count config option
       def max_cached_plans_per_serializer_count
@@ -160,54 +215,6 @@ class Serega
       # @return [#call] Provided callable object
       def from_json=(value)
         opts[:from_json] = value
-      end
-
-      # Returns :auto_preload_attributes_with_delegate config option
-      # @return [Boolean] Current :auto_preload_attributes_with_delegate config option
-      def auto_preload_attributes_with_delegate
-        opts.fetch(:auto_preload_attributes_with_delegate)
-      end
-
-      # Sets :auto_preload_attributes_with_delegate config option
-      #
-      # @param value [Boolean] Set :auto_preload_attributes_with_delegate config option
-      #
-      # @return [Boolean] :auto_preload_attributes_with_delegate config option
-      def auto_preload_attributes_with_delegate=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:auto_preload_attributes_with_delegate] = value
-      end
-
-      # Returns :auto_preload_attributes_with_serializer config option
-      # @return [Boolean] Current :auto_preload_attributes_with_serializer config option
-      def auto_preload_attributes_with_serializer
-        opts.fetch(:auto_preload_attributes_with_serializer)
-      end
-
-      # Sets :auto_preload_attributes_with_serializer config option
-      #
-      # @param value [Boolean] Set :auto_preload_attributes_with_serializer config option
-      #
-      # @return [Boolean] :auto_preload_attributes_with_serializer config option
-      def auto_preload_attributes_with_serializer=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:auto_preload_attributes_with_serializer] = value
-      end
-
-      # Returns :auto_hide_attributes_with_preload config option
-      # @return [Boolean] Current :auto_hide_attributes_with_preload config option
-      def auto_hide_attributes_with_preload
-        opts.fetch(:auto_hide_attributes_with_preload)
-      end
-
-      # Sets :auto_hide_attributes_with_preload config option
-      #
-      # @param value [Boolean] Set :auto_hide_attributes_with_preload config option
-      #
-      # @return [Boolean] :auto_hide_attributes_with_preload config option
-      def auto_hide_attributes_with_preload=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:auto_hide_attributes_with_preload] = value
       end
     end
 

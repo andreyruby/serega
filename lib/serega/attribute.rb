@@ -37,6 +37,10 @@ class Serega
       # @return [Array, nil] Attribute :preloads_path option
       attr_reader :preloads_path
 
+      # Batch loader names required to detect attribute value
+      # @return [Array<Symbol>] Batch loader names
+      attr_reader :batch_loaders
+
       #
       # Initializes new attribute
       #
@@ -80,11 +84,6 @@ class Serega
       end
 
       #
-      # Method #value patched in:
-      # - plugin :formatters (formats result additionally)
-      #
-
-      #
       # Finds attribute value
       #
       # @param object [Object] Serialized object
@@ -92,13 +91,16 @@ class Serega
       #
       # @return [Object] Serialized attribute value
       #
-      #
-      def value(object, context)
+      def value(object, context, batches: nil)
+        # Signatires should match allowed signatures in CheckOptValue and CheckBlock
         result =
           case value_block_signature
           when "1" then value_block.call(object)
-          when "2" then value_block.call(object, context)
           when "1_ctx" then value_block.call(object, ctx: context)
+          when "1_batches" then value_block.call(object, batches: batches)
+          when "1_batches_ctx" then value_block.call(object, ctx: context, batches: batches)
+          when "2" then value_block.call(object, context)
+          when "2_batches_ctx" then value_block.call(object, context, ctx: context, batches: batches)
           else value_block.call # signature is "0" - no parameters
           end
 
@@ -142,6 +144,7 @@ class Serega
         @serializer = normalizer.serializer
         @preloads = normalizer.preloads
         @preloads_path = normalizer.preloads_path
+        @batch_loaders = normalizer.batch_loaders
       end
     end
 

@@ -14,12 +14,6 @@ RSpec.describe Serega::SeregaPlugins::If do
       expect(attribute_keys).to include :unless
       expect(attribute_keys).to include :unless_value
     end
-
-    it "raises error if loaded after :batch plugin" do
-      serializer.plugin(:batch)
-      error = "Plugin :if must be loaded before the :batch plugin"
-      expect { serializer.plugin(:if) }.to raise_error Serega::SeregaError, error
-    end
   end
 
   describe "validations" do
@@ -229,17 +223,16 @@ RSpec.describe Serega::SeregaPlugins::If do
       )
     end
 
-    context "with additional batch plugin" do
+    context "with batch attribute" do
       context "when skipping regular attribute" do
         let(:user_serializer) do
           Class.new(Serega) do
             plugin :if
-            plugin :batch, id_method: :id
 
             attribute :id
             attribute :online_time,
               if: proc { |obj| obj.id != 1 },
-              batch: {loader: proc { |_keys| {1 => 10, 2 => 20} }}
+              batch: proc { |_users| {1 => 10, 2 => 20} }
           end
         end
 
@@ -277,22 +270,19 @@ RSpec.describe Serega::SeregaPlugins::If do
           child_serializer = status_serializer
           Class.new(Serega) do
             plugin :if
-            plugin :batch, id_method: :id
 
             attribute :id
             attribute :status,
               serializer: child_serializer,
               if: proc { |obj| obj.id != 1 }, # should skip status for user1
-              batch: {
-                loader: proc do |_keys|
-                  {
-                    1 => status1,
-                    2 => status2,
-                    3 => status3,
-                    4 => status4,
-                    5 => status5
-                  }
-                end
+              batch: proc { |_keys|
+                {
+                  1 => status1,
+                  2 => status2,
+                  3 => status3,
+                  4 => status4,
+                  5 => status5
+                }
               }
           end
         end

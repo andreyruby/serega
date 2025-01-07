@@ -50,19 +50,6 @@ class Serega
         :if
       end
 
-      # Checks requirements to load plugin
-      #
-      # @param serializer_class [Class<Serega>] Current serializer class
-      # @param opts [Hash] plugin options
-      #
-      # @return [void]
-      #
-      def self.before_load_plugin(serializer_class, **opts)
-        if serializer_class.plugin_used?(:batch)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded before the :batch plugin"
-        end
-      end
-
       #
       # Applies plugin code to specific serializer
       #

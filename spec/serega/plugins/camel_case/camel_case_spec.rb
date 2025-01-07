@@ -100,7 +100,7 @@ RSpec.describe Serega::SeregaPlugins::CamelCase do
     end
 
     context "with custom camel_case transformation" do
-      let(:base_serializer) { Class.new(Serega) { plugin :camel_case, transform: ->(name) { name.to_s.upcase! } } }
+      let(:base_serializer) { Class.new(Serega) { plugin :camel_case, transform: ->(name) { name.to_s.upcase } } }
 
       it "serializes keys transformed names" do
         response = user_serializer.new.to_h(user)

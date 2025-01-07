@@ -25,8 +25,12 @@ class Serega
       # @return [Hash] Attributes to serialize
       attr_reader :modifiers
 
+      # Shows preloads for nested attributes
+      # @return [Hash] preloads for nested attributes
+      attr_reader :preloads
+
       # Shows preloads_path for current attribute
-      # @return [Array, nil] Attribute preloads_path
+      # @return [Array<Symbol>, nil] preloads path for current attribute
       attr_reader :preloads_path
 
       #
@@ -50,8 +54,8 @@ class Serega
 
       # Attribute `value`
       # @see SeregaAttribute::AttributeInstanceMethods#value
-      def value(obj, ctx)
-        attribute.value(obj, ctx)
+      def value(obj, ctx, batches: nil)
+        attribute.value(obj, ctx, batches: batches)
       end
 
       # Attribute `name`
@@ -72,6 +76,16 @@ class Serega
         attribute.serializer
       end
 
+      def batch?
+        !attribute.batch_loaders.empty?
+      end
+
+      # Attribute `batch_loaders`
+      # @see SeregaAttribute::AttributeInstanceMethods#batch_loaders
+      def batch_loaders
+        attribute.batch_loaders
+      end
+
       #
       # @return [SeregaObjectSerializer] object serializer for child plan
       #
@@ -81,11 +95,11 @@ class Serega
 
       private
 
-      # Patched in:
-      # - plugin :batch (prepares @batch)
       def set_normalized_vars
         @child_plan = prepare_child_plan
+        @preloads = prepare_preloads
         @preloads_path = prepare_preloads_path
+        plan.mark_as_has_batch_points if batch?
       end
 
       def prepare_child_plan
@@ -94,6 +108,10 @@ class Serega
         fields = modifiers || FROZEN_EMPTY_HASH
 
         serializer::SeregaPlan.new(self, fields)
+      end
+
+      def prepare_preloads
+        SeregaUtils::PreloadsConstructor.call(child_plan)
       end
 
       def prepare_preloads_path

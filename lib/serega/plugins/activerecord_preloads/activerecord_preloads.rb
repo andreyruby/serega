@@ -60,12 +60,6 @@ class Serega
         opts.each_key do |key|
           raise SeregaError, "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. No options are allowed"
         end
-
-        # Preloads functionality is now built into core, no dependency needed
-
-        if serializer_class.plugin_used?(:batch)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded before the :batch plugin"
-        end
       end
 
       #
@@ -78,8 +72,30 @@ class Serega
       #
       def self.load_plugin(serializer_class, **_opts)
         require_relative "lib/preloader"
+        require_relative "lib/active_record_objects"
 
         serializer_class.include(InstanceMethods)
+        serializer_class::SeregaBatchAttributeLoader.include(BatchAttributeLoaderInstanceMethods)
+      end
+
+      #
+      # Overrides SeregaBatch::AttributeLoader class instance methods
+      #
+      module BatchAttributeLoaderInstanceMethods
+        private
+
+        # Preloads associations to batch-generated data
+        def load_one(serializer_class, batch_loader_name, context)
+          batch_loaded_data = super
+
+          preloads = point.preloads
+          return batch_loaded_data if preloads.empty?
+
+          ar_objects = ActiveRecordObjects.call(batch_loaded_data)
+          Preloader.preload(ar_objects, preloads)
+
+          batch_loaded_data
+        end
       end
 
       #

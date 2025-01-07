@@ -69,4 +69,64 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.from_json).to eq value
     end
   end
+
+  describe "#auto_hide" do
+    it "returns default value" do
+      expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: false)
+    end
+  end
+
+  describe "#auto_hide=" do
+    it "validates value is boolean" do
+      expect { config.auto_hide = false }.not_to raise_error
+      expect { config.auto_hide = true }.not_to raise_error
+      expect { config.auto_hide = nil }
+        .to raise_error Serega::SeregaError, "Must have boolean value or Hash, nil provided"
+
+      expect { config.auto_hide = {foo: :bar} }
+        .to raise_error Serega::SeregaError,
+          "Invalid auto_hide option :foo. Allowed options are: :has_batch_option, :has_preload_option"
+    end
+
+    it "sets auto_hide option" do
+      config.auto_hide = true
+      expect(config.auto_hide).to eq(has_preload_option: true, has_batch_option: true)
+
+      config.auto_hide = false
+      expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: false)
+
+      config.auto_hide = {has_preload_option: true}
+      expect(config.auto_hide).to eq(has_preload_option: true, has_batch_option: false)
+
+      config.auto_hide = {has_batch_option: true}
+      expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: true)
+    end
+  end
+
+  describe "#auto_preload=" do
+    it "validates value is boolean" do
+      expect { config.auto_preload = false }.not_to raise_error
+      expect { config.auto_preload = true }.not_to raise_error
+      expect { config.auto_preload = nil }
+        .to raise_error Serega::SeregaError, "Must have boolean value or Hash, nil provided"
+
+      expect { config.auto_preload = {foo: :bar} }
+        .to raise_error Serega::SeregaError,
+          "Invalid auto_preload option :foo. Allowed options are: :has_delegate_option, :has_serializer_option"
+    end
+
+    it "sets auto_preload option" do
+      config.auto_preload = true
+      expect(config.auto_preload).to eq(has_delegate_option: true, has_serializer_option: true)
+
+      config.auto_preload = false
+      expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
+
+      config.auto_preload = {has_delegate_option: true}
+      expect(config.auto_preload).to eq(has_delegate_option: true, has_serializer_option: false)
+
+      config.auto_preload = {has_serializer_option: true}
+      expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
+    end
+  end
 end

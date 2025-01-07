@@ -46,7 +46,7 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     callable = proc { |one:, two: 2, **three, &block| }
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two])).to eq "0_one_two"
-    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_one_two_a_b"
+    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end
 
   it "generates signatures for lambdas" do
@@ -94,7 +94,7 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     callable = lambda { |one:, two: 2, **three, &block| }
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two])).to eq "0_one_two"
-    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_one_two_a_b"
+    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end
 
   it "generates signatures for callable objects" do
@@ -163,7 +163,7 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     end
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two])).to eq "0_one_two"
-    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_one_two_a_b"
+    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end
 
   it "returns 1 if provided callable with not named *rest parameters" do
