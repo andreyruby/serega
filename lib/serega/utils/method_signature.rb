@@ -36,49 +36,52 @@ class Serega
 
           keyword_args = keyword_args.dup
 
-          # Temporar signature object is an array where first item is a counter
-          # of positional parameters and next arguments are the names of
-          # keyword arguments. We will join this signature to a string finally.
-          signature = [0]
+          # signature parts
+          positional_parameters = 0
+          keyword_parameters = []
 
           params.each do |type, name|
             case type
             when :req
-              signature[0] += 1
+              positional_parameters += 1
               pos_limit -= 1
             when :opt
               next if pos_limit <= 0
 
-              signature[0] += 1
+              positional_parameters += 1
               pos_limit -= 1
             when :rest
               next if pos_limit <= 0
 
-              signature[0] += pos_limit
+              positional_parameters += pos_limit
               pos_limit = 0
             when :keyreq
-              signature << name
+              keyword_parameters << name
               keyword_args.delete(name)
             when :key
               next unless keyword_args.include?(name)
 
-              signature << name
+              keyword_parameters << name
               keyword_args.delete(name)
             when :keyrest
-              signature.concat(keyword_args)
+              keyword_parameters.concat(keyword_args)
               keyword_args.clear
             end
           end
 
-          signature.join("_")
+          build_signature_string(positional_parameters, keyword_parameters)
         end
 
         private
 
         def full_signature(pos_limit, keyword_args)
-          signature = [pos_limit]
-          signature.concat(keyword_args)
-          signature.join("_")
+          build_signature_string(pos_limit, keyword_args)
+        end
+
+        def build_signature_string(positional_parameters, keyword_parameters)
+          sorted_signature_parts = keyword_parameters.sort
+          sorted_signature_parts.unshift(positional_parameters)
+          sorted_signature_parts.join("_")
         end
       end
     end

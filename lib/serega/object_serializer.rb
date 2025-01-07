@@ -10,7 +10,7 @@ class Serega
     # SeregaObjectSerializer instance methods
     #
     module InstanceMethods
-      attr_reader :context, :plan, :many, :opts
+      attr_reader :context, :plan, :many, :opts, :batch_loaders
 
       # @param plan [SeregaPlan] Serialization plan
       # @param context [Hash] Serialization context
@@ -23,6 +23,7 @@ class Serega
         @plan = plan
         @many = many
         @opts = opts
+        @batch_loaders = opts[:batch_loaders]
       end
 
       # Serializes object(s)
@@ -47,8 +48,6 @@ class Serega
       def serialize_object(object)
         plan.points.each_with_object({}) do |point, container|
           serialize_point(object, point, container)
-        rescue SeregaError
-          raise
         rescue => error
           reraise_with_serialized_attribute_details(error, point)
         end
@@ -57,20 +56,23 @@ class Serega
       # Patched in:
       # - plugin :if (conditionally skips serializing this point)
       def serialize_point(object, point, container)
-        attach_value(object, point, container)
+        if point.batch?
+          attacher = lambda { |obj, batches| attach_value(obj, point, container, batches: batches) }
+          batch_loaders.remember(point, object, attacher)
+          container[point.name] = nil # Reserve attribute place in resulted hash. We will set correct value later
+        else
+          attach_value(object, point, container, batches: nil)
+        end
       end
 
-      # Patched in:
-      # - plugin :batch (remembers key for batch loading values instead of attaching)
-      def attach_value(object, point, container)
-        value = point.value(object, context)
+      def attach_value(object, point, container, batches: nil)
+        value = point.value(object, context, batches: batches)
         final_value = final_value(value, point)
         attach_final_value(final_value, point, container)
       end
 
       # Patched in:
       # - plugin :if (conditionally skips attaching)
-      # - plugin :batch :if extension (removes prepared key)
       def attach_final_value(final_value, point, container)
         container[point.name] = final_value
       end

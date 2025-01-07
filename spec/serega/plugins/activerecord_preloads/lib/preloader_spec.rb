@@ -2,7 +2,7 @@
 
 require "support/activerecord"
 
-load_plugin_code :preloads, :activerecord_preloads
+load_plugin_code :activerecord_preloads
 
 RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
   describe described_class::Preloader do

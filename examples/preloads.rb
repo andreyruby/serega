@@ -74,12 +74,10 @@ Comment.create!(user: user1, post: post2, text: "comment4")
 
 # Serializers
 class AppSerializer < Serega
-  plugin :preloads,
-    auto_preload_attributes_with_serializer: true,
-    auto_preload_attributes_with_delegate: true,
-    auto_hide_attributes_with_preload: false
-
   plugin :activerecord_preloads
+
+  config.auto_preload = true
+  config.auto_hide = false
 end
 
 class UserSerializer < AppSerializer

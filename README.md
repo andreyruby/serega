@@ -18,8 +18,8 @@ It has some great features:
 
 - Manually [select serialized fields](#selecting-fields)
 - Secure from malicious queries with [depth_limit][depth_limit] plugin
-- Solutions for N+1 problem (via [batch][batch], [preloads][preloads] or
-  [activerecord_preloads][activerecord_preloads] plugins)
+- Solutions for N+1 problem (via built-in [batch loading](#batch-loading), [preloads][preloads] or
+  [activerecord_preloads][activerecord_preloads] plugin)
 - Built-in object presenter ([presenter][presenter] plugin)
 - Adding custom metadata (via [metadata][metadata] or
   [context_metadata][context_metadata] plugins)
@@ -62,6 +62,14 @@ end
 ```
 
 ### Adding attributes
+
+⚠️ Attribute names are checked to include only "a-z", "A-Z", "0-9", "\_", "-",
+"~" characters.
+
+We allow ONLY these characters as we want to be able to use attribute names in
+URLs without escaping.
+
+This rule can be turned off with simple config option: `config.check_attribute_name = false`
 
 ```ruby
 class UserSerializer < Serega
@@ -133,26 +141,6 @@ class UserSerializer < Serega
 end
 ```
 
----
-
-⚠️ Attribute names are checked to include only "a-z", "A-Z", "0-9", "\_", "-",
-"~" characters.
-
-We allow ONLY these characters as we want to be able to use attribute names in
-URLs without escaping.
-
-The check can be turned off:
-
-```ruby
-# Disable globally
-Serega.config.check_attribute_name = false
-
-# Disable for specific serializer
-class SomeSerializer < Serega
-  config.check_attribute_name = false
-end
-```
-
 ### Serializing
 
 We can serialize objects using class methods `.to_h`, `.to_json`, `.as_json` and
@@ -218,7 +206,7 @@ Modifiers can be provided as Hash, Array, String, Symbol, or their combinations.
 
 With plugin [string_modifiers][string_modifiers] we can provide modifiers as
 single `String` with attributes split by comma `,` and nested values inside
-brackets `()`, like: `username,enemies(username,email)`. This can be very useful
+brackets `()`, like: `first_name,last_name,addresses(line1,line2)`. This can be very useful
 to accept the list of fields in **GET** requests.
 
 When a non-existing attribute is provided, the `Serega::AttributeNotExist` error
@@ -334,6 +322,67 @@ UserSerializer.new.to_h(user, context: {current_user: user}) # same
 # => {:email=>"email@example.com"}
 ```
 
+### Batch Loading
+
+Serega includes built-in batch loading functionality to efficiently load data on demand and solve N+1 problems.
+
+#### Defining Named Batch Loaders
+
+Named loaders can be defined using the `batch_loader` class method and reused across attributes:
+
+```ruby
+class UserSerializer < Serega
+  # Define named loaders
+  batch_loader :comments_count, ->(users) { Comment.where(user: users).group(:user_id).count }
+  batch_loader :comments_count, CommentsCountLoader # Example with callable class
+
+  # Full attribute example
+  attribute :comments_count, batch: { use: :comments_count },
+    value: proc { |user, batch:| batch[:comments_count][user.id] }
+
+  # Shorter version
+  attribute :comments_count, batch: { use: :comments_count, id: :id } # Equivalent, id: :id is default
+
+  # Shortest version
+  attribute :comments_count, batch: true # Equivalent
+end
+```
+
+#### Using Custom Loaders
+
+Custom loaders can be provided directly using the `:use` option with any callable object:
+
+```ruby
+class UserSerializer < Serega
+  # Inline proc loader
+  attribute :followers_count,
+    batch: { use: ->(users) { Follow.where(user: users).group(:user_id).count } }
+
+  # Callable class loader
+  attribute :likes_count, batch: { use: LikesCountLoader }
+
+  # Method reference
+  attribute :views_count, batch: { use: ViewsCounter.method(:batch_load) }
+end
+```
+
+#### Using Multiple Loaders in Same Attribute
+
+Custom loaders can be provided directly using the `:use` option with any callable object:
+
+```ruby
+class UserSerializer < Serega
+  # Define named loaders
+  batch_loader :facebook_likes, FacebookLikesLoader
+  batch_loader :twitter_likes, TwitterLikesLoader
+
+  # Summarize likes
+  attribute :likes_count,
+    batch: { use: [:facebook_likes, :twitter_likes] },
+    value: { |user, batch:| batch[:facebook_likes][user.id] + batch[:twitter_likes][user.id] }
+end
+```
+
 ## Configuration
 
 Here are the default options. Other options can be added with plugins.
@@ -364,9 +413,7 @@ class AppSerializer < Serega
 end
 ```
 
-## Plugins
-
-### Preloads
+## Preloads
 
 Serega includes built-in preloads functionality that allows you to define
 `:preloads` to attributes and then merge preloads from serialized attributes
@@ -434,7 +481,7 @@ UserSerializer.new(
 
 ---
 
-#### SPECIFIC CASE #1: Serializing the same object in association
+### SPECIFIC CASE #1: Serializing the same object in association
 
 For example, you show your current user as "user" and use the same user object
 to serialize "user_stats". `UserStatSerializer` relies on user fields and any
@@ -458,7 +505,7 @@ class UserSerializer < AppSerializer
 end
 ```
 
-#### SPECIFIC CASE #2: Serializing multiple associations as a single relation
+### SPECIFIC CASE #2: Serializing multiple associations as a single relation
 
 For example, "user" has two relations - "new_profile" and "old_profile". Also
 profiles have the "avatar" association. And you decided to serialize profiles in
@@ -492,7 +539,7 @@ UserSerializer.new.preloads
 # => {:new_profile=>{:avatar=>{}}, :old_profile=>{:avatar=>{}}}
 ```
 
-#### SPECIFIC CASE #3: Preload association through another association
+### SPECIFIC CASE #3: Preload association through another association
 
 ```ruby
 attribute :image,
@@ -503,7 +550,7 @@ attribute :image,
 ```
 
 In this case, we don't know if preloads defined in ImageSerializer, should be
-preloaded to `attachment` or `blob`, so please specify `preload_path` manually.
+preloaded to `attachment` or `blob`, so `preload_path` must be specified manually.
 You can specify `preload_path: nil` if you are sure that there are no preloads
 inside ImageSerializer.
 
@@ -514,12 +561,14 @@ in single Hash, but they should be preloaded manually.
 
 There is the [activerecord_preloads][activerecord_preloads] plugin that can be used to preload these associations automatically.
 
+## Plugins
+
 ### Plugin :activerecord_preloads
 
 Automatically preloads associations to serialized objects.
 
 It takes all defined preloads from serialized attributes (including attributes
-from serialized relations), merges them into a single associations hash, and then
+from serialized associations), merges them into a single associations hash, and then
 uses ActiveRecord::Associations::Preloader to preload associations to objects.
 
 ```ruby
@@ -548,168 +597,6 @@ UserSerializer.to_h(user)
 ```
 
 For testing purposes preloading can be done manually with `#preload_associations_to(obj)` instance method
-
-### Plugin :batch
-
-Helps to omit N+1.
-
-User must specify how attribute values are loaded -
-`attribute :foo, batch: {loader: SomeLoader, id_method: :id}`.
-
-The result must be returned as Hash, where each key is one of the provided IDs.
-
-```ruby
-class AppSerializer
-  plugin :batch
-end
-
-class UserSerializer < AppSerializer
-  attribute :comments_count,
-    batch: { loader: SomeLoader, id_method: :id }
-
-  attribute :company,
-    batch: { loader: SomeLoader, id_method: :id },
-    serializer: CompanySerializer
-end
-```
-
-#### Option :loader
-
-Loaders can be defined as a Proc, a callable value, or a named Symbol
-Named loaders should be predefined with
-`config.batch.define(:loader_name) { |ids| ... })`
-
-The loader can accept 1 to 3 arguments:
-
-1. List of IDs (each ID will be found by using the `:id_method` option)
-2. Context
-3. PlanPoint - a special object containing information about current
-   attribute and all children and parent attributes. It can be used to preload
-   required associations to batch values.
-   See [example](examples/batch_loader.rb) how
-   to find required preloads when using the `:preloads` plugin.
-
-```ruby
-class AppSerializer < Serega
-  plugin :batch, id_method: :id
-end
-
-class UserSerializer < Serega
-  # Define loader as a callable object
-  attribute :comments_count,
-    batch: { loader: CountLoader }
-
-  # Define loader as a Proc
-  attribute :comments_count,
-    batch: { loader: proc { |ids| CountLoader.call(ids) } }
-
-  # Define loader as a Symbol
-  config.batch.define(:comments_count_loader) { |ids| CountLoader.call(ids }
-  attribute :comments_count, batch: { loader: :comments_count_loader }
-end
-
-class CountLoader
-  def self.call(user_ids)
-    Comment.where(user_id: user_ids).group(:user_id).count
-  end
-end
-```
-
-#### Option :id_method
-
-The `:batch` plugin can be added with the global `:id_method` option. It can be
-a Symbol, Proc or any callable value that can accept the current object and
-context.
-
-```ruby
-class SomeSerializer
-  plugin :batch, id_method: :id
-end
-
-class UserSerializer < AppSerializer
-  attribute :comments_count,
-    batch: { loader: CommentsCountBatchLoader } # no :id_method here anymore
-
-  attribute :company,
-    batch: { loader: UserCompanyBatchLoader }, # no :id_method here anymore
-    serializer: CompanySerializer
-end
-
-```
-
-However, the global `id_method` option can be overwritten via
-`config.batch.id_method=` method or in specific attributes with the `id_method`
-option.
-
-```ruby
-class SomeSerializer
-  plugin :batch, id_method: :id # global id_method is `:id`
-end
-
-class UserSerializer < AppSerializer
-  # :user_id will be used as default `id_method` for all batch attributes
-  config.batch.id_method = :user_id
-
-  # id_method is :user_id
-  attribute :comments_count,
-    batch: { loader: CommentsCountBatchLoader }
-
-
-  # id_method is :user_id
-  attribute :company,
-    batch: { loader: UserCompanyBatchLoader }, serializer: CompanySerializer
-
-  # id_method is :uuid
-  attribute :points_amount,
-    batch: { loader: PointsBatchLoader, id_method: :uuid }
-end
-```
-
-#### Default value
-
-The default value for attributes without found value can be specified via
-`:default` option. By default, attributes without found value will be
-serialized as a `nil` value. Attributes marked as `many: true` will be
-serialized as empty array `[]` values.
-
-```ruby
-class UserSerializer < AppSerializer
-  # Missing values become empty arrays, as the `many: true` option is specified
-  attribute :companies,
-    batch: {loader: proc {}},
-    serializer: CompanySerializer,
-    many: true
-
-  # Missing values become `0` as specified directly
-  attribute :points_amount, batch: { loader: proc {} }, default: 0
-end
-```
-
-Batch attributes can be marked as hidden by default if the plugin is enabled
-with the `auto_hide` option. The `auto_hide` option can be changed with
-the `config.batch.auto_hide=` method.
-
-Look at [select serialized fields](#selecting-fields) for more information
-about hiding/showing attributes.
-
-```ruby
-class AppSerializer
-  plugin :batch, auto_hide: true
-end
-
-class UserSerializer < AppSerializer
-  config.batch.auto_hide = false
-end
-```
-
----
-⚠️ ATTENTION: The `:batch` plugin must be added to all serializers that have
-`:batch` attributes inside nested serializers. For example, when you serialize
-the `User -> Album -> Song` and the Song has a `batch` attribute, then
-the `:batch` plugin must be added to the User serializer.
-
-The best way would be to create one parent `AppSerializer < Serega` serializer
-and add the `:batch` plugin once to this parent serializer.
 
 ### Plugin :root
 
@@ -1101,13 +988,13 @@ Bug reports, pull requests and improvements ideas are very welcome!
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
 [activerecord_preloads]: #plugin-activerecord_preloads
-[batch]: #plugin-batch
+[batch-loading]: #batch-loading
 [camel_case]: #plugin-camel_case
 [context_metadata]: #plugin-context_metadata
 [depth_limit]: #plugin-depth_limit
 [formatters]: #plugin-formatters
 [metadata]: #plugin-metadata
-[preloads]: #plugin-preloads
+[preloads]: #preloads
 [presenter]: #plugin-presenter
 [root]: #plugin-root
 [string_modifiers]: #plugin-string_modifiers

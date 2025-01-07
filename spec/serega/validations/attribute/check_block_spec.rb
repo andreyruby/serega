@@ -5,10 +5,12 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckBlock do
   let(:signature_error) do
     <<~ERR.strip
       Invalid attribute block parameters, valid parameters signatures:
-      - ()                # no parameters
-      - (object)          # one positional parameter
-      - (object, context) # two positional parameters
-      - (object, :ctx)    # one positional parameter and :ctx keyword
+      - ()                       # no parameters
+      - (object)                 # one positional parameter
+      - (object, ctx:)           # one positional parameter and :ctx keyword
+      - (object, batches:)       # one positional parameter and :batches keyword
+      - (object, ctx:, batches:) # one positional parameter, :ctx, and :batches keywords
+      - (object, context)        # two positional parameters
     ERR
   end
 
@@ -16,12 +18,14 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckBlock do
     expect { described_class.call(nil) }.not_to raise_error
   end
 
-  it "checks value parameters signature" do
+  it "checks block parameters signature" do
     expect { described_class.call(lambda {}) }.not_to raise_error
     expect { described_class.call(lambda { |obj| }) }.not_to raise_error
     expect { described_class.call(lambda { |obj, ctx| }) }.not_to raise_error
     expect { described_class.call(lambda { |obj, ctx:| }) }.not_to raise_error
     expect { described_class.call(lambda { |obj, ctx: {}| }) }.not_to raise_error
+    expect { described_class.call(lambda { |obj, batches:| }) }.not_to raise_error
+    expect { described_class.call(lambda { |obj, ctx:, batches:| }) }.not_to raise_error
     expect { described_class.call(lambda { |obj, context, ctx:| }) }
       .to raise_error Serega::SeregaError, signature_error
   end

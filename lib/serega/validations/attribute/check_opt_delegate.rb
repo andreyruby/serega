@@ -60,6 +60,7 @@ class Serega
             raise SeregaError, "Option :delegate can not be used together with option :method" if opts.key?(:method)
             raise SeregaError, "Option :delegate can not be used together with option :const" if opts.key?(:const)
             raise SeregaError, "Option :delegate can not be used together with option :value" if opts.key?(:value)
+            raise SeregaError, "Option :delegate can not be used together with option :batch" if opts.key?(:batch)
             raise SeregaError, "Option :delegate can not be used together with block" if block
           end
         end

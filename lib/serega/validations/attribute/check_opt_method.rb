@@ -29,6 +29,7 @@ class Serega
           def check_usage_with_other_params(opts, block)
             raise SeregaError, "Option :method can not be used together with option :const" if opts.key?(:const)
             raise SeregaError, "Option :method can not be used together with option :value" if opts.key?(:value)
+            raise SeregaError, "Option :method can not be used together with option :batch" if opts.key?(:batch)
             raise SeregaError, "Option :method can not be used together with block" if block
           end
         end

@@ -4,34 +4,37 @@
 
 ### Breaking Changes
 
+- **BREAKING**: Configuration changes
+  Added options `auto_hide` and `auto_preload`
+
+  **Before**
+
+  ```ruby
+  plugin :preloads,
+    auto_preload_attributes_with_delegate: true,
+    auto_preload_attributes_with_serializer: true,
+    auto_hide_attributes_with_preload: true
+
+  plugin :batch, auto_hide: true
+  ```
+
+  **After**
+
+  ```ruby
+  config.auto_hide = true
+  config.auto_preload = true
+
+  # Or you can specify specific options that trigher auto hide or preload:
+  config.auto_hide = { has_preload_option: true, has_batch_option: true }
+  config.auto_preload = { has_serializer_option: true, has_delegate_option: true }
+  ```
+
+- **BREAKING**: Removed `batch` plugin. There are new functionality called `batch loaders`
+  integrated to core that replaces batch plugin. See examples in README.
+
 - **BREAKING**: Moved preloads functionality from `:preloads` plugin to core.
   The `:preloads` plugin is no longer needed and should be removed from your
   serializers.
-
-  **Before:**
-
-  ```ruby
-  class AppSerializer < Serega
-    plugin :preloads,
-      auto_preload_attributes_with_delegate: true,
-      auto_preload_attributes_with_serializer: true,
-      auto_hide_attributes_with_preload: true
-  end
-  ```
-
-  **After:**
-
-  ```ruby
-  class AppSerializer < Serega
-    config.auto_preload_attributes_with_delegate = true
-    config.auto_preload_attributes_with_serializer = true
-    config.auto_hide_attributes_with_preload = true
-  end
-  ```
-
-- Preloads functionality is now available in all serializers by default
-- The `#preloads` method is now available on all serializer instances
-- Attribute options `:preload` and `:preload_path` are now available by default
 
 ## [0.21.0] - 2024-11-19
 

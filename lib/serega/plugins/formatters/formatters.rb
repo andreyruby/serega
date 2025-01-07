@@ -64,10 +64,6 @@ class Serega
             "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. Allowed options:\n" \
             "  - :formatters [Hash<Symbol, #call>] - Formatters (names and according callable values)"
         end
-
-        if serializer_class.plugin_used?(:batch)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded before the :batch plugin"
-        end
       end
 
       #
@@ -207,8 +203,8 @@ class Serega
         #
         # @return [Object] Formatted attribute value
         #
-        def value(object, context)
-          result = super
+        def value(object, context, batches: nil)
+          result = super # `:batches` parameter is needed to find unformatted result
           return result unless formatter
 
           case formatter_signature
