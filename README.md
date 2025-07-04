@@ -1,9 +1,9 @@
+# Serega Ruby Serializer
+
 [![Gem Version](https://badge.fury.io/rb/serega.svg)](https://badge.fury.io/rb/serega)
 [![GitHub Actions](https://github.com/aglushkov/serega/actions/workflows/main.yml/badge.svg?event=push)](https://github.com/aglushkov/serega/actions/workflows/main.yml)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/f10c0659e16e25e49faa/test_coverage)](https://codeclimate.com/github/aglushkov/serega/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/f10c0659e16e25e49faa/maintainability)](https://codeclimate.com/github/aglushkov/serega/maintainability)
-
-# Serega Ruby Serializer
 
 The Serega Ruby Serializer provides easy and powerful DSL to describe your
 objects and serialize them to Hash or JSON.
@@ -24,8 +24,8 @@ It has some great features:
 - Adding custom metadata (via [metadata][metadata] or
   [context_metadata][context_metadata] plugins)
 - Value formatters ([formatters][formatters] plugin) helps to transform
-  time, date, money, percentage, and any other values in the same way keeping
-  the code dry
+  time, date, money, percentage, and any other values in the same way
+  keeping the code dry
 - Conditional attributes - ([if][if] plugin)
 - Auto camelCase keys - [camel_case][camel_case] plugin
 
@@ -68,14 +68,15 @@ class UserSerializer < Serega
   # Regular attribute
   attribute :first_name
 
-  # Option :method specifies the method that must be called on the serialized object
+  # Option :method specifies the method that must be called on the
+  # serialized object
   attribute :first_name, method: :old_first_name
 
   # Block is used to define attribute value
   attribute(:first_name) { |user| user.profile&.first_name }
 
-  # Option :value can be used with a Proc or callable object to define attribute
-  # value
+  # Option :value can be used with a Proc or callable object to define
+  # attribute value
   attribute :first_name, value: UserProfile.new # must have #call method
   attribute :first_name, value: proc { |user| user.profile&.first_name }
 
@@ -106,12 +107,13 @@ class UserSerializer < Serega
   attribute :posts, serializer: -> { PostSerializer }
 
   # Option `:many` specifies a has_many relationship. It is optional.
-  # If not specified, it is defined during serialization by checking `object.is_a?(Enumerable)`
+  # If not specified, it is defined during serialization by checking
+  # `object.is_a?(Enumerable)`
   # Also the `:many` changes the default value from `nil` to `[]`.
   attribute :posts, serializer: PostSerializer, many: true
 
-  # Option `:preload` can be specified when enabled `:preloads` plugin
-  # It allows to specify associations to preload to attribute value
+  # Option `:preload` allows to specify associations to preload to
+  # attribute value
   attribute(:email, preload: :emails) { |user| user.emails.find(&:verified?) }
 
   # Options `:if, :unless, :if_value and :unless_value` can be specified
@@ -364,19 +366,20 @@ end
 
 ## Plugins
 
-### Plugin :preloads
+### Preloads
 
-Allows to define `:preloads` to attributes and then allows to merge preloads
-from serialized attributes and return single associations hash.
+Serega includes built-in preloads functionality that allows you to define
+`:preloads` to attributes and then merge preloads from serialized attributes
+into a single associations hash.
 
-Plugin accepts options:
+Configuration options:
 
-- `auto_preload_attributes_with_delegate` - default `false`
-- `auto_preload_attributes_with_serializer` - default `false`
-- `auto_hide_attributes_with_preload` - default `false`
+- `config.auto_preload_attributes_with_delegate` - default `false`
+- `config.auto_preload_attributes_with_serializer` - default `false`
+- `config.auto_hide_attributes_with_preload` - default `false`
 
-These options are extremely useful if you want to forget about finding preloads
-manually.
+These options are extremely useful if you want to forget about finding
+preloads manually.
 
 Preloads can be disabled with the `preload: false` attribute option.
 Automatically added preloads can be overwritten with the manually specified
@@ -386,10 +389,9 @@ For some examples, **please read the comments in the code below**
 
 ```ruby
 class AppSerializer < Serega
-  plugin :preloads,
-    auto_preload_attributes_with_delegate: true,
-    auto_preload_attributes_with_serializer: true,
-    auto_hide_attributes_with_preload: true
+  config.auto_preload_attributes_with_delegate = true
+  config.auto_preload_attributes_with_serializer = true
+  config.auto_hide_attributes_with_preload = true
 end
 
 class UserSerializer < AppSerializer
@@ -507,15 +509,12 @@ inside ImageSerializer.
 
 ---
 
-📌 Plugin `:preloads` only allows to group preloads together in single Hash, but
-they should be preloaded manually.
+📌 The built-in preloads functionality only allows to group preloads together
+in single Hash, but they should be preloaded manually.
 
-There are only [activerecord_preloads][activerecord_preloads] plugin that can
-be used to preload these associations automatically.
+There is the [activerecord_preloads][activerecord_preloads] plugin that can be used to preload these associations automatically.
 
 ### Plugin :activerecord_preloads
-
-(depends on [preloads][preloads] plugin, that must be loaded first)
 
 Automatically preloads associations to serialized objects.
 
@@ -525,10 +524,9 @@ uses ActiveRecord::Associations::Preloader to preload associations to objects.
 
 ```ruby
 class AppSerializer < Serega
-  plugin :preloads,
-    auto_preload_attributes_with_delegate: true,
-    auto_preload_attributes_with_serializer: true,
-    auto_hide_attributes_with_preload: false
+  config.auto_preload_attributes_with_delegate = true
+  config.auto_preload_attributes_with_serializer = true
+  config.auto_hide_attributes_with_preload = false
 
   plugin :activerecord_preloads
 end
@@ -549,8 +547,7 @@ UserSerializer.to_h(user)
 # => preloads {users_stats: {}, albums: { downloads: {} }}
 ```
 
-For testing purposes preloading can be done manually with
-`#preload_association_to(obj)` instance method
+For testing purposes preloading can be done manually with `#preload_associations_to(obj)` instance method
 
 ### Plugin :batch
 
@@ -585,8 +582,8 @@ Named loaders should be predefined with
 The loader can accept 1 to 3 arguments:
 
 1. List of IDs (each ID will be found by using the `:id_method` option)
-1. Context
-1. PlanPoint - a special object containing information about current
+2. Context
+3. PlanPoint - a special object containing information about current
    attribute and all children and parent attributes. It can be used to preload
    required associations to batch values.
    See [example](examples/batch_loader.rb) how

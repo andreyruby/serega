@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## [Unreleased]
+
+### Breaking Changes
+
+- **BREAKING**: Moved preloads functionality from `:preloads` plugin to core.
+  The `:preloads` plugin is no longer needed and should be removed from your
+  serializers.
+
+  **Before:**
+
+  ```ruby
+  class AppSerializer < Serega
+    plugin :preloads,
+      auto_preload_attributes_with_delegate: true,
+      auto_preload_attributes_with_serializer: true,
+      auto_hide_attributes_with_preload: true
+  end
+  ```
+
+  **After:**
+
+  ```ruby
+  class AppSerializer < Serega
+    config.auto_preload_attributes_with_delegate = true
+    config.auto_preload_attributes_with_serializer = true
+    config.auto_hide_attributes_with_preload = true
+  end
+  ```
+
+- Preloads functionality is now available in all serializers by default
+- The `#preloads` method is now available on all serializer instances
+- Attribute options `:preload` and `:preload_path` are now available by default
+
 ## [0.21.0] - 2024-11-19
 
 - Allow to provide modifiers and serialization options as strings. Only symbols
@@ -228,7 +261,7 @@ attribute :email, unless_value: :nil?
 
 - Allow to call serialize methods with `nil` as options
 
-```
+```ruby
   UserSerialzier.to_h(user, nil) # same as UserSerialzier.to_h(user)
   UserSerialzier.new(nil).to_h(user, nil)  # same as UserSerialzier.new.to_h(user)
 ```

@@ -108,6 +108,28 @@ class Serega
         @default = prepare_default
       end
 
+      #
+      # Shows normalized preloads for current attribute
+      #
+      # @return [Hash, nil] normalized preloads of current attribute
+      #
+      def preloads
+        return @preloads if instance_variable_defined?(:@preloads)
+
+        @preloads = prepare_preloads
+      end
+
+      #
+      # Shows normalized preloads_path for current attribute
+      #
+      # @return [Array] normalized preloads_path of current attribute
+      #
+      def preloads_path
+        return @preloads_path if instance_variable_defined?(:@preloads_path)
+
+        @preloads_path = prepare_preloads_path
+      end
+
       private
 
       def prepare_name
@@ -120,11 +142,13 @@ class Serega
 
       #
       # Patched in:
-      # - plugin :preloads (returns true by default if config option auto_hide_attribute_with_preloads is enabled)
       # - plugin :batch (returns true by default if auto_hide option was set and attribute has batch loader)
       #
       def prepare_hide
-        init_opts[:hide]
+        return init_opts[:hide] if init_opts.key?(:hide)
+        return true if preloads && !preloads.empty? && self.class.serializer_class.config.auto_hide_attributes_with_preload
+
+        nil
       end
 
       def prepare_many
@@ -175,6 +199,65 @@ class Serega
             object.public_send(delegate_to).public_send(key_method_name)
           end
         end
+      end
+
+      # Prepares preloads
+      # @return [Hash,nil]
+      #  - Nil means no need to add preloads and nested preloads
+      #  - Hash with any keys will add preloads
+      #  - Empty hash will skip only top-lelvel preloads, but will allow to load nested preloads
+      def prepare_preloads
+        preload = init_opts[:preload]
+
+        # Handle explicit preload option
+        if init_opts.key?(:preload)
+          return nil unless preload # return nil when false or nil
+          return SeregaUtils::FormatUserPreloads.call(preload)
+        end
+
+        # Auto-preload for delegate
+        if init_opts[:delegate] && self.class.serializer_class.config.auto_preload_attributes_with_delegate
+          delegate_to = init_opts[:delegate][:to]
+          return SeregaUtils::FormatUserPreloads.call(delegate_to)
+        end
+
+        # Auto-preload for serializer
+        if init_opts[:serializer] && self.class.serializer_class.config.auto_preload_attributes_with_serializer
+          return SeregaUtils::FormatUserPreloads.call(name)
+        end
+
+        {}
+      end
+
+      def prepare_preloads_path
+        path = init_opts.fetch(:preload_path) { default_preload_path(preloads) }
+
+        if path && path[0].is_a?(Array)
+          prepare_many_preload_paths(path)
+        else
+          prepare_one_preload_path(path)
+        end
+      end
+
+      def prepare_one_preload_path(path)
+        return unless path
+
+        case path
+        when Array
+          path.map(&:to_sym).freeze
+        else
+          [path.to_sym].freeze
+        end
+      end
+
+      def prepare_many_preload_paths(paths)
+        paths.map { |path| prepare_one_preload_path(path) }.freeze
+      end
+
+      def default_preload_path(preloads)
+        return FROZEN_EMPTY_ARRAY if !preloads || preloads.empty?
+
+        [preloads.keys.first]
       end
     end
 

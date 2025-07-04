@@ -116,6 +116,11 @@ class Serega
           }.freeze
         end
 
+        #
+        # Returns method signatures for all if options for optimized calling
+        #
+        # @return [Hash] Hash with signatures for each if option type
+        #
         def if_options_signatures
           @if_options_signatures ||= {
             if: if_option_signature(:if),

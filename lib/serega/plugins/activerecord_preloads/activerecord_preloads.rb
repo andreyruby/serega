@@ -4,7 +4,6 @@ class Serega
   module SeregaPlugins
     #
     # Plugin :activerecord_preloads
-    # (depends on :preloads plugin, that must be loaded first)
     #
     # Automatically preloads associations to serialized objects
     #
@@ -14,10 +13,9 @@ class Serega
     #
     # @example
     #   class AppSerializer < Serega
-    #     plugin :preloads,
-    #       auto_preload_attributes_with_delegate: true,
-    #       auto_preload_attributes_with_serializer: true,
-    #       auto_hide_attributes_with_preload: true
+    #     config.auto_preload_attributes_with_delegate = true
+    #     config.auto_preload_attributes_with_serializer = true
+    #     config.auto_hide_attributes_with_preload = true
     #
     #     plugin :activerecord_preloads
     #   end
@@ -63,9 +61,7 @@ class Serega
           raise SeregaError, "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. No options are allowed"
         end
 
-        unless serializer_class.plugin_used?(:preloads)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded after the :preloads plugin. Please load the :preloads plugin first"
-        end
+        # Preloads functionality is now built into core, no dependency needed
 
         if serializer_class.plugin_used?(:batch)
           raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded before the :batch plugin"

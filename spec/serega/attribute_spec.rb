@@ -40,7 +40,9 @@ RSpec.describe Serega::SeregaAttribute do
         serializer: nil,
         method: nil,
         value_block: nil,
-        value_block_signature: nil
+        value_block_signature: nil,
+        preloads: nil,
+        preloads_path: nil
       )
 
       initials = {name: :name, opts: {}, block: nil}
@@ -48,7 +50,7 @@ RSpec.describe Serega::SeregaAttribute do
       attribute = attribute_class.new(**initials)
 
       expect(attribute.instance_variables)
-        .to include(:@name, :@default, :@value_block, :@value_block_signature, :@many, :@hide, :@serializer)
+        .to include(:@name, :@default, :@value_block, :@value_block_signature, :@many, :@hide, :@serializer, :@preloads, :@preloads_path)
     end
   end
 
