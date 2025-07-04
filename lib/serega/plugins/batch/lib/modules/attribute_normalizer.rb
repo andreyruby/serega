@@ -33,9 +33,14 @@ class Serega
           res = super
           return res unless res.nil?
 
-          if batch
-            self.class.serializer_class.config.batch.auto_hide || nil
-          end
+          self.class.serializer_class.config.batch.auto_hide || nil if batch
+        end
+
+        # Do not add any preloads automatically when batch option provided
+        def prepare_preloads
+          return if init_opts.key?(:batch) && !init_opts.key?(:preload)
+
+          super
         end
 
         def prepare_batch

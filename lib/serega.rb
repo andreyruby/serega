@@ -17,7 +17,10 @@ require_relative "serega/errors"
 require_relative "serega/helpers/serializer_class_helper"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
+require_relative "serega/utils/format_user_preloads"
 require_relative "serega/utils/method_signature"
+require_relative "serega/utils/preload_paths"
+require_relative "serega/utils/preloads_constructor"
 require_relative "serega/utils/symbol_name"
 require_relative "serega/utils/to_hash"
 require_relative "serega/json/adapter"
@@ -35,6 +38,8 @@ require_relative "serega/validations/attribute/check_opt_hide"
 require_relative "serega/validations/attribute/check_opt_delegate"
 require_relative "serega/validations/attribute/check_opt_many"
 require_relative "serega/validations/attribute/check_opt_method"
+require_relative "serega/validations/attribute/check_opt_preload"
+require_relative "serega/validations/attribute/check_opt_preload_path"
 require_relative "serega/validations/attribute/check_opt_serializer"
 require_relative "serega/validations/attribute/check_opt_value"
 require_relative "serega/validations/initiate/check_modifiers"
@@ -337,6 +342,11 @@ class Serega
     # @see #call
     def to_h(object, opts = nil)
       call(object, opts)
+    end
+
+    # @return [Hash] merged preloads of all serialized attributes
+    def preloads
+      @preloads ||= SeregaUtils::PreloadsConstructor.call(plan)
     end
 
     #

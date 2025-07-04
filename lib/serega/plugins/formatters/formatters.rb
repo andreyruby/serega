@@ -167,6 +167,11 @@ class Serega
           @formatter ||= prepare_formatter
         end
 
+        #
+        # Returns formatter method signature for optimized calling
+        #
+        # @return [String, nil] Formatter signature ("1", "2", "1_ctx") or nil if no formatter
+        #
         def formatter_signature
           @formatter_signature ||= prepare_formatter_signature
         end
@@ -194,6 +199,14 @@ class Serega
       # @see SeregaAttribute
       #
       module AttributeInstanceMethods
+        #
+        # Returns formatted attribute value
+        #
+        # @param object [Object] Serialized object
+        # @param context [Hash] Serialization context
+        #
+        # @return [Object] Formatted attribute value
+        #
         def value(object, context)
           result = super
           return result unless formatter

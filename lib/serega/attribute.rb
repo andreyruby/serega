@@ -29,6 +29,14 @@ class Serega
       # @return [Boolean, nil] Attribute :hide option
       attr_reader :hide
 
+      # Attribute :preloads option
+      # @return [Hash, nil] Attribute :preloads option
+      attr_reader :preloads
+
+      # Attribute :preloads_path option
+      # @return [Array, nil] Attribute :preloads_path option
+      attr_reader :preloads_path
+
       #
       # Initializes new attribute
       #
@@ -132,6 +140,8 @@ class Serega
         @value_block_signature = normalizer.value_block_signature
         @hide = normalizer.hide
         @serializer = normalizer.serializer
+        @preloads = normalizer.preloads
+        @preloads_path = normalizer.preloads_path
       end
     end
 

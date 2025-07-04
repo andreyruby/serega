@@ -13,5 +13,8 @@
 # local ruby version
 .ruby-version
 
+# amazon Q
+.amazonq
+
 # built gems
 *.gem

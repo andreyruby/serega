@@ -110,11 +110,6 @@ class Serega
           serializer_class::SeregaObjectSerializer.include(PluginsExtensions::If::ObjectSerializerInstanceMethods123)
         end
 
-        if serializer_class.plugin_used?(:preloads)
-          require_relative "lib/plugins_extensions/preloads"
-          serializer_class::SeregaAttributeNormalizer.include(PluginsExtensions::Preloads::AttributeNormalizerInstanceMethods)
-        end
-
         config = serializer_class.config
         config.attribute_keys << :batch
         config.opts[:batch] = {loaders: {}, id_method: nil, auto_hide: false}
