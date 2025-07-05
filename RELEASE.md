@@ -1,83 +1,95 @@
 # Release process
 
+## Automated Release (Recommended)
+
+1. **Prepare release:**
+
+   ```bash
+   ./bin/release 1.2.3 --dry-run  # Test the process first
+   ./bin/release 1.2.3            # Create release branch and prepare
+   ```
+
+2. **Complete release after PR merge:**
+
+   ```bash
+   ./bin/release --finalize 1.2.3
+   ```
+
+## Manual Release (Legacy)
+
+Manual steps for reference:
+
 1. Check documentation
 
-    ```
-    yard doc --no-cache --quiet && yard stats --list-undoc
-    ```
+   ```bash
+   yard doc --no-cache --quiet && yard stats --list-undoc
+   ```
 
-1. Run and fix all warnings
+2. Run and fix all warnings
 
-    ```
-    pip3 install codespell \
-      && gem update --system \
-      && bundle update && bundle update --bundler \
-      && BUNDLE_GEMFILE=gemfiles/5.2.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/6.1.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update \
-      && bundle exec rspec \
-      && bundle exec rubocop -A \
-      && bundle exec rake examples \
-      && codespell --skip="./sig,./doc,./coverage"
-    ```
+   ```bash
+   pip3 install codespell && \
+   gem update --system && \
+   bundle update && bundle update --bundler && \
+   BUNDLE_GEMFILE=gemfiles/5.2.gemfile bundle update && \
+   BUNDLE_GEMFILE=gemfiles/6.1.gemfile bundle update && \
+   BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle update && \
+   BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update && \
+   bundle exec rspec && \
+   bundle exec rubocop -A && \
+   bundle exec rake examples && \
+   codespell --skip="./sig,./doc,./coverage"
+   ```
 
-1. Update version number in VERSION file
+3. Update version number in VERSION file
 
-1. Checkout to new release branch
+4. Checkout to new release branch
 
-    ```
-    git co -b "v$(cat "VERSION")"
-    ```
+   ```bash
+   git checkout -b "v$(cat VERSION)"
+   ```
 
-1. Make local gem release
+5. Build gem
 
-    ```
-    gem build serega.gemspec
-    ```
+   ```bash
+   gem build serega.gemspec
+   ```
 
-1. Repeat
+6. Run final validation (repeat step 2)
 
-    ```
-    bundle update \
-      && BUNDLE_GEMFILE=gemfiles/5.2.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/6.1.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/7.0.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/7.1.gemfile bundle update \
-      && BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update \
-      && bundle exec rspec \
-      && bundle exec rubocop -A \
-      && bundle exec rake examples \
-      && codespell --skip="./sig,./doc,./coverage"
-    ```
+7. Validate documentation
 
-1. Add CHANGELOG, README notices, test them:
+   ```bash
+   mdl README.md RELEASE.md CHANGELOG.md
+   ```
 
-    ```
-    mdl README.md  RELEASE.md CHANGELOG.md
-    ```
+8. Commit changes
 
-1. Commit all changes.
+   ```bash
+   git add . && git commit -m "Release v$(cat VERSION)"
+   git push origin "v$(cat VERSION)"
+   ```
 
-    ```
-    git add . && git commit -m "Release v$(cat "VERSION")"
-    git push origin "v$(cat "VERSION")"
-    ```
+9. Merge PR when all checks pass
 
-1. Merge PR when all checks pass.
+10. Add tag and publish
 
-1. Add tag
-
-    ```
+    ```bash
     git checkout master
     git pull --rebase origin master
-    git tag -a v$(cat "VERSION") -m v$(cat "VERSION")
+    git tag -a "v$(cat VERSION)" -m "v$(cat VERSION)"
     git push origin master
     git push origin --tags
+    gem push "serega-$(cat VERSION).gem"
     ```
 
-1. Push new gem version
+## Release Checklist
 
-    ```
-    gem push serega-$(cat "VERSION").gem
-    ```
+- [ ] All tests pass
+- [ ] Documentation is 100% complete
+- [ ] CHANGELOG.md updated
+- [ ] Version follows semantic versioning
+- [ ] All gemfiles updated and tested
+- [ ] No rubocop violations
+- [ ] Examples work correctly
+- [ ] No spelling errors
