@@ -14,9 +14,9 @@ jobs:
       matrix:
         include:
           # https://github.com/ruby/setup-ruby
-          # - ruby: "head" # cannot test on head as sqlite-ruby requires `ruby < '3.4.dev'`
-          #   activerecord: "8.0"
-          - ruby: "3.3"
+          # - ruby: "head"
+          #   activerecord: "8.0" cannot test on head as sqlite-ruby requires `ruby < '3.5.dev'`
+          - ruby: "3.4"
             activerecord: "8.0"
           - ruby: "3.1"
             activerecord: "7.2"
@@ -24,9 +24,7 @@ jobs:
             activerecord: "6.1"
           - ruby: "2.6"
             activerecord: "5.2"
-          - ruby: "jruby-9.4.9"
-            activerecord: "6.1"
-          - ruby: "truffleruby-24.1.1"
+          - ruby: "truffleruby-24.2.1"
             activerecord: "8.0"
 
     env:
@@ -45,27 +43,27 @@ jobs:
           bundler-cache: true
 
       - name: Install codespell
-        if: startsWith(matrix.ruby, '3.3') && matrix.activerecord == '8.0'
+        if: startsWith(matrix.ruby, '3.4') && matrix.activerecord == '8.0'
         run: |
           python -m pip install --upgrade pip
           pip install codespell==2.3.0
       - name: Check spelling with codespell
-        if: startsWith(matrix.ruby, '3.3') && matrix.activerecord == '8.0'
+        if: startsWith(matrix.ruby, '3.4') && matrix.activerecord == '8.0'
         run: codespell --skip="./sig,./doc,./coverage,./vendor" || exit 1
 
       # Check code standards only for latest MRI. It takes a lot of time for jruby or truffleruby
       - name: Check Code Standards
-        if: startsWith(matrix.ruby, '3.3') && matrix.activerecord == '8.0'
+        if: startsWith(matrix.ruby, '3.4') && matrix.activerecord == '8.0'
         run: bundle exec rubocop
 
       - name: Run Tests
         run: bundle exec rspec
 
       - name: Markdown linter
-        if: startsWith(matrix.ruby, '3.3') && matrix.activerecord == '8.0'
+        if: startsWith(matrix.ruby, '3.4') && matrix.activerecord == '8.0'
         run: bundle exec mdl README.md CHANGELOG.md RELEASE.md
 
       # https://github.com/paambaati/codeclimate-action
       - name: Publish code coverage to code-climate
         uses: paambaati/codeclimate-action@v9.0.0
-        if: (github.event_name == 'push') && startsWith(matrix.ruby, '3.3')
+        if: (github.event_name == 'push') && startsWith(matrix.ruby, '3.4')

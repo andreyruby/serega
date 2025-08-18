@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.3.0] - 2025-08-18
 
 ### Breaking Changes
 

@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    serega (0.21.0)
+    serega (0.30.0)
 
 GEM
   remote: https://rubygems.org/
@@ -11,11 +11,6 @@ GEM
     activerecord (6.1.7.10)
       activemodel (= 6.1.7.10)
       activesupport (= 6.1.7.10)
-    activerecord-jdbc-adapter (61.0-java)
-      activerecord (~> 6.1.0)
-    activerecord-jdbcsqlite3-adapter (61.0-java)
-      activerecord-jdbc-adapter (= 61.0)
-      jdbc-sqlite3 (~> 3.8, < 3.30)
     activesupport (6.1.7.10)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
@@ -26,7 +21,7 @@ GEM
     diff-lcs (1.6.2)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
-    jdbc-sqlite3 (3.28.0)
+    logger (1.7.0)
     minitest (5.25.5)
     rake (13.3.0)
     rspec (3.13.1)
@@ -48,12 +43,11 @@ GEM
     zeitwerk (2.6.18)
 
 PLATFORMS
-  java
   x86_64-linux
 
 DEPENDENCIES
   activerecord (~> 6.1.0)
-  activerecord-jdbcsqlite3-adapter (= 61.0)
+  logger
   rake (~> 13.0)
   rspec (~> 3.11)
   serega!

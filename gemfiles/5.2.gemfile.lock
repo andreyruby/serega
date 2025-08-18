@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    serega (0.21.0)
+    serega (0.30.0)
 
 GEM
   remote: https://rubygems.org/
@@ -23,7 +23,7 @@ GEM
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     mini_portile2 (2.8.9)
-    minitest (5.25.5)
+    minitest (5.25.4)
     rake (13.3.0)
     rspec (3.13.1)
       rspec-core (~> 3.13.0)
@@ -49,6 +49,7 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord (~> 5.2.3)
+  minitest (= 5.25.4)
   rake (~> 13.0)
   rspec (~> 3.11)
   serega!
