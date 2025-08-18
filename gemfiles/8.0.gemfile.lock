@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    serega (0.21.0)
+    serega (0.30.0)
 
 GEM
   remote: https://rubygems.org/
@@ -151,8 +151,8 @@ DEPENDENCIES
   rubocop-rspec (~> 3.2)
   serega!
   simplecov (~> 0.22)
-  sqlite3 (~> 2.2)
+  sqlite3 (~> 2.7)
   standard (~> 1.12, >= 1.12.1)
 
 BUNDLED WITH
-   2.5.6
+   2.7.1

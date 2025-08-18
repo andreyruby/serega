@@ -1,0 +1,156 @@
+# Serega Improvements Based on Recent Commits Analysis
+
+## 1. **Documentation Gaps**
+
+### Missing README Section for Batch Loading
+The new batch loading feature is a major addition but lacks documentation in README.md. Should add:
+
+```ruby
+### Plugin :batch (Core Feature)
+
+Replaces the :batch plugin with improved functionality:
+
+```ruby
+class UserSerializer < Serega
+  # Simple batch loading
+  attribute :posts_count, batch: PostsCountLoader
+
+  # With custom ID method  
+  attribute :posts_count, batch: { use: PostsCountLoader, id: :user_id }
+
+  # Multiple loaders with custom value resolution
+  attribute :stats, batch: { use: [:posts_loader, :comments_loader] } do |user, batch:|
+    {
+      posts: batch[:posts_loader][user.id],
+      comments: batch[:comments_loader][user.id]
+    }
+  end
+end
+```
+
+## 2. **Code Quality Issues**
+
+### A. Inconsistent Error Messages
+In `check_opt_batch.rb`:
+```ruby
+# Current - inconsistent format
+raise SeregaError, "Invalid batch option `:id` value, it can be a Symbol or a String"
+raise SeregaError, "Batch loader with name `#{value.inspect}` is not defined"
+
+# Should be consistent
+raise SeregaError, "Invalid :batch option `:id` value. Expected Symbol or String"
+raise SeregaError, "Batch loader `#{value.inspect}` is not defined"
+```
+
+### B. Method Complexity
+`AutoResolverFactory.get` method has high cyclomatic complexity. Should extract:
+
+```ruby
+def self.get(serializer_class, attribute_name, batch_opt)
+  loader_name, loader_id_method = resolve_loader_config(serializer_class, attribute_name, batch_opt)
+  AutoResolver.new(loader_name, loader_id_method)
+end
+
+private
+
+def self.resolve_loader_config(serializer_class, attribute_name, batch_opt)
+  case batch_opt
+  when true
+    [attribute_name, :id]
+  when ->(opt) { opt.respond_to?(:call) }
+    register_callable_loader(serializer_class, attribute_name, batch_opt)
+  else
+    resolve_hash_config(serializer_class, attribute_name, batch_opt)
+  end
+end
+```
+
+### C. Memory Optimization
+In `Loaders` class, consider using `ObjectSpace::WeakMap` for `point_index`:
+
+```ruby
+def initialize
+  @point_batch_loaders = []
+  @point_index = ObjectSpace::WeakMap.new  # Prevents memory leaks
+end
+```
+
+## 3. **Testing Improvements**
+
+### A. Missing Edge Cases
+Add tests for:
+- Circular batch loading dependencies
+- Memory usage with large object sets
+- Performance benchmarks vs batch plugin
+
+### B. Integration Tests
+The example in `examples/batch_loader.rb` should be converted to proper integration tests.
+
+## 4. **Performance Concerns**
+
+### A. Object Allocation
+`SerializerObjectContainer` creates many small objects. Consider using Struct:
+
+```ruby
+SerializerObjectContainer = Struct.new(:serializer, :object, :container) do
+  def initialize(serializer, object, container)
+    super
+    freeze  # Prevent accidental mutations
+  end
+end
+```
+
+### B. Hash Lookups
+In `AutoResolver#call`, consider caching the lookup:
+
+```ruby
+def call(obj, batch:)
+  @cached_loader_data ||= batch.fetch(loader_name)
+  @cached_loader_data[obj.public_send(id_method)]
+end
+```
+
+## 5. **API Design Issues**
+
+### A. Inconsistent Naming
+- `batch_loaders` vs `batch_loader` methods
+- `use` vs `loader` in options
+
+### B. Missing Validation
+Should validate that batch loaders don't create circular dependencies.
+
+## 6. **Migration Path**
+
+### A. Deprecation Strategy
+Need clear migration guide from `:batch` plugin to batch loading:
+
+```ruby
+# Old batch plugin
+attribute :posts_count, batch: { loader: PostsCountLoader, id_method: :id }
+
+# New batch loading
+attribute :posts_count, batch: { use: PostsCountLoader, id: :id }
+```
+
+### B. Compatibility Layer
+Consider adding a compatibility shim for existing batch plugin users.
+
+## 7. **Security Considerations**
+
+### A. Loader Validation
+Ensure batch loaders can't be exploited for arbitrary code execution:
+
+```ruby
+def validate_loader(loader)
+  return if loader.respond_to?(:call)
+  raise SeregaError, "Batch loader must respond to :call"
+end
+```
+
+## Priority Recommendations
+
+1. **High**: Add README documentation for batch loading
+2. **High**: Fix error message consistency  
+3. **Medium**: Extract complex methods in AutoResolverFactory
+4. **Medium**: Add integration tests
+5. **Low**: Memory optimizations with WeakMap

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Some old versions of ActiveRecord use Logger, but don't load it.
+require "logger"
 require "active_record"
 
 pool = ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")

@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-Warning[:deprecated] = true
-Warning[:experimental] = true
-Warning[:performance] = true
+if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.7.0")
+  Warning[:deprecated] = true
+  Warning[:experimental] = true
+  Warning[:performance] = true if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.3.0")
+end
 
-if RUBY_ENGINE == "ruby" && RUBY_VERSION.start_with?("3.3.") && (ARGV.none? || ARGV == ["spec"] || ARGV == ["spec/"])
+if RUBY_ENGINE == "ruby" && RUBY_VERSION.start_with?("3.4.") && (ARGV.none? || ARGV == ["spec"] || ARGV == ["spec/"])
   begin
     require "simplecov"
 
