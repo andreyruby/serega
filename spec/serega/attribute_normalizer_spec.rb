@@ -274,6 +274,13 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
         expect(norm.preloads).to eq(foo: {})
       end
 
+      it "returns automatically found preloads when serializer provided and method name provided" do
+        serializer_class.config.auto_preload = {has_serializer_option: true}
+        opts[:serializer] = "bar"
+        opts[:method] = "other"
+        expect(norm.preloads).to eq(other: {})
+      end
+
       it "returns no auto preloads when serializer and batch provided" do
         serializer_class.config.auto_preload = {has_serializer_option: true}
         opts[:serializer] = "bar"
