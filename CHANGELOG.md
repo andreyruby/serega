@@ -2,15 +2,17 @@
 
 ## master (unreleased)
 
+## [0.32.0] - 2025-08-19
+
 - Fix issue with `auto_preload` tries to preload association by attribute name
   instead of by `method` when `method` provided
 
-## [0.3.1] - 2025-08-19
+## [0.31.0] - 2025-08-19
 
 - Fix issue with `auto_preload` tries to preload associations for attributes
   with `batch` option
 
-## [0.3.0] - 2025-08-18
+## [0.30.0] - 2025-08-18
 
 ### Breaking Changes
 
