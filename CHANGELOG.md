@@ -2,6 +2,11 @@
 
 ## master (unreleased)
 
+- Remove `to_json` and `as_json` methods and config options.
+  After ruby JSON gem becomes faster in
+  [2.8.0 version](https://github.com/ruby/json/releases/tag/v2.8.0),
+  there are no sense to keep this functionality
+
 ## [0.32.0] - 2025-08-19
 
 - Fix issue with `auto_preload` tries to preload association by attribute name

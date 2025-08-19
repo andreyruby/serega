@@ -23,8 +23,6 @@ require_relative "serega/utils/preload_paths"
 require_relative "serega/utils/preloads_constructor"
 require_relative "serega/utils/symbol_name"
 require_relative "serega/utils/to_hash"
-require_relative "serega/json/adapter"
-
 require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
 require_relative "serega/batch/attribute_loader"
@@ -245,59 +243,7 @@ class Serega
       new(modifiers_opts).to_h(object, serialize_opts)
     end
 
-    #
-    # Serializes provided object to Hash
-    #
-    # @param object [Object] Serialized object
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
-    #
-    # @return [Hash] Serialization result
-    #
-    def to_h(object, opts = nil)
-      call(object, opts)
-    end
-
-    #
-    # Serializes provided object to JSON string
-    #
-    # @param object [Object] Serialized object
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
-    #
-    # @return [String] Serialization result
-    #
-    def to_json(object, opts = nil)
-      config.to_json.call(to_h(object, opts))
-    end
-
-    #
-    # Serializes provided object as JSON
-    #
-    # @param object [Object] Serialized object
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
-    #
-    # @return [Hash] Serialization result
-    #
-    def as_json(object, opts = nil)
-      config.from_json.call(to_json(object, opts))
-    end
+    alias_method :to_h, :call
 
     private
 
@@ -429,36 +375,6 @@ class Serega
     # @return [Hash] merged preloads of all serialized attributes
     def preloads
       @preloads ||= SeregaUtils::PreloadsConstructor.call(plan)
-    end
-
-    #
-    # Serializes provided object to JSON string
-    #
-    # @param object [Object] Serialized object
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
-    #
-    # @return [Hash] Serialization result
-    #
-    def to_json(object, opts = nil)
-      hash = to_h(object, opts)
-      config.to_json.call(hash)
-    end
-
-    #
-    # Serializes provided object as JSON
-    #
-    # @param object [Object] Serialized object
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
-    #
-    # @return [Hash] Serialization result
-    #
-    def as_json(object, opts = nil)
-      json = to_json(object, opts)
-      config.from_json.call(json)
     end
 
     private
