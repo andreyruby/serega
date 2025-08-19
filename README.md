@@ -392,6 +392,13 @@ class AppSerializer < Serega
   # was not requested
   config.auto_hide = false
 
+  # Default method used on serialized object to resolve batch value
+  # For example:
+  #   attribute :counter, batch: CounterBatchLoader
+  #   # Attribute values will be resolved as:
+  #   proc { |object, batches:| batches[:counter][object.id] }
+  config.batch_id_option = :id
+
   # Disable/enable validation of modifiers (`:with, :except, :only`)
   # By default, this validation is enabled.
   # After disabling, all requested incorrect attributes will be skipped.

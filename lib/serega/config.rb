@@ -32,7 +32,8 @@ class Serega
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 0,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
-      auto_hide: {has_preload_option: false, has_batch_option: false}
+      auto_hide: {has_preload_option: false, has_batch_option: false},
+      batch_id_option: :id
     }.freeze
     # :nocov:
 
@@ -183,6 +184,21 @@ class Serega
       def check_attribute_name=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:check_attribute_name] = value
+      end
+
+      # Returns current batch_id_option
+      def batch_id_option
+        opts.fetch(:batch_id_option)
+      end
+
+      # Sets :batch_id_option config option
+      #
+      # @param value [Symbol] Set :batch_id_option config option
+      #
+      # @return [Symbol] New :check_attribute_name config option
+      def batch_id_option=(value)
+        raise SeregaError, "Must have Symbol value, #{value.inspect} provided" unless value.is_a?(Symbol)
+        opts[:batch_id_option] = value
       end
     end
 

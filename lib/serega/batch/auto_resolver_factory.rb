@@ -22,26 +22,28 @@ class Serega
       # In other cases we should never call tis method here.
       #
       def self.get(serializer_class, attribute_name, batch_opt)
+        default_method = serializer_class.config.batch_id_option
+
         if batch_opt == true                        # ex: `batch: true`
-          loader_name = attribute_name
-          loader_id_method = :id
+          batch_name = attribute_name
+          batch_id_method = default_method
         elsif batch_opt.respond_to?(:call)          # ex: `batch: FooLoader`
           serializer_class.batch(attribute_name, batch_opt)
-          loader_name = attribute_name
-          loader_id_method = :id
+          batch_name = attribute_name
+          batch_id_method = default_method
         else
           use = batch_opt[:use]
-          loader_id_method = batch_opt[:id] || :id
+          batch_id_method = batch_opt[:id] || default_method
 
           if use.respond_to?(:call)                 # ex: `batch: { use: FooLoader }`
-            loader_name = attribute_name
-            serializer_class.batch(loader_name, use)
+            batch_name = attribute_name
+            serializer_class.batch(batch_name, use)
           else                                      # ex: `batch: { use: :foo }` || batch: { id: :some_id }
-            loader_name = use || attribute_name
+            batch_name = use || attribute_name
           end
         end
 
-        AutoResolver.new(loader_name, loader_id_method)
+        AutoResolver.new(batch_name, batch_id_method)
       end
     end
   end

@@ -3,6 +3,11 @@
 RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
   let(:serializer_class) { Class.new(Serega) }
   let(:attribute_name) { :user }
+  let(:batch_id_option) { :some_id }
+
+  before do
+    serializer_class.config.batch_id_option = batch_id_option
+  end
 
   describe ".get" do
     subject(:resolver) { described_class.get(serializer_class, attribute_name, batch_opt) }
@@ -12,7 +17,7 @@ RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
 
       it "creates resolver with attribute name and :id method" do
         expect(resolver.loader_name).to eq(:user)
-        expect(resolver.id_method).to eq(:id)
+        expect(resolver.id_method).to eq(batch_id_option)
       end
     end
 
@@ -24,7 +29,7 @@ RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
         resolver
         expect(serializer_class).to have_received(:batch).with(:user, batch_opt)
         expect(resolver.loader_name).to eq(:user)
-        expect(resolver.id_method).to eq(:id)
+        expect(resolver.id_method).to eq(batch_id_option)
       end
     end
 
@@ -36,7 +41,7 @@ RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
         resolver
         expect(serializer_class).to have_received(:batch).with(:user, batch_opt[:use])
         expect(resolver.loader_name).to eq(:user)
-        expect(resolver.id_method).to eq(:id)
+        expect(resolver.id_method).to eq(batch_id_option)
       end
     end
 
@@ -45,7 +50,7 @@ RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
 
       it "creates resolver with custom loader name and :id method" do
         expect(resolver.loader_name).to eq(:custom_loader)
-        expect(resolver.id_method).to eq(:id)
+        expect(resolver.id_method).to eq(batch_id_option)
       end
     end
 

@@ -22,6 +22,7 @@ RSpec.describe Serega do
         max_cached_plans_per_serializer_count
         auto_preload
         auto_hide
+        batch_id_option
       ]
 
       expect(config.plugins).to eq []
@@ -46,6 +47,9 @@ RSpec.describe Serega do
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 0
+      expect(config.auto_hide).to eq(has_batch_option: false, has_preload_option: false)
+      expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
+      expect(config.batch_id_option).to eq :id
     end
   end
 
