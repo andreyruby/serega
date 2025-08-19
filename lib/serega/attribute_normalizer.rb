@@ -265,13 +265,13 @@ class Serega
         end
 
         # Auto-preload for delegate
-        if init_opts[:delegate] && config.auto_preload.fetch(:has_delegate_option)
+        if config.auto_preload.fetch(:has_delegate_option) && init_opts[:delegate]
           delegate_to = init_opts[:delegate][:to]
           return SeregaUtils::FormatUserPreloads.call(delegate_to)
         end
 
         # Auto-preload for serializer
-        if init_opts[:serializer] && config.auto_preload.fetch(:has_serializer_option)
+        if config.auto_preload.fetch(:has_serializer_option) && init_opts[:serializer] && !init_opts.key?(:batch)
           return SeregaUtils::FormatUserPreloads.call(name)
         end
 
