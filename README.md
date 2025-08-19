@@ -326,8 +326,8 @@ Named loaders can be defined using the `batch_loader` class method and reused ac
 ```ruby
 class UserSerializer < Serega
   # Define named loaders
-  batch_loader :comments_count, ->(users) { Comment.where(user: users).group(:user_id).count }
-  batch_loader :comments_count, CommentsCountLoader # Example with callable class
+  batch :comments_count, ->(users) { Comment.where(user: users).group(:user_id).count }
+  batch :comments_count, CommentsCountLoader # Example with callable class
 
   # Full attribute example
   attribute :comments_count, batch: { use: :comments_count },

@@ -83,7 +83,7 @@ RSpec.describe Serega do
 
     it "inherits same batch loaders" do
       parent = Class.new(described_class)
-      parent.batch_loader(:foo, proc { |objects| objects })
+      parent.batch(:foo, proc { |objects| objects })
 
       child = Class.new(parent)
       expect(child.batch_loaders).to have_key(:foo)
@@ -683,30 +683,30 @@ RSpec.describe Serega do
 
   describe "Batch functionality" do
     it "allows to specify named batch loader by providing callable value" do
-      serializer_class.batch_loader(:foo, proc { |objects| objects })
+      serializer_class.batch(:foo, proc { |objects| objects })
       block_result = serializer_class.batch_loaders[:foo].load(1, 2)
       expect(block_result).to eq 1
     end
 
     it "allows to specify named batch loader by providing block" do
-      serializer_class.batch_loader(:foo) { |objects, context| [objects, context] }
+      serializer_class.batch(:foo) { |objects, context| [objects, context] }
       block_result = serializer_class.batch_loaders[:foo].load(1, 2)
       expect(block_result).to eq [1, 2]
     end
 
     it "allows to specify named batch loader by providing block with objects and keyword ctx: parameters" do
-      serializer_class.batch_loader(:foo) { |objects, ctx:| [objects, ctx] }
+      serializer_class.batch(:foo) { |objects, ctx:| [objects, ctx] }
       block_result = serializer_class.batch_loaders[:foo].load(1, 2)
       expect(block_result).to eq [1, 2]
     end
 
     it "checks only block or only value provided" do
       # no block and no value
-      expect { serializer_class.batch_loader(:foo) }
+      expect { serializer_class.batch(:foo) }
         .to raise_error(Serega::SeregaError, "Batch loader must be defined with a callable value or block")
 
       # block and value together
-      expect { serializer_class.batch_loader(:foo, proc {}) {} }
+      expect { serializer_class.batch(:foo, proc {}) {} }
         .to raise_error(Serega::SeregaError, "Batch loader must be defined with a callable value or block")
     end
 

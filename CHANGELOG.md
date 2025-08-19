@@ -2,6 +2,7 @@
 
 ## master (unreleased)
 
+- Raname method to add named batch loader from `.batch_loader` to `.batch`
 - Remove `to_json` and `as_json` methods and config options.
   After ruby JSON gem becomes faster in
   [2.8.0 version](https://github.com/ruby/json/releases/tag/v2.8.0),

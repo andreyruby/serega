@@ -76,7 +76,7 @@ class Serega
   check_serialize_params_class.serializer_class = self
   const_set(:CheckSerializeParams, check_serialize_params_class)
 
-  # Validates `Serializer.batch_loader` params
+  # Validates `Serializer.batch` params
   check_batch_loader_params_class = Class.new(SeregaValidations::CheckBatchLoaderParams)
   check_batch_loader_params_class.serializer_class = self
   const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
@@ -153,7 +153,7 @@ class Serega
     end
 
     #
-    # Lists batch loaders
+    # Lists defined batch loaders
     #
     # @return [Hash] batch loaders list
     #
@@ -182,7 +182,7 @@ class Serega
     # Defines a batch loader
     #
     # @example
-    #   batch_loader :tags, PostTagsLoader
+    #   batch :tags, PostTagsLoader
     #
     # @example with block
     #   batch_loader(:tags) do |posts|
@@ -206,7 +206,7 @@ class Serega
     #
     # @return [#call] Batch loader
     #
-    def batch_loader(name, value = nil, &block)
+    def batch(name, value = nil, &block)
       raise SeregaError, "Batch loader must be defined with a callable value or block" if (value && block) || (!value && !block)
 
       batch_loader = self::SeregaBatchLoader.new(name: name, block: value || block)
@@ -308,7 +308,7 @@ class Serega
 
       # Assign same batch loaders
       batch_loaders.each_value do |loader|
-        subclass.batch_loader(loader.name, loader.block)
+        subclass.batch(loader.name, loader.block)
       end
 
       super

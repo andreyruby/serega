@@ -26,7 +26,7 @@ class Serega
           loader_name = attribute_name
           loader_id_method = :id
         elsif batch_opt.respond_to?(:call)          # ex: `batch: FooLoader`
-          serializer_class.batch_loader(attribute_name, batch_opt)
+          serializer_class.batch(attribute_name, batch_opt)
           loader_name = attribute_name
           loader_id_method = :id
         else
@@ -35,7 +35,7 @@ class Serega
 
           if use.respond_to?(:call)                 # ex: `batch: { use: FooLoader }`
             loader_name = attribute_name
-            serializer_class.batch_loader(loader_name, use)
+            serializer_class.batch(loader_name, use)
           else                                      # ex: `batch: { use: :foo }` || batch: { id: :some_id }
             loader_name = use || attribute_name
           end
