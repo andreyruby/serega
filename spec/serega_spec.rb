@@ -22,8 +22,6 @@ RSpec.describe Serega do
         max_cached_plans_per_serializer_count
         auto_preload
         auto_hide
-        to_json
-        from_json
       ]
 
       expect(config.plugins).to eq []
@@ -48,7 +46,6 @@ RSpec.describe Serega do
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 0
-      expect(config.to_json.call({})).to eq "{}"
     end
   end
 
@@ -233,18 +230,6 @@ RSpec.describe Serega do
       end
     end
 
-    describe "#to_json" do
-      it "returns serialized to json response" do
-        expect(serializer.to_json("foo", serialize_opts)).to eq('{"obj":"foo","ctx":"bar"}')
-      end
-    end
-
-    describe "#as_json" do
-      it "returns serialized as json response (with JSON compatible types)" do
-        expect(serializer.as_json("foo", serialize_opts)).to eq({"obj" => "foo", "ctx" => "bar"})
-      end
-    end
-
     describe ".call" do
       it "returns serialized to response" do
         expect(serializer_class.call("foo", modifiers.merge(serialize_opts))).to eq({obj: "foo", ctx: "bar"})
@@ -265,18 +250,6 @@ RSpec.describe Serega do
     describe ".to_h" do
       it "returns serialized response same as .call method" do
         expect(serializer_class.to_h("foo", modifiers.merge(serialize_opts))).to eq({obj: "foo", ctx: "bar"})
-      end
-    end
-
-    describe ".to_json" do
-      it "returns serialized to json response" do
-        expect(serializer_class.to_json("foo", modifiers.merge(serialize_opts))).to eq('{"obj":"foo","ctx":"bar"}')
-      end
-    end
-
-    describe ".as_json" do
-      it "returns serialized as json response (with JSON compatible types)" do
-        expect(serializer_class.as_json("foo", modifiers.merge(serialize_opts))).to eq({"obj" => "foo", "ctx" => "bar"})
       end
     end
   end

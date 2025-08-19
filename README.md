@@ -143,9 +143,8 @@ end
 
 ### Serializing
 
-We can serialize objects using class methods `.to_h`, `.to_json`, `.as_json` and
-same instance methods `#to_h`, `#to_json`, `#as_json`.
-The `to_h` method is also aliased as `call`.
+We can serialize objects using class method `.call` aliased ad `.to_h` and
+same instance methods `#call` and its alias `#to_h`.
 
 ```ruby
 user = OpenStruct.new(username: 'serega')
@@ -156,12 +155,6 @@ end
 
 UserSerializer.to_h(user) # => {username: "serega"}
 UserSerializer.to_h([user]) # => [{username: "serega"}]
-
-UserSerializer.to_json(user) # => '{"username":"serega"}'
-UserSerializer.to_json([user]) # => '[{"username":"serega"}]'
-
-UserSerializer.as_json(user) # => {"username":"serega"}
-UserSerializer.as_json([user]) # => [{"username":"serega"}]
 ```
 
 If serialized fields are constant, then it's a good idea to initiate the
@@ -389,16 +382,15 @@ Here are the default options. Other options can be added with plugins.
 
 ```ruby
 class AppSerializer < Serega
-  # Configure adapter to serialize to JSON.
-  # It is `JSON.dump` by default. But if the Oj gem is loaded, then the default
-  # is changed to `Oj.dump(data, mode: :compat)`
-  config.to_json = ->(data) { Oj.dump(data, mode: :compat) }
+  # With `activerecord_preloads` plugin it automatically adds `preload` option
+  # to attributes with `:delegate` or `:serializer` option.
+  # It helps to preload associations automatically, omitting N+1 requests.
+  config.auto_preload = false
 
-  # Configure adapter to de-serialize JSON.
-  # De-serialization is used only for the `#as_json` method.
-  # It is `JSON.parse` by default.
-  # When the Oj gem is loaded, then the default is `Oj.load(data)`
-  config.from_json = ->(data) { Oj.load(data) }
+  # Automatically marks as hidden attributes with `:preload` or `:batch` options.
+  # By default is false. Useful option to not make extra DB requests if attribute
+  # was not requested
+  config.auto_hide = false
 
   # Disable/enable validation of modifiers (`:with, :except, :only`)
   # By default, this validation is enabled.

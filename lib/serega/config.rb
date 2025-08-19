@@ -32,13 +32,7 @@ class Serega
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 0,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
-      auto_hide: {has_preload_option: false, has_batch_option: false},
-      # auto_preload_attributes_with_delegate: false,
-      # auto_preload_attributes_with_serializer: false,
-      # auto_hide_attributes_with_preload: false,
-      # hide_batch_attributes: false,
-      to_json: (SeregaJSON.adapter == :oj) ? SeregaJSON::OjDump : SeregaJSON::JSONDump,
-      from_json: (SeregaJSON.adapter == :oj) ? SeregaJSON::OjLoad : SeregaJSON::JSONLoad
+      auto_hide: {has_preload_option: false, has_batch_option: false}
     }.freeze
     # :nocov:
 
@@ -82,7 +76,7 @@ class Serega
         opts.fetch(:attribute_keys)
       end
 
-      # Returns options names allowed in `to_h, to_json, as_json` methods
+      # Returns options names allowed in `call, to_h` methods
       # @return [Array<Symbol>] Allowed options keys for serialization
       def serialize_keys
         opts.fetch(:serialize_keys)
@@ -189,32 +183,6 @@ class Serega
       def check_attribute_name=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:check_attribute_name] = value
-      end
-
-      # Returns current `to_json` adapter
-      # @return [#call] Callable that used to construct JSON
-      def to_json
-        opts.fetch(:to_json)
-      end
-
-      # Sets current `to_json` adapter
-      # @param value [#call] Callable that used to construct JSON
-      # @return [#call] Provided callable object
-      def to_json=(value)
-        opts[:to_json] = value
-      end
-
-      # Returns current `from_json` adapter
-      # @return [#call] Callable that used to parse JSON
-      def from_json
-        opts.fetch(:from_json)
-      end
-
-      # Sets current `from_json` adapter
-      # @param value [#call] Callable that used to parse JSON
-      # @return [#call] Provided callable object
-      def from_json=(value)
-        opts[:from_json] = value
       end
     end
 

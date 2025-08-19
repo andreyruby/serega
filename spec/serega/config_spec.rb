@@ -54,22 +54,6 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
-  describe "#to_json=" do
-    it "sets to_json option" do
-      value = proc {}
-      config.to_json = value
-      expect(config.to_json).to eq value
-    end
-  end
-
-  describe "#from_json=" do
-    it "sets from_json option" do
-      value = proc {}
-      config.from_json = value
-      expect(config.from_json).to eq value
-    end
-  end
-
   describe "#auto_hide" do
     it "returns default value" do
       expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: false)
