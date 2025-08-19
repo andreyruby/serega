@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.3.1] - 2025-08-19
+
+- Fix issue with `auto_preload` tries to preload associations for attributes
+  with `batch` option
+
 ## [0.3.0] - 2025-08-18
 
 ### Breaking Changes
@@ -30,7 +35,21 @@
   ```
 
 - **BREAKING**: Removed `batch` plugin. There are new functionality called `batch loaders`
-  integrated to core that replaces batch plugin. See examples in README.
+  integrated to core that replaces batch plugin.
+
+  **Before**
+
+  ```ruby
+  attribute :foo, batch: { loader: FooLoader, id_method: :id }
+  ```
+
+  **After**
+
+  ```ruby
+  attribute :foo, batch: FooLoader                # id: :id (by default)
+  attribute :foo, { use: FooLoader, id: :foo_id } # id: :foo_id
+  attribute :foo, FooLoader, value: proc { |obj, batches:| batches[:foo][obj.id] } # custom value to resolve batch
+  ```
 
 - **BREAKING**: Moved preloads functionality from `:preloads` plugin to core.
   The `:preloads` plugin is no longer needed and should be removed from your
