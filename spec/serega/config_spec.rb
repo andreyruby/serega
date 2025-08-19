@@ -113,4 +113,22 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
     end
   end
+
+  describe "#batch_id_option" do
+    it "returns default value" do
+      expect(config.batch_id_option).to eq(:id)
+    end
+  end
+
+  describe "#batch_id_option=" do
+    it "validates value is Symbol" do
+      expect { config.batch_id_option = "id" }.to raise_error Serega::SeregaError,
+        "Must have Symbol value, \"id\" provided"
+    end
+
+    it "sets batch_id_option option" do
+      config.batch_id_option = :uuid
+      expect(config.batch_id_option).to eq :uuid
+    end
+  end
 end
