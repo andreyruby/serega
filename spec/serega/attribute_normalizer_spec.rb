@@ -274,6 +274,13 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
         expect(norm.preloads).to eq(foo: {})
       end
 
+      it "returns no auto preloads when serializer and batch provided" do
+        serializer_class.config.auto_preload = {has_serializer_option: true}
+        opts[:serializer] = "bar"
+        opts[:batch] = :batch
+        expect(norm.preloads).to be_nil
+      end
+
       it "returns no preloads for attributes with serializer by default" do
         opts[:serializer] = "bar"
         expect(norm.preloads).to be_nil
