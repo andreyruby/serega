@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaBatch::Loader do
-  subject(:loader) { serializer_class.batch_loader(name, block) }
+  subject(:loader) { serializer_class.batch(name, block) }
 
   let(:serializer_class) { Class.new(Serega) }
   let(:name) { :test_attribute }

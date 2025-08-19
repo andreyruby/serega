@@ -20,9 +20,9 @@ RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
       let(:batch_opt) { proc { |objects| objects.map(&:id) } }
 
       it "creates resolver with attribute name and :id method" do
-        allow(serializer_class).to receive(:batch_loader)
+        allow(serializer_class).to receive(:batch)
         resolver
-        expect(serializer_class).to have_received(:batch_loader).with(:user, batch_opt)
+        expect(serializer_class).to have_received(:batch).with(:user, batch_opt)
         expect(resolver.loader_name).to eq(:user)
         expect(resolver.id_method).to eq(:id)
       end
@@ -32,9 +32,9 @@ RSpec.describe Serega::SeregaBatch::AutoResolverFactory do
       let(:batch_opt) { {use: proc { |objects| objects.map(&:id) }} }
 
       it "creates resolver with attribute name and :id method" do
-        allow(serializer_class).to receive(:batch_loader)
+        allow(serializer_class).to receive(:batch)
         resolver
-        expect(serializer_class).to have_received(:batch_loader).with(:user, batch_opt[:use])
+        expect(serializer_class).to have_received(:batch).with(:user, batch_opt[:use])
         expect(resolver.loader_name).to eq(:user)
         expect(resolver.id_method).to eq(:id)
       end
