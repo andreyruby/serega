@@ -272,7 +272,7 @@ class Serega
 
         # Auto-preload for serializer
         if config.auto_preload.fetch(:has_serializer_option) && init_opts[:serializer] && !init_opts.key?(:batch)
-          return SeregaUtils::FormatUserPreloads.call(name)
+          return SeregaUtils::FormatUserPreloads.call(method_name)
         end
 
         nil
