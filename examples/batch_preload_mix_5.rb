@@ -114,7 +114,7 @@ class PostSerializer < AppSerializer
 end
 
 class CommentSerializer < AppSerializer
-  batch_loader :comments_views, CommentsViewsLoader
+  batch :comments_views, CommentsViewsLoader
 
   attribute :text
   attribute :views_count, batch: :comments_views,

@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+## [0.33.0] - 2025-08-20
+
 - Add config `batch_id_option` method to set default method to resolve batch
   value. Previously it was `:id` hardcoded value. Now `:id` is a default value.
 - Raname method to add named batch loader from `.batch_loader` to `.batch`
