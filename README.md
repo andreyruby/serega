@@ -366,8 +366,8 @@ Custom loaders can be provided directly using the `:use` option with any callabl
 ```ruby
 class UserSerializer < Serega
   # Define named loaders
-  batch_loader :facebook_likes, FacebookLikesLoader
-  batch_loader :twitter_likes, TwitterLikesLoader
+  batch :facebook_likes, FacebookLikesLoader
+  batch :twitter_likes, TwitterLikesLoader
 
   # Summarize likes
   attribute :likes_count,
