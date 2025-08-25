@@ -29,12 +29,8 @@ class Serega
       end
 
       def call
-        const_value
+        @const_value
       end
-
-      private
-
-      attr_reader :const_value
     end
   end
 end

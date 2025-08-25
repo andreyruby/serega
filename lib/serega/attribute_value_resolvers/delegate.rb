@@ -50,12 +50,8 @@ class Serega
       end
 
       def call(object)
-        object.public_send(delegate_to).public_send(method_name)
+        object.public_send(@delegate_to).public_send(@method_name)
       end
-
-      private
-
-      attr_reader :delegate_to, :method_name
     end
   end
 end

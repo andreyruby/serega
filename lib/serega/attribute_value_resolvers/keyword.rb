@@ -29,12 +29,8 @@ class Serega
       end
 
       def call(object)
-        object.public_send(keyword)
+        object.public_send(@keyword)
       end
-
-      private
-
-      attr_reader :keyword
     end
   end
 end
