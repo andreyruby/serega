@@ -128,10 +128,24 @@ class Serega
 
         def prepare_if_option(if_option)
           return unless if_option
-          return proc { |val| val.public_send(if_option) } if if_option.is_a?(Symbol)
+          return KeywordConditionResolver.new(if_option) if if_option.is_a?(Symbol)
 
           if_option
         end
+      end
+
+      class KeywordConditionResolver
+        def initialize(keyword)
+          @keyword = keyword
+        end
+
+        def call(object)
+          object.public_send(keyword)
+        end
+
+        private
+
+        attr_reader :keyword
       end
 
       #
