@@ -17,8 +17,8 @@ RSpec.describe Serega::AttributeValueResolvers do
         let(:batch_opt) { true }
 
         it "creates resolver with attribute name and :id method" do
-          expect(resolver.loader_name).to eq(:user)
-          expect(resolver.id_method).to eq(batch_id_option)
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:user)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(batch_id_option)
         end
       end
 
@@ -29,8 +29,8 @@ RSpec.describe Serega::AttributeValueResolvers do
           allow(serializer_class).to receive(:batch)
           resolver
           expect(serializer_class).to have_received(:batch).with(:user, batch_opt)
-          expect(resolver.loader_name).to eq(:user)
-          expect(resolver.id_method).to eq(batch_id_option)
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:user)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(batch_id_option)
         end
       end
 
@@ -41,8 +41,8 @@ RSpec.describe Serega::AttributeValueResolvers do
           allow(serializer_class).to receive(:batch)
           resolver
           expect(serializer_class).to have_received(:batch).with(:user, batch_opt[:use])
-          expect(resolver.loader_name).to eq(:user)
-          expect(resolver.id_method).to eq(batch_id_option)
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:user)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(batch_id_option)
         end
       end
 
@@ -50,8 +50,8 @@ RSpec.describe Serega::AttributeValueResolvers do
         let(:batch_opt) { {use: :custom_loader} }
 
         it "creates resolver with custom loader name and :id method" do
-          expect(resolver.loader_name).to eq(:custom_loader)
-          expect(resolver.id_method).to eq(batch_id_option)
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:custom_loader)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(batch_id_option)
         end
       end
 
@@ -59,8 +59,8 @@ RSpec.describe Serega::AttributeValueResolvers do
         let(:batch_opt) { {use: :custom_loader, id: :custom_id} }
 
         it "creates resolver with custom loader name and custom id method" do
-          expect(resolver.loader_name).to eq(:custom_loader)
-          expect(resolver.id_method).to eq(:custom_id)
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:custom_loader)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(:custom_id)
         end
       end
     end
@@ -74,8 +74,8 @@ RSpec.describe Serega::AttributeValueResolvers do
       subject(:resolver) { described_class.new(loader_name, id_method) }
 
       it "sets loader_name and id_method" do
-        expect(resolver.loader_name).to eq(:user)
-        expect(resolver.id_method).to eq(:id)
+        expect(resolver.instance_variable_get(:@loader_name)).to eq(:user)
+        expect(resolver.instance_variable_get(:@id_method)).to eq(:id)
       end
     end
 
