@@ -191,22 +191,18 @@ class Serega
       def prepare_const_block
         return unless init_opts.key?(:const)
 
-        const = init_opts[:const]
-        proc { const }
+        AttributeValueResolvers::ConstResolver.get(init_opts[:const])
       end
 
       def prepare_keyword_block
-        key_method_name = method_name
-        proc do |object|
-          object.public_send(key_method_name)
-        end
+        AttributeValueResolvers::KeywordResolver.get(method_name)
       end
 
       def prepare_batch_loader_block
         batch_opt = init_opts[:batch]
         return unless batch_opt
 
-        SeregaBatch::AutoResolverFactory.get(self.class.serializer_class, name, batch_opt)
+        AttributeValueResolvers::BatchResolver.get(self.class.serializer_class, name, batch_opt)
       end
 
       def prepare_batch_loaders
@@ -238,16 +234,7 @@ class Serega
         delegate_to = delegate[:to]
 
         allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
-
-        if allow_nil
-          proc do |object|
-            object.public_send(delegate_to)&.public_send(key_method_name)
-          end
-        else
-          proc do |object|
-            object.public_send(delegate_to).public_send(key_method_name)
-          end
-        end
+        AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, allow_nil)
       end
 
       # Prepares preloads
