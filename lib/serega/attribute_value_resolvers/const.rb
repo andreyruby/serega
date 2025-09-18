@@ -28,6 +28,11 @@ class Serega
         @const_value = const_value
       end
 
+      #
+      # Returns the constant value
+      #
+      # @return [Object] the constant value
+      #
       def call
         @const_value
       end

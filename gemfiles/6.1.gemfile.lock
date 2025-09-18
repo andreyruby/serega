@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    serega (0.33.0)
+    serega (0.33.1)
 
 GEM
   remote: https://rubygems.org/
@@ -36,7 +36,7 @@ GEM
     rspec-mocks (3.13.5)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
-    rspec-support (3.13.5)
+    rspec-support (3.13.6)
     sqlite3 (1.4.4)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)

@@ -31,6 +31,12 @@ class Serega
         @method_name = method_name
       end
 
+      #
+      # Delegates method call to another object with safe navigation
+      #
+      # @param object [Object] the object to delegate from
+      # @return [Object, nil] result of delegated method call or nil if delegated object is nil
+      #
       def call(object)
         object.public_send(delegate_to)&.public_send(method_name)
       end
@@ -49,6 +55,12 @@ class Serega
         @method_name = method_name
       end
 
+      #
+      # Delegates method call to another object
+      #
+      # @param object [Object] the object to delegate from
+      # @return [Object] result of delegated method call
+      #
       def call(object)
         object.public_send(@delegate_to).public_send(@method_name)
       end
