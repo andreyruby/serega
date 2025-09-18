@@ -29,7 +29,6 @@ jobs:
 
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.activerecord }}.gemfile
-      CC_TEST_REPORTER_ID: 2b0dd65d1c078b0d9f6edc768751ab9f210decdace1eae9651603a6bccff96ca
 
     steps:
       # https://github.com/actions/checkout
@@ -62,8 +61,3 @@ jobs:
       - name: Markdown linter
         if: startsWith(matrix.ruby, '3.4') && matrix.activerecord == '8.0'
         run: bundle exec mdl README.md CHANGELOG.md RELEASE.md
-
-      # https://github.com/paambaati/codeclimate-action
-      - name: Publish code coverage to code-climate
-        uses: paambaati/codeclimate-action@v9.0.0
-        if: (github.event_name == 'push') && startsWith(matrix.ruby, '3.4')
