@@ -15,10 +15,20 @@ RSpec.describe Serega::SeregaBatch do
       let(:object) { double }
       let(:container) { double }
 
-      it "adds object and container to collections" do
+      it "adds objects and attachers to collection" do
         loader.store(object, "attacher")
         expect(loader.send(:objects)).to eq([object])
-        expect(loader.send(:serialized_object_attachers)).to eq({object => "attacher"})
+        expect(loader.send(:serialized_object_attachers)).to eq [[object, "attacher"]]
+      end
+
+      it "stores same objects multiple times" do
+        loader.store(object, "attacher1")
+        loader.store(object, "attacher2")
+        expect(loader.send(:objects)).to eq([object, object])
+        expect(loader.send(:serialized_object_attachers)).to eq [
+          [object, "attacher1"],
+          [object, "attacher2"]
+        ]
       end
     end
 

@@ -13,7 +13,7 @@ class Serega
         def initialize(point)
           @point = point
           @objects = []
-          @serialized_object_attachers = {}
+          @serialized_object_attachers = []
         end
 
         # Stores object with attacher to find and attach attribute values in batch later.
@@ -22,7 +22,7 @@ class Serega
         # @return [void]
         def store(object, attacher)
           objects << object
-          serialized_object_attachers[object] = attacher
+          serialized_object_attachers << [object, attacher]
         end
 
         # Loads serialized values for all stored objects for current attribute
