@@ -134,18 +134,23 @@ class Serega
         end
       end
 
+      #
+      # Resolves keyword-based conditions for if/unless options
+      #
       class KeywordConditionResolver
         def initialize(keyword)
           @keyword = keyword
         end
 
+        #
+        # Calls the keyword method on the object
+        #
+        # @param object [Object] the object to call method on
+        # @return [Object] result of method call
+        #
         def call(object)
-          object.public_send(keyword)
+          object.public_send(@keyword)
         end
-
-        private
-
-        attr_reader :keyword
       end
 
       #
