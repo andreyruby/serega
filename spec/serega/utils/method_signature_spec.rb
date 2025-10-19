@@ -11,7 +11,7 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     expect(described_class.call(callable, pos_limit: 2, keyword_args: [:ctx])).to eq "2_ctx"
 
     callable = proc { |one| }
-    expect(described_class.call(callable, pos_limit: 0)).to eq "0"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "1"
     expect(described_class.call(callable, pos_limit: 1)).to eq "1"
     expect(described_class.call(callable, pos_limit: 2)).to eq "1"
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "1"
@@ -23,28 +23,28 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "3"
 
     callable = proc { |one, two = 2| }
-    expect(described_class.call(callable, pos_limit: 0)).to eq "0"
-    expect(described_class.call(callable, pos_limit: 1)).to eq "1"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "2"
+    expect(described_class.call(callable, pos_limit: 1)).to eq "2"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "2"
 
     callable = proc { |one, *two| }
-    expect(described_class.call(callable, pos_limit: 0)).to eq "0"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "1"
     expect(described_class.call(callable, pos_limit: 1)).to eq "1"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3)).to eq "3"
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "3"
 
     callable = proc { |one, two = 2, *three| }
-    expect(described_class.call(callable, pos_limit: 0)).to eq "0"
-    expect(described_class.call(callable, pos_limit: 1)).to eq "1"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "2"
+    expect(described_class.call(callable, pos_limit: 1)).to eq "2"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3)).to eq "3"
     expect(described_class.call(callable, pos_limit: 4)).to eq "4"
     expect(described_class.call(callable, pos_limit: 4, keyword_args: [:ctx])).to eq "4"
 
     callable = proc { |one:, two: 2, **three, &block| }
-    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one"
+    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one_two"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two])).to eq "0_one_two"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end
@@ -71,8 +71,8 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "3"
 
     callable = lambda { |one, two = 2| }
-    expect(described_class.call(callable, pos_limit: 0)).to eq "1"
-    expect(described_class.call(callable, pos_limit: 1)).to eq "1"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "2"
+    expect(described_class.call(callable, pos_limit: 1)).to eq "2"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "2"
 
@@ -84,15 +84,15 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "3"
 
     callable = lambda { |one, two = 2, *three| }
-    expect(described_class.call(callable, pos_limit: 0)).to eq "1"
-    expect(described_class.call(callable, pos_limit: 1)).to eq "1"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "2"
+    expect(described_class.call(callable, pos_limit: 1)).to eq "2"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3)).to eq "3"
     expect(described_class.call(callable, pos_limit: 4)).to eq "4"
     expect(described_class.call(callable, pos_limit: 4, keyword_args: [:ctx])).to eq "4"
 
     callable = lambda { |one:, two: 2, **three, &block| }
-    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one"
+    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one_two"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two])).to eq "0_one_two"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end
@@ -131,8 +131,8 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
       def self.call(one, two = 2)
       end
     end
-    expect(described_class.call(callable, pos_limit: 0)).to eq "1"
-    expect(described_class.call(callable, pos_limit: 1)).to eq "1"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "2"
+    expect(described_class.call(callable, pos_limit: 1)).to eq "2"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3, keyword_args: [:ctx])).to eq "2"
 
@@ -150,8 +150,8 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
       def self.call(one, two = 2, *three)
       end
     end
-    expect(described_class.call(callable, pos_limit: 0)).to eq "1"
-    expect(described_class.call(callable, pos_limit: 1)).to eq "1"
+    expect(described_class.call(callable, pos_limit: 0)).to eq "2"
+    expect(described_class.call(callable, pos_limit: 1)).to eq "2"
     expect(described_class.call(callable, pos_limit: 2)).to eq "2"
     expect(described_class.call(callable, pos_limit: 3)).to eq "3"
     expect(described_class.call(callable, pos_limit: 4)).to eq "4"
@@ -161,7 +161,7 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
       def self.call(one:, two: 2, **three, &block)
       end
     end
-    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one"
+    expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one])).to eq "0_one_two"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two])).to eq "0_one_two"
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end

@@ -42,12 +42,7 @@ class Serega
 
           params.each do |type, name|
             case type
-            when :req
-              positional_parameters += 1
-              pos_limit -= 1
-            when :opt
-              next if pos_limit <= 0
-
+            when :req, :opt
               positional_parameters += 1
               pos_limit -= 1
             when :rest
@@ -55,12 +50,7 @@ class Serega
 
               positional_parameters += pos_limit
               pos_limit = 0
-            when :keyreq
-              keyword_parameters << name
-              keyword_args.delete(name)
-            when :key
-              next unless keyword_args.include?(name)
-
+            when :key, :keyreq
               keyword_parameters << name
               keyword_args.delete(name)
             when :keyrest
