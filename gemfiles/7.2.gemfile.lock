@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    serega (0.33.1)
+    serega (0.33.2)
 
 GEM
   remote: https://rubygems.org/
@@ -57,6 +57,7 @@ GEM
     zeitwerk (2.6.18)
 
 PLATFORMS
+  arm64-darwin-24
   x86_64-linux
 
 DEPENDENCIES

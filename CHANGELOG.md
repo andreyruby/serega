@@ -2,6 +2,16 @@
 
 ## master (unreleased)
 
+## [0.33.2] - 2026-04-05
+
+- Allow `true` as a modifier value (e.g. `only: { users: { first_name: true, posts: { text: true } } }`)
+
+## [0.33.1] - 2025-09-18
+
+- Fix returned nils for batch-loaded attributes (issue was that batch-load data was fetched for unique objects only)
+- Replace Proc-based value resolvers with separate classes
+- Eliminate extra method calls for new value resolvers
+
 ## [0.33.0] - 2025-08-20
 
 - Add config `batch_id_option` method to set default method to resolve batch
