@@ -10,15 +10,16 @@ class Serega
         #
         # Constructs deep hashes from provided data
         #
-        # @param value [Array, Hash, String, Symbol, NilClass, FalseClass] Value to transform
+        # @param value [Array, Hash, String, Symbol, NilClass, FalseClass, TrueClass] Value to transform
         #
         # @example
         #   Serega::SeregaUtils::ToHash.(nil) # => {}
+        #   Serega::SeregaUtils::ToHash.(true) # => {}
         #   Serega::SeregaUtils::ToHash.(false) # => {}
         #   Serega::SeregaUtils::ToHash.(:foo) # => {:foo=>{}}
         #   Serega::SeregaUtils::ToHash.("foo") # => {:foo=>{}}
         #   Serega::SeregaUtils::ToHash.(%w[foo bar]) # => {:foo=>{}, :bar=>{}}
-        #   Serega::SeregaUtils::ToHash.({ foo: nil, bar: false }) # => {:foo=>{}, :bar=>{}}
+        #   Serega::SeregaUtils::ToHash.({ foo: nil, bar: true }) # => {:foo=>{}, :bar=>{}}
         #   Serega::SeregaUtils::ToHash.({ foo: :bar }) # => {:foo=>{:bar=>{}}}
         #   Serega::SeregaUtils::ToHash.({ foo: [:bar] }) # => {:foo=>{:bar=>{}}}
         #
@@ -28,7 +29,7 @@ class Serega
           case value
           when Array then array_to_hash(value)
           when Hash then hash_to_hash(value)
-          when NilClass, FalseClass then nil_to_hash(value)
+          when NilClass, FalseClass, TrueClass then nil_to_hash(value)
           when String then string_to_hash(value)
           when Symbol then symbol_to_hash(value)
           else raise SeregaError, "Can't convert #{value.class} class object to hash"

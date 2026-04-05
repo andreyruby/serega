@@ -75,11 +75,12 @@ RSpec.describe Serega::SeregaUtils::ToHash do
     end
   end
 
-  context "with no-supported type value" do
+  context "with true value" do
     let(:val) { true }
 
-    it "returns nested hash with symbol keys with frozen empty hash final value" do
-      expect { result }.to raise_error Serega::SeregaError, "Can't convert TrueClass class object to hash"
+    it "returns frozen hash" do
+      expect(result).to eq({})
+      expect(result).to be_frozen
     end
   end
 
