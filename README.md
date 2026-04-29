@@ -319,7 +319,7 @@ Serega includes built-in batch loading functionality to efficiently load data on
 
 #### Defining Named Batch Loaders
 
-Named loaders can be defined using the `batch_loader` class method and reused across attributes:
+Named loaders can be defined using the `batch` class method and reused across attributes:
 
 ```ruby
 class UserSerializer < Serega
@@ -385,10 +385,14 @@ class AppSerializer < Serega
   # It helps to preload associations automatically, omitting N+1 requests.
   config.auto_preload = false
 
-  # Automatically marks as hidden attributes with `:preload` or `:batch` options.
-  # By default is false. Useful option to not make extra DB requests if attribute
-  # was not requested
-  config.auto_hide = false
+  # Hides attributes by default. Accepts:
+  #   false         - nothing hidden (default)
+  #   true          - all attributes hidden
+  #   [:preload]    - attributes with :preload option hidden
+  #   [:batch]      - attributes with :batch option hidden
+  #   [:preload, :batch] - either option triggers hiding
+  # Useful to avoid extra DB requests for attributes that were not requested.
+  config.hide_by_default = false
 
   # Default method used on serialized object to resolve batch value
   # For example:
@@ -418,9 +422,8 @@ into a single associations hash.
 
 Configuration options:
 
-- `config.auto_preload_attributes_with_delegate` - default `false`
-- `config.auto_preload_attributes_with_serializer` - default `false`
-- `config.auto_hide_attributes_with_preload` - default `false`
+- `config.auto_preload` - default `false` (use `true` or `{ has_delegate_option: true, has_serializer_option: true }`)
+- `config.hide_by_default` - default `false` (use `[:preload]` to hide attributes with preloads)
 
 These options are extremely useful if you want to forget about finding
 preloads manually.
@@ -433,9 +436,8 @@ For some examples, **please read the comments in the code below**
 
 ```ruby
 class AppSerializer < Serega
-  config.auto_preload_attributes_with_delegate = true
-  config.auto_preload_attributes_with_serializer = true
-  config.auto_hide_attributes_with_preload = true
+  config.auto_preload = true
+  config.hide_by_default = [:preload]
 end
 
 class UserSerializer < AppSerializer
@@ -447,11 +449,11 @@ class UserSerializer < AppSerializer
     value: proc { |user| user.user_stats.followers_count }
 
   # `preload: :user_stats` added automatically, as
-  # `auto_preload_attributes_with_delegate` option is true
+  # `auto_preload` includes `has_delegate_option: true`
   attribute :comments_count, delegate: { to: :user_stats }
 
   # `preload: :albums` added automatically as
-  # `auto_preload_attributes_with_serializer` option is true
+  # `auto_preload` includes `has_serializer_option: true`
   attribute :albums, serializer: 'AlbumSerializer'
 end
 
@@ -459,7 +461,7 @@ class AlbumSerializer < AppSerializer
   attribute :images_count, delegate: { to: :album_stats }
 end
 
-# By default, preloads are empty, as we specify `auto_hide_attributes_with_preload`
+# By default, preloads are empty, as we specify `hide_by_default = [:preload]`
 # so attributes with preloads will be skipped and nothing will be preloaded
 UserSerializer.new.preloads
 # => {}
@@ -487,10 +489,8 @@ other user associations. You should specify `preload: nil` to preload
 
 ```ruby
 class AppSerializer < Serega
-  plugin :preloads,
-    auto_preload_attributes_with_delegate: true,
-    auto_preload_attributes_with_serializer: true,
-    auto_hide_attributes_with_preload: true
+  config.auto_preload = true
+  config.hide_by_default = [:preload]
 end
 
 class UserSerializer < AppSerializer
@@ -511,9 +511,7 @@ achieve this:
 
 ```ruby
 class AppSerializer < Serega
-  plugin :preloads,
-    auto_preload_attributes_with_delegate: true,
-    auto_preload_attributes_with_serializer: true
+  config.auto_preload = true
 end
 
 class UserSerializer < AppSerializer
@@ -570,9 +568,8 @@ uses ActiveRecord::Associations::Preloader to preload associations to objects.
 
 ```ruby
 class AppSerializer < Serega
-  config.auto_preload_attributes_with_delegate = true
-  config.auto_preload_attributes_with_serializer = true
-  config.auto_hide_attributes_with_preload = false
+  config.auto_preload = true
+  config.hide_by_default = false
 
   plugin :activerecord_preloads
 end

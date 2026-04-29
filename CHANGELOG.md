@@ -2,6 +2,12 @@
 
 ## master (unreleased)
 
+- Replace `config.auto_hide` with `config.hide_by_default`.
+  Accepts `false` (default — nothing hidden), `true` (hide all attributes),
+  or an array of symbols — `[:preload]`, `[:batch]`, or `[:preload, :batch]` —
+  to hide only attributes that use those options.
+  Attribute-level `hide: true/false` always takes precedence over the config.
+
 ## [0.33.2] - 2026-04-05
 
 - Allow `true` as a modifier value (e.g. `only: { users: { first_name: true, posts: { text: true } } }`)

@@ -77,7 +77,7 @@ class AppSerializer < Serega
   plugin :activerecord_preloads
 
   config.auto_preload = true
-  config.auto_hide = false
+  config.hide_by_default = false
 end
 
 class UserSerializer < AppSerializer

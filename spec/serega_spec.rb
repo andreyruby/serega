@@ -21,7 +21,7 @@ RSpec.describe Serega do
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
         auto_preload
-        auto_hide
+        hide_by_default
         batch_id_option
       ]
 
@@ -47,7 +47,7 @@ RSpec.describe Serega do
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 0
-      expect(config.auto_hide).to eq(has_batch_option: false, has_preload_option: false)
+      expect(config.hide_by_default).to be false
       expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
       expect(config.batch_id_option).to eq :id
     end
@@ -663,7 +663,7 @@ RSpec.describe Serega do
       end
 
       it "auto-hides attributes with preloads when configured" do
-        serializer_class.config.auto_hide = {has_preload_option: true}
+        serializer_class.config.hide_by_default = [:preload]
         serializer_class.attribute :name, preload: :user_profile
         attribute = serializer_class.attributes[:name]
         expect(attribute.hide).to be true

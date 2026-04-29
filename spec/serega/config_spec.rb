@@ -54,36 +54,42 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
-  describe "#auto_hide" do
+  describe "#hide_by_default" do
     it "returns default value" do
-      expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: false)
+      expect(config.hide_by_default).to be false
     end
   end
 
-  describe "#auto_hide=" do
-    it "validates value is boolean" do
-      expect { config.auto_hide = false }.not_to raise_error
-      expect { config.auto_hide = true }.not_to raise_error
-      expect { config.auto_hide = nil }
-        .to raise_error Serega::SeregaError, "Must have boolean value or Hash, nil provided"
-
-      expect { config.auto_hide = {foo: :bar} }
+  describe "#hide_by_default=" do
+    it "validates value" do
+      expect { config.hide_by_default = false }.not_to raise_error
+      expect { config.hide_by_default = true }.not_to raise_error
+      expect { config.hide_by_default = [:preload] }.not_to raise_error
+      expect { config.hide_by_default = [:batch] }.not_to raise_error
+      expect { config.hide_by_default = [:preload, :batch] }.not_to raise_error
+      expect { config.hide_by_default = nil }
         .to raise_error Serega::SeregaError,
-          "Invalid auto_hide option :foo. Allowed options are: :has_batch_option, :has_preload_option"
+          "Must have true, false, or an Array of [:preload, :batch], nil provided"
+      expect { config.hide_by_default = [:foo] }
+        .to raise_error Serega::SeregaError,
+          "Must have true, false, or an Array of [:preload, :batch], [:foo] provided"
     end
 
-    it "sets auto_hide option" do
-      config.auto_hide = true
-      expect(config.auto_hide).to eq(has_preload_option: true, has_batch_option: true)
+    it "sets hide_by_default option" do
+      config.hide_by_default = true
+      expect(config.hide_by_default).to be true
 
-      config.auto_hide = false
-      expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: false)
+      config.hide_by_default = false
+      expect(config.hide_by_default).to be false
 
-      config.auto_hide = {has_preload_option: true}
-      expect(config.auto_hide).to eq(has_preload_option: true, has_batch_option: false)
+      config.hide_by_default = [:preload]
+      expect(config.hide_by_default).to eq [:preload]
 
-      config.auto_hide = {has_batch_option: true}
-      expect(config.auto_hide).to eq(has_preload_option: false, has_batch_option: true)
+      config.hide_by_default = [:batch]
+      expect(config.hide_by_default).to eq [:batch]
+
+      config.hide_by_default = [:preload, :batch]
+      expect(config.hide_by_default).to eq [:preload, :batch]
     end
   end
 

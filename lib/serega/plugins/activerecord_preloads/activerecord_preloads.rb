@@ -15,7 +15,7 @@ class Serega
     #   class AppSerializer < Serega
     #     config.auto_preload_attributes_with_delegate = true
     #     config.auto_preload_attributes_with_serializer = true
-    #     config.auto_hide_attributes_with_preload = true
+    #     config.hide_by_default = [:preload]
     #
     #     plugin :activerecord_preloads
     #   end
