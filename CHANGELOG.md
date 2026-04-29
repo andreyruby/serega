@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+## [0.34.0] - 2026-04-29
+
 - Replace `config.auto_hide` with `config.hide_by_default`.
   Accepts `false` (default — nothing hidden), `true` (hide all attributes),
   or an array of symbols — `[:preload]`, `[:batch]`, or `[:preload, :batch]` —

@@ -35,6 +35,7 @@ Manual steps for reference:
    BUNDLE_GEMFILE=gemfiles/6.1.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update && \
+   BUNDLE_GEMFILE=gemfiles/8.1.gemfile bundle update && \
    bundle exec rspec && \
    bundle exec rubocop -A && \
    bundle exec rake examples && \
