@@ -153,18 +153,18 @@ class Serega
       end
 
       def prepare_hide
-        # Return provided durectly value
+        # Return provided directly value
         hide = init_opts[:hide]
         return hide if (hide == true) || (hide == false)
 
-        # Auto hide when `:preload` option provided
-        if config.auto_hide.fetch(:has_preload_option)
-          return true if preloads
-        end
+        hide_setting = config.hide_by_default
 
-        # Auto hide when `:batch` option provided
-        if config.auto_hide.fetch(:has_batch_option)
-          return true if batch_loaders.any?
+        case hide_setting
+        when true
+          return true
+        when Array
+          return true if hide_setting.include?(:preload) && preloads # hide when attribute has `:preload` option
+          return true if hide_setting.include?(:batch) && batch_loaders.any? # hide when attribute has `:batch` option
         end
 
         # Return nil for undefined value which means "not hide" but allows

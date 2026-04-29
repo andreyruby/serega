@@ -32,7 +32,7 @@ class Serega
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 0,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
-      auto_hide: {has_preload_option: false, has_batch_option: false},
+      hide_by_default: false,
       batch_id_option: :id
     }.freeze
     # :nocov:
@@ -115,23 +115,28 @@ class Serega
         opts[:delegate_default_allow_nil] = value
       end
 
-      # @return [Hash] auto_hide option
-      def auto_hide
-        opts.fetch(:auto_hide)
+      # Returns :hide_by_default config option
+      # @return [Boolean, Array<Symbol>] Current :hide_by_default config option
+      def hide_by_default
+        opts.fetch(:hide_by_default)
       end
 
-      # Validates and sets auto_hide option
-      # @return [Hash] New auto_hide option with attributes that trigger auto hide
-      def auto_hide=(value)
-        opts[:auto_hide] =
+      # Sets :hide_by_default config option
+      #
+      # @param value [Boolean, Array<Symbol>] false, true, or array of :preload/:batch symbols
+      #
+      # @return [Boolean, Array<Symbol>] New :hide_by_default config option
+      def hide_by_default=(value)
+        opts[:hide_by_default] =
           case value
-          when true then {has_preload_option: true, has_batch_option: true}
-          when false then {has_preload_option: false, has_batch_option: false}
-          when Hash
-            SeregaValidations::Utils::CheckAllowedKeys.call(value, %i[has_preload_option has_batch_option], "auto_hide")
-            {has_preload_option: !!value[:has_preload_option], has_batch_option: !!value[:has_batch_option]}
+          when true, false
+            value
+          when Array
+            invalid = value - %i[preload batch]
+            raise SeregaError, "Must have true, false, or an Array of [:preload, :batch], #{value.inspect} provided" if invalid.any?
+            value
           else
-            raise SeregaError, "Must have boolean value or Hash, #{value.inspect} provided"
+            raise SeregaError, "Must have true, false, or an Array of [:preload, :batch], #{value.inspect} provided"
           end
       end
 
