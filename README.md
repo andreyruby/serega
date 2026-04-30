@@ -761,26 +761,49 @@ end
 
 ### Plugin :presenter
 
-Helps to write clean code by using a Presenter class.
+Moves computed attribute logic out of blocks and into a dedicated `Presenter` class,
+keeping serializers readable as schemas rather than bags of lambdas.
+
+Without the plugin, computed attributes live as inline blocks:
+
+```ruby
+class UserSerializer < Serega
+  attribute :name, value: proc { |u| [u.first_name, u.last_name].compact.join(' ') }
+  attribute :role, value: proc { |u, ctx| u == ctx[:current_user] ? :self : :other }
+end
+```
+
+With the plugin, they move into a clean class:
 
 ```ruby
 class UserSerializer < Serega
   plugin :presenter
 
   attribute :name
-  attribute :address
+  attribute :role
 
   class Presenter
     def name
-      [first_name, last_name].compact_blank.join(' ')
+      [first_name, last_name].compact.join(' ')
     end
 
-    def address
-      [country, city, address].join("\n")
+    def role
+      id == __ctx__[:current_user_id] ? :self : :other
     end
   end
 end
 ```
+
+`Presenter` inherits from `SimpleDelegator`, so every method of the serialized
+object is available directly inside presenter methods. Any method not explicitly
+defined on `Presenter` is resolved via `method_missing` on the first call, which
+also defines a real delegator method — so all subsequent serializations call it
+directly, without going through `method_missing` again.
+
+The original wrapped object is accessible via `__getobj__` (standard
+`SimpleDelegator` API) when you need an unambiguous reference to it.
+
+The serialization context is accessible via the private method `__ctx__`.
 
 ### Plugin :string_modifiers
 
