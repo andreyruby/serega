@@ -68,6 +68,10 @@ class Serega
       class Presenter < SimpleDelegator
         # Presenter instance methods
         module InstanceMethods
+          #
+          # @param object [Object] Serialized object to wrap
+          # @param ctx [Hash, nil] Serialization context
+          #
           def initialize(object, ctx = nil)
             super(object)
             @__ctx__ = ctx
