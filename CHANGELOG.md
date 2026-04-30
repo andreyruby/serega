@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+## [0.35.0] - 2026-04-30
+
 - Plugin `:presenter` — expose serialization context inside `Presenter` via `__ctx__`
 
 ## [0.34.0] - 2026-04-29
