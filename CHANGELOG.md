@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+- Plugin `:presenter` — expose serialization context inside `Presenter` via `__ctx__`
+
 ## [0.34.0] - 2026-04-29
 
 - Replace `config.auto_hide` with `config.hide_by_default`.

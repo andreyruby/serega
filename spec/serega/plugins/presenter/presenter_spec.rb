@@ -52,6 +52,22 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     expect(result).to eq([{value: 123}, {value: 234}])
   end
 
+  it "makes __ctx__ private" do
+    expect(serializer::Presenter.private_method_defined?(:__ctx__)).to be true
+  end
+
+  it "exposes context inside Presenter via __ctx__" do
+    serializer.attribute(:greeting) { |obj| obj.greeting }
+    serializer::Presenter.class_exec do
+      def greeting
+        "Hello, #{__ctx__[:name]}!"
+      end
+    end
+
+    result = serializer.new.to_h("ignored", context: {name: "Alice"})
+    expect(result).to eq({greeting: "Hello, Alice!"})
+  end
+
   it "works in nested relation" do
     struct = Struct.new(:nested).new("123")
 

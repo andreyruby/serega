@@ -6,16 +6,28 @@ require "forwardable"
 class Serega
   module SeregaPlugins
     #
-    # Plugin Presenter adds possibility to use declare Presenter for your objects inside serializer
+    # Plugin :presenter — moves computed attribute logic into a dedicated Presenter class.
     #
-    #   class User < Serega
+    # Presenter inherits from SimpleDelegator:
+    # - All methods of the serialized object are available directly inside presenter methods.
+    # - Methods not defined on Presenter are resolved via method_missing on the first call
+    #   and then defined as real delegators, so subsequent calls skip method_missing entirely.
+    # - The original object is accessible via __getobj__ (standard SimpleDelegator API).
+    # - The serialization context is accessible via the private method __ctx__.
+    #
+    #   class UserSerializer < Serega
     #     plugin :presenter
     #
     #     attribute :name
+    #     attribute :role
     #
     #     class Presenter
     #       def name
-    #         [first_name, last_name].compact_blank.join(' ')
+    #         [first_name, last_name].compact.join(' ') # first_name/last_name delegated to object
+    #       end
+    #
+    #       def role
+    #         id == __ctx__[:current_user_id] ? :self : :other
     #       end
     #     end
     #   end
@@ -56,6 +68,15 @@ class Serega
       class Presenter < SimpleDelegator
         # Presenter instance methods
         module InstanceMethods
+          def initialize(object, ctx = nil)
+            super(object)
+            @__ctx__ = ctx
+          end
+
+          private
+
+          attr_reader :__ctx__
+
           #
           # Delegates all missing methods to serialized object.
           #
@@ -100,10 +121,10 @@ class Serega
         private
 
         #
-        # Replaces serialized object with Presenter.new(object)
+        # Replaces serialized object with Presenter.new(object, ctx)
         #
         def serialize_object(object)
-          object = self.class.serializer_class::Presenter.new(object)
+          object = self.class.serializer_class::Presenter.new(object, context)
           super
         end
       end
