@@ -10,10 +10,11 @@ RSpec.describe Serega::SeregaPlugins::If::CheckOptUnless do
   let(:signature_error) do
     <<~ERR.strip
       Invalid attribute option :unless parameters, valid parameters signatures:
-      - ()                # no parameters
-      - (object)          # one positional parameter
-      - (object, context) # two positional parameters
-      - (object, :ctx)    # one positional parameter and :ctx keyword
+      - ()                      # no parameters
+      - (object)                # one positional parameter
+      - (object, context)       # two positional parameters
+      - (object, :ctx)          # one positional parameter and :ctx keyword
+      - (object, context, :ctx) # two positional parameters and :ctx keyword
     ERR
   end
 
@@ -27,6 +28,7 @@ RSpec.describe Serega::SeregaPlugins::If::CheckOptUnless do
   end
 
   it "checks callable parameters signature" do
+    expect { described_class.call(unless: proc {}) }.not_to raise_error
     expect { described_class.call(unless: lambda {}) }.not_to raise_error
     expect { described_class.call(unless: lambda { |obj| }) }.not_to raise_error
     expect { described_class.call(unless: lambda { |obj, ctx| }) }.not_to raise_error
