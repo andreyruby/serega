@@ -27,6 +27,18 @@ class Serega
         cached_plan_for(opts, max_cache_size)
       end
 
+      #
+      # Returns (and caches) the Data class for the given set of field names.
+      # Uses the Array as cache key so the same Data class is reused across
+      # all plan instances with identical fields.
+      #
+      # @param point_names [Array<Symbol>] Attribute names for the Data members
+      # @return [Class] Subclass of Data
+      #
+      def data_class_for(point_names)
+        (@data_classes ||= {})[point_names] ||= Data.define(*point_names)
+      end
+
       private
 
       def cached_plan_for(opts, max_cache_size)
@@ -57,6 +69,10 @@ class Serega
     # SeregaPlan instance methods
     #
     module InstanceMethods
+      # Shows if plan includes batch points
+      # @return [Array<SeregaPlanPoint>] points to serialize
+      attr_reader :has_batch_points
+
       # Parent plan point
       # @return [SeregaPlanPoint, nil]
       attr_reader :parent_plan_point
@@ -65,9 +81,9 @@ class Serega
       # @return [Array<SeregaPlanPoint>] points to serialize
       attr_reader :points
 
-      # Shows if plan includes batch points
-      # @return [Array<SeregaPlanPoint>] points to serialize
-      attr_reader :has_batch_points
+      # Named serialization points
+      # @return [Hash] Named points
+      attr_reader :points_hash
 
       #
       # Instantiate new serialization plan
@@ -87,6 +103,7 @@ class Serega
         @has_batch_points = false # should be before assigning points, generated points can change this attribute
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
+        @points_hash = points.to_h { |point| [point.name, point] }
       end
 
       #
@@ -94,6 +111,15 @@ class Serega
       #
       def serializer_class
         self.class.serializer_class
+      end
+
+      # Returns the Data class whose members match this plan's serialized fields.
+      # Delegates to the class-level cache so identical field sets share one Data class.
+      #
+      # @return [Class] Subclass of Data
+      #
+      def data_class
+        @data_class ||= self.class.data_class_for(point_names)
       end
 
       #
@@ -129,6 +155,10 @@ class Serega
         end
 
         points.freeze
+      end
+
+      def point_names
+        @point_names ||= points.map(&:name)
       end
     end
 

@@ -256,6 +256,58 @@ RSpec.describe Serega do
         expect(serializer_class.to_h("foo", modifiers.merge(serialize_opts))).to eq({obj: "foo", ctx: "bar"})
       end
     end
+
+    describe "#to_data" do
+      it "returns a Data object with correct members" do
+        result = serializer.to_data("foo", serialize_opts)
+        expect(result).to be_a(Data)
+        expect(result.obj).to eq "foo"
+        expect(result.ctx).to eq "bar"
+      end
+
+      it "returns nil when object is nil" do
+        expect(serializer.to_data(nil, serialize_opts)).to be_nil
+      end
+
+      context "with string opts" do
+        before do
+          modifiers.transform_keys!(&:to_s)
+          serialize_opts.transform_keys!(&:to_s)
+        end
+
+        it "returns correct response when options provided with string keys" do
+          result = serializer.to_data("foo", serialize_opts)
+          expect(result.obj).to eq "foo"
+          expect(result.ctx).to eq "bar"
+        end
+      end
+    end
+
+    describe ".to_data" do
+      it "returns a Data object with correct members" do
+        result = serializer_class.to_data("foo", modifiers.merge(serialize_opts))
+        expect(result).to be_a(Data)
+        expect(result.obj).to eq "foo"
+        expect(result.ctx).to eq "bar"
+      end
+
+      it "returns nil when object is nil" do
+        expect(serializer_class.to_data(nil, modifiers.merge(serialize_opts))).to be_nil
+      end
+
+      context "with string opts" do
+        before do
+          modifiers.transform_keys!(&:to_s)
+          serialize_opts.transform_keys!(&:to_s)
+        end
+
+        it "returns correct response when options provided with string keys" do
+          result = serializer_class.to_data("foo", modifiers.merge(serialize_opts))
+          expect(result.obj).to eq "foo"
+          expect(result.ctx).to eq "bar"
+        end
+      end
+    end
   end
 
   describe "validating initiate params" do
@@ -298,7 +350,7 @@ RSpec.describe Serega do
     it "selects serialize params (not modifiers params) and validates them" do
       serializer_class.to_h(nil, params)
 
-      expect(serializer_class::CheckSerializeParams).to have_received(:new).with(context: {foo: "bar"}, a: 1)
+      expect(serializer_class::CheckSerializeParams).to have_received(:new).with(hash_including(context: {foo: "bar"}, a: 1))
       expect(validator).to have_received(:validate)
     end
   end

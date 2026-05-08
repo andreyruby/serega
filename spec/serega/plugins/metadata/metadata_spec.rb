@@ -177,4 +177,59 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
       end
     end
   end
+
+  describe "serialization to data" do
+    let(:obj) { double(first_name: "FIRST_NAME") }
+    let(:base_serializer) { Class.new(serializer) { plugin :metadata } }
+    let(:user_serializer) do
+      Class.new(base_serializer) do
+        attribute :first_name
+      end
+    end
+
+    before { user_serializer.meta_attribute(:version, const: "1.2.3") }
+
+    it "wraps data under root key and keeps metadata as plain values" do
+      result = user_serializer.to_data(obj)
+      expect(result).to be_a Data
+      expect(result.members).to contain_exactly(:data, :version)
+      expect(result.data.first_name).to eq "FIRST_NAME"
+      expect(result.version).to eq "1.2.3"
+    end
+
+    it "works with a collection" do
+      result = user_serializer.to_data([obj])
+      expect(result.members).to contain_exactly(:data, :version)
+      expect(result.data).to be_an Array
+      expect(result.data.first.first_name).to eq "FIRST_NAME"
+      expect(result.version).to eq "1.2.3"
+    end
+
+    it "returns plain Data without metadata when root is nil" do
+      user_serializer.config.root = {one: nil, many: nil}
+      result = user_serializer.to_data(obj)
+      expect(result.members).to eq [:first_name]
+    end
+
+    it "converts nested metadata hashes to Data objects" do
+      user_serializer.meta_attribute(:meta, :paging, :page, const: 1)
+      user_serializer.meta_attribute(:meta, :paging, :per_page, const: 10)
+      result = user_serializer.to_data(obj)
+      expect(result.members).to contain_exactly(:data, :version, :meta)
+      expect(result.meta).to be_a Data
+      expect(result.meta.paging).to be_a Data
+      expect(result.meta.paging.page).to eq 1
+      expect(result.meta.paging.per_page).to eq 10
+    end
+
+    it "converts hashes inside metadata arrays to Data objects" do
+      user_serializer.meta_attribute(:links, const: [{href: "/prev", rel: "prev"}, {href: "/next", rel: "next"}])
+      result = user_serializer.to_data(obj)
+      expect(result.links).to be_an Array
+      expect(result.links.first).to be_a Data
+      expect(result.links.first.href).to eq "/prev"
+      expect(result.links.first.rel).to eq "prev"
+      expect(result.links.last.href).to eq "/next"
+    end
+  end
 end

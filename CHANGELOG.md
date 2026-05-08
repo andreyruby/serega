@@ -2,6 +2,12 @@
 
 ## master (unreleased)
 
+- Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects (Ruby 3.2+).
+  Nested serialized relations are recursively converted to `Data` objects.
+  Plugin `:root` wraps the result in an outer `Data` with root and metadata keys.
+  Plugin `:if` correctly builds `Data` classes from the actually-present keys when
+  conditions skip some attributes.
+
 ## [0.35.0] - 2026-04-30
 
 - Plugin `:presenter` — expose serialization context inside `Presenter` via `__ctx__`
