@@ -18,7 +18,7 @@ class Serega
         @point_index = {}.compare_by_identity
       end
 
-      # Remembers data for batch seryalization:
+      # Remembers data for batch serialization:
       #
       # @param point [SeregaPlanPoint] Serialization plan point
       # @param object [Object] Serialized object

@@ -141,7 +141,7 @@ end
 
 ### Serializing
 
-We can serialize objects using class method `.call` aliased ad `.to_h` and
+We can serialize objects using class method `.call` aliased as `.to_h` and
 same instance methods `#call` and its alias `#to_h`.
 
 ```ruby
@@ -153,6 +153,18 @@ end
 
 UserSerializer.to_h(user) # => {username: "serega"}
 UserSerializer.to_h([user]) # => [{username: "serega"}]
+```
+
+Use `.to_data` / `#to_data` to get the same result as Ruby `Data` objects
+(immutable value objects, Ruby 3.2+). Nested serialized relations are also
+converted to `Data` objects.
+
+```ruby
+result = UserSerializer.to_data(user)
+result         # => #<data username="serega">
+result.username # => "serega"
+
+UserSerializer.to_data([user]) # => [#<data username="serega">]
 ```
 
 If serialized fields are constant, then it's a good idea to initiate the

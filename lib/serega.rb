@@ -11,6 +11,10 @@ class Serega
   # Frozen array
   # @return [Array] frozen array
   FROZEN_EMPTY_ARRAY = [].freeze
+
+  # Empty modifiers/serialization options (used when serializing with no opts provided)
+  FROZEN_EMPTY_OPTS = [FROZEN_EMPTY_HASH, nil].freeze
+  private_constant :FROZEN_EMPTY_OPTS
 end
 
 require_relative "serega/errors"
@@ -58,6 +62,7 @@ require_relative "serega/config"
 require_relative "serega/object_serializer"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
+require_relative "serega/data_builder"
 require_relative "serega/plugins"
 
 class Serega
@@ -230,24 +235,44 @@ class Serega
     # @return [Hash] Serialization result
     #
     def call(object, opts = nil)
-      opts ||= FROZEN_EMPTY_HASH
-      initiate_keys = config.initiate_keys
-
-      if opts.empty?
-        modifiers_opts = FROZEN_EMPTY_HASH
-        serialize_opts = nil
-      else
-        opts.transform_keys!(&:to_sym)
-        serialize_opts = opts.except(*initiate_keys)
-        modifiers_opts = opts.slice(*initiate_keys)
-      end
-
+      opts = opts&.transform_keys(&:to_sym)
+      modifiers_opts = init_modifier_opts(opts)
+      serialize_opts = init_serialize_opts(opts)
       new(modifiers_opts).to_h(object, serialize_opts)
+    end
+
+    #
+    # Serializes provided object to a tree of Ruby Data objects
+    #
+    # @param object [Object] Serialized object
+    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
+    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
+    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
+    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
+    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
+    # @option opts [Hash] :context Serialization context
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
+    #
+    # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
+    #
+    def to_data(object, opts = nil)
+      opts = opts&.transform_keys(&:to_sym)
+      modifiers_opts = init_modifier_opts(opts)
+      serialize_opts = init_serialize_opts(opts)
+      new(modifiers_opts).to_data(object, serialize_opts)
     end
 
     alias_method :to_h, :call
 
     private
+
+    def init_modifier_opts(opts)
+      (!opts || opts.empty?) ? FROZEN_EMPTY_HASH : opts.slice(*config.initiate_keys)
+    end
+
+    def init_serialize_opts(opts)
+      (!opts || opts.empty?) ? nil : opts.except(*config.initiate_keys)
+    end
 
     # Patched in:
     # - plugin :metadata (defines MetaAttribute and copies meta_attributes to subclasses)
@@ -265,6 +290,10 @@ class Serega
       attribute_normalizer_class = Class.new(self::SeregaAttributeNormalizer)
       attribute_normalizer_class.serializer_class = subclass
       subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
+
+      data_builder_class = Class.new(self::SeregaDataBuilder)
+      data_builder_class.serializer_class = subclass
+      subclass.const_set(:SeregaDataBuilder, data_builder_class)
 
       plan_class = Class.new(self::SeregaPlan)
       plan_class.serializer_class = subclass
@@ -355,23 +384,38 @@ class Serega
     # Serializes provided object to Hash
     #
     # @param object [Object] Serialized object
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
+    # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
     # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
     #
     # @return [Hash] Serialization result
     #
     def call(object, opts = nil)
-      opts = opts ? opts.transform_keys!(&:to_sym) : {}
-      self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
-
-      opts[:context] ||= {}
+      opts = prepare_initial_serialization_opts(object, opts)
       serialize(object, opts)
     end
 
     # @see #call
     def to_h(object, opts = nil)
       call(object, opts)
+    end
+
+    #
+    # Serializes provided object to Data objects
+    # Patched in:
+    # - plugin :root (adds a data-object for a root level keys)
+    #
+    # @param object [Object] Serialized object
+    # @param opts [Hash, nil] Serializing options
+    # @option opts [Hash] :context Serialization context
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
+    #
+    # @return [Data] Serialization result
+    #
+    def to_data(object, opts = nil)
+      opts = prepare_initial_serialization_opts(object, opts)
+      serialized_data = serialize(object, opts)
+      self.class::SeregaDataBuilder.call(self, serialized_data)
     end
 
     # @return [Hash] merged preloads of all serialized attributes
@@ -404,15 +448,25 @@ class Serega
       SeregaUtils::ToHash.call(value)
     end
 
+    def prepare_initial_serialization_opts(object, opts)
+      opts = opts ? opts.transform_keys(&:to_sym) : {}
+      self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
+
+      opts[:context] ||= {}
+      opts[:batch_loaders] = SeregaBatch::AttributeLoaders.new if plan.has_batch_points
+      opts[:many] = object.is_a?(Enumerable) unless opts.key?(:many)
+      opts[:plan] = plan
+      opts
+    end
+
     # Patched in:
     # - plugin :activerecord_preloads (loads defined :preloads to object)
     # - plugin :root (wraps result `{ root => result }`)
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
-      batch_loaders = plan.has_batch_points ? SeregaBatch::AttributeLoaders.new : nil
-      result = self.class::SeregaObjectSerializer.new(**opts, batch_loaders: batch_loaders, plan: plan).serialize(object)
-      batch_loaders&.load_all(opts[:context])
+      result = self.class::SeregaObjectSerializer.new(**opts).serialize(object)
+      opts[:batch_loaders]&.load_all(opts[:context])
       result
     end
   end

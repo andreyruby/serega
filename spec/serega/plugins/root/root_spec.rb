@@ -169,4 +169,76 @@ RSpec.describe Serega::SeregaPlugins::Root do
       end
     end
   end
+
+  describe "serialization to data" do
+    let(:user) { double(first_name: "FIRST_NAME") }
+
+    context "with default root (config-computed)" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          plugin :root
+          attribute :first_name
+        end
+      end
+
+      it "wraps single object in a Data with default root key" do
+        result = user_serializer.to_data(user)
+        expect(result).to be_a(Data)
+        expect(result.members).to eq [:data]
+        expect(result.data).to be_a(Data)
+        expect(result.data.first_name).to eq "FIRST_NAME"
+      end
+
+      it "wraps collection in a Data with default root key" do
+        result = user_serializer.to_data([user])
+        expect(result).to be_a(Data)
+        expect(result.members).to eq [:data]
+        expect(result.data).to be_an(Array)
+        expect(result.data.first.first_name).to eq "FIRST_NAME"
+      end
+    end
+
+    context "with different root keys for one and many" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          plugin :root, root_one: :user, root_many: :users
+          attribute :first_name
+        end
+      end
+
+      it "uses one-root key for single object" do
+        result = user_serializer.to_data(user)
+        expect(result.members).to eq [:user]
+        expect(result.user.first_name).to eq "FIRST_NAME"
+      end
+
+      it "uses many-root key for collection" do
+        result = user_serializer.to_data([user])
+        expect(result.members).to eq [:users]
+        expect(result.users.first.first_name).to eq "FIRST_NAME"
+      end
+    end
+
+    context "with root provided as serialization option" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          plugin :root
+          attribute :first_name
+        end
+      end
+
+      it "uses explicit root key" do
+        result = user_serializer.to_data(user, root: :customer)
+        expect(result.members).to eq [:customer]
+        expect(result.customer.first_name).to eq "FIRST_NAME"
+      end
+
+      it "returns plain Data (no root wrapper) when root: nil" do
+        result = user_serializer.to_data(user, root: nil)
+        expect(result).to be_a(Data)
+        expect(result.members).to eq [:first_name]
+        expect(result.first_name).to eq "FIRST_NAME"
+      end
+    end
+  end
 end

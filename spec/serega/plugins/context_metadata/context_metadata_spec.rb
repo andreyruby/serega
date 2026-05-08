@@ -139,4 +139,42 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
       end
     end
   end
+
+  describe "serialization to data" do
+    let(:obj) { double(first_name: "FIRST_NAME") }
+    let(:base_serializer) { Class.new(serializer) { plugin :context_metadata } }
+    let(:user_serializer) do
+      Class.new(base_serializer) do
+        attribute :first_name
+      end
+    end
+
+    it "wraps data under root key and keeps context metadata as plain values" do
+      result = user_serializer.to_data(obj, meta: {version: "1.2.3"})
+      expect(result).to be_a Data
+      expect(result.members).to contain_exactly(:data, :version)
+      expect(result.data.first_name).to eq "FIRST_NAME"
+      expect(result.version).to eq "1.2.3"
+    end
+
+    it "works with a collection" do
+      result = user_serializer.to_data([obj], meta: {version: "1.2.3"})
+      expect(result.members).to contain_exactly(:data, :version)
+      expect(result.data.first.first_name).to eq "FIRST_NAME"
+    end
+
+    it "returns plain Data without metadata when root is nil" do
+      user_serializer.config.root = {one: nil, many: nil}
+      result = user_serializer.to_data(obj, meta: {version: "1.2.3"})
+      expect(result.members).to eq [:first_name]
+    end
+
+    it "converts nested context metadata hashes to Data objects" do
+      result = user_serializer.to_data(obj, meta: {paging: {page: 1, per_page: 10}})
+      expect(result.members).to contain_exactly(:data, :paging)
+      expect(result.paging).to be_a Data
+      expect(result.paging.page).to eq 1
+      expect(result.paging.per_page).to eq 10
+    end
+  end
 end
