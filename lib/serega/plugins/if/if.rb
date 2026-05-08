@@ -69,6 +69,7 @@ class Serega
         serializer_class::SeregaPlanPoint.include(PlanPointInstanceMethods)
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
         serializer_class::SeregaObjectSerializer.include(ObjectSerializerInstanceMethods)
+        serializer_class::SeregaDataBuilder.extend(DataBuilderClassMethods)
       end
 
       #
@@ -215,6 +216,7 @@ class Serega
           when "1" then condition.call(object)
           when "2" then condition.call(object, context)
           when "1_ctx" then condition.call(object, ctx: context)
+          when "2_ctx" then condition.call(object, context, ctx: context)
           else # "0"
             condition.call
           end
@@ -236,6 +238,27 @@ class Serega
           CheckOptUnless.call(opts)
           CheckOptIfValue.call(opts)
           CheckOptUnlessValue.call(opts)
+        end
+      end
+
+      #
+      # SeregaDataBuilder additional/patched class methods
+      #
+      # Overrides `build_data_object` to handle plans where some keys were skipped
+      # by `:if`/`:unless`/`:if_value`/`:unless_value` conditions, so the Data class
+      # is built from the actually-present keys rather than the full plan.
+      #
+      # @see Serega::SeregaDataBuilder
+      #
+      module DataBuilderClassMethods
+        private
+
+        def build_data_object(plan, hash_data)
+          if hash_data.size < plan.points.size
+            plan.class.data_class_for(hash_data.keys).new(**hash_data)
+          else
+            super
+          end
         end
       end
 

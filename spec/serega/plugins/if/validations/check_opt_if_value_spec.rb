@@ -10,10 +10,11 @@ RSpec.describe Serega::SeregaPlugins::If::CheckOptIfValue do
   let(:signature_error) do
     <<~ERR.strip
       Invalid attribute option :if_value parameters, valid parameters signatures:
-      - ()               # no parameters
-      - (value)          # one positional parameter
-      - (value, context) # two positional parameters
-      - (value, :ctx)    # one positional parameter and :ctx keyword
+      - ()                     # no parameters
+      - (value)                # one positional parameter
+      - (value, context)       # two positional parameters
+      - (value, :ctx)          # one positional parameter and :ctx keyword
+      - (value, context, :ctx) # two positional parameters and :ctx keyword
     ERR
   end
 
@@ -35,6 +36,7 @@ RSpec.describe Serega::SeregaPlugins::If::CheckOptIfValue do
   end
 
   it "checks callable parameters signature" do
+    expect { described_class.call(if_value: proc {}) }.not_to raise_error
     expect { described_class.call(if_value: lambda {}) }.not_to raise_error
     expect { described_class.call(if_value: lambda { |obj| }) }.not_to raise_error
     expect { described_class.call(if_value: lambda { |obj, ctx| }) }.not_to raise_error

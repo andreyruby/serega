@@ -319,4 +319,88 @@ RSpec.describe Serega::SeregaPlugins::If do
       end
     end
   end
+
+  describe "serializing to data" do
+    before { serializer.plugin :if }
+
+    it "includes all attributes when no conditions hide them" do
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, const: "bar")
+      result = serializer.new.to_data(1)
+
+      expect(result).to be_a Data
+      expect(result.members).to eq [:foo, :bar]
+      expect(result.foo).to eq "foo"
+      expect(result.bar).to eq "bar"
+    end
+
+    it "excludes attribute hidden by :if condition" do
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, const: "bar", if: proc { |obj| obj != 1 })
+      result = serializer.new.to_data(1)
+
+      expect(result.members).to eq [:foo]
+      expect(result.foo).to eq "foo"
+      expect { result.bar }.to raise_error NoMethodError
+    end
+
+    it "excludes attribute hidden by :unless condition" do
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, const: "bar", unless: proc { |obj| obj == 1 })
+      result = serializer.new.to_data(1)
+
+      expect(result.members).to eq [:foo]
+      expect(result.foo).to eq "foo"
+    end
+
+    it "excludes attribute hidden by :if_value condition" do
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, const: nil, if_value: proc { |val| !val.nil? })
+      result = serializer.new.to_data(1)
+
+      expect(result.members).to eq [:foo]
+    end
+
+    it "excludes attribute hidden by :unless_value condition" do
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, const: nil, unless_value: :nil?)
+      result = serializer.new.to_data(1)
+
+      expect(result.members).to eq [:foo]
+    end
+
+    it "uses context when evaluating conditions" do
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, const: "bar", if: proc { |_obj, ctx| ctx[:show] })
+      result_without = serializer.new.to_data(1, context: {show: false})
+      result_with = serializer.new.to_data(1, context: {show: true})
+
+      expect(result_without.members).to eq [:foo]
+      expect(result_with.members).to eq [:foo, :bar]
+    end
+
+    it "handles collection — each element gets its own Data shape" do
+      serializer.attribute(:val, if: proc { |obj| obj != 2 }) { |obj| obj }
+      result = serializer.new.to_data([1, 2, 3])
+
+      expect(result).to be_an Array
+      expect(result[0].members).to eq [:val]
+      expect(result[0].val).to eq 1
+      expect(result[1].members).to eq []
+      expect(result[2].val).to eq 3
+    end
+
+    it "handles nested relation with hidden attributes" do
+      nested = Class.new(Serega) do
+        plugin :if
+        attribute :x, const: "x"
+        attribute :y, const: "y", if: proc { false }
+      end
+      serializer.attribute(:nested, const: double(x: "x"), serializer: nested)
+      result = serializer.new.to_data(1)
+
+      expect(result.nested).to be_a Data
+      expect(result.nested.members).to eq [:x]
+    end
+  end
 end

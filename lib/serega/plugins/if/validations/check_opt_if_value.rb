@@ -52,6 +52,8 @@ class Serega
               true
             when "1_ctx"  # (value, :ctx)
               true
+            when "2_ctx"  # (value, context, :ctx)
+              true
             else
               false
             end
@@ -60,10 +62,11 @@ class Serega
           def signature_error
             <<~ERROR.strip
               Invalid attribute option :if_value parameters, valid parameters signatures:
-              - ()               # no parameters
-              - (value)          # one positional parameter
-              - (value, context) # two positional parameters
-              - (value, :ctx)    # one positional parameter and :ctx keyword
+              - ()                     # no parameters
+              - (value)                # one positional parameter
+              - (value, context)       # two positional parameters
+              - (value, :ctx)          # one positional parameter and :ctx keyword
+              - (value, context, :ctx) # two positional parameters and :ctx keyword
             ERROR
           end
         end
