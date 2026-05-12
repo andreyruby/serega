@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## master (unreleased)
+## [0.36.0] - 2026-05-12
 
 - Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects.
   Nested serialized relations are recursively converted to `Data` objects.
