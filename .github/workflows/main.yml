@@ -5,21 +5,54 @@ on:
   - pull_request
 
 jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    name: Lint
+    env:
+      BUNDLE_GEMFILE: gemfiles/8.1.gemfile
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v6
+
+      # https://github.com/ruby/setup-ruby
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: Install codespell
+        run: pipx install codespell==2.3.0
+
+      - name: Check spelling
+        run: codespell --skip="./sig,./doc,./coverage,./vendor"
+
+      - name: Check code standards
+        run: bundle exec rubocop
+
+      - name: Markdown linter
+        run: bundle exec mdl README.md CHANGELOG.md RELEASE.md
+
   build:
-    # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
     runs-on: ubuntu-24.04
     name: Ruby ${{ matrix.ruby }} (AR ${{ matrix.activerecord }})
+    continue-on-error: ${{ matrix.experimental == true }}
     strategy:
       fail-fast: false
       matrix:
         include:
           # https://github.com/ruby/setup-ruby
+          # ruby head is disabled until bundler fixes Pathname::SEPARATOR_PAT (made private in 4.1.dev)
           # - ruby: "head"
-          #   activerecord: "8.1" cannot test on head as sqlite3 binary requires ruby < 4.1.dev
+          #   activerecord: "8.1"
+          #   experimental: true
+          #   bundle_force_ruby_platform: "1"
           - ruby: "4.0"
             activerecord: "8.1"
           - ruby: "3.4"
             activerecord: "8.1"
+          - ruby: "3.3"
+            activerecord: "8.0"
           - ruby: "3.2"
             activerecord: "7.2"
           - ruby: "truffleruby-33.0.1"
@@ -27,10 +60,11 @@ jobs:
 
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.activerecord }}.gemfile
+      BUNDLE_FORCE_RUBY_PLATFORM: ${{ matrix.bundle_force_ruby_platform || '' }}
 
     steps:
       # https://github.com/actions/checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # https://github.com/ruby/setup-ruby
       - name: Set up Ruby ${{ matrix.ruby }} (AR ${{ matrix.activerecord }})
@@ -39,23 +73,5 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
-      - name: Install codespell
-        if: matrix.ruby == '4.0' && matrix.activerecord == '8.1'
-        run: |
-          python -m pip install --upgrade pip
-          pip install codespell==2.3.0
-      - name: Check spelling with codespell
-        if: matrix.ruby == '4.0' && matrix.activerecord == '8.1'
-        run: codespell --skip="./sig,./doc,./coverage,./vendor" || exit 1
-
-      # Check code standards only for latest MRI. It takes a lot of time for jruby or truffleruby
-      - name: Check Code Standards
-        if: matrix.ruby == '4.0' && matrix.activerecord == '8.1'
-        run: bundle exec rubocop
-
-      - name: Run Tests
+      - name: Run tests
         run: bundle exec rspec
-
-      - name: Markdown linter
-        if: matrix.ruby == '4.0' && matrix.activerecord == '8.1'
-        run: bundle exec mdl README.md CHANGELOG.md RELEASE.md
