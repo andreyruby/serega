@@ -19,8 +19,6 @@ AllCops:
     - sig/**/*
     - vendor/bundle/**/*
 
-Style/ArgumentsForwarding:
-  UseAnonymousForwarding: false # for ruby 2.7 compatability
 
 Style/FrozenStringLiteralComment:
   Enabled: true

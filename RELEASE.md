@@ -1,23 +1,6 @@
 # Release process
 
-## Automated Release (Recommended)
-
-1. **Prepare release:**
-
-   ```bash
-   ./bin/release 1.2.3 --dry-run  # Test the process first
-   ./bin/release 1.2.3            # Create release branch and prepare
-   ```
-
-2. **Complete release after PR merge:**
-
-   ```bash
-   ./bin/release --finalize 1.2.3
-   ```
-
-## Manual Release (Legacy)
-
-Manual steps for reference:
+Steps to release a new version:
 
 1. Check documentation
 
@@ -31,9 +14,7 @@ Manual steps for reference:
    pip3 install codespell && \
    gem update --system && \
    bundle update && bundle update --bundler && \
-   BUNDLE_GEMFILE=gemfiles/5.2.gemfile bundle lock && \
-   BUNDLE_GEMFILE=gemfiles/6.1.gemfile bundle lock && \
-   BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle lock && \
+   BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/8.1.gemfile bundle update && \
    bundle exec rspec && \

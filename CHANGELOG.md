@@ -2,11 +2,15 @@
 
 ## master (unreleased)
 
-- Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects (Ruby 3.2+).
+- Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects.
   Nested serialized relations are recursively converted to `Data` objects.
   Plugin `:root` wraps the result in an outer `Data` with root and metadata keys.
   Plugin `:if` correctly builds `Data` classes from the actually-present keys when
   conditions skip some attributes.
+- **BREAKING**: Raise minimum supported Ruby version to 3.2. The `Data` class
+  introduced in Ruby 3.2 is required by the new `.to_data` feature. The existing
+  `.to_h` serialization continues to work as before and has no such requirement,
+  but we no longer test or support older Ruby versions.
 
 ## [0.35.0] - 2026-04-30
 
