@@ -41,9 +41,13 @@ class Serega
       #
       # Loads all registered batches and removes them from registered list
       #
+      # Iterates over each loader including loaders added during iteration
+      # (child serializers discovered inside a batch flush add new loaders).
       def load_all(context)
-        point_batch_loaders.each do |point_batch_loader|
-          point_batch_loader.load_all(context)
+        i = 0
+        while i < point_batch_loaders.size
+          point_batch_loaders[i].load_all(context)
+          i += 1
         end
       end
 
