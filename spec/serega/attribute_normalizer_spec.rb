@@ -75,49 +75,26 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       expect(norm.hide).to be_nil
     end
 
-    context "with :preload option" do
-      subject(:hide) { normalizer.new(opts: {preload: :foo}).hide }
+    context "with hide_by_default: :auto" do
+      before { serializer_class.config.hide_by_default = :auto }
 
-      it "returns nil if `hide_by_default` is not set" do
-        expect(hide).to be_nil
+      it "hides attribute with :preload" do
+        expect(normalizer.new(opts: {preload: :foo}).hide).to be true
       end
 
-      it "returns true if `hide_by_default` includes :preload" do
-        serializer_class.config.hide_by_default = [:preload]
-        expect(hide).to be true
+      it "hides attribute with :batch" do
+        expect(normalizer.new(name: :foo, opts: {batch: true}).hide).to be true
       end
 
-      it "returns nil if `hide_by_default` does not include :preload" do
-        serializer_class.config.hide_by_default = [:batch]
-        expect(hide).to be_nil
-      end
-
-      it "returns nil if `hide_by_default` includes :preload but attribute has no preloads" do
-        serializer_class.config.hide_by_default = [:preload]
+      it "does not hide plain attribute" do
         expect(normalizer.new(opts: {}).hide).to be_nil
       end
-    end
 
-    context "with :batch option" do
-      subject(:hide) { normalizer.new(name: :foo, opts: {batch: true}).hide }
-
-      it "returns nil if `hide_by_default` is not set" do
-        expect(hide).to be_nil
+      it "does not hide attribute with :preload when preloads resolve to nil" do
+        expect(normalizer.new(opts: {preload: false}).hide).to be_nil
       end
 
-      it "returns true if `hide_by_default` includes :batch" do
-        serializer_class.config.hide_by_default = [:batch]
-        expect(hide).to be true
-      end
-
-      it "returns nil if `hide_by_default` does not include :batch" do
-        serializer_class.config.hide_by_default = [:preload]
-        expect(hide).to be_nil
-      end
-
-      it "returns nil if `hide_by_default` includes :batch but no or empty batch option" do
-        serializer_class.config.hide_by_default = [:batch]
-        expect(normalizer.new(opts: {}).hide).to be_nil
+      it "does not hide attribute with empty batch" do
         expect(normalizer.new(opts: {batch: {use: []}}).hide).to be_nil
       end
     end

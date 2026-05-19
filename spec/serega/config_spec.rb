@@ -64,15 +64,13 @@ RSpec.describe Serega::SeregaConfig do
     it "validates value" do
       expect { config.hide_by_default = false }.not_to raise_error
       expect { config.hide_by_default = true }.not_to raise_error
-      expect { config.hide_by_default = [:preload] }.not_to raise_error
-      expect { config.hide_by_default = [:batch] }.not_to raise_error
-      expect { config.hide_by_default = [:preload, :batch] }.not_to raise_error
+      expect { config.hide_by_default = :auto }.not_to raise_error
       expect { config.hide_by_default = nil }
         .to raise_error Serega::SeregaError,
-          "Must have true, false, or an Array of [:preload, :batch], nil provided"
-      expect { config.hide_by_default = [:foo] }
+          "Must have true, false, or :auto, nil provided"
+      expect { config.hide_by_default = [:preload] }
         .to raise_error Serega::SeregaError,
-          "Must have true, false, or an Array of [:preload, :batch], [:foo] provided"
+          "Must have true, false, or :auto, [:preload] provided"
     end
 
     it "sets hide_by_default option" do
@@ -82,14 +80,8 @@ RSpec.describe Serega::SeregaConfig do
       config.hide_by_default = false
       expect(config.hide_by_default).to be false
 
-      config.hide_by_default = [:preload]
-      expect(config.hide_by_default).to eq [:preload]
-
-      config.hide_by_default = [:batch]
-      expect(config.hide_by_default).to eq [:batch]
-
-      config.hide_by_default = [:preload, :batch]
-      expect(config.hide_by_default).to eq [:preload, :batch]
+      config.hide_by_default = :auto
+      expect(config.hide_by_default).to eq :auto
     end
   end
 

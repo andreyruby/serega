@@ -158,14 +158,8 @@ class Serega
         return hide if (hide == true) || (hide == false)
 
         hide_setting = config.hide_by_default
-
-        case hide_setting
-        when true
-          return true
-        when Array
-          return true if hide_setting.include?(:preload) && preloads # hide when attribute has `:preload` option
-          return true if hide_setting.include?(:batch) && batch_loaders.any? # hide when attribute has `:batch` option
-        end
+        return true if hide_setting == true
+        return true if hide_setting == :auto && (preloads || batch_loaders.any?)
 
         # Return nil for undefined value which means "not hide" but allows
         # to change this value by plugins
