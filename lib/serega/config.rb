@@ -116,27 +116,26 @@ class Serega
       end
 
       # Returns :hide_by_default config option
-      # @return [Boolean, Array<Symbol>] Current :hide_by_default config option
+      # @return [Boolean, Symbol] Current :hide_by_default config option
       def hide_by_default
         opts.fetch(:hide_by_default)
       end
 
       # Sets :hide_by_default config option
       #
-      # @param value [Boolean, Array<Symbol>] false, true, or array of :preload/:batch symbols
+      # @param value [Boolean, Symbol] Accepted values:
+      #   - false (default) — nothing is hidden by default
+      #   - true — all attributes are hidden by default
+      #   - :auto — hides attributes that declare :preload or :batch
       #
-      # @return [Boolean, Array<Symbol>] New :hide_by_default config option
+      # @return [Boolean, Symbol] New :hide_by_default config option
       def hide_by_default=(value)
         opts[:hide_by_default] =
           case value
-          when true, false
-            value
-          when Array
-            invalid = value - %i[preload batch]
-            raise SeregaError, "Must have true, false, or an Array of [:preload, :batch], #{value.inspect} provided" if invalid.any?
+          when true, false, :auto
             value
           else
-            raise SeregaError, "Must have true, false, or an Array of [:preload, :batch], #{value.inspect} provided"
+            raise SeregaError, "Must have true, false, or :auto, #{value.inspect} provided"
           end
       end
 

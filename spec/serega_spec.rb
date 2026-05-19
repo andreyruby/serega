@@ -715,7 +715,7 @@ RSpec.describe Serega do
       end
 
       it "auto-hides attributes with preloads when configured" do
-        serializer_class.config.hide_by_default = [:preload]
+        serializer_class.config.hide_by_default = :auto
         serializer_class.attribute :name, preload: :user_profile
         attribute = serializer_class.attributes[:name]
         expect(attribute.hide).to be true

@@ -435,7 +435,7 @@ into a single associations hash.
 Configuration options:
 
 - `config.auto_preload` - default `false` (use `true` or `{ has_delegate_option: true, has_serializer_option: true }`)
-- `config.hide_by_default` - default `false` (use `[:preload]` to hide attributes with preloads)
+- `config.hide_by_default` - default `false` (use `:auto` to hide attributes with preloads or batch loaders)
 
 These options are extremely useful if you want to forget about finding
 preloads manually.
@@ -449,7 +449,7 @@ For some examples, **please read the comments in the code below**
 ```ruby
 class AppSerializer < Serega
   config.auto_preload = true
-  config.hide_by_default = [:preload]
+  config.hide_by_default = :auto
 end
 
 class UserSerializer < AppSerializer
@@ -473,7 +473,7 @@ class AlbumSerializer < AppSerializer
   attribute :images_count, delegate: { to: :album_stats }
 end
 
-# By default, preloads are empty, as we specify `hide_by_default = [:preload]`
+# By default, preloads are empty, as we specify `hide_by_default = :auto`
 # so attributes with preloads will be skipped and nothing will be preloaded
 UserSerializer.new.preloads
 # => {}
@@ -502,7 +502,7 @@ other user associations. You should specify `preload: nil` to preload
 ```ruby
 class AppSerializer < Serega
   config.auto_preload = true
-  config.hide_by_default = [:preload]
+  config.hide_by_default = :auto
 end
 
 class UserSerializer < AppSerializer

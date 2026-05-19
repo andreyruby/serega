@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- **BREAKING**: `config.hide_by_default` no longer accepts an Array of symbols.
+  The Array form (`[:preload]`, `[:batch]`, `[:preload, :batch]`) is replaced by a
+  single `:auto` symbol. The motivation: attributes with `:preload` are being
+  auto-converted into batch-loaded attributes (see below), so the `:preload` and
+  `:batch` distinction in the hide rule became meaningless — an attribute declared
+  with `:preload` would end up with a batch loader too. `:auto` collapses both into
+  one semantic: hide any attribute that requires deferred or lazy loading.
+  `true` and `false` are unchanged.
+
+  ```ruby
+  # Before
+  config.hide_by_default = [:preload, :batch]
+
+  # After
+  config.hide_by_default = :auto
+  ```
+
 ## [0.36.0] - 2026-05-12
 
 - Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects.
