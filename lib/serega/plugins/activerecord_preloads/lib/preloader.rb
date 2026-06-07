@@ -14,7 +14,7 @@ class Serega
           # @return [Object] provided object with preloaded associations
           #
           def preload(object, preloads)
-            return object if object.nil? || (object.is_a?(Array) && object.empty?) || preloads.empty?
+            return object if object.nil? || (object.is_a?(Array) && object.empty?)
 
             preload_handler = handlers.find { |handler| handler.fit?(object) }
             raise SeregaError, "Can't preload #{preloads.inspect} to #{object.inspect}" unless preload_handler

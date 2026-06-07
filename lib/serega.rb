@@ -21,7 +21,6 @@ require_relative "serega/errors"
 require_relative "serega/helpers/serializer_class_helper"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
-require_relative "serega/utils/format_user_preloads"
 require_relative "serega/utils/method_signature"
 require_relative "serega/utils/symbol_name"
 require_relative "serega/utils/to_hash"
@@ -218,6 +217,38 @@ class Serega
     end
 
     #
+    # Registers (or returns) the handler used to preload an attribute's
+    # associations onto the records gathered during serialization.
+    #
+    # The handler is called once per preloaded attribute with the gathered
+    # objects and that attribute's preloads. ORM plugins register a handler
+    # that performs the actual eager loading.
+    #
+    # @example with a block
+    #   preload_with { |objects, preloads| MyORM.eager_load(objects, preloads) }
+    #
+    # @example with a callable value
+    #   preload_with MyPreloader
+    #
+    # @param value [#call, nil] Preload handler accepting two positional arguments
+    # @param block [Proc] Preload handler accepting two positional arguments
+    #
+    # @return [#call, nil] The registered preload handler
+    #
+    def preload_with(value = nil, &block)
+      return @preload_with if value.nil? && block.nil?
+      raise SeregaError, "preload_with accepts a single callable or a block, not both" if value && block
+
+      handler = value || block
+      raise SeregaError, "preload_with value must be a Proc or respond to #call" if !handler.is_a?(Proc) && !handler.respond_to?(:call)
+
+      signature = SeregaUtils::MethodSignature.call(handler, pos_limit: 2)
+      raise SeregaError, "preload_with handler must accept two positional arguments: (objects, preloads)" unless signature == "2"
+
+      @preload_with = handler
+    end
+
+    #
     # Serializes provided object to Hash
     #
     # @param object [Object] Serialized object
@@ -339,6 +370,9 @@ class Serega
         subclass.batch(loader.name, loader.block)
       end
 
+      # Assign same preload handler
+      subclass.preload_with(preload_with) if preload_with
+
       super
     end
   end
@@ -452,7 +486,6 @@ class Serega
     end
 
     # Patched in:
-    # - plugin :activerecord_preloads (loads defined :preloads to object)
     # - plugin :root (wraps result `{ root => result }`)
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)

@@ -285,33 +285,38 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
         expect(norm.preloads).to be_nil
       end
 
-      it "returns empty hash when provided empty hash" do
+      it "returns provided empty hash as-is" do
         opts[:preload] = {}
         expect(norm.preloads).to eq({})
       end
 
-      it "returns empty hash when provided empty array" do
+      it "returns provided empty array as-is" do
         opts[:preload] = []
-        expect(norm.preloads).to eq({})
+        expect(norm.preloads).to eq([])
       end
 
-      it "returns formatted provided preloads" do
+      it "returns provided preloads as-is" do
         opts[:preload] = :bar
-        expect(norm.preloads).to eq(bar: {})
+        expect(norm.preloads).to eq(:bar)
         expect(norm.preloads).to equal norm.preloads
+      end
+
+      it "returns provided nested preloads as-is" do
+        opts[:preload] = {bar: [:baz, {bat: :qux}]}
+        expect(norm.preloads).to eq({bar: [:baz, {bat: :qux}]})
       end
 
       it "returns automatically found preloads when serializer provided" do
         serializer_class.config.auto_preload = {has_serializer_option: true}
         opts[:serializer] = "bar"
-        expect(norm.preloads).to eq(foo: {})
+        expect(norm.preloads).to eq(:foo)
       end
 
       it "returns automatically found preloads when serializer provided and method name provided" do
         serializer_class.config.auto_preload = {has_serializer_option: true}
         opts[:serializer] = "bar"
         opts[:method] = "other"
-        expect(norm.preloads).to eq(other: {})
+        expect(norm.preloads).to eq(:other)
       end
 
       it "returns no auto preloads when serializer and batch provided" do
@@ -329,7 +334,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       it "returns automatically found preloads when :delegate option provided" do
         serializer_class.config.auto_preload = {has_delegate_option: true}
         opts[:delegate] = {to: :bar}
-        expect(norm.preloads).to eq(bar: {})
+        expect(norm.preloads).to eq(:bar)
       end
 
       it "returns no preloads for attributes with :delegate option by default" do

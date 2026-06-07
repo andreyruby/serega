@@ -268,11 +268,16 @@ end
 
 ### `preload:` value semantics
 
+The value is passed to the preload handler exactly as written — `:activerecord_preloads`
+hands it straight to `ActiveRecord::Associations::Preloader`.
+
 | Value | Effect |
 |---------------|--------------------------|
 | `:assoc` | preloads the `:assoc` association onto the serialized objects |
+| `[:a, :b]` / `{a: :b}` / custom | passed through as-is to the preload handler |
 | `nil` | preloads nothing (also blocks `auto_preload`) |
 | `false` | preloads nothing (also blocks `auto_preload`) |
+| `true` | invalid — raises when the attribute is defined |
 
 ```ruby
 class AddressSerializer < Serega
@@ -290,14 +295,26 @@ end
 
 ### How preloads actually work
 
-`:preload` works with **ActiveRecord** through the
-[§11 Plugin `:activerecord_preloads`][plugin-activerecord_preloads]: enable it
-and every declared association is loaded once, automatically, with
-`ActiveRecord::Associations::Preloader` — no N+1.
+The loading is done by a handler registered with `preload_with`, called once per
+preloaded attribute with the gathered objects and that attribute's `:preload`
+value:
+
+```ruby
+class AppSerializer < Serega
+  preload_with { |objects, preloads| MyORM.preload(objects, preloads) }
+end
+```
+
+[§11 Plugin `:activerecord_preloads`][plugin-activerecord_preloads] registers one
+for you (built on `ActiveRecord::Associations::Preloader`), so enabling it loads
+every declared association once, automatically — no N+1. For another ORM — or for
+plain non-ORM objects — register your own handler: it can load data from any
+source and attach it to the objects by your own rules. Declaring `:preload` with
+no registered handler raises an error.
 
 `config.auto_preload` saves you from writing `preload:` by hand — when enabled,
 attributes with `:serializer` or `:delegate` get a `:preload` inferred from that
-option's target. The `:activerecord_preloads` plugin does the actual loading.
+option's target.
 
 ---
 

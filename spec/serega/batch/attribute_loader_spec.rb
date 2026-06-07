@@ -4,7 +4,7 @@ RSpec.describe Serega::SeregaBatch do
   describe Serega::SeregaBatch::AttributeLoader do
     subject(:loader) { described_class.new(point) }
 
-    let(:point) { double(class: double(serializer_class: serializer_class)) }
+    let(:point) { double(class: double(serializer_class: serializer_class), attribute: double(preloads: nil)) }
     let(:serializer_class) { double(batch_loaders: batch_loaders) }
     let(:batch_loaders) { {user: batch_loader} }
     let(:batch_loader) { double(load: batch_data) }

@@ -43,12 +43,27 @@ class Serega
 
         private
 
-        # Patched in:
-        # - plugin :activerecord_preloads (preloads associations to found AR objects)
         def load_one(serializer_class, batch_loader_name, context)
+          preload_attribute_associations(serializer_class)
           serializer_class.batch_loaders[batch_loader_name].load(objects, context)
         rescue => error
           reraise_with_serialized_attribute_details(error)
+        end
+
+        # Runs the serializer's registered `preload_with` handler to load this
+        # attribute's associations onto the gathered records before the batch
+        # loader runs. Raises when `:preload` is declared but no handler exists,
+        # so a declared preload never silently does nothing.
+        def preload_attribute_associations(serializer_class)
+          preloads = point.attribute.preloads
+          return unless preloads
+
+          handler = serializer_class.preload_with
+          unless handler
+            raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
+          end
+
+          handler.call(objects, preloads)
         end
 
         def reraise_with_serialized_attribute_details(error)

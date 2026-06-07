@@ -32,10 +32,9 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
         expect { described_class.preload(object, preloads) }.not_to raise_error
       end
 
-      it "does nothing when preloads are empty" do
-        preloads = {}
-        object = 123
-        expect { described_class.preload(object, preloads) }.not_to raise_error
+      it "loads nothing when preloads are empty", :with_rollback do
+        object = AR::User.create!
+        expect { described_class.preload(object, {}) }.not_to raise_error
       end
 
       it "raises error when provided object does not support preloading" do
