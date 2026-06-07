@@ -23,7 +23,6 @@ class Serega
         delegate
         default
         preload
-        preload_path
         batch
       ].freeze,
       serialize_keys: %i[context many].freeze,

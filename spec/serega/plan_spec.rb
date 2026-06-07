@@ -182,45 +182,4 @@ RSpec.describe Serega::SeregaPlan do
       expect(p1.data_class).not_to equal p2.data_class
     end
   end
-
-  describe "#mark_as_has_batch_points" do
-    let(:batch_serializer) do
-      Class.new(base_class) do
-        attribute :name
-        attribute :batch_attr, batch: true
-      end
-    end
-
-    let(:nested_batch_serializer) do
-      batch_ser = batch_serializer
-      Class.new(base_class) do
-        attribute :name
-        attribute :nested, serializer: batch_ser
-      end
-    end
-
-    it "marks plan as having batch points when attribute has batch loaders" do
-      plan = batch_serializer::SeregaPlan.call({})
-      expect(plan.has_batch_points).to be true
-    end
-
-    it "does not mark plan as having batch points when no attributes have batch loaders" do
-      plan = current_serializer::SeregaPlan.call({})
-      expect(plan.has_batch_points).to be false
-    end
-
-    it "propagates batch points flag to parent plan" do
-      plan = nested_batch_serializer::SeregaPlan.call({})
-      expect(plan.has_batch_points).to be true
-    end
-
-    it "does not change flag if already marked as having batch points" do
-      plan = batch_serializer::SeregaPlan.call({})
-      expect(plan.has_batch_points).to be true
-
-      # Call mark_as_has_batch_points again - should not change anything
-      plan.mark_as_has_batch_points
-      expect(plan.has_batch_points).to be true
-    end
-  end
 end

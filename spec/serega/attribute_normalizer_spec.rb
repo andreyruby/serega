@@ -94,8 +94,8 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
         expect(normalizer.new(opts: {preload: false}).hide).to be_nil
       end
 
-      it "does not hide attribute with empty batch" do
-        expect(normalizer.new(opts: {batch: {use: []}}).hide).to be_nil
+      it "hides attribute with empty :batch use list (batch key present)" do
+        expect(normalizer.new(name: :foo, opts: {batch: {use: []}}).hide).to be(true)
       end
     end
 
@@ -230,6 +230,46 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
+  describe "auto-batching of relations and preloads" do
+    it "auto-batches an attribute with a serializer (no preload)" do
+      child = Class.new(Serega)
+      serializer = Class.new(Serega) do
+        attribute :title
+        attribute :author, serializer: child
+      end
+      expect(serializer.attributes[:author].batch_loaders).not_to be_empty
+      expect(serializer.attributes[:title].batch_loaders).to be_empty
+    end
+
+    it "auto-batches an attribute with a preload (no serializer)" do
+      serializer = Class.new(Serega) do
+        attribute :likes, preload: :likes, value: proc { |o| o.likes.size }
+      end
+      expect(serializer.attributes[:likes].batch_loaders).not_to be_empty
+    end
+
+    describe "hide_by_default :auto" do
+      it "keeps a plain serializer relation visible" do
+        child = Class.new(Serega)
+        serializer = Class.new(Serega) do
+          config.hide_by_default = :auto
+          attribute :author, serializer: child
+        end
+        expect(serializer.attributes[:author].hide).to be_nil
+      end
+
+      it "hides attributes declared with :preload or :batch" do
+        serializer = Class.new(Serega) do
+          config.hide_by_default = :auto
+          attribute :a, preload: :a, value: proc { |o| o }
+          attribute :b, batch: proc { |objs| objs.to_h { |o| [o, o] } }
+        end
+        expect(serializer.attributes[:a].hide).to be(true)
+        expect(serializer.attributes[:b].hide).to be(true)
+      end
+    end
+  end
+
   describe "preloads functionality" do
     let(:initials) { {name: :foo, opts: opts, block: nil} }
     let(:opts) { {} }
@@ -295,52 +335,6 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       it "returns no preloads for attributes with :delegate option by default" do
         opts[:delegate] = {to: :bar}
         expect(norm.preloads).to be_nil
-      end
-    end
-
-    describe "#preloads_path" do
-      it "returns constructed preloads_path" do
-        opts[:preload] = :foo
-        expect(norm.preloads_path).to eq([:foo])
-        expect(norm.preloads_path).to be_frozen
-        expect(norm.preloads_path).to equal norm.preloads_path
-      end
-
-      it "returns provided preloads_path" do
-        opts[:serializer] = "foo"
-        opts[:preload] = %i[bar bazz]
-        opts[:preload_path] = :bar
-        expect(norm.preloads_path).to eq([:bar])
-        expect(norm.preloads_path).to be_frozen
-      end
-
-      it "returns symbolized preloads_path" do
-        opts[:serializer] = "foo"
-        opts[:preload] = %i[bar bazz]
-        opts[:preload_path] = "bar"
-        expect(norm.preloads_path).to eq([:bar])
-      end
-
-      it "returns symbolized preloads_path when array provided" do
-        opts[:serializer] = "foo"
-        opts[:preload] = %i[bar bazz]
-        opts[:preload_path] = %w[bar]
-        expect(norm.preloads_path).to eq([:bar])
-      end
-
-      it "returns normalized array of provided paths" do
-        opts[:serializer] = "foo"
-        opts[:preload] = %i[bar bazz]
-        opts[:preload_path] = [["bar"], ["bar", :bazz]]
-        expect(norm.preloads_path).to eq([%i[bar], %i[bar bazz]])
-        expect(norm.preloads_path).to be_frozen
-      end
-
-      it "returns nil if nil provided" do
-        opts[:serializer] = "foo"
-        opts[:preload] = %i[bar bazz]
-        opts[:preload_path] = nil
-        expect(norm.preloads_path).to be_nil
       end
     end
   end

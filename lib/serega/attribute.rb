@@ -33,10 +33,6 @@ class Serega
       # @return [Hash, nil] Attribute :preloads option
       attr_reader :preloads
 
-      # Attribute :preloads_path option
-      # @return [Array, nil] Attribute :preloads_path option
-      attr_reader :preloads_path
-
       # Batch loader names required to detect attribute value
       # @return [Array<Symbol>] Batch loader names
       attr_reader :batch_loaders
@@ -143,7 +139,6 @@ class Serega
         @hide = normalizer.hide
         @serializer = normalizer.serializer
         @preloads = normalizer.preloads
-        @preloads_path = normalizer.preloads_path
         @batch_loaders = normalizer.batch_loaders
       end
     end

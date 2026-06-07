@@ -25,14 +25,6 @@ class Serega
       # @return [Hash] Attributes to serialize
       attr_reader :modifiers
 
-      # Shows preloads for nested attributes
-      # @return [Hash] preloads for nested attributes
-      attr_reader :preloads
-
-      # Shows preloads_path for current attribute
-      # @return [Array<Symbol>, nil] preloads path for current attribute
-      attr_reader :preloads_path
-
       #
       # Initializes plan point
       #
@@ -97,9 +89,6 @@ class Serega
 
       def set_normalized_vars
         @child_plan = prepare_child_plan
-        @preloads = prepare_preloads
-        @preloads_path = prepare_preloads_path
-        plan.mark_as_has_batch_points if batch?
       end
 
       def prepare_child_plan
@@ -108,14 +97,6 @@ class Serega
         fields = modifiers || FROZEN_EMPTY_HASH
 
         serializer::SeregaPlan.new(self, fields)
-      end
-
-      def prepare_preloads
-        SeregaUtils::PreloadsConstructor.call(child_plan)
-      end
-
-      def prepare_preloads_path
-        attribute.preloads_path
       end
     end
 

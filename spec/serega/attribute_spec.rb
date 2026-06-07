@@ -42,8 +42,7 @@ RSpec.describe Serega::SeregaAttribute do
         method: nil,
         value_block: nil,
         value_block_signature: nil,
-        preloads: nil,
-        preloads_path: nil
+        preloads: nil
       )
 
       initials = {name: :name, opts: {}, block: nil}
@@ -60,8 +59,7 @@ RSpec.describe Serega::SeregaAttribute do
           :@many,
           :@hide,
           :@serializer,
-          :@preloads,
-          :@preloads_path
+          :@preloads
         )
     end
   end

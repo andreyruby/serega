@@ -148,8 +148,6 @@ quote = Struct.new(:text).new('I am going to steal the moon')
 QuoteSerializer.to_h(quote, many: false)
 ```
 
-⚠️ No `.to_json` method. JSON-encode the hash yourself.
-
 ---
 
 ## 4. Field Selection — `:only` `:except` `:with`
@@ -266,18 +264,15 @@ class PostSerializer < Serega
   attribute :verified_comments, preload: :comments,
     value: proc { |post| post.comments.select(&:verified?) }
 end
-
-PostSerializer.new.preloads # => {comments: {}}
 ```
 
 ### `preload:` value semantics
 
-| Value | Top-level preload | Nested serializer's preloads |
-|---------------|-------------------|------------------------------|
-| `:assoc` | `{assoc: {...}}` | nested INSIDE `:assoc` |
-| `{}` | nothing added | bubble up to **parent** |
-| `nil` | dropped | dropped (also blocks `auto_preload`) |
-| `false` | dropped | dropped (also blocks `auto_preload`) |
+| Value | Effect |
+|---------------|--------------------------|
+| `:assoc` | preloads the `:assoc` association onto the serialized objects |
+| `nil` | preloads nothing (also blocks `auto_preload`) |
+| `false` | preloads nothing (also blocks `auto_preload`) |
 
 ```ruby
 class AddressSerializer < Serega
@@ -289,68 +284,20 @@ end
 class UserSerializer < Serega
   attribute :address, serializer: AddressSerializer, preload: :address
 end
-UserSerializer.new.preloads   # => {address: {country: {}}}
 ```
 
-```ruby
-class UserSerializer < Serega
-  attribute :address, serializer: AddressSerializer, preload: {}
-end
-UserSerializer.new.preloads   # => {country: {}}   (bubbled to parent)
-```
-
-```ruby
-class UserSerializer < Serega
-  attribute :address, serializer: AddressSerializer, preload: nil
-end
-UserSerializer.new.preloads   # => {}              (everything dropped)
-```
-
-Use `preload: {}` when the attribute value IS the parent. Useful for
-**grouping fields under a sub-object** without an extra record:
-
-```ruby
-class UserStatsSerializer < Serega
-  attribute :followers_count, preload: :user_stats, delegate: { to: :user_stats }
-  attribute :posts_count,     preload: :user_stats, delegate: { to: :user_stats }
-end
-
-class UserSerializer < Serega
-  attribute :name
-  attribute :stats, serializer: UserStatsSerializer,
-    value: proc { |user| user }, preload: {}
-end
-
-UserSerializer.new.preloads
-# => {user_stats: {}}     # bubbled up — preloaded against user, not user.stats
-
-UserSerializer.to_h(user)
-# => {name: "Felonious Gru", stats: {followers_count: 1000000, posts_count: 42}}
-```
-
-Use `preload_path: [[:owner], [:guest]]` when one attribute spans multiple associations.
+`:address` is preloaded onto the users, and `:country` onto the addresses.
 
 ### How preloads actually work
 
-`preload:` on its own **does not load anything**. Serega just merges the
-`:preload` values from every attribute that ends up in the current response
-into one Hash, available via `serializer.preloads`. Attributes that are hidden
-or not requested via `:only`/`:with` contribute nothing to that Hash.
+`:preload` works with **ActiveRecord** through the
+[§11 Plugin `:activerecord_preloads`][plugin-activerecord_preloads]: enable it
+and every declared association is loaded once, automatically, with
+`ActiveRecord::Associations::Preloader` — no N+1.
 
-What you do with the Hash depends on your ORM:
-
-- **ActiveRecord** — enable
-  [§11 Plugin `:activerecord_preloads`][plugin-activerecord_preloads]. It calls
-  `ActiveRecord::Associations::Preloader` on the constructed Hash automatically
-  — but only when the serialized objects (and their nested relations) are
-  ActiveRecord records.
-- **Sequel / ROM / custom ORM** — read `MySerializer.new(...).preloads`
-  yourself and feed it to your ORM's preload/eager API.
-
-`config.auto_preload` is **not** a loader either. It only saves you from
-writing `preload:` by hand: when enabled, attributes that have `:serializer` or
-`:delegate` get a virtual `preload:` based on the option's target. You still
-need one of the strategies above to execute the loads.
+`config.auto_preload` saves you from writing `preload:` by hand — when enabled,
+attributes with `:serializer` or `:delegate` get a `:preload` inferred from that
+option's target. The `:activerecord_preloads` plugin does the actual loading.
 
 ---
 
@@ -389,7 +336,7 @@ class UserSerializer < Serega
   config.auto_preload = true
   attribute :city, delegate: { to: :address, method: :city }
 end
-UserSerializer.new.preloads   # => {address: {}}     (added automatically)
+# `:address` is preloaded automatically (from the :delegate option)
 ```
 
 Default `false`. `true` is sugar for both flags on. Pass a Hash to opt in to
@@ -401,7 +348,6 @@ class UserSerializer < Serega
   attribute :city,  delegate:   { to: :address, method: :city }   # no auto-preload
   attribute :posts, serializer: PostSerializer                     # auto-preloaded
 end
-UserSerializer.new.preloads   # => {posts: {}}
 ```
 
 See [§8 Preloads][preloads].
@@ -495,9 +441,6 @@ class AppSerializer < Serega
 end
 
 UserSerializer.to_h(user) # AR Preloader runs declared preloads automatically
-
-# For tests
-UserSerializer.new.preload_associations_to(user)
 ```
 
 Needs preloads declared on attributes — see [§8 Preloads][preloads].

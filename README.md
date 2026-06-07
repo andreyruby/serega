@@ -428,9 +428,10 @@ end
 
 ## Preloads
 
-Serega includes built-in preloads functionality that allows you to define
-`:preloads` to attributes and then merge preloads from serialized attributes
-into a single associations hash.
+Serega includes built-in preloads functionality that lets you declare
+`:preload` on attributes. It is used by the `:activerecord_preloads` plugin:
+enable it and every association you declare is loaded once during
+serialization, automatically, with no N+1.
 
 Configuration options:
 
@@ -473,31 +474,25 @@ class AlbumSerializer < AppSerializer
   attribute :images_count, delegate: { to: :album_stats }
 end
 
-# By default, preloads are empty, as we specify `hide_by_default = :auto`
-# so attributes with preloads will be skipped and nothing will be preloaded
-UserSerializer.new.preloads
-# => {}
-
-UserSerializer.new(with: :followers_count).preloads
-# => {:user_stats=>{}}
-
-UserSerializer.new(with: %i[followers_count comments_count]).preloads
-# => {:user_stats=>{}}
-
-UserSerializer.new(
-  with: [:followers_count, :comments_count, { albums: :images_count }]
-).preloads
-# => {:user_stats=>{}, :albums=>{:album_stats=>{}}}
+# With `hide_by_default = :auto`, attributes that declare a preload are hidden
+# unless explicitly requested with `:with`. When requested, their associations
+# are preloaded automatically. For example:
+#
+#   UserSerializer.to_h(users, with: [:followers_count, { albums: :images_count }])
+#
+# preloads `:user_stats` and `:albums` on the users, and `:album_stats` on the
+# albums.
 ```
 
 ---
 
-### SPECIFIC CASE #1: Serializing the same object in association
+### SPECIFIC CASE: Serializing the same object in association
 
 For example, you show your current user as "user" and use the same user object
 to serialize "user_stats". `UserStatSerializer` relies on user fields and any
-other user associations. You should specify `preload: nil` to preload
-`UserStatSerializer` nested associations to the "user" object.
+other user associations. Specify `preload: nil` so that nothing is preloaded for
+this attribute on the "user" object — the associations declared in
+`UserStatSerializer` are still preloaded onto the same user object.
 
 ```ruby
 class AppSerializer < Serega
@@ -514,59 +509,7 @@ class UserSerializer < AppSerializer
 end
 ```
 
-### SPECIFIC CASE #2: Serializing multiple associations as a single relation
-
-For example, "user" has two relations - "new_profile" and "old_profile". Also
-profiles have the "avatar" association. And you decided to serialize profiles in
-one array. You can specify `preload_path: [[:new_profile], [:old_profile]]` to
-achieve this:
-
-```ruby
-class AppSerializer < Serega
-  config.auto_preload = true
-end
-
-class UserSerializer < AppSerializer
-  attribute :username
-  attribute :profiles,
-    serializer: 'ProfileSerializer',
-    value: proc { |user| [user.new_profile, user.old_profile] },
-    preload: [:new_profile, :old_profile],
-    preload_path: [[:new_profile], [:old_profile]] # <--- like here
-end
-
-class ProfileSerializer < AppSerializer
-  attribute :avatar, serializer: 'AvatarSerializer'
-end
-
-class AvatarSerializer < AppSerializer
-end
-
-UserSerializer.new.preloads
-# => {:new_profile=>{:avatar=>{}}, :old_profile=>{:avatar=>{}}}
-```
-
-### SPECIFIC CASE #3: Preload association through another association
-
-```ruby
-attribute :image,
-  preload: { attachment: :blob }, # <--------- like this one
-  value: proc { |record| record.attachment },
-  serializer: ImageSerializer,
-  preload_path: [:attachment] # or preload_path: [:attachment, :blob]
-```
-
-In this case, we don't know if preloads defined in ImageSerializer, should be
-preloaded to `attachment` or `blob`, so `preload_path` must be specified manually.
-You can specify `preload_path: nil` if you are sure that there are no preloads
-inside ImageSerializer.
-
 ---
-
-📌 The built-in preloads functionality only allows to group preloads together
-in single Hash, but they should be preloaded manually.
-
-There is the [activerecord_preloads][activerecord_preloads] plugin that can be used to preload these associations automatically.
 
 ## Plugins
 
@@ -574,9 +517,9 @@ There is the [activerecord_preloads][activerecord_preloads] plugin that can be u
 
 Automatically preloads associations to serialized objects.
 
-It takes all defined preloads from serialized attributes (including attributes
-from serialized associations), merges them into a single associations hash, and then
-uses ActiveRecord::Associations::Preloader to preload associations to objects.
+Every association you declare with `:preload` is loaded once during
+serialization using `ActiveRecord::Associations::Preloader`, so there are no
+N+1 queries.
 
 ```ruby
 class AppSerializer < Serega
@@ -599,10 +542,9 @@ class AlbumSerializer < AppSerializer
 end
 
 UserSerializer.to_h(user)
-# => preloads {users_stats: {}, albums: { downloads: {} }}
+# preloads :user_stats and :albums on the user; the AlbumSerializer level
+# preloads :downloads on the albums
 ```
-
-For testing purposes preloading can be done manually with `#preload_associations_to(obj)` instance method
 
 ### Plugin :root
 

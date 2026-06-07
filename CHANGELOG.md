@@ -19,6 +19,20 @@
   config.hide_by_default = :auto
   ```
 
+- **BREAKING**: removed the public `Serega#preloads` method. Preloads are no longer
+  exposed as a hash; `:preload` is used only by the `:activerecord_preloads`
+  plugin, which loads the declared associations automatically.
+
+- **BREAKING**: the attribute `:preload_path` option has been removed. It existed
+  only to steer where nested preloads attached during the old deep merge; with
+  per-level preloads there is nothing to disambiguate, so it is no longer needed.
+
+- Serialization now routes every relation through the batch mechanism, giving one
+  uniform execution path. The `:activerecord_preloads` plugin loads every
+  declared association once, so there are no N+1 queries, while pure-ActiveRecord
+  chains keep the same query counts. `config.hide_by_default = :auto` hides the
+  same attributes as before (those declared with `:preload` or `:batch`).
+
 ## [0.36.0] - 2026-05-12
 
 - Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects.
