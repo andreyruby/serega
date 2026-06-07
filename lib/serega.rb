@@ -23,8 +23,6 @@ require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/format_user_preloads"
 require_relative "serega/utils/method_signature"
-require_relative "serega/utils/preload_paths"
-require_relative "serega/utils/preloads_constructor"
 require_relative "serega/utils/symbol_name"
 require_relative "serega/utils/to_hash"
 require_relative "serega/attribute_value_resolvers/batch"
@@ -49,7 +47,6 @@ require_relative "serega/validations/attribute/check_opt_batch"
 require_relative "serega/validations/attribute/check_opt_many"
 require_relative "serega/validations/attribute/check_opt_method"
 require_relative "serega/validations/attribute/check_opt_preload"
-require_relative "serega/validations/attribute/check_opt_preload_path"
 require_relative "serega/validations/attribute/check_opt_serializer"
 require_relative "serega/validations/attribute/check_opt_value"
 require_relative "serega/validations/initiate/check_modifiers"
@@ -418,11 +415,6 @@ class Serega
       self.class::SeregaDataBuilder.call(self, serialized_data)
     end
 
-    # @return [Hash] merged preloads of all serialized attributes
-    def preloads
-      @preloads ||= SeregaUtils::PreloadsConstructor.call(plan)
-    end
-
     private
 
     attr_reader :opts
@@ -453,7 +445,7 @@ class Serega
       self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
 
       opts[:context] ||= {}
-      opts[:batch_loaders] = SeregaBatch::AttributeLoaders.new if plan.has_batch_points
+      opts[:batch_loaders] = SeregaBatch::AttributeLoaders.new
       opts[:many] = object.is_a?(Enumerable) unless opts.key?(:many)
       opts[:plan] = plan
       opts
@@ -466,7 +458,7 @@ class Serega
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
       result = self.class::SeregaObjectSerializer.new(**opts).serialize(object)
-      opts[:batch_loaders]&.load_all(opts[:context])
+      opts[:batch_loaders].load_all(opts[:context])
       result
     end
   end

@@ -9,6 +9,10 @@ class Serega
     # AttributeNormalizer instance methods
     #
     module AttributeNormalizerInstanceMethods
+      # Identity loader that routes relation/preload attributes through the batch
+      # mechanism. Its result is never read — the attribute's value block still
+      # computes the value.
+      AUTO_BATCH_LOADER = proc { |records| records.to_h { |record| [record, record] } }
       # Attribute initial params
       # @return [Hash] Attribute initial params
       attr_reader :init_name, :init_opts, :init_block
@@ -119,17 +123,6 @@ class Serega
         @preloads = prepare_preloads
       end
 
-      #
-      # Shows normalized preloads_path for current attribute
-      #
-      # @return [Array] normalized preloads_path of current attribute
-      #
-      def preloads_path
-        return @preloads_path if instance_variable_defined?(:@preloads_path)
-
-        @preloads_path = prepare_preloads_path
-      end
-
       # Shows specified batch loaders names
       # @return [Array<Symbol>] specified serializer
       #
@@ -159,7 +152,7 @@ class Serega
 
         hide_setting = config.hide_by_default
         return true if hide_setting == true
-        return true if hide_setting == :auto && (preloads || batch_loaders.any?)
+        return true if hide_setting == :auto && (preloads || init_opts.key?(:batch))
 
         # Return nil for undefined value which means "not hide" but allows
         # to change this value by plugins
@@ -201,10 +194,16 @@ class Serega
 
       def prepare_batch_loaders
         batch_opt = init_opts[:batch]
+        return explicit_batch_loaders(batch_opt) if batch_opt
+        return FROZEN_EMPTY_ARRAY unless serializer || preloads
 
-        if batch_opt.nil?
-          []
-        elsif batch_opt == true || batch_opt.respond_to?(:call)
+        loader_name = :"__auto_batch_#{name}__"
+        self.class.serializer_class.batch(loader_name, AUTO_BATCH_LOADER)
+        [loader_name]
+      end
+
+      def explicit_batch_loaders(batch_opt)
+        if batch_opt == true || batch_opt.respond_to?(:call)
           [name]
         elsif batch_opt.is_a?(Symbol)
           [batch_opt]
@@ -231,11 +230,8 @@ class Serega
         AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, allow_nil)
       end
 
-      # Prepares preloads
-      # @return [Hash,nil]
-      #  - Nil means no need to add preloads and nested preloads
-      #  - Hash with any keys will add preloads
-      #  - Empty hash will skip only top-level preloads, but will allow to load nested preloads
+      # Prepares preloads for this attribute
+      # @return [Hash, nil] preloads hash, or nil when the attribute has no preloads
       def prepare_preloads
         preload = init_opts[:preload]
 
@@ -257,37 +253,6 @@ class Serega
         end
 
         nil
-      end
-
-      def prepare_preloads_path
-        path = init_opts.fetch(:preload_path) { default_preload_path(preloads) }
-
-        if path && path[0].is_a?(Array)
-          prepare_many_preload_paths(path)
-        else
-          prepare_one_preload_path(path)
-        end
-      end
-
-      def prepare_one_preload_path(path)
-        return unless path
-
-        case path
-        when Array
-          path.map(&:to_sym).freeze
-        else
-          [path.to_sym].freeze
-        end
-      end
-
-      def prepare_many_preload_paths(paths)
-        paths.map { |path| prepare_one_preload_path(path) }.freeze
-      end
-
-      def default_preload_path(preloads)
-        return FROZEN_EMPTY_ARRAY if !preloads || preloads.empty?
-
-        [preloads.keys.first]
       end
     end
 

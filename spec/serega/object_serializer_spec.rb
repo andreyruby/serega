@@ -42,15 +42,13 @@ RSpec.describe Serega::SeregaObjectSerializer do
     end
 
     context "with nested serializers" do
-      let(:plan) { serializer_class::SeregaPlan.new(nil, {only: {foo: {}, hash: {}, array: {}}}) }
-
       before do
         serializer_class.attribute(:hash, serializer: serializer_class, const: 1, hide: true)
         serializer_class.attribute(:array, serializer: serializer_class, const: [1, 1], hide: true)
       end
 
       it "serializes nested object to hash and nested array to array of hashes" do
-        result = serialize(1)
+        result = serializer_class.call(1, only: {foo: {}, hash: {foo: {}}, array: {foo: {}}})
         expect(result).to eq(
           foo: "bar",
           hash: {foo: "bar"},

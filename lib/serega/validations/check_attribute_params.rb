@@ -65,7 +65,6 @@ class Serega
           Attribute::CheckOptMethod.call(opts, block)
           Attribute::CheckOptMany.call(opts)
           Attribute::CheckOptPreload.call(opts)
-          Attribute::CheckOptPreloadPath.call(opts)
           Attribute::CheckOptSerializer.call(opts)
           Attribute::CheckOptValue.call(opts, block)
           Attribute::CheckOptBatch.call(self.class.serializer_class, opts, block)

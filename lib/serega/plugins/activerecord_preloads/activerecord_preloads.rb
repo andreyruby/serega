@@ -7,9 +7,8 @@ class Serega
     #
     # Automatically preloads associations to serialized objects
     #
-    # It takes all defined preloads from serialized attributes (including attributes from serialized relations),
-    # merges them into single associations hash and then uses ActiveRecord::Associations::Preloader
-    # to preload all associations.
+    # Every association declared with `:preload` is loaded once during serialization using
+    # ActiveRecord::Associations::Preloader, so there are no N+1 queries.
     #
     # @example
     #   class AppSerializer < Serega
@@ -39,7 +38,7 @@ class Serega
     #     attribute :downloads_count, preload: :downloads, value: proc { |album| album.downloads.count }
     #   end
     #
-    #   UserSerializer.to_h(user) # => preloads {users_stats: {}, albums: { downloads: {} }}
+    #   UserSerializer.to_h(user)
     #
     module ActiverecordPreloads
       #
@@ -72,9 +71,7 @@ class Serega
       #
       def self.load_plugin(serializer_class, **_opts)
         require_relative "lib/preloader"
-        require_relative "lib/active_record_objects"
 
-        serializer_class.include(InstanceMethods)
         serializer_class::SeregaBatchAttributeLoader.include(BatchAttributeLoaderInstanceMethods)
       end
 
@@ -84,48 +81,11 @@ class Serega
       module BatchAttributeLoaderInstanceMethods
         private
 
-        # Preloads associations to batch-generated data
+        # Preloads this attribute's own associations onto the gathered records
+        # before the batch loader runs.
         def load_one(serializer_class, batch_loader_name, context)
-          batch_loaded_data = super
-
-          preloads = point.preloads
-          return batch_loaded_data if preloads.empty?
-
-          ar_objects = ActiveRecordObjects.call(batch_loaded_data)
-          Preloader.preload(ar_objects, preloads)
-
-          batch_loaded_data
-        end
-      end
-
-      #
-      # Overrides Serega class instance methods
-      #
-      module InstanceMethods
-        #
-        # Preloads associations to object
-        #
-        # @param object [Object] Any object
-        # @return provided object
-        #
-        def preload_associations_to(object)
-          return object if object.nil? || (object.is_a?(Array) && object.empty?)
-
-          preloads = preloads() # `preloads()` method comes from :preloads plugin
-          return object if preloads.empty?
-
-          Preloader.preload(object, preloads)
-          object
-        end
-
-        private
-
-        #
-        # Override original #serialize method
-        # Preloads associations to object before serialization
-        #
-        def serialize(object, _opts)
-          preload_associations_to(object)
+          preloads = point.attribute.preloads
+          Preloader.preload(objects, preloads) if preloads && !preloads.empty?
           super
         end
       end

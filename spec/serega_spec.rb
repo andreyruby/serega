@@ -39,7 +39,6 @@ RSpec.describe Serega do
           delegate
           default
           preload
-          preload_path
           batch
         ]
       )
@@ -672,25 +671,6 @@ RSpec.describe Serega do
 
   describe "Preloads functionality" do
     let(:serializer_class) { Class.new(described_class) }
-
-    describe "instance methods" do
-      it "adds #preloads method" do
-        serializer = serializer_class.new
-        expect(serializer).to respond_to(:preloads)
-      end
-
-      it "returns empty hash when no preloads defined" do
-        serializer_class.attribute :name
-        serializer = serializer_class.new
-        expect(serializer.preloads).to eq({})
-      end
-
-      it "returns preloads hash when preloads defined" do
-        serializer_class.attribute :name, preload: :user_profile
-        serializer = serializer_class.new
-        expect(serializer.preloads).to eq({user_profile: {}})
-      end
-    end
 
     describe "attribute preloads" do
       it "allows manual preload specification" do
