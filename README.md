@@ -441,9 +441,18 @@ Configuration options:
 These options are extremely useful if you want to forget about finding
 preloads manually.
 
-Preloads can be disabled with the `preload: false` attribute option.
-Automatically added preloads can be overwritten with the manually specified
-`preload: :xxx` option.
+The `:preload` value is passed to the preload handler exactly as written — a
+Symbol, Array, Hash, or any custom value your ORM understands. Preloads can be
+disabled with `preload: false` (or `preload: nil`); `preload: true` is not a
+valid value. Automatically added preloads can be overwritten with the manually
+specified `preload: :xxx` option.
+
+The actual loading is performed by a handler registered with `preload_with`. The
+`:activerecord_preloads` plugin registers one for you; to preload with another
+ORM — or to attach data to plain non-ORM objects by your own rules — register
+your own (see [Custom preloading](#custom-preloading)). Declaring `:preload`
+without a registered handler raises an error, so a preload never silently does
+nothing.
 
 For some examples, **please read the comments in the code below**
 
@@ -511,6 +520,35 @@ end
 
 ---
 
+### Custom preloading
+
+The `:activerecord_preloads` plugin works out of the box, but the preload
+mechanism itself is not tied to ActiveRecord — or to ORMs at all. Register a
+handler with `preload_with` and it is called once per preloaded attribute with
+the gathered objects and that attribute's `:preload` value, before the
+attribute is serialized:
+
+```ruby
+class UserSerializer < Serega
+  # `objects` is the gathered users; `preloads` is this attribute's
+  # `:preload` value (`:posts`). `MyORM.preload` does the eager loading.
+  preload_with { |objects, preloads| MyORM.preload(objects, preloads) }
+
+  attribute :name
+  attribute :posts, serializer: PostSerializer, preload: :posts
+end
+```
+
+The handler can be a block or any callable taking `(objects, preloads)`. It is
+inherited by child serializers and can be overridden per subclass. The
+`:preload` value reaches the handler untouched, so you can pass whatever your
+handler expects — not necessarily something an ORM understands. The gathered
+objects can be plain Ruby objects too: the handler decides where the data comes
+from (another ORM, an HTTP API, a cache) and how to attach it to the objects,
+by whatever rules you define.
+
+---
+
 ## Plugins
 
 ### Plugin :activerecord_preloads
@@ -519,7 +557,8 @@ Automatically preloads associations to serialized objects.
 
 Every association you declare with `:preload` is loaded once during
 serialization using `ActiveRecord::Associations::Preloader`, so there are no
-N+1 queries.
+N+1 queries. The plugin does this by registering a [`preload_with`](#custom-preloading)
+handler; to use a different ORM, register your own instead.
 
 ```ruby
 class AppSerializer < Serega

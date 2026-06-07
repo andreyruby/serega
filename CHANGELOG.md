@@ -33,6 +33,40 @@
   chains keep the same query counts. `config.hide_by_default = :auto` hides the
   same attributes as before (those declared with `:preload` or `:batch`).
 
+- Add the `preload_with` serializer class method — register a handler (a block or
+  a callable taking `(objects, preloads)`) that performs the eager loading for
+  attributes declared with `:preload`. This is the generic loading seam: the
+  `:activerecord_preloads` plugin now registers a handler built on
+  `ActiveRecord::Associations::Preloader`, other ORMs can register their own,
+  and a handler is not limited to ORMs at all — it can load data from any source
+  and attach it to plain non-ORM objects by its own rules. The handler is
+  inherited by child serializers and can be overridden per subclass.
+
+  ```ruby
+  class AppSerializer < Serega
+    preload_with { |objects, preloads| MyORM.preload(objects, preloads) }
+  end
+  ```
+
+- `:preload` values are now passed to the preload handler exactly as written
+  (Symbol, Array, Hash, or any custom value an ORM understands) instead of being
+  normalized into a nested Hash. ActiveRecord accepts these directly, so AR query
+  counts are unchanged.
+
+- **BREAKING**: `preload: true` is now rejected when the attribute is defined.
+  `false`/`nil` disable preloading; any other value is a preload spec; `true` is
+  neither.
+
+- **BREAKING**: declaring `:preload` (directly or via `auto_preload`) now requires
+  a `preload_with` handler on that serializer. If none is registered, serializing
+  raises a clear error instead of silently preloading nothing. Loading
+  `:activerecord_preloads` registers the handler for you.
+
+- Fix `:presenter` + `:activerecord_preloads`: associations now preload onto the
+  underlying records instead of the presenter wrappers. The `:presenter` plugin
+  must be loaded after `:activerecord_preloads` (loading them in the wrong order
+  now raises a clear error).
+
 ## [0.36.0] - 2026-05-12
 
 - Add `.to_data` / `#to_data` — serialize objects to Ruby `Data` value objects.

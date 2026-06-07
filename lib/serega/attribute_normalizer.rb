@@ -230,26 +230,25 @@ class Serega
         AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, allow_nil)
       end
 
-      # Prepares preloads for this attribute
-      # @return [Hash, nil] preloads hash, or nil when the attribute has no preloads
+      # Prepares preloads for this attribute.
+      #
+      # The value is passed through as provided (Symbol, Array, Hash, or any
+      # custom value an ORM understands) — it is the data handed to the
+      # serializer's `preload_with` handler.
+      #
+      # @return [Object, nil] preloads as provided, or nil when the attribute has none
       def prepare_preloads
-        preload = init_opts[:preload]
+        # Explicit preload option (false or nil disables preloading)
+        return init_opts[:preload] || nil if init_opts.key?(:preload)
 
-        # Handle explicit preload option
-        if init_opts.key?(:preload)
-          return nil unless preload # return nil when false or nil
-          return SeregaUtils::FormatUserPreloads.call(preload)
-        end
-
-        # Auto-preload for delegate
+        # Auto-preload the delegated association
         if config.auto_preload.fetch(:has_delegate_option) && init_opts[:delegate]
-          delegate_to = init_opts[:delegate][:to]
-          return SeregaUtils::FormatUserPreloads.call(delegate_to)
+          return init_opts[:delegate][:to]
         end
 
-        # Auto-preload for serializer
+        # Auto-preload the nested serializer's association
         if config.auto_preload.fetch(:has_serializer_option) && init_opts[:serializer] && !init_opts.key?(:batch)
-          return SeregaUtils::FormatUserPreloads.call(method_name)
+          return method_name
         end
 
         nil

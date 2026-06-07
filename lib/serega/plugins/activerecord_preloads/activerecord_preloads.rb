@@ -59,6 +59,12 @@ class Serega
         opts.each_key do |key|
           raise SeregaError, "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. No options are allowed"
         end
+
+        # The :presenter plugin patches preloading to unwrap presenter objects, so
+        # it must be loaded after this plugin.
+        if serializer_class.plugin_used?(:presenter)
+          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded before the :presenter plugin. Please load the #{plugin_name.inspect} plugin first"
+        end
       end
 
       #
@@ -71,23 +77,18 @@ class Serega
       #
       def self.load_plugin(serializer_class, **_opts)
         require_relative "lib/preloader"
-
-        serializer_class::SeregaBatchAttributeLoader.include(BatchAttributeLoaderInstanceMethods)
       end
 
       #
-      # Overrides SeregaBatch::AttributeLoader class instance methods
+      # Registers the ActiveRecord preload handler
       #
-      module BatchAttributeLoaderInstanceMethods
-        private
-
-        # Preloads this attribute's own associations onto the gathered records
-        # before the batch loader runs.
-        def load_one(serializer_class, batch_loader_name, context)
-          preloads = point.attribute.preloads
-          Preloader.preload(objects, preloads) if preloads && !preloads.empty?
-          super
-        end
+      # @param serializer_class [Class<Serega>] Current serializer class
+      # @param _opts [Hash] Plugin options
+      #
+      # @return [void]
+      #
+      def self.after_load_plugin(serializer_class, **_opts)
+        serializer_class.preload_with { |objects, preloads| Preloader.preload(objects, preloads) }
       end
     end
 
