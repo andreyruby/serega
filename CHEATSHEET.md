@@ -312,6 +312,27 @@ plain non-ORM objects — register your own handler: it can load data from any
 source and attach it to the objects by your own rules. Declaring `:preload` with
 no registered handler raises an error.
 
+The handler runs **once per preloaded attribute** — the same `:preload` value on
+several attributes calls it once for each, so a custom handler should check
+whether the data is already loaded before loading it again.
+
+Because the `:preload` value is yours to choose (not necessarily an association
+name), it doubles as a **discriminator** — give attributes different `:preload`
+values and branch on `preloads` in the handler:
+
+```ruby
+attribute :owner,  serializer: UserSerializer, preload: :owner
+attribute :author, serializer: UserSerializer, preload: :author
+
+preload_with do |objects, preloads|
+  case preloads
+  when :owner  then load_owners(objects)
+  when :author then load_authors(objects)
+  else MyORM.preload(objects, preloads)
+  end
+end
+```
+
 `config.auto_preload` saves you from writing `preload:` by hand — when enabled,
 attributes with `:serializer` or `:delegate` get a `:preload` inferred from that
 option's target.
