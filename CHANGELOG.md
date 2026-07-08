@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## [0.38.0] - 2026-07-09
+
+- Rework the core serialization engine. Serialization now runs **level by
+  level**: objects that share a serialization plan are gathered into one
+  level and resolved together, then their relations form the next level. Preloads
+  and batch loaders therefore run **once per level** over the whole set instead of
+  per parent, which removes internal bookkeeping, **reduces allocations**, and
+  **improves serialization speed**. Serialized output is unchanged.
+
+- `many: true` given a single (non-enumerable) object now serializes it as a
+  one-element array instead of raising — both as the `:many` serialization option
+  and as a relation's `:many` attribute option.
+
+- **BREAKING**: with the `:presenter` plugin, batch loaders now receive the
+  presenter-wrapped objects (previously the raw objects), keeping the batch key
+  consistent with the presenter — a presenter overriding the batch id method no
+  longer drops the value. If a batch loader relied on receiving the raw objects
+  (e.g. calling a method the presenter overrides, or using them as Hash/DB keys),
+  unwrap them with `#__getobj__`.
+
 ## [0.37.2] - 2026-07-08
 
 - Fix error attribution for batch-loaded attributes (relations, `:preload`, and

@@ -31,10 +31,9 @@ require_relative "serega/attribute_value_resolvers/delegate"
 require_relative "serega/attribute_value_resolvers/keyword"
 require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
-require_relative "serega/batch/attribute_loader"
-require_relative "serega/batch/attribute_loaders"
-require_relative "serega/batch/level"
-require_relative "serega/batch/loader"
+require_relative "serega/engine/level_queue"
+require_relative "serega/engine/level"
+require_relative "serega/engine/loader"
 require_relative "serega/validations/utils/check_allowed_keys"
 require_relative "serega/validations/utils/check_opt_is_bool"
 require_relative "serega/validations/utils/check_opt_is_hash"
@@ -86,15 +85,10 @@ class Serega
   check_batch_loader_params_class.serializer_class = self
   const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
 
-  # Assigns `SeregaBatchLoader` constant to current class
-  batch_loader_class = Class.new(SeregaBatch::Loader)
-  batch_loader_class.serializer_class = self
-  const_set(:SeregaBatchLoader, batch_loader_class)
-
-  # Assigns `SeregaBatchAttributeLoader` constant to current class
-  batch_attribute_loader_class = Class.new(SeregaBatch::AttributeLoader)
-  batch_attribute_loader_class.serializer_class = self
-  const_set(:SeregaBatchAttributeLoader, batch_attribute_loader_class)
+  # Assigns `SeregaEngineLoader` constant to current class
+  engine_loader_class = Class.new(SeregaEngine::Loader)
+  engine_loader_class.serializer_class = self
+  const_set(:SeregaEngineLoader, engine_loader_class)
 
   #
   # Serializers class methods
@@ -214,7 +208,7 @@ class Serega
     def batch(name, value = nil, &block)
       raise SeregaError, "Batch loader must be defined with a callable value or block" if (value && block) || (!value && !block)
 
-      batch_loader = self::SeregaBatchLoader.new(name: name, block: value || block)
+      batch_loader = self::SeregaEngineLoader.new(name: name, block: value || block)
       batch_loaders[batch_loader.name] = batch_loader
     end
 
@@ -333,13 +327,9 @@ class Serega
       plan_point_class.serializer_class = subclass
       subclass.const_set(:SeregaPlanPoint, plan_point_class)
 
-      batch_loader_class = Class.new(self::SeregaBatchLoader)
-      batch_loader_class.serializer_class = subclass
-      subclass.const_set(:SeregaBatchLoader, batch_loader_class)
-
-      batch_attribute_loader_class = Class.new(self::SeregaBatchAttributeLoader)
-      batch_attribute_loader_class.serializer_class = subclass
-      subclass.const_set(:SeregaBatchAttributeLoader, batch_attribute_loader_class)
+      engine_loader_class = Class.new(self::SeregaEngineLoader)
+      engine_loader_class.serializer_class = subclass
+      subclass.const_set(:SeregaEngineLoader, engine_loader_class)
 
       object_serializer_class = Class.new(self::SeregaObjectSerializer)
       object_serializer_class.serializer_class = subclass
@@ -481,7 +471,7 @@ class Serega
       self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
 
       opts[:context] ||= {}
-      opts[:batch_loaders] = SeregaBatch::AttributeLoaders.new(opts[:context])
+      opts[:level_queue] = SeregaEngine::LevelQueue.new
       opts[:many] = object.is_a?(Enumerable) unless opts.key?(:many)
       opts[:plan] = plan
       opts
@@ -493,7 +483,7 @@ class Serega
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
       result = self.class::SeregaObjectSerializer.new(**opts).serialize(object)
-      opts[:batch_loaders].load_all
+      opts[:level_queue].run
       result
     end
   end

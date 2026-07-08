@@ -68,21 +68,72 @@ class Serega
         attribute.serializer
       end
 
-      def batch?
-        !attribute.batch_loaders.empty?
-      end
-
       # Attribute `batch_loaders`
       # @see SeregaAttribute::AttributeInstanceMethods#batch_loaders
       def batch_loaders
         attribute.batch_loaders
       end
 
+      # Attribute `preloads`
+      # @see SeregaAttribute::AttributeInstanceMethods#preloads
+      def preloads
+        attribute.preloads
+      end
+
+      # Runs this point's declared preloads over the given objects using the
+      # serializer's registered preload handler.
       #
-      # @return [SeregaObjectSerializer] object serializer for child plan
+      # @param objects [Array] objects serialized at this point's level
+      # @return [void]
+      def run_preloads(objects)
+        return unless preloads
+
+        handler = self.class.serializer_class.preload_with
+        unless handler
+          raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
+        end
+
+        handler.call(objects, preloads)
+      rescue => error
+        SeregaUtils::SerializedAttributeError.call(error, self)
+      end
+
+      # Loads the batch loaders this point's value needs, each once for the whole
+      # level, and returns them keyed by loader name for #value to read from.
+      #
+      # @param level [SeregaEngine::Level] level whose objects are loaded for
+      # @return [Hash, nil] loaded data per loader name, or nil when none are needed
+      def load_batches(level)
+        names = batch_loaders
+        return if names.empty?
+
+        loaders = self.class.serializer_class.batch_loaders
+        names.each_with_object({}) do |name, batches|
+          batches[name] = level.fetch(loaders[name])
+        end
+      rescue => error
+        SeregaUtils::SerializedAttributeError.call(error, self)
+      end
+
+      #
+      # @return [Class<SeregaObjectSerializer>] object serializer class for child plan
       #
       def child_object_serializer
         serializer::SeregaObjectSerializer
+      end
+
+      # Builds the object serializer that serializes this point's relation, or nil
+      # when the point has no child plan (a plain attribute). The point owns the
+      # static config (child plan, serializer class, `many`); the caller injects the
+      # runtime `context` and `opts`.
+      #
+      # @param context [Hash] serialization context
+      # @param opts [Hash] extra object-serializer options (e.g. the level queue)
+      # @return [SeregaObjectSerializer, nil] serializer for the child level
+      def child_serializer(context:, **opts)
+        return unless child_plan
+
+        child_object_serializer.new(context: context, plan: child_plan, many: many, **opts)
       end
 
       private

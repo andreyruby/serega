@@ -923,6 +923,22 @@ RSpec.describe Serega do
       end
     end
 
+    context "when many: true but a sole object is given" do
+      it "wraps the object in an array instead of raising (:many serialization option)" do
+        user_serializer = Class.new(Serega) { attribute :id }
+        expect(user_serializer.to_h(double(id: 1), many: true)).to eq [{id: 1}]
+      end
+
+      it "wraps a sole relation object in an array (:many attribute option)" do
+        comment_serializer = Class.new(Serega) { attribute :id }
+        user_serializer = Class.new(Serega) do
+          attribute :comments, serializer: comment_serializer, many: true
+        end
+        user = double(comments: double(id: 5)) # a sole object, not a collection
+        expect(user_serializer.to_h(user)).to eq(comments: [{id: 5}])
+      end
+    end
+
     context "with some error in batch loader" do
       subject(:result) { user_serializer.to_h(user) }
 
