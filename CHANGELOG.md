@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.37.2] - 2026-07-08
 
 - Fix error attribution for batch-loaded attributes (relations, `:preload`, and
   explicit `:batch`). Their values are resolved during the batch attach phase,
@@ -9,6 +9,12 @@
   attributes already got. The message (and the duplicated helper that produced it)
   is now shared between the serialization walk and the batch loader, so every
   attribute reports the same way.
+
+- Auto-batched relations and preloads no longer register a synthetic per-attribute
+  loader or build an identity hash that was never read. They are marked with a
+  single reserved name that the batch loader skips, so their value still comes from
+  the attribute's own resolver while objects are gathered and preloads run once per
+  level. No behavior change.
 
 ## [0.37.1] - 2026-07-08
 
