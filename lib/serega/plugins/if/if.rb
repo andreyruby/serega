@@ -42,9 +42,6 @@ class Serega
     #  end
     #
     module If
-      # This value must be returned to identify that serialization key was skipped
-      KEY_SKIPPED = :_key_skipped_with_serega_if_plugin
-
       # @return [Symbol] Plugin name
       def self.plugin_name
         :if
@@ -270,16 +267,18 @@ class Serega
       module ObjectSerializerInstanceMethods
         private
 
-        def serialize_point(object, point, _container)
-          return KEY_SKIPPED unless point.satisfy_if_conditions?(object, context)
+        # Skip the whole point for this object (its value is never resolved).
+        def resolve_point(object, point, _container, _batches, _child_plan)
+          return unless point.satisfy_if_conditions?(object, context)
+
           super
         end
 
-        def attach_final_value(value, point, container)
-          unless point.satisfy_if_value_conditions?(value, context)
-            container.delete(point.name) # remove reserved placeholder
-            return KEY_SKIPPED
-          end
+        # Skip only the assignment based on the resolved value. Levels resolve
+        # points in attribute order, so simply not assigning keeps the remaining
+        # keys in declared order — no slot to reserve or delete.
+        def write_value(value, point, _container)
+          return unless point.satisfy_if_value_conditions?(value, context)
 
           super
         end

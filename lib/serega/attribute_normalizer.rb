@@ -109,9 +109,9 @@ class Serega
       end
 
       #
-      # Shows normalized preloads for current attribute
+      # Preloads declared for this attribute, passed through as provided.
       #
-      # @return [Hash, nil] normalized preloads of current attribute
+      # @return [Object, nil] declared preloads, or nil when the attribute has none
       #
       def preloads
         return @preloads if instance_variable_defined?(:@preloads)
@@ -199,16 +199,14 @@ class Serega
         AttributeValueResolvers::BatchResolver.get(self.class.serializer_class, name, batch_opt)
       end
 
+      # Batch loader names whose loaded data this attribute's value needs. Only
+      # explicit `:batch` attributes have any — everything else resolves its value
+      # from the record itself, so the list is empty (no loader to run).
       def prepare_batch_loaders
         batch_opt = init_opts[:batch]
         return explicit_batch_loaders(batch_opt) if batch_opt
-        return FROZEN_EMPTY_ARRAY unless serializer || preloads
 
-        # Relations and preloads only need to be routed through the batch phase
-        # (so objects are gathered per level and preloads run) — there is nothing
-        # to load, since the value comes from the attribute's own resolver. Mark
-        # them with the reserved marker; the batch machinery skips it.
-        [SeregaBatch::AUTO_BATCH_LOADER_NAME]
+        FROZEN_EMPTY_ARRAY
       end
 
       def explicit_batch_loaders(batch_opt)

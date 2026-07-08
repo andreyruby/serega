@@ -82,7 +82,25 @@ class Serega
       # @return [void]
       #
       def self.after_load_plugin(serializer_class, **_opts)
-        serializer_class.preload_with { |objects, preloads| Preloader.preload(objects, preloads) }
+        serializer_class.preload_with do |objects, preloads|
+          Preloader.preload(ActiverecordPreloads.records(serializer_class, objects), preloads)
+        end
+      end
+
+      #
+      # The underlying records to preload onto. The :presenter plugin wraps every
+      # serialized object in a SimpleDelegator, but ActiveRecord's Preloader needs
+      # the real records, so unwrap them via #__getobj__ when presenter is used.
+      #
+      # @param serializer_class [Class<Serega>] Current serializer class
+      # @param objects [Array] objects serialized at the current level
+      #
+      # @return [Array] the underlying records
+      #
+      def self.records(serializer_class, objects)
+        return objects unless serializer_class.plugin_used?(:presenter)
+
+        objects.map(&:__getobj__)
       end
     end
 

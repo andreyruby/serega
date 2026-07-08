@@ -68,6 +68,28 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     expect(result).to eq({greeting: "Hello, Alice!"})
   end
 
+  it "passes presenters to batch loaders, keyed consistently with attribute values" do
+    received = nil
+    serializer.attribute(:id)
+    serializer.attribute(:score, batch: proc { |objects|
+      received = objects
+      objects.to_h { |object| [object.id, object.id * 10] }
+    })
+    # Presenter overrides #id, so the batch key must come from the presenter too,
+    # or the loaded value would not be found.
+    serializer::Presenter.class_exec do
+      def id
+        __getobj__.id + 100
+      end
+    end
+
+    object = Struct.new(:id)
+    result = serializer.to_h([object.new(1), object.new(2)])
+
+    expect(received).to all be_a(SimpleDelegator)
+    expect(result).to eq [{id: 101, score: 1010}, {id: 102, score: 1020}]
+  end
+
   it "works in nested relation" do
     struct = Struct.new(:nested).new("123")
 

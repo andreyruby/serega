@@ -217,6 +217,8 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
 
     it "returns array of required batch loader names to send to attribute" do
+      # Only explicit :batch attributes need a loader; everything else resolves
+      # its value from the record, so the list is empty.
       expect(batch_loaders(name: :foo, opts: {})).to eq %i[]
       expect(batch_loaders(name: :foo, opts: {batch: true})).to eq %i[foo]
       expect(batch_loaders(name: :foo, opts: {batch: proc {}})).to eq %i[foo]
@@ -230,40 +232,22 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
-  describe "auto-batching of relations and preloads" do
-    it "auto-batches an attribute with a serializer (no preload)" do
+  describe "batch-all-attributes experiment" do
+    it "registers no synthetic loaders — only explicit :batch attributes have any" do
       child = Class.new(Serega)
       serializer = Class.new(Serega) do
         attribute :title
         attribute :author, serializer: child
-      end
-      expect(serializer.attributes[:author].batch_loaders).not_to be_empty
-      expect(serializer.attributes[:title].batch_loaders).to be_empty
-    end
-
-    it "auto-batches an attribute with a preload (no serializer)" do
-      serializer = Class.new(Serega) do
-        attribute :likes, preload: :likes, value: proc { |o| o.likes.size }
-      end
-      expect(serializer.attributes[:likes].batch_loaders).not_to be_empty
-    end
-
-    it "marks auto-batched attributes with a shared marker and registers no loader" do
-      child = Class.new(Serega)
-      serializer = Class.new(Serega) do
-        attribute :author, serializer: child
-        attribute :editor, serializer: child
         attribute :likes, preload: :likes, value: proc { |o| o }
       end
 
-      # No synthetic loaders are registered — the marker has nothing to load
+      # relations, preloads and plain attributes carry no batch loader;
+      # their value comes from the record, they are just routed through the
+      # batch phase unconditionally by the object serializer.
       expect(serializer.batch_loaders).to be_empty
-
-      # every auto-batched attribute carries the same reserved marker
-      marker = [Serega::SeregaBatch::AUTO_BATCH_LOADER_NAME]
-      expect(serializer.attributes[:author].batch_loaders).to eq marker
-      expect(serializer.attributes[:editor].batch_loaders).to eq marker
-      expect(serializer.attributes[:likes].batch_loaders).to eq marker
+      expect(serializer.attributes[:title].batch_loaders).to be_empty
+      expect(serializer.attributes[:author].batch_loaders).to be_empty
+      expect(serializer.attributes[:likes].batch_loaders).to be_empty
     end
 
     describe "hide_by_default :auto" do

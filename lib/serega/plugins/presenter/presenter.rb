@@ -125,11 +125,14 @@ class Serega
         private
 
         #
-        # Replaces serialized object with Presenter.new(object, ctx)
+        # Wraps each serialized object in Presenter.new(object, ctx) before it is
+        # enqueued, so the whole level — value resolution and batch loaders alike —
+        # sees presenters.
         #
-        def serialize_object(object)
-          object = self.class.serializer_class::Presenter.new(object, context)
-          super
+        def enqueue(objects)
+          presenter = self.class.serializer_class::Presenter
+          presenters = objects.map { |object| presenter.new(object, context) }
+          super(presenters)
         end
       end
     end

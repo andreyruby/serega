@@ -13,7 +13,10 @@ RSpec.describe Serega::SeregaObjectSerializer do
 
   describe "serialization" do
     def serialize(object)
-      object_serializer.new(context: context, plan: plan).serialize(object)
+      level_queue = Serega::SeregaEngine::LevelQueue.new
+      result = object_serializer.new(context: context, plan: plan, level_queue: level_queue).serialize(object)
+      level_queue.run
+      result
     end
 
     let(:serializer_class) do

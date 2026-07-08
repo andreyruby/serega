@@ -4,7 +4,7 @@ class Serega
   #
   # Batch feature main module
   #
-  module SeregaBatch
+  module SeregaEngine
     #
     #  Batch loader
     #

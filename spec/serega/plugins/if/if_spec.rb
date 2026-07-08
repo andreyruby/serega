@@ -195,6 +195,28 @@ RSpec.describe Serega::SeregaPlugins::If do
   end
 
   describe "serializing" do
+    it "annotates errors raised while evaluating an :if condition" do
+      serializer.plugin :if
+      serializer.attribute(:foo, const: "x", if: proc { raise "boom in if" })
+
+      expect { serializer.new.to_h(1) }.to raise_error RuntimeError,
+        a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
+    end
+
+    it "keeps attributes in declared order when :if skips one for an earlier object only" do
+      serializer.plugin :if
+
+      serializer.attribute(:a, const: "a")
+      serializer.attribute(:b, const: "b", if: proc { |obj| obj[:keep_b] })
+      serializer.attribute(:c, const: "c")
+
+      # :b is skipped for the first object, so its batch loader is registered
+      # (out of attribute order) only when the second object includes it.
+      result = serializer.to_h([{keep_b: false}, {keep_b: true}])
+      expect(result[0].keys).to eq %i[a c]
+      expect(result[1].keys).to eq %i[a b c]
+    end
+
     it "hides attributes when :if condition matches" do
       serializer.plugin :if
 

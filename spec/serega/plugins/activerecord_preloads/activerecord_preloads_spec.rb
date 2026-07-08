@@ -19,6 +19,25 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
     end
   end
 
+  describe ".records" do
+    let(:serializer) { Class.new(Serega) }
+
+    it "returns objects unchanged when the :presenter plugin is not used" do
+      serializer.plugin(:activerecord_preloads)
+      objects = [Object.new, Object.new]
+      expect(described_class.records(serializer, objects)).to equal objects
+    end
+
+    it "unwraps presenter-wrapped objects to their underlying records when :presenter is used" do
+      serializer.plugin(:activerecord_preloads)
+      serializer.plugin(:presenter)
+      record1, record2 = Object.new, Object.new
+
+      objects = [SimpleDelegator.new(record1), SimpleDelegator.new(record2)]
+      expect(described_class.records(serializer, objects)).to eq [record1, record2]
+    end
+  end
+
   describe "serialization" do
     context "with top-level preloads", :with_rollback do
       let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }

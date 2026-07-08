@@ -2,15 +2,19 @@
 
 class Serega
   #
-  # Low-level class that is used by more high-level SeregaSerializer
-  # to construct serialized to hash response
+  # Low-level class used by the serializer to construct the serialized response.
+  #
+  # Serialization is level-by-level. `#serialize` builds the result container(s)
+  # and enqueues this level; the batch queue later calls `#process` for each level,
+  # which resolves every attribute for every object and enqueues child levels for
+  # relations.
   #
   class SeregaObjectSerializer
     #
     # SeregaObjectSerializer instance methods
     #
     module InstanceMethods
-      attr_reader :context, :plan, :many, :opts, :batch_loaders
+      attr_reader :context, :plan, :many, :opts, :level_queue
 
       # @param plan [SeregaPlan] Serialization plan
       # @param context [Hash] Serialization context
@@ -23,85 +27,86 @@ class Serega
         @plan = plan
         @many = many
         @opts = opts
-        @batch_loaders = opts[:batch_loaders]
+        @level_queue = opts[:level_queue]
       end
 
-      # Serializes object(s)
+      # Enqueues this level and returns its result container(s). The containers are
+      # returned immediately but filled in place once the queue is processed.
       #
-      # @param object [Object] Serialized object
+      # @param object [Object] Serialized object(s)
       #
       # @return [Hash, Array<Hash>, nil] Serialized object(s)
       def serialize(object)
         return if object.nil?
 
-        if array?(object, many)
-          batch_loaders.add_objects(plan, object.to_a) if plan.batch?
-          serialize_array(object)
-        else
-          batch_loaders.add_objects(plan, [object]) if plan.batch?
-          serialize_object(object)
+        case serialize_mode(object)
+        when :many then enqueue(object.to_a)
+        when :many_for_one then enqueue([object]) # `many` on, but a sole object was given — wrap it, don't raise
+        else enqueue([object])[0] # :one
+        end
+      end
+
+      # Resolves every attribute of one level onto its containers. For each point,
+      # preloads and batch loaders run once over all of the level's objects; the
+      # value is then resolved and assigned per object, in attribute order.
+      #
+      # @param level [SeregaEngine::Level] level to resolve
+      # @return [void]
+      def process(level)
+        objects = level.objects
+
+        plan.points.each do |point|
+          point.run_preloads(objects)
+          batches = point.load_batches(level)
+          # One child serializer per relation point per level (reused for every object),
+          # instead of one per object — child objects are grouped into one child level anyway.
+          child_serializer = point.child_serializer(context: context, **opts)
+
+          objects.each_with_index do |object, index|
+            resolve_point(object, point, level.containers[index], batches, child_serializer)
+          rescue => error
+            SeregaUtils::SerializedAttributeError.call(error, point)
+          end
         end
       end
 
       private
 
-      def serialize_array(objects)
-        objects.map { |object| serialize_object(object) }
+      # Enqueues this chunk of objects onto the queue and returns their result
+      # containers. This is where objects enter their level, so every object a
+      # point resolves against and a batch loader receives has the same shape.
+      #
+      # Patched in:
+      # - plugin :presenter (wraps each object in a Presenter before enqueueing)
+      def enqueue(objects)
+        level_queue.enqueue(self, objects)
       end
 
       # Patched in:
-      # - plugin :presenter (makes presenter_object and serializes it)
-      def serialize_object(object)
-        plan.points.each_with_object({}) do |point, container|
-          serialize_point(object, point, container)
-        rescue => error
-          SeregaUtils::SerializedAttributeError.call(error, point)
-        end
-      end
-
-      # Patched in:
-      # - plugin :if (conditionally skips serializing this point)
-      def serialize_point(object, point, container)
-        if point.batch?
-          attacher = lambda { |obj, batches| attach_value(obj, point, container, batches: batches) }
-          batch_loaders.remember(point, object, attacher)
-          container[point.name] = nil # Reserve attribute place in resulted hash. We will set correct value later
-        else
-          attach_value(object, point, container, batches: nil)
-        end
-      end
-
-      def attach_value(object, point, container, batches: nil)
+      # - plugin :if (skips the point for objects failing an :if/:unless condition)
+      def resolve_point(object, point, container, batches, child_serializer)
         value = point.value(object, context, batches: batches)
-        final_value = final_value(value, point)
-        attach_final_value(final_value, point, container)
+        final_value = child_serializer ? child_serializer.serialize(value) : value
+        write_value(final_value, point, container)
       end
 
       # Patched in:
-      # - plugin :if (conditionally skips attaching)
-      def attach_final_value(final_value, point, container)
+      # - plugin :if (skips assigning when an :if_value/:unless_value condition fails)
+      def write_value(final_value, point, container)
         container[point.name] = final_value
       end
 
-      def final_value(value, point)
-        point.child_plan ? relation_value(value, point) : value
-      end
-
-      def relation_value(value, point)
-        child_serializer(point).serialize(value)
-      end
-
-      def child_serializer(point)
-        point.child_object_serializer.new(
-          context: context,
-          plan: point.child_plan,
-          many: point.many,
-          **opts
-        )
-      end
-
-      def array?(object, many)
-        many.nil? ? object.is_a?(Enumerable) : many
+      # How to serialize `object`, deciding whether the result is a collection or a
+      # single object and reading `Enumerable` only once:
+      # - :many         — `many` is on and the object is a collection
+      # - :many_for_one — `many` is on but a sole object was given (wrap it, don't raise)
+      # - :one          — serialize the object on its own
+      def serialize_mode(object)
+        case many
+        when NilClass then object.is_a?(Enumerable) ? :many : :one
+        when TrueClass then object.is_a?(Enumerable) ? :many : :many_for_one
+        else :one # many == false
+        end
       end
     end
 
