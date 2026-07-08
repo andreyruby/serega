@@ -275,8 +275,11 @@ class Serega
           super
         end
 
-        def attach_final_value(value, point, _container)
-          return KEY_SKIPPED unless point.satisfy_if_value_conditions?(value, context)
+        def attach_final_value(value, point, container)
+          unless point.satisfy_if_value_conditions?(value, context)
+            container.delete(point.name) # remove reserved placeholder
+            return KEY_SKIPPED
+          end
 
           super
         end
