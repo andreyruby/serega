@@ -5,6 +5,11 @@ class Serega
   # Batch feature main module
   #
   module SeregaBatch
+    # Reserved batch-loader name that marks relation/preload attributes as
+    # batch-processed. It has no registered loader — the attribute's value comes
+    # from its own resolver — so `load_batches` skips it (nothing to load).
+    AUTO_BATCH_LOADER_NAME = :__auto_batch__
+
     #
     # Batch loaders
     #
@@ -98,6 +103,10 @@ class Serega
 
         batches = {}
         point.batch_loaders.each do |batch_loader_name|
+          # Auto-batched relations/preloads carry the marker, not a real loader:
+          # their value comes from their own resolver, so there is nothing to load.
+          next if batch_loader_name == AUTO_BATCH_LOADER_NAME
+
           loader = serializer_class.batch_loaders[batch_loader_name]
           batches[batch_loader_name] = attribute_loader.load_batch(loader)
         end

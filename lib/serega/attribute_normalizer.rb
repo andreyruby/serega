@@ -9,10 +9,6 @@ class Serega
     # AttributeNormalizer instance methods
     #
     module AttributeNormalizerInstanceMethods
-      # Identity loader that routes relation/preload attributes through the batch
-      # mechanism. Its result is never read — the attribute's value block still
-      # computes the value.
-      AUTO_BATCH_LOADER = proc { |records| records.to_h { |record| [record, record] } }
       # Attribute initial params
       # @return [Hash] Attribute initial params
       attr_reader :init_name, :init_opts, :init_block
@@ -152,11 +148,22 @@ class Serega
 
         hide_setting = config.hide_by_default
         return true if hide_setting == true
-        return true if hide_setting == :auto && (preloads || init_opts.key?(:batch))
+        return true if hide_setting == :auto && preload_or_batch?
 
         # Return nil for undefined value which means "not hide" but allows
         # to change this value by plugins
         nil
+      end
+
+      # The `hide_by_default = :auto` criterion: hide attributes that fetch extra
+      # data on demand — those declared with `:preload` or an explicit `:batch`.
+      #
+      # This is intentionally narrower than a "goes through the batch mechanism"
+      # check (`SeregaPlanPoint#batch?`): a plain relation (`serializer:` without
+      # `:preload`) is batch-processed too, but it only serializes an already-loaded
+      # nested object, so it stays visible by default.
+      def preload_or_batch?
+        !!(preloads || init_opts.key?(:batch))
       end
 
       def config
@@ -197,9 +204,11 @@ class Serega
         return explicit_batch_loaders(batch_opt) if batch_opt
         return FROZEN_EMPTY_ARRAY unless serializer || preloads
 
-        loader_name = :"__auto_batch_#{name}__"
-        self.class.serializer_class.batch(loader_name, AUTO_BATCH_LOADER)
-        [loader_name]
+        # Relations and preloads only need to be routed through the batch phase
+        # (so objects are gathered per level and preloads run) — there is nothing
+        # to load, since the value comes from the attribute's own resolver. Mark
+        # them with the reserved marker; the batch machinery skips it.
+        [SeregaBatch::AUTO_BATCH_LOADER_NAME]
       end
 
       def explicit_batch_loaders(batch_opt)
