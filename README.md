@@ -1,7 +1,7 @@
 # Serega Ruby Serializer
 
 [![Gem Version](https://badge.fury.io/rb/serega.svg)](https://badge.fury.io/rb/serega)
-[![GitHub Actions](https://github.com/aglushkov/serega/actions/workflows/main.yml/badge.svg?event=push)](https://github.com/aglushkov/serega/actions/workflows/main.yml)
+[![GitHub Actions][build-badge]][build]
 
 The Serega Ruby Serializer provides easy and powerful DSL to describe your
 objects and serialize them to Hash or JSON.
@@ -1009,3 +1009,5 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [root]: #plugin-root
 [string_modifiers]: #plugin-string_modifiers
 [if]: #plugin-if
+[build-badge]: https://github.com/aglushkov/serega/actions/workflows/main.yml/badge.svg?event=push
+[build]: https://github.com/aglushkov/serega/actions/workflows/main.yml

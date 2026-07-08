@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.37.0] - 2026-07-08
 
 - **BREAKING**: `config.hide_by_default` no longer accepts an Array of symbols.
   The Array form (`[:preload]`, `[:batch]`, `[:preload, :batch]`) is replaced by a
