@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- Fix error attribution for batch-loaded attributes (relations, `:preload`, and
+  explicit `:batch`). Their values are resolved during the batch attach phase,
+  which was not wrapping failures with the
+  `(when serializing '<name>' attribute in <Serializer>)` details that inline
+  attributes already got. The message (and the duplicated helper that produced it)
+  is now shared between the serialization walk and the batch loader, so every
+  attribute reports the same way.
+
 ## [0.37.1] - 2026-07-08
 
 - Fix `:if_value`/`:unless_value` conditions on batch-loaded attributes leaving a
