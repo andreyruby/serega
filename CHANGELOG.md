@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.37.1] - 2026-07-08
 
 - Fix `:if_value`/`:unless_value` conditions on batch-loaded attributes leaving a
   `nil` value in the result instead of omitting the key. A batch attribute reserves
