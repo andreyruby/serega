@@ -55,6 +55,15 @@ RSpec.describe Serega::SeregaBatch do
         expect(attacher1).to have_received(:call).with(object1, batches)
         expect(attacher2).to have_received(:call).with(object2, batches)
       end
+
+      it "annotates an attacher error with the attribute name and serializer" do
+        allow(point).to receive(:name).and_return(:full_name)
+        failing = ->(_object, _batches) { raise "boom resolving value" }
+        attribute_loader.store(object1, failing)
+
+        expect { attribute_loader.attach(batches) }
+          .to raise_error(RuntimeError, /boom resolving value.*when serializing 'full_name' attribute in/m)
+      end
     end
   end
 end

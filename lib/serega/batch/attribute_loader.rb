@@ -41,7 +41,7 @@ class Serega
 
           handler.call(level.objects, preloads)
         rescue => error
-          reraise_with_serialized_attribute_details(error)
+          SeregaUtils::SerializedAttributeError.call(error, point)
         end
 
         # Loads a single named batch for this level's objects. Caching across
@@ -51,29 +51,26 @@ class Serega
         def load_batch(loader)
           level.load(loader)
         rescue => error
-          reraise_with_serialized_attribute_details(error)
+          SeregaUtils::SerializedAttributeError.call(error, point)
         end
 
         # Attaches already loaded batch values to every stored object.
+        # Value resolution happens here (inside the attacher), so errors are
+        # annotated with the attribute, matching the synchronous walk.
         # @param batches [Hash] Loaded values grouped by batch loader name
         # @return [void]
         def attach(batches)
           serialized_object_attachers.each do |object, attacher|
             attacher.call(object, batches)
           end
+        rescue => error
+          SeregaUtils::SerializedAttributeError.call(error, point)
         end
 
         attr_reader :point
         attr_reader :level
 
         private
-
-        def reraise_with_serialized_attribute_details(error)
-          raise error.exception(<<~MESSAGE.strip)
-            #{error.message}
-            (when serializing '#{point.name}' attribute in #{point.class.serializer_class})
-          MESSAGE
-        end
 
         attr_reader :serialized_object_attachers
       end
