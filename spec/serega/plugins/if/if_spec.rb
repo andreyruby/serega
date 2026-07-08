@@ -254,6 +254,39 @@ RSpec.describe Serega::SeregaPlugins::If do
         end
       end
 
+      context "when skipping batch attribute by :if_value/:unless_value" do
+        let(:user_serializer) do
+          Class.new(Serega) do
+            plugin :if
+
+            attribute :id
+            attribute :online_time,
+              if_value: proc { |val| val != 10 }, # hide when loaded value is 10
+              batch: proc { |_users| {1 => 10, 2 => 20} }
+            attribute :score,
+              unless_value: proc { |val| val == 200 }, # hide when loaded value is 200
+              batch: proc { |_users| {1 => 100, 2 => 200} }
+          end
+        end
+
+        let(:users) do
+          [
+            double(id: 1),
+            double(id: 2)
+          ]
+        end
+
+        it "removes the reserved placeholder key instead of leaving a nil value" do
+          result = user_serializer.to_h(users)
+          expect(result).to eq(
+            [
+              {id: 1, score: 100}, # online_time hidden by :if_value
+              {id: 2, online_time: 20} # score hidden by :unless_value
+            ]
+          )
+        end
+      end
+
       context "when skipping relation attribute and nested attributes" do
         let(:status_serializer) do
           _status1, _status2, status3, status4, _status5 = statuses

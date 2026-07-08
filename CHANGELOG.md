@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- Fix `:if_value`/`:unless_value` conditions on batch-loaded attributes leaving a
+  `nil` value in the result instead of omitting the key. A batch attribute reserves
+  its slot in the result hash before its value is known; when a value condition then
+  hid the attribute, that reserved key was left behind with a `nil` value. The
+  reserved key is now removed.
+
 ## [0.37.0] - 2026-07-08
 
 - **BREAKING**: `config.hide_by_default` no longer accepts an Array of symbols.
