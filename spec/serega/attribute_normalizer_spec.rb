@@ -248,6 +248,24 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       expect(serializer.attributes[:likes].batch_loaders).not_to be_empty
     end
 
+    it "marks auto-batched attributes with a shared marker and registers no loader" do
+      child = Class.new(Serega)
+      serializer = Class.new(Serega) do
+        attribute :author, serializer: child
+        attribute :editor, serializer: child
+        attribute :likes, preload: :likes, value: proc { |o| o }
+      end
+
+      # No synthetic loaders are registered — the marker has nothing to load
+      expect(serializer.batch_loaders).to be_empty
+
+      # every auto-batched attribute carries the same reserved marker
+      marker = [Serega::SeregaBatch::AUTO_BATCH_LOADER_NAME]
+      expect(serializer.attributes[:author].batch_loaders).to eq marker
+      expect(serializer.attributes[:editor].batch_loaders).to eq marker
+      expect(serializer.attributes[:likes].batch_loaders).to eq marker
+    end
+
     describe "hide_by_default :auto" do
       it "keeps a plain serializer relation visible" do
         child = Class.new(Serega)
