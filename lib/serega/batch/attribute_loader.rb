@@ -10,9 +10,10 @@ class Serega
       # Instance methods for AttributeLoader
       module InstanceMethods
         # @param point [SeregaPlanPoint]
-        def initialize(point)
+        # @param level [SeregaBatch::Level] Shared objects and results for this point's plan level
+        def initialize(point, level)
           @point = point
-          @objects = []
+          @level = level
           @serialized_object_attachers = []
         end
 
@@ -21,50 +22,51 @@ class Serega
         # @param attacher [Proc] Proc that attaches found values to originated attributes
         # @return [void]
         def store(object, attacher)
-          objects << object
           serialized_object_attachers << [object, attacher]
         end
 
-        # Loads serialized values for all stored objects for current attribute
-        # @param context [Hash] Current serialization context
+        # Preloads this attribute's associations onto the level's objects, once for
+        # the attribute (not per named batch loader), via the serializer's registered
+        # `preload_with` handler. Raises when `:preload` is declared but no handler
+        # exists, so a declared preload never silently does nothing.
         # @return [void]
-        def load_all(context)
-          batches = {}
-          serializer_class = point.class.serializer_class
+        def preload_associations
+          preloads = point.attribute.preloads
+          return unless preloads
 
-          point.batch_loaders.each do |batch_loader_name|
-            batches[batch_loader_name] ||= load_one(serializer_class, batch_loader_name, context)
+          handler = point.class.serializer_class.preload_with
+          unless handler
+            raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
           end
 
+          handler.call(level.objects, preloads)
+        rescue => error
+          reraise_with_serialized_attribute_details(error)
+        end
+
+        # Loads a single named batch for this level's objects. Caching across
+        # attributes that reuse the loader is handled by the Level.
+        # @param loader [SeregaBatch::Loader] Named batch loader
+        # @return [Object] Loaded batch values
+        def load_batch(loader)
+          level.load(loader)
+        rescue => error
+          reraise_with_serialized_attribute_details(error)
+        end
+
+        # Attaches already loaded batch values to every stored object.
+        # @param batches [Hash] Loaded values grouped by batch loader name
+        # @return [void]
+        def attach(batches)
           serialized_object_attachers.each do |object, attacher|
             attacher.call(object, batches)
           end
         end
 
+        attr_reader :point
+        attr_reader :level
+
         private
-
-        def load_one(serializer_class, batch_loader_name, context)
-          preload_attribute_associations(serializer_class)
-          serializer_class.batch_loaders[batch_loader_name].load(objects, context)
-        rescue => error
-          reraise_with_serialized_attribute_details(error)
-        end
-
-        # Runs the serializer's registered `preload_with` handler to load this
-        # attribute's associations onto the gathered records before the batch
-        # loader runs. Raises when `:preload` is declared but no handler exists,
-        # so a declared preload never silently does nothing.
-        def preload_attribute_associations(serializer_class)
-          preloads = point.attribute.preloads
-          return unless preloads
-
-          handler = serializer_class.preload_with
-          unless handler
-            raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
-          end
-
-          handler.call(objects, preloads)
-        end
 
         def reraise_with_serialized_attribute_details(error)
           raise error.exception(<<~MESSAGE.strip)
@@ -73,8 +75,6 @@ class Serega
           MESSAGE
         end
 
-        attr_reader :point
-        attr_reader :objects
         attr_reader :serialized_object_attachers
       end
 

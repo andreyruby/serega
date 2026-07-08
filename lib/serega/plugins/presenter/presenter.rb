@@ -62,28 +62,6 @@ class Serega
         presenter_class = Class.new(Presenter)
         presenter_class.serializer_class = serializer_class
         serializer_class.const_set(:Presenter, presenter_class)
-
-        wrap_preload_handler(serializer_class)
-      end
-
-      #
-      # Wraps the registered preload handler so associations are preloaded onto
-      # the underlying records instead of the presenter wrappers.
-      #
-      # The handler is registered by ORM plugins such as :activerecord_preloads,
-      # which must therefore be loaded before :presenter.
-      #
-      # @param serializer_class [Class<Serega>] Current serializer class
-      #
-      # @return [void]
-      #
-      def self.wrap_preload_handler(serializer_class)
-        handler = serializer_class.preload_with
-        return unless handler
-
-        serializer_class.preload_with do |objects, preloads|
-          handler.call(objects.map(&:__getobj__), preloads)
-        end
       end
 
       # Presenter class

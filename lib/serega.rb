@@ -32,6 +32,7 @@ require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
 require_relative "serega/batch/attribute_loader"
 require_relative "serega/batch/attribute_loaders"
+require_relative "serega/batch/level"
 require_relative "serega/batch/loader"
 require_relative "serega/validations/utils/check_allowed_keys"
 require_relative "serega/validations/utils/check_opt_is_bool"
@@ -479,7 +480,7 @@ class Serega
       self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
 
       opts[:context] ||= {}
-      opts[:batch_loaders] = SeregaBatch::AttributeLoaders.new
+      opts[:batch_loaders] = SeregaBatch::AttributeLoaders.new(opts[:context])
       opts[:many] = object.is_a?(Enumerable) unless opts.key?(:many)
       opts[:plan] = plan
       opts
@@ -491,7 +492,7 @@ class Serega
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
       result = self.class::SeregaObjectSerializer.new(**opts).serialize(object)
-      opts[:batch_loaders].load_all(opts[:context])
+      opts[:batch_loaders].load_all
       result
     end
   end

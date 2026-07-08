@@ -815,6 +815,19 @@ RSpec.describe Serega do
         expect(called).to be false
       end
 
+      it "invokes the handler once for an attribute with multiple batch loaders" do
+        calls = []
+        serializer = Class.new(described_class) do
+          preload_with { |objects, preloads| calls << preloads }
+          batch(:a) { |objects| objects.to_h { |object| [object, object] } }
+          batch(:b) { |objects| objects.to_h { |object| [object, object] } }
+          attribute(:value, batch: {use: [:a, :b]}, preload: :assoc) { |obj, batches:| obj }
+        end
+
+        serializer.to_h([1, 2])
+        expect(calls).to eq [:assoc]
+      end
+
       it "raises when an attribute declares :preload but no handler is registered" do
         serializer = Class.new(described_class) do
           attribute :value, preload: :assoc, value: proc { |obj| obj }
@@ -865,6 +878,49 @@ RSpec.describe Serega do
       # block and value together
       expect { serializer_class.batch(:foo, proc {}) {} }
         .to raise_error(Serega::SeregaError, "Batch loader must be defined with a callable value or block")
+    end
+
+    context "when same named batch loader is used by multiple attributes" do
+      subject(:result) { user_serializer.to_h([user1, user2], many: true) }
+
+      let(:load_calls) { [] }
+      let(:user1) { double(id: 1) }
+      let(:user2) { double(id: 2) }
+
+      let(:user_serializer) do
+        calls = load_calls
+        Class.new(Serega) do
+          batch(:stats) do |objects|
+            calls << objects.map(&:id)
+            objects.each_with_object({}) { |obj, hash| hash[obj.id] = {comments: obj.id * 10, likes: obj.id * 100} }
+          end
+
+          attribute(:comments_count, batch: {use: :stats}) { |obj, batches:| batches[:stats][obj.id][:comments] }
+          attribute(:likes_count, batch: {use: :stats}) { |obj, batches:| batches[:stats][obj.id][:likes] }
+        end
+      end
+
+      it "loads the shared batch only once" do
+        expect(result).to eq [
+          {comments_count: 10, likes_count: 100},
+          {comments_count: 20, likes_count: 200}
+        ]
+        expect(load_calls).to eq [[1, 2]]
+      end
+    end
+
+    context "when serialized objects are a non-Array enumerable" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          batch(:stats) { |users| users.each_with_object({}) { |user, hash| hash[user.id] = user.id * 10 } }
+          attribute(:stat, batch: {use: :stats}) { |user, batches:| batches[:stats][user.id] }
+        end
+      end
+
+      it "batch loads objects gathered from the enumerable" do
+        users = [double(id: 1), double(id: 2)].each # Enumerator, not an Array
+        expect(user_serializer.to_h(users, many: true)).to eq [{stat: 10}, {stat: 20}]
+      end
     end
 
     context "with some error in batch loader" do
