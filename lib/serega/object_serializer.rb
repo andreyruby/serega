@@ -34,7 +34,13 @@ class Serega
       def serialize(object)
         return if object.nil?
 
-        array?(object, many) ? serialize_array(object) : serialize_object(object)
+        if array?(object, many)
+          batch_loaders.add_objects(plan, object.to_a) if plan.batch?
+          serialize_array(object)
+        else
+          batch_loaders.add_objects(plan, [object]) if plan.batch?
+          serialize_object(object)
+        end
       end
 
       private

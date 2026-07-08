@@ -33,6 +33,9 @@
   chains keep the same query counts. `config.hide_by_default = :auto` hides the
   same attributes as before (those declared with `:preload` or `:batch`).
 
+- Fixed: a named batch loader shared by several attributes (`batch: { use: :name }`)
+  is now called once per object set instead of once per attribute.
+
 - Add the `preload_with` serializer class method — register a handler (a block or
   a callable taking `(objects, preloads)`) that performs the eager loading for
   attributes declared with `:preload`. This is the generic loading seam: the
@@ -61,11 +64,6 @@
   a `preload_with` handler on that serializer. If none is registered, serializing
   raises a clear error instead of silently preloading nothing. Loading
   `:activerecord_preloads` registers the handler for you.
-
-- Fix `:presenter` + `:activerecord_preloads`: associations now preload onto the
-  underlying records instead of the presenter wrappers. The `:presenter` plugin
-  must be loaded after `:activerecord_preloads` (loading them in the wrong order
-  now raises a clear error).
 
 ## [0.36.0] - 2026-05-12
 

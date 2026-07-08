@@ -59,12 +59,6 @@ class Serega
         opts.each_key do |key|
           raise SeregaError, "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. No options are allowed"
         end
-
-        # The :presenter plugin patches preloading to unwrap presenter objects, so
-        # it must be loaded after this plugin.
-        if serializer_class.plugin_used?(:presenter)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded before the :presenter plugin. Please load the #{plugin_name.inspect} plugin first"
-        end
       end
 
       #

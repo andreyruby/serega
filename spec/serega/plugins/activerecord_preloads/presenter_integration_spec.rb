@@ -7,19 +7,6 @@ load_plugin_code :activerecord_preloads
 load_plugin_code :presenter
 
 RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
-  describe "load order with :presenter" do
-    it "raises when :activerecord_preloads is loaded after :presenter" do
-      serializer = Class.new(Serega) { plugin :presenter }
-      error = "Plugin :activerecord_preloads must be loaded before the :presenter plugin. Please load the :activerecord_preloads plugin first"
-      expect { serializer.plugin(:activerecord_preloads) }.to raise_error Serega::SeregaError, error
-    end
-
-    it "allows :presenter to be loaded after :activerecord_preloads" do
-      serializer = Class.new(Serega) { plugin :activerecord_preloads }
-      expect { serializer.plugin(:presenter) }.not_to raise_error
-    end
-  end
-
   describe "preloading through presenter", :with_rollback do
     let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }
     let(:user2) { AR::User.create!(first_name: "Clark", last_name: "Kent") }

@@ -108,6 +108,15 @@ class Serega
         self.class.serializer_class
       end
 
+      #
+      # @return [Boolean] whether any point of this plan is batch loaded
+      #
+      def batch?
+        return @batch if defined?(@batch)
+
+        @batch = points.any?(&:batch?)
+      end
+
       # Returns the Data class whose members match this plan's serialized fields.
       # Delegates to the class-level cache so identical field sets share one Data class.
       #
