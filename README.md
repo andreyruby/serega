@@ -530,12 +530,12 @@ attribute is serialized:
 
 ```ruby
 class UserSerializer < Serega
+  attribute :name
+  attribute :posts, serializer: PostSerializer, preload: :posts
+
   # `objects` is the gathered users; `preloads` is this attribute's
   # `:preload` value (`:posts`). `MyORM.preload` does the eager loading.
   preload_with { |objects, preloads| MyORM.preload(objects, preloads) }
-
-  attribute :name
-  attribute :posts, serializer: PostSerializer, preload: :posts
 end
 ```
 
@@ -546,6 +546,33 @@ handler expects — not necessarily something an ORM understands. The gathered
 objects can be plain Ruby objects too: the handler decides where the data comes
 from (another ORM, an HTTP API, a cache) and how to attach it to the objects,
 by whatever rules you define.
+
+The handler runs **once per preloaded attribute**, not once per distinct
+`:preload` value. If the same `:preload` is declared on several attributes, the
+handler is invoked once for each of them over the same objects, so it should
+check whether the data is already loaded before loading it again. (The
+`:activerecord_preloads` handler relies on `ActiveRecord::Associations::Preloader`,
+which already skips associations that are loaded.)
+
+Because you choose the `:preload` value, it doubles as a **discriminator**: give
+two attributes different `:preload` values and branch on `preloads` inside the
+handler — no need for the value to be a real association name.
+
+```ruby
+class PostSerializer < Serega
+  attribute :owner,  serializer: UserSerializer, preload: :owner
+  attribute :author, serializer: UserSerializer, preload: :author
+
+  # Both attributes load the same person, but from different sources.
+  preload_with do |objects, preloads|
+    case preloads
+    when :owner  then load_owners(objects)   # e.g. from the DB
+    when :author then load_authors(objects)  # e.g. from an external API
+    else MyORM.preload(objects, preloads)
+    end
+  end
+end
+```
 
 ---
 
