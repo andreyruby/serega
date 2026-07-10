@@ -816,6 +816,12 @@ The original wrapped object is accessible via `__getobj__` (standard
 
 The serialization context is accessible via the private method `__ctx__`.
 
+Objects are wrapped in the `Presenter` only when the serializer's `Presenter`
+class (or an inherited one) actually defines custom methods. Loading the
+plugin in a base serializer adds no overhead to serializers that don't
+customize their presenters — their attribute values, batch loaders and value
+callables keep receiving the raw objects.
+
 ### Plugin :string_modifiers
 
 Allows to specify modifiers as strings.

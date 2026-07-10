@@ -28,9 +28,21 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       expect(described_class.records(serializer, objects)).to equal objects
     end
 
-    it "unwraps presenter-wrapped objects to their underlying records when :presenter is used" do
+    it "returns objects unchanged when the Presenter class has no custom methods" do
       serializer.plugin(:activerecord_preloads)
       serializer.plugin(:presenter)
+
+      objects = [Object.new, Object.new]
+      expect(described_class.records(serializer, objects)).to equal objects
+    end
+
+    it "unwraps presenter-wrapped objects to their underlying records when custom presenter is used" do
+      serializer.plugin(:activerecord_preloads)
+      serializer.plugin(:presenter)
+      serializer::Presenter.class_exec do
+        def name
+        end
+      end
       record1, record2 = Object.new, Object.new
 
       objects = [SimpleDelegator.new(record1), SimpleDelegator.new(record2)]
