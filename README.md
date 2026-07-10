@@ -130,7 +130,7 @@ class UserSerializer < Serega
 
   # Option `:many` specifies a has_many relationship. It is optional.
   # If not specified, it is defined during serialization by checking
-  # `object.is_a?(Enumerable)`
+  # `object.is_a?(Enumerable) && !object.is_a?(Struct)`
   # Also the `:many` changes the default value from `nil` to `[]`.
   attribute :posts, serializer: PostSerializer, many: true
 
@@ -265,15 +265,6 @@ serializer.to_h(user2)
 serializer = UserSerializer.new(only: [:username, :avatar])
 serializer.to_h(user1)
 serializer.to_h(user2)
-```
-
----
-⚠️ When you serialize the `Struct` object, specify manually `many: false`. As Struct
-is Enumerable and we check `object.is_a?(Enumerable)` to detect if we should
-return array.
-
-```ruby
-UserSerializer.to_h(user_struct, many: false)
 ```
 
 ### Selecting Fields

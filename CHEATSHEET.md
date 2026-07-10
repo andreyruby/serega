@@ -152,12 +152,6 @@ UserSerializer.to_data(user) # Ruby Data object (3.2+) => #<data name="Felonious
 UserSerializer.new(only: [:name]).to_h(user) # reuse — serialization plan built once
 ```
 
-```ruby
-# Struct is Enumerable — force single (see [§6 Relations][relations] for `many:`)
-quote = Struct.new(:text).new('I am going to steal the moon')
-QuoteSerializer.to_h(quote, many: false)
-```
-
 ---
 
 ## 4. Field Selection — `:only` `:except` `:with`

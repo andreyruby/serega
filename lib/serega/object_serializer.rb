@@ -97,14 +97,14 @@ class Serega
       end
 
       # How to serialize `object`, deciding whether the result is a collection or a
-      # single object and reading `Enumerable` only once:
+      # single object and checking the object type only once:
       # - :many         — `many` is on and the object is a collection
       # - :many_for_one — `many` is on but a sole object was given (wrap it, don't raise)
       # - :one          — serialize the object on its own
       def serialize_mode(object)
         case many
-        when NilClass then object.is_a?(Enumerable) ? :many : :one
-        when TrueClass then object.is_a?(Enumerable) ? :many : :many_for_one
+        when NilClass then SeregaUtils::Collection.call(object) ? :many : :one
+        when TrueClass then SeregaUtils::Collection.call(object) ? :many : :many_for_one
         else :one # many == false
         end
       end

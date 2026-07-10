@@ -244,7 +244,7 @@ class Serega
           return opts[:root] if opts.key?(:root)
 
           root = self.class.config.root
-          (opts.fetch(:many) { object.is_a?(Enumerable) }) ? root.many : root.one
+          (opts.fetch(:many) { SeregaUtils::Collection.call(object) }) ? root.many : root.one
         end
       end
 

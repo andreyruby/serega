@@ -136,7 +136,7 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       attribute :nested, serializer: current_serializer
     end
 
-    result = base_serializer.new.to_h(struct, many: false)
+    result = base_serializer.new.to_h(struct)
     expect(result).to eq({nested: {rev: "321"}})
   end
 end

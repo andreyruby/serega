@@ -43,6 +43,11 @@
   `auto_preload` enabled generated a bogus `:itself` preload (and made
   `hide_by_default = :auto` hide the attribute).
 
+- Fix Struct objects being serialized as collections. Structs are Enumerable,
+  so the automatic `:many` detection treated them as multiple objects and
+  serialized each member value separately. Now a Struct is serialized as a
+  single object and the `many: false` workaround is not needed anymore.
+
 ## [0.38.0] - 2026-07-09
 
 - Rework the core serialization engine. Serialization now runs **level by
