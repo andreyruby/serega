@@ -39,7 +39,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
     it "unwraps presenter-wrapped objects to their underlying records when custom presenter is used" do
       serializer.plugin(:activerecord_preloads)
       serializer.plugin(:presenter)
-      serializer::Presenter.class_exec do
+      serializer.presenter do
         def name
         end
       end
