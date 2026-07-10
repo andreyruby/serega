@@ -410,15 +410,18 @@ class UserSerializer < Serega
   batch :comments_count, ->(users) { Comment.where(user: users).group(:user_id).count }
   batch :comments_count, CommentsCountLoader # Example with callable class
 
-  # Full attribute example
-  attribute :comments_count, batch: { use: :comments_count },
-    value: proc { |user, batch:| batch[:comments_count][user.id] }
+  # Use a loader by its name
+  attribute :comments_count, batch: :comments_count
 
-  # Shorter version
-  attribute :comments_count, batch: { use: :comments_count, id: :id } # Equivalent, id: :id is default
+  # Equivalent — when the attribute name matches the loader name
+  attribute :comments_count, batch: true
 
-  # Shortest version
-  attribute :comments_count, batch: true # Equivalent
+  # Equivalent — the default value resolution spelled out
+  attribute :comments_count, batch: :comments_count,
+    value: proc { |user, batches:| batches[:comments_count][user.id] }
+
+  # Hash form — needed only for sub-options, for example a custom `:id` method
+  attribute :comments_count, batch: { use: :comments_count, id: :uuid }
 end
 ```
 
@@ -453,7 +456,7 @@ class UserSerializer < Serega
   # Summarize likes
   attribute :likes_count,
     batch: { use: [:facebook_likes, :twitter_likes] },
-    value: proc { |user, batch:| batch[:facebook_likes][user.id] + batch[:twitter_likes][user.id] }
+    value: proc { |user, batches:| batches[:facebook_likes][user.id] + batches[:twitter_likes][user.id] }
 end
 ```
 

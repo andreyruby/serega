@@ -18,6 +18,7 @@ class Serega
       # It handles this cases:
       # - `attribute :foo, batch: true`
       # - `attribute :foo, batch: FooLoader`
+      # - `attribute :foo, batch: :foo_loader`
       # - `attribute :foo, batch: { id: :foo_id }`
       # - `attribute :foo, batch: { use: FooLoader, id: foo_id }`
       # - `attribute :foo, batch: { use: :foo_loader, id: foo_id }`
@@ -31,6 +32,9 @@ class Serega
         elsif batch_opt.respond_to?(:call)          # ex: `batch: FooLoader`
           serializer_class.batch(attribute_name, batch_opt)
           batch_name = attribute_name
+          batch_id_method = default_method
+        elsif batch_opt.is_a?(Symbol) || batch_opt.is_a?(String) # ex: `batch: :foo_loader`
+          batch_name = batch_opt.to_sym
           batch_id_method = default_method
         else
           use = batch_opt[:use]

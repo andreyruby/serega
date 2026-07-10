@@ -255,7 +255,8 @@ UserSerializer.to_h([OpenStruct.new(id: 1), OpenStruct.new(id: 2)])
 Other forms:
 
 ```ruby
-attribute :comments_count, batch: { use: :comments_count, id: :id } # explicit
+attribute :comments_count, batch: :comments_count # named loader by name (same as batch: true above)
+attribute :comments_count, batch: { use: :comments_count, id: :uuid } # hash form, only for sub-options
 attribute :comments_count, batch: { use: ->(users) { ... } } # inline loader
 
 # Multiple loaders — note the keyword is `batches:` (plural)

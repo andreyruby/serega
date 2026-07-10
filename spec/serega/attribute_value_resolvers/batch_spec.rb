@@ -34,6 +34,24 @@ RSpec.describe Serega::AttributeValueResolvers do
         end
       end
 
+      context "when batch_opt is a symbol" do
+        let(:batch_opt) { :custom_loader }
+
+        it "creates resolver with the named loader and :id method" do
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:custom_loader)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(batch_id_option)
+        end
+      end
+
+      context "when batch_opt is a string" do
+        let(:batch_opt) { "custom_loader" }
+
+        it "creates resolver with the named loader symbolized and :id method" do
+          expect(resolver.instance_variable_get(:@loader_name)).to eq(:custom_loader)
+          expect(resolver.instance_variable_get(:@id_method)).to eq(batch_id_option)
+        end
+      end
+
       context "when batch_opt is a hash with callable use" do
         let(:batch_opt) { {use: proc { |objects| objects.map(&:id) }} }
 
