@@ -137,14 +137,136 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       norm.instance_variable_set(:@serializer, nil)
       expect(norm.serializer).to be_nil
     end
+
+    context "with block" do
+      let(:base_serializer) { Class.new(Serega) }
+
+      before { serializer_class.config.base_serializer = base_serializer }
+
+      def nested_serializer_for(block, opts: {})
+        normalizer.new(name: :author, opts: opts, block: block).serializer
+      end
+
+      it "builds an anonymous nested serializer inherited from config.base_serializer" do
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested).to be < base_serializer
+        expect(nested.attributes.keys).to eq [:name]
+      end
+
+      it "prefers the :base_serializer attribute option over config" do
+        other_base = Class.new(Serega)
+        nested = nested_serializer_for(proc { attribute :name }, opts: {base_serializer: other_base})
+
+        expect(nested).to be < other_base
+      end
+
+      it "raises when no base serializer is chosen" do
+        plain_serializer = Class.new(Serega)
+        plain_normalizer = plain_serializer::SeregaAttributeNormalizer.new(name: :author, opts: {}, block: proc { attribute :name })
+
+        expect { plain_normalizer.serializer }.to raise_error Serega::SeregaError,
+          "Attribute block requires a base serializer for the nested serializer." \
+          " Provide the `base_serializer: <SerializerClass>` attribute option" \
+          " or set `config.base_serializer = <SerializerClass>`"
+      end
+
+      it "does not inherit from the current serializer and takes none of its attributes" do
+        serializer_class.attribute :id
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested).not_to be < serializer_class
+        expect(nested.attributes.keys).to eq [:name]
+      end
+
+      it "raises an explaining error when the block defines no attributes" do
+        expect { nested_serializer_for(proc {}) }
+          .to raise_error Serega::SeregaError, Serega::SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE
+      end
+
+      it "allows a base serializer with its own block attributes when not cyclic" do
+        base_serializer.config.base_serializer = Class.new(Serega)
+        base_serializer.attribute(:meta, method: :itself) { attribute :version }
+
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested.attributes.keys).to eq %i[meta name]
+      end
+
+      it "raises when the base serializer transitively contains the block attribute being built" do
+        cyclic_base = Class.new(Serega)
+        cyclic_base.config.base_serializer = cyclic_base
+        cyclic_base.attribute(:meta, method: :itself) { attribute :version }
+
+        expect { Class.new(cyclic_base) }.to raise_error Serega::SeregaError,
+          "Can not define a nested serializer for attribute :meta —" \
+          " its base serializer #{cyclic_base.inspect} (transitively)" \
+          " contains this same block attribute (cyclic definition)"
+      end
+
+      it "raises when the cycle goes through another base serializer" do
+        first_base = Class.new(Serega)
+        second_base = Class.new(Serega)
+        first_base.config.base_serializer = second_base
+        second_base.config.base_serializer = first_base
+
+        # each definition completes — the other base has no block attributes yet
+        first_base.attribute(:meta, method: :itself) { attribute :version }
+        second_base.attribute(:info, method: :itself) { attribute :details }
+
+        # copying :meta builds its nested serializer from second_base, which
+        # copies :info, whose nested serializer is built from first_base,
+        # which copies :meta again — the cycle closes
+        expect { Class.new(first_base) }.to raise_error Serega::SeregaError,
+          "Can not define a nested serializer for attribute :meta —" \
+          " its base serializer #{second_base.inspect} (transitively)" \
+          " contains this same block attribute (cyclic definition)"
+      end
+
+      it "labels the nested serializer with current serializer and attribute names" do
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested.inspect).to eq "#{serializer_class.inspect}.<author>"
+        expect(nested.to_s).to eq "#{serializer_class.inspect}.<author>"
+      end
+
+      it "inherits base serializer plugins" do
+        base_serializer.plugin :camel_case
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested.plugin_used?(:camel_case)).to be true
+      end
+
+      it "inherits base serializer config without sharing it" do
+        base_serializer.config.auto_preload = {has_serializer_option: true}
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
+
+        nested.config.auto_preload = false
+        expect(base_serializer.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
+      end
+
+      it "inherits base serializer attributes, batch loaders and preload handler" do
+        handler = proc { |objects, preloads| [objects, preloads] }
+        base_serializer.attribute :id
+        base_serializer.batch(:stats, proc { |objects| {} })
+        base_serializer.preload_with(handler)
+
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested.attributes.keys).to eq %i[id name]
+        expect(nested.batch_loaders.keys).to eq [:stats]
+        expect(nested.preload_with).to equal handler
+      end
+    end
   end
 
   describe "#prepare_value_block" do
-    it "returns provided block" do
-      block = lambda { 123 }
-      attribute = normalizer.new(block: block, opts: {})
-      value_block = attribute.send(:prepare_value_block)
-      expect(value_block).to equal block
+    it "ignores provided block, it defines a nested serializer, not a value" do
+      block = proc {}
+      resolver = normalizer.new(name: :length, opts: {}, block: block).send(:prepare_value_block)
+      expect(resolver).to be_a(Serega::AttributeValueResolvers::Keyword)
     end
 
     it "returns provided value option" do

@@ -10,25 +10,30 @@ class Serega
       # Attribute `block` parameter validator
       #
       class CheckBlock
+        # Explains the changed attribute block behavior. Shown when the block
+        # looks like an old-style value block — it accepts parameters or
+        # defines no attributes.
+        ERROR_MESSAGE =
+          "Attribute block now defines a nested serializer:" \
+          " it is executed in the context of a new serializer class and must define its attributes." \
+          " Defining the attribute value with a block is not supported anymore," \
+          " use the `value: <callable>` option instead."
+
         class << self
           #
           # Checks block parameter provided with attribute.
-          # Must have up to two arguments - object and context. Context can be
-          # also provided as keyword argument :ctx.
           #
-          # @example without arguments
-          #   attribute(:email) { CONSTANT_EMAIL }
+          # The block defines attributes of a nested anonymous serializer, so
+          # it is executed in the context of that serializer and must accept
+          # no parameters.
           #
-          # @example with one argument
-          #   attribute(:email) { |obj| obj.confirmed_email }
+          # @example
+          #   attribute :statistics, method: :itself do
+          #     attribute :likes_count
+          #     attribute :comments_count
+          #   end
           #
-          # @example with two arguments
-          #   attribute(:email) { |obj, context| context['is_current'] ? obj.email : nil }
-          #
-          # @example with one argument and keyword context
-          #   attribute(:email) { |obj, ctx:| obj.email if ctx[:show] }
-          #
-          # @param block [Proc] Block that returns serialized attribute value
+          # @param block [Proc] Block that defines nested serializer attributes
           #
           # @raise [SeregaError] SeregaError that block has invalid arguments
           #
@@ -37,48 +42,8 @@ class Serega
           def call(block)
             return unless block
 
-            check_block(block)
-          end
-
-          private
-
-          def check_block(block)
-            signature = SeregaUtils::MethodSignature.call(block, pos_limit: 2, keyword_args: [:ctx, :batches])
-
-            raise SeregaError, signature_error unless valid_signature?(signature)
-          end
-
-          def valid_signature?(signature)
-            case signature
-            when "0"             # no parameters
-              true
-            when "1"             # call(object)
-              true
-            when "1_ctx"         # call(object, ctx:)
-              true
-            when "1_batches"     # call(object, batches:)
-              true
-            when "1_batches_ctx" # call(object, batches:, ctx:)
-              true
-            when "2"             # call(object, context)
-              true
-            when "2_batches_ctx" # call(object, context, batches:, ctx:) (proc with no params)
-              true
-            else
-              false
-            end
-          end
-
-          def signature_error
-            <<~ERROR.strip
-              Invalid attribute block parameters, valid parameters signatures:
-              - ()                       # no parameters
-              - (object)                 # one positional parameter
-              - (object, ctx:)           # one positional parameter and :ctx keyword
-              - (object, batches:)       # one positional parameter and :batches keyword
-              - (object, ctx:, batches:) # one positional parameter, :ctx, and :batches keywords
-              - (object, context)        # two positional parameters
-            ERROR
+            signature = SeregaUtils::MethodSignature.call(block, pos_limit: 0)
+            raise SeregaError, ERROR_MESSAGE unless signature == "0"
           end
         end
       end

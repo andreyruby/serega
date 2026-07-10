@@ -435,7 +435,7 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
 
     it "handles collection — each element gets its own Data shape" do
-      serializer.attribute(:val, if: proc { |obj| obj != 2 }) { |obj| obj }
+      serializer.attribute(:val, if: proc { |obj| obj != 2 }, value: proc { |obj| obj })
       result = serializer.new.to_data([1, 2, 3])
 
       expect(result).to be_an Array

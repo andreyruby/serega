@@ -59,15 +59,16 @@ class Serega
         def check_opts
           Utils::CheckAllowedKeys.call(opts, allowed_opts_keys, :attribute)
 
-          Attribute::CheckOptConst.call(opts, block)
-          Attribute::CheckOptDelegate.call(opts, block)
+          Attribute::CheckOptBaseSerializer.call(opts, block)
+          Attribute::CheckOptConst.call(opts)
+          Attribute::CheckOptDelegate.call(opts)
           Attribute::CheckOptHide.call(opts)
-          Attribute::CheckOptMethod.call(opts, block)
-          Attribute::CheckOptMany.call(opts)
+          Attribute::CheckOptMethod.call(opts)
+          Attribute::CheckOptMany.call(opts, block)
           Attribute::CheckOptPreload.call(opts)
-          Attribute::CheckOptSerializer.call(opts)
-          Attribute::CheckOptValue.call(opts, block)
-          Attribute::CheckOptBatch.call(self.class.serializer_class, opts, block)
+          Attribute::CheckOptSerializer.call(opts, block)
+          Attribute::CheckOptValue.call(opts)
+          Attribute::CheckOptBatch.call(self.class.serializer_class, opts)
         end
 
         def check_block

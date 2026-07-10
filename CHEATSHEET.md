@@ -41,15 +41,24 @@ UserSerializer.to_h(OpenStruct.new(full_name: 'Felonious Gru'))
 # => {name: "Felonious Gru"}
 ```
 
-### block — computed value
+### block — nested serializer
+
+A block defines a nested serializer for the attribute value. Requires a base
+serializer: the `base_serializer:` option or `config.base_serializer` (see
+[§6 Relations][relations], [§10 Configuration][configuration]).
 
 ```ruby
 class UserSerializer < Serega
-  attribute(:greeting) { |user| "Hello, #{user.first_name}" }
+  config.base_serializer = Serega
+
+  attribute :statistics, method: :itself do
+    attribute :likes_count
+    attribute :comments_count
+  end
 end
 
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'))
-# => {greeting: "Hello, Felonious"}
+UserSerializer.to_h(OpenStruct.new(likes_count: 10, comments_count: 3))
+# => {statistics: {likes_count: 10, comments_count: 3}}
 ```
 
 ### `value:` — callable
@@ -179,7 +188,7 @@ UserSerializer.to_h(user, only: [:address], check_initiate_params: false)
 
 ```ruby
 class UserSerializer < Serega
-  attribute(:email) { |user, ctx| user.email if ctx[:current_user] == user }
+  attribute :email, value: proc { |user, ctx| user.email if ctx[:current_user] == user }
 end
 user = OpenStruct.new(email: 'gru@example.com')
 
@@ -214,6 +223,15 @@ PostSerializer.to_h(post)
 attribute :comments, serializer: 'CommentSerializer'
 attribute :comments, serializer: -> { CommentSerializer }
 attribute :comments, serializer: CommentSerializer, many: true # force collection
+```
+
+```ruby
+# Inline nested serializer via block. It inherits from `base_serializer:`
+# option / `config.base_serializer` (attributes of the base, if any, are
+# serialized too).
+attribute :comments, base_serializer: AppSerializer do
+  attribute :body
+end
 ```
 
 DB preloads for `:serializer` attributes — see [§8 Preloads][preloads].
@@ -342,6 +360,7 @@ Define a base serializer once, then put shared setup there.
 class AppSerializer < Serega
   plugin :string_modifiers      # shared by every subclass
   config.check_initiate_params = false
+  config.base_serializer = self # nested serializers from attribute blocks inherit AppSerializer
 end
 
 class UserSerializer < AppSerializer
@@ -432,6 +451,24 @@ UserSerializer.to_h([OpenStruct.new(uuid: 'abc')])   # => [{likes: 99}]
 ```
 
 Default `:id`. See [§7 Batch Loading][batch-loading].
+
+### `config.base_serializer` — parent for block-defined nested serializers
+
+```ruby
+class AppSerializer < Serega
+  config.base_serializer = self   # usually a settings-only serializer
+end
+
+class UserSerializer < AppSerializer
+  attribute :statistics, method: :itself do  # inherits from AppSerializer
+    attribute :likes_count
+  end
+end
+```
+
+No default — an attribute block raises an error when no base serializer is
+chosen. Can be set per attribute with the `base_serializer:` option (it wins
+over config). Attributes of the base, if any, are serialized too.
 
 ### `config.check_initiate_params` — validate `:only` / `:except` / `:with`
 
@@ -636,6 +673,11 @@ end
 # Fix:
 attribute :author, serializer: -> { UserSerializer }, many: false
 attribute :comments, serializer: -> { CommentSerializer }, many: true
+
+# Same for relations defined with a block:
+attribute :comments, many: true do
+  attribute :text
+end
 ```
 
 ---
@@ -701,7 +743,7 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 > ```ruby
 > class ResponseSerializer < AppSerializer
 > attribute :data, serializer: -> { ... }
-> attribute :meta # via :value or block
+> attribute :meta # via :value or a nested serializer block
 > end
 > ```
 

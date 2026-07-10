@@ -6,9 +6,10 @@ RSpec.describe Serega::SeregaAttribute do
 
   describe ".initialize" do
     it "validates provided params" do
+      serializer_class.config.base_serializer = Serega
       name = :current_name
       opts = {foo: :bar}
-      block = proc {}
+      block = proc { attribute :nested_name }
       checker = instance_double(serializer_class::CheckAttributeParams, validate: nil)
       allow(serializer_class::CheckAttributeParams).to receive(:new).with(name, opts, block).and_return(checker)
 
@@ -25,8 +26,9 @@ RSpec.describe Serega::SeregaAttribute do
     end
 
     it "saves provided block" do
+      serializer_class.config.base_serializer = Serega
       expect(attribute_class.new(name: :name).initials[:block]).to be_nil
-      block = proc { |obj| }
+      block = proc { attribute :nested_name }
       expect(attribute_class.new(name: :name, block: block).initials[:block]).to eq block
     end
 
@@ -92,8 +94,8 @@ RSpec.describe Serega::SeregaAttribute do
   describe "#value" do
     context "with no args" do
       it "gets value" do
-        block = lambda { "NAME" }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = lambda { "NAME" }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(nil, nil)).to eq "NAME"
       end
     end
@@ -101,8 +103,8 @@ RSpec.describe Serega::SeregaAttribute do
     context "with 1 arg" do
       it "gets value" do
         obj = double(name: "NAME")
-        block = proc { |obj| obj.name }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = proc { |obj| obj.name }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(obj, nil)).to eq "NAME"
       end
     end
@@ -111,8 +113,8 @@ RSpec.describe Serega::SeregaAttribute do
       it "gets value" do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
-        block = lambda { |obj, ctx| [obj.name, ctx[:foo]] }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = lambda { |obj, ctx| [obj.name, ctx[:foo]] }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx)).to eq ["NAME", "CTX"]
       end
     end
@@ -121,8 +123,8 @@ RSpec.describe Serega::SeregaAttribute do
       it "gets value" do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
-        block = lambda { |obj, ctx:| [obj.name, ctx[:foo]] }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = lambda { |obj, ctx:| [obj.name, ctx[:foo]] }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx)).to eq ["NAME", "CTX"]
       end
     end
@@ -132,8 +134,8 @@ RSpec.describe Serega::SeregaAttribute do
         obj = double(name: "NAME")
         ctx = nil
         batches = {foo: "LAZY"}
-        block = lambda { |obj, batches:| [obj.name, batches[:foo]] }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = lambda { |obj, batches:| [obj.name, batches[:foo]] }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "LAZY"]
       end
     end
@@ -143,8 +145,8 @@ RSpec.describe Serega::SeregaAttribute do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
         batches = {foo: "LAZY"}
-        block = lambda { |obj, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = lambda { |obj, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "CTX", "LAZY"]
       end
     end
@@ -154,8 +156,8 @@ RSpec.describe Serega::SeregaAttribute do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
         batches = {foo: "LAZY"}
-        block = lambda { |obj, _context, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
-        attribute = attribute_class.new(name: :name, block: block)
+        value = lambda { |obj, _context, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
+        attribute = attribute_class.new(name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "CTX", "LAZY"]
       end
     end
@@ -164,8 +166,8 @@ RSpec.describe Serega::SeregaAttribute do
       it "returns default" do
         obj = nil
         ctx = {foo: "CTX"}
-        block = lambda { |obj| obj }
-        attribute = attribute_class.new(name: :name, block: block, opts: {default: 42})
+        value = lambda { |obj| obj }
+        attribute = attribute_class.new(name: :name, opts: {value: value, default: 42})
         expect(attribute.value(obj, ctx)).to eq 42
       end
     end

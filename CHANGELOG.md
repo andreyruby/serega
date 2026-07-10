@@ -2,6 +2,73 @@
 
 ## [Unreleased]
 
+- **BREAKING**: an attribute block now defines a **nested serializer** instead
+  of the attribute value. The block is executed in the context of a new
+  serializer class, so everything available in a serializer class body can be
+  used inside. The attribute value (found by name or the
+  `:method`/`:value`/`:delegate`/`:const`/`:batch` option as usual) is
+  serialized with this nested serializer:
+
+  ```ruby
+  attribute :statistics, method: :itself do
+    attribute :likes_count
+    attribute :comments_count
+  end
+  ```
+
+  Defining the attribute value with a block is not supported anymore — use the
+  `value: <callable>` option instead. A block that accepts parameters or
+  defines no attributes raises an error explaining this. Since a block no
+  longer defines a value, it can be combined with any option except
+  `:serializer`.
+
+  **Migrating to 0.39:** move the body of every attribute block that computes
+  a value into the `value:` option, keeping the block parameters as-is:
+
+  ```ruby
+  # Before
+  attribute :full_name do |user|
+    "#{user.first_name} #{user.last_name}"
+  end
+  attribute :can_edit do |user, ctx|
+    ctx[:current_user].admin?
+  end
+
+  # After
+  attribute :full_name, value: proc { |user| "#{user.first_name} #{user.last_name}" }
+  attribute :can_edit, value: proc { |user, ctx| ctx[:current_user].admin? }
+  ```
+
+  To find such attributes, search for `do |` and `{ |` blocks in your
+  serializers, for example:
+
+  ```sh
+  grep -rnE "attribute.*(do|\{) \|" app/serializers
+  ```
+
+  There is no risk of missing one: every old-style block (with parameters or
+  without defined attributes) raises an error at serializer definition time,
+  so leftovers show up as soon as the serializer file is loaded.
+
+- New `config.base_serializer` option and `base_serializer:` attribute option.
+  A nested serializer defined with a block is a regular subclass of this base —
+  usually a settings-only serializer holding plugins and configuration
+  (`config.base_serializer = self` in an application base class). The
+  attribute option wins over config; an error is raised when none is chosen.
+  Any serializer can be used as a base — its attributes, if any, are
+  serialized too. Cyclic definitions (the base transitively containing the
+  same block attribute) raise an error instead of recursing forever.
+
+- Nested serializers defined with a block get a readable label in errors and
+  debug output: `UserSerializer.<statistics>`
+  (`when serializing 'comments_count' attribute in UserSerializer.<statistics>`).
+
+- Attributes with a block (nested serializers) are now treated as relations
+  by the `:many` option: `many:` can be set on them (previously it raised
+  "Option :many can be provided only together with :serializer or :batch
+  option"), and the `explicit_many_option` plugin now requires `many:` for
+  them, same as for attributes with the `:serializer` option.
+
 - Plugin `:presenter` no longer wraps serialized objects in the Presenter
   class when it (and its inherited Presenter classes) has no custom methods —
   a bare `plugin :presenter` in a base serializer now adds no per-object

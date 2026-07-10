@@ -6,7 +6,8 @@ class Serega
     # Plugin :explicit_many_option
     #
     # Plugin requires to add :many option when adding relationships
-    # (relationships are attributes with :serializer option specified)
+    # (relationships are attributes with the :serializer option or a block
+    # defining a nested serializer)
     #
     # Adding this plugin makes it clearer to find if relationship returns array or single object
     #
@@ -56,7 +57,7 @@ class Serega
         def check_opts
           super
 
-          CheckOptMany.call(opts)
+          CheckOptMany.call(opts, block)
         end
       end
     end

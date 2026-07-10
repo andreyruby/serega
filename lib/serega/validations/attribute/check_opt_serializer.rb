@@ -12,13 +12,16 @@ class Serega
           # Checks attribute :serializer option
           #
           # @param opts [Hash] Attribute options
+          # @param block [nil, Proc] Attribute block (defines a nested serializer)
           #
           # @raise [SeregaError] SeregaError that option has invalid value
           #
           # @return [void]
           #
-          def call(opts)
+          def call(opts, block = nil)
             return unless opts.key?(:serializer)
+
+            raise SeregaError, "Option :serializer can not be used together with block" if block
 
             value = opts[:serializer]
             return if valid_serializer?(value)

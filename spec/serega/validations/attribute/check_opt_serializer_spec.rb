@@ -36,4 +36,9 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptSerializer do
     expect { described_class.call(serializer: true) }.to raise_error error(true)
     expect { described_class.call(serializer: Object) }.to raise_error error(Object)
   end
+
+  it "prohibits to use together with block" do
+    expect { described_class.call({serializer: Class.new(Serega)}, proc {}) }
+      .to raise_error Serega::SeregaError, "Option :serializer can not be used together with block"
+  end
 end

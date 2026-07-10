@@ -17,20 +17,19 @@ class Serega
           #
           # @return [void]
           #
-          def call(opts, block = nil)
+          def call(opts)
             return unless opts.key?(:method)
 
-            check_usage_with_other_params(opts, block)
+            check_usage_with_other_params(opts)
             Utils::CheckOptIsStringOrSymbol.call(opts, :method)
           end
 
           private
 
-          def check_usage_with_other_params(opts, block)
+          def check_usage_with_other_params(opts)
             raise SeregaError, "Option :method can not be used together with option :const" if opts.key?(:const)
             raise SeregaError, "Option :method can not be used together with option :value" if opts.key?(:value)
             raise SeregaError, "Option :method can not be used together with option :batch" if opts.key?(:batch)
-            raise SeregaError, "Option :method can not be used together with block" if block
           end
         end
       end
