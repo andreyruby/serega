@@ -64,7 +64,7 @@ class Serega
           Attribute::CheckOptDelegate.call(opts)
           Attribute::CheckOptHide.call(opts)
           Attribute::CheckOptMethod.call(opts)
-          Attribute::CheckOptMany.call(opts)
+          Attribute::CheckOptMany.call(opts, block)
           Attribute::CheckOptPreload.call(opts)
           Attribute::CheckOptSerializer.call(opts, block)
           Attribute::CheckOptValue.call(opts)

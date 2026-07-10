@@ -5,8 +5,8 @@ class Serega
     #
     # Utility to check if an object should be serialized as a collection.
     #
-    # Structs are Enumerable, but enumerate their own member values,
-    # so they are treated as single objects.
+    # Hashes and Structs are Enumerable, but enumerate their own member
+    # values, so they are treated as single objects.
     #
     class Collection
       class << self
@@ -18,7 +18,7 @@ class Serega
         # @return [Boolean] whether object should be serialized as a collection
         #
         def call(object)
-          object.is_a?(Enumerable) && !object.is_a?(Struct)
+          object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)
         end
       end
     end

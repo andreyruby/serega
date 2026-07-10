@@ -679,6 +679,11 @@ end
 # Fix:
 attribute :author, serializer: -> { UserSerializer }, many: false
 attribute :comments, serializer: -> { CommentSerializer }, many: true
+
+# Same for relations defined with a block:
+attribute :comments, many: true do
+  attribute :text
+end
 ```
 
 ---

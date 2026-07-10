@@ -268,7 +268,7 @@ class Serega
     # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
     # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Struct)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Hash] Serialization result
     #
@@ -289,7 +289,7 @@ class Serega
     # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
     # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Struct)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
     #
@@ -423,7 +423,7 @@ class Serega
     # @param object [Object] Serialized object
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Struct)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Hash] Serialization result
     #
@@ -445,7 +445,7 @@ class Serega
     # @param object [Object] Serialized object
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Struct)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Data] Serialization result
     #

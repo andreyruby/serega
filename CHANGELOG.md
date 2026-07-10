@@ -48,6 +48,17 @@
   serialized each member value separately. Now a Struct is serialized as a
   single object and the `many: false` workaround is not needed anymore.
 
+- Fix Hash objects being serialized as collections of key-value pairs by
+  the automatic `:many` detection. Now a Hash is serialized as a single
+  object (define attribute values with the `value: <callable>` option, as
+  hashes usually have no reader methods).
+
+- Attributes with a block (nested serializers) are now treated as relations
+  by the `:many` option: `many:` can be set on them (previously it raised
+  "Option :many can be provided only together with :serializer or :batch
+  option"), and the `explicit_many_option` plugin now requires `many:` for
+  them, same as for attributes with the `:serializer` option.
+
 ## [0.38.0] - 2026-07-09
 
 - Rework the core serialization engine. Serialization now runs **level by

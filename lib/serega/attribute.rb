@@ -45,7 +45,7 @@ class Serega
       # @option opts [Symbol] :method Object method name to fetch attribute value
       # @option opts [Hash] :delegate Allows to fetch value from nested object
       # @option opts [Boolean] :hide Specify `true` to not serialize this attribute by default
-      # @option opts [Boolean] :many Specifies has_many relationship. By default is detected via object.is_a?(Enumerable) && !object.is_a?(Struct)
+      # @option opts [Boolean] :many Specifies has_many relationship. By default is detected via object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)
       # @option opts [Proc, #call] :value Custom block or callable to find attribute value
       # @option opts [Serega, Proc] :serializer Relationship serializer class. Use `proc { MySerializer }` if serializers have cross references
       # @param block [Proc] Defines attributes of a nested anonymous serializer

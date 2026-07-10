@@ -3,7 +3,7 @@
 RSpec.describe Serega::SeregaUtils::Collection do
   it "returns true for Enumerable objects" do
     expect(described_class.call([])).to be true
-    expect(described_class.call({})).to be true
+    expect(described_class.call(Set.new)).to be true
     expect(described_class.call([].each)).to be true
   end
 
@@ -11,6 +11,10 @@ RSpec.describe Serega::SeregaUtils::Collection do
     expect(described_class.call(nil)).to be false
     expect(described_class.call("string")).to be false
     expect(described_class.call(Object.new)).to be false
+  end
+
+  it "returns false for Hash objects" do
+    expect(described_class.call({})).to be false
   end
 
   it "returns false for Struct objects" do

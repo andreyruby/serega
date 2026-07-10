@@ -632,6 +632,20 @@ RSpec.describe Serega do
       end
     end
 
+    context "with Hash object" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :first_name, value: proc { |user| user[:first_name] }
+          attribute :last_name, value: proc { |user| user[:last_name] }
+        end
+      end
+      let(:user) { {first_name: "FIRST_NAME", last_name: "LAST_NAME"} }
+
+      it "serializes Hash as a single object, not as a collection of key-value pairs" do
+        expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME"})
+      end
+    end
+
     context "with object with Struct relation" do
       let(:statistics_struct) { Struct.new(:likes_count, :comments_count) }
       let(:statistics_serializer) do

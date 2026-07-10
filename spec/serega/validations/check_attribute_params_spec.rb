@@ -41,7 +41,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     expect(Serega::SeregaValidations::Attribute::CheckOptHide).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts)
-    expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts)
+    expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block)
     expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts, block)
     expect(Serega::SeregaValidations::Attribute::CheckOptValue).to have_received(:call).with(opts)
   end

@@ -130,7 +130,7 @@ class UserSerializer < Serega
 
   # Option `:many` specifies a has_many relationship. It is optional.
   # If not specified, it is defined during serialization by checking
-  # `object.is_a?(Enumerable) && !object.is_a?(Struct)`
+  # `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`
   # Also the `:many` changes the default value from `nil` to `[]`.
   attribute :posts, serializer: PostSerializer, many: true
 
@@ -1067,7 +1067,8 @@ end
 ### Plugin :explicit_many_option
 
 The plugin requires adding a `:many` option when adding relationships
-(attributes with the `:serializer` option).
+(attributes with the `:serializer` option or a block defining a nested
+serializer).
 
 Adding this plugin makes it clearer to find if some relationship is an array or
 a single object.
