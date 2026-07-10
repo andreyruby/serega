@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.39.0] - 2026-07-11
 
 - Fix `batch: <loader_name>` short form (Symbol or String) raising a TypeError
   when the attribute had no explicit `:value` option — the default batch value
