@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaValidations::Attribute::CheckOptValue do
-  subject(:check) { described_class.call(opts, block) }
+  subject(:check) { described_class.call(opts) }
 
   let(:opts) { {} }
-  let(:block) { nil }
 
   let(:type_error) { "Option :value value must be a Proc or respond to #call" }
   let(:signature_error) do
@@ -89,11 +88,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptValue do
     it "prohibits to use with :const opt" do
       opts.merge!(value: proc {}, const: 1)
       expect { check }.to raise_error Serega::SeregaError, "Option :value can not be used together with option :const"
-    end
-
-    it "prohibits to use with block" do
-      opts[:value] = proc {}
-      expect { described_class.call(opts, proc {}) }.to raise_error Serega::SeregaError, "Option :value can not be used together with block"
     end
   end
 

@@ -14,7 +14,7 @@ end
 
 class UserSerializer < AppSerializer
   attribute :id
-  attribute(:name) { |user| [user.first_name, user.last_name].join(" ") }
+  attribute :name, value: proc { |user| [user.first_name, user.last_name].join(" ") }
 
   attribute :profile, serializer: "ProfileSerializer"
   attribute :roles, serializer: "RoleSerializer"
@@ -22,7 +22,7 @@ end
 
 class ProfileSerializer < AppSerializer
   attribute :id
-  attribute(:location) { |profile| profile.location || "Gotham City" }
+  attribute :location, value: proc { |profile| profile.location || "Gotham City" }
   attribute :followers_count
 end
 

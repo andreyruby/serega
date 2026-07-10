@@ -17,11 +17,11 @@ class Serega
           #
           # @return [void]
           #
-          def call(serializer_class, opts, block)
+          def call(serializer_class, opts)
             return unless opts.key?(:batch)
 
             check_opt_batch(opts, serializer_class)
-            check_usage_with_other_params(opts, block)
+            check_usage_with_other_params(opts)
           end
 
           private
@@ -72,22 +72,22 @@ class Serega
             Utils::CheckAllowedKeys.call(batch_opts, %i[use id], :batch)
           end
 
-          def check_usage_with_other_params(opts, block)
+          def check_usage_with_other_params(opts)
             batch = opts[:batch]
             use_id = batch.is_a?(Hash) && batch.key?(:id)
             use_multiple = batch.is_a?(Hash) && (Array(batch[:use]).size > 1)
-            value_added = opts.key?(:value) || block
+            value_added = opts.key?(:value)
 
             if use_multiple && use_id
               raise SeregaError, "Option `batch.id` should not be used with multiple loaders provided in `batch.use`"
             end
 
             if use_multiple && !value_added
-              raise SeregaError, "Attribute :value option or block should be provided when selecting multiple batch loaders"
+              raise SeregaError, "Attribute :value option should be provided when selecting multiple batch loaders"
             end
 
             if use_id && value_added
-              raise SeregaError, "Option `batch.id` should not be used when :value or block provided directly"
+              raise SeregaError, "Option `batch.id` should not be used when :value option provided directly"
             end
 
             raise SeregaError, "Option :batch can not be used together with option :method" if opts.key?(:method)

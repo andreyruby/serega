@@ -48,7 +48,7 @@ class Serega
       # @option opts [Boolean] :many Specifies has_many relationship. By default is detected via object.is_a?(Enumerable)
       # @option opts [Proc, #call] :value Custom block or callable to find attribute value
       # @option opts [Serega, Proc] :serializer Relationship serializer class. Use `proc { MySerializer }` if serializers have cross references
-      # @param block [Proc] Custom block to find attribute value
+      # @param block [Proc] Defines attributes of a nested anonymous serializer
       #
       def initialize(name:, opts: {}, block: nil)
         serializer_class = self.class.serializer_class
@@ -88,7 +88,7 @@ class Serega
       # @return [Object] Serialized attribute value
       #
       def value(object, context, batches: nil)
-        # Signatires should match allowed signatures in CheckOptValue and CheckBlock
+        # Signatures should match allowed signatures in CheckOptValue
         result =
           case value_block_signature
           when "1" then value_block.call(object)

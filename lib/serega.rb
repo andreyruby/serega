@@ -40,6 +40,7 @@ require_relative "serega/validations/utils/check_opt_is_hash"
 require_relative "serega/validations/utils/check_opt_is_string_or_symbol"
 require_relative "serega/validations/attribute/check_block"
 require_relative "serega/validations/attribute/check_name"
+require_relative "serega/validations/attribute/check_opt_base_serializer"
 require_relative "serega/validations/attribute/check_opt_const"
 require_relative "serega/validations/attribute/check_opt_hide"
 require_relative "serega/validations/attribute/check_opt_delegate"
@@ -168,7 +169,19 @@ class Serega
     #
     # @param name [Symbol] Attribute name. Attribute value will be found by executing `object.<name>`
     # @param opts [Hash] Options to serialize attribute
-    # @param block [Proc] Custom block to find attribute value. Accepts object and context.
+    # @param block [Proc] Defines attributes of a nested anonymous serializer.
+    #   The block is executed in the context of that serializer, so everything
+    #   available in a serializer class body can be used inside. The attribute
+    #   value (found by name/:method/:value/:delegate/:const/:batch as usual)
+    #   is serialized with this nested serializer. The nested serializer
+    #   inherits from the `:base_serializer` attribute option or
+    #   `config.base_serializer` (one of them is required).
+    #
+    # @example
+    #   attribute :statistics, method: :itself do
+    #     attribute :likes_count
+    #     attribute :comments_count
+    #   end
     #
     # @return [Serega::SeregaAttribute] Added attribute
     #

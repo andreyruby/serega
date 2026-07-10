@@ -24,6 +24,7 @@ class Serega
         default
         preload
         batch
+        base_serializer
       ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
@@ -32,7 +33,8 @@ class Serega
       max_cached_plans_per_serializer_count: 0,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
       hide_by_default: false,
-      batch_id_option: :id
+      batch_id_option: :id,
+      base_serializer: nil
     }.freeze
     # :nocov:
 
@@ -112,6 +114,27 @@ class Serega
       def delegate_default_allow_nil=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:delegate_default_allow_nil] = value
+      end
+
+      # Returns :base_serializer config option — the parent class for nested
+      # serializers defined with attribute blocks
+      # @return [Class, nil] Current :base_serializer config option
+      def base_serializer
+        opts.fetch(:base_serializer)
+      end
+
+      # Sets :base_serializer config option — the parent class for nested
+      # serializers defined with attribute blocks. Usually a settings-only
+      # serializer, e.g. `config.base_serializer = self` in an application
+      # base serializer class.
+      #
+      # @param value [Class] Serega or its subclass
+      #
+      # @return [Class] New :base_serializer config option
+      def base_serializer=(value)
+        raise SeregaError, "Must be a Serega subclass, #{value.inspect} provided" if !value.is_a?(Class) || !(value <= Serega)
+
+        opts[:base_serializer] = value
       end
 
       # Returns :hide_by_default config option

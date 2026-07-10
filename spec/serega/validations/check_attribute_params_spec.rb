@@ -14,6 +14,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckBlock).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckName).to receive(:call)
+    allow(Serega::SeregaValidations::Attribute::CheckOptBaseSerializer).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptConst).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptHide).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptBatch).to receive(:call)
@@ -35,13 +36,14 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
 
     expect(Serega::SeregaValidations::Attribute::CheckBlock).to have_received(:call).with(block)
     expect(Serega::SeregaValidations::Attribute::CheckName).to have_received(:call).with(name)
-    expect(Serega::SeregaValidations::Attribute::CheckOptConst).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptBaseSerializer).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptConst).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptHide).to have_received(:call).with(opts)
-    expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, opts, block)
-    expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, opts)
+    expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts)
-    expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts)
-    expect(Serega::SeregaValidations::Attribute::CheckOptValue).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptValue).to have_received(:call).with(opts)
   end
 
   it "skips checking name if names check is disabled" do
