@@ -85,6 +85,28 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#safe_auto_preload_methods" do
+    it "returns default value" do
+      expect(config.safe_auto_preload_methods).to eq %i[itself __getobj__]
+    end
+  end
+
+  describe "#safe_auto_preload_methods=" do
+    it "validates value is an Array of Symbols" do
+      expect { config.safe_auto_preload_methods = [] }.not_to raise_error
+      expect { config.safe_auto_preload_methods = %i[itself current_object] }.not_to raise_error
+      expect { config.safe_auto_preload_methods = :itself }
+        .to raise_error Serega::SeregaError, "Must be an Array of Symbols, :itself provided"
+      expect { config.safe_auto_preload_methods = ["itself"] }
+        .to raise_error Serega::SeregaError, "Must be an Array of Symbols, [\"itself\"] provided"
+    end
+
+    it "sets safe_auto_preload_methods option" do
+      config.safe_auto_preload_methods = %i[current_object]
+      expect(config.safe_auto_preload_methods).to eq %i[current_object]
+    end
+  end
+
   describe "#base_serializer" do
     it "returns default value" do
       expect(config.base_serializer).to be_nil

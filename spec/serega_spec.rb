@@ -21,6 +21,7 @@ RSpec.describe Serega do
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
         auto_preload
+        safe_auto_preload_methods
         hide_by_default
         batch_id_option
         base_serializer
@@ -50,6 +51,7 @@ RSpec.describe Serega do
       expect(config.max_cached_plans_per_serializer_count).to eq 0
       expect(config.hide_by_default).to be false
       expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
+      expect(config.safe_auto_preload_methods).to eq %i[itself __getobj__]
       expect(config.batch_id_option).to eq :id
       expect(config.base_serializer).to be_nil
     end
@@ -347,6 +349,29 @@ RSpec.describe Serega do
           attribute(:full_name) { "Kate Smith" }
         end
       }.to raise_error Serega::SeregaError, /use the `value: <callable>` option instead/
+    end
+
+    it "raises instead of recursing when subclassing a serializer that is its own base and has a block attribute" do
+      base = Class.new(described_class)
+      base.config.base_serializer = base
+      base.attribute(:meta, method: :itself) { attribute :version }
+
+      expect { Class.new(base) }
+        .to raise_error Serega::SeregaError, /cyclic definition/
+    end
+
+    it "serializes base serializer attributes together with attributes defined in the block" do
+      base = Class.new(Serega) { attribute :id }
+      user_serializer = Class.new(Serega) do
+        config.base_serializer = base
+
+        attribute :statistics, method: :itself do
+          attribute :likes_count
+        end
+      end
+
+      user = double(id: 1, likes_count: 10)
+      expect(user_serializer.to_h(user)).to eq(statistics: {id: 1, likes_count: 10})
     end
   end
 

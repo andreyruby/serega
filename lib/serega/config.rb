@@ -32,6 +32,7 @@ class Serega
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 0,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
+      safe_auto_preload_methods: %i[itself __getobj__].freeze,
       hide_by_default: false,
       batch_id_option: :id,
       base_serializer: nil
@@ -179,6 +180,30 @@ class Serega
           else
             raise SeregaError, "Must have boolean value or Hash, #{value.inspect} provided"
           end
+      end
+
+      # Returns :safe_auto_preload_methods config option — methods that are
+      # never auto-preloaded, as they return the serialized object itself and
+      # not an association
+      # @return [Array<Symbol>] Current :safe_auto_preload_methods config option
+      def safe_auto_preload_methods
+        opts.fetch(:safe_auto_preload_methods)
+      end
+
+      # Sets :safe_auto_preload_methods config option — methods that are
+      # never auto-preloaded. Applies to the `:method` option of attributes
+      # with a serializer (or a block) and to the `delegate: {to: ...}`
+      # option.
+      #
+      # @param value [Array<Symbol>] Method names to skip in auto-preload
+      #
+      # @return [Array<Symbol>] New :safe_auto_preload_methods config option
+      def safe_auto_preload_methods=(value)
+        unless value.is_a?(Array) && value.all?(Symbol)
+          raise SeregaError, "Must be an Array of Symbols, #{value.inspect} provided"
+        end
+
+        opts[:safe_auto_preload_methods] = value
       end
 
       # Returns :max_cached_plans_per_serializer_count config option

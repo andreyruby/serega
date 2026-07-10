@@ -201,8 +201,10 @@ no attributes raises an error explaining this.
 
 The nested serializer inherits everything the base serializer has — plugins,
 config, attributes, batch loaders, the preload handler — through the regular
-inheritance mechanism. Anything the base does not provide can be declared
-inside the block:
+inheritance mechanism. Any serializer can be used as a base: if it has
+attributes, they are serialized by the nested serializer too, together with
+the attributes defined in the block. Anything the base does not provide can
+be declared inside the block:
 
 ```ruby
 attribute :statistics, method: :itself do
@@ -485,6 +487,11 @@ class AppSerializer < Serega
   # to attributes with `:delegate` or `:serializer` option.
   # It helps to preload associations automatically, omitting N+1 requests.
   config.auto_preload = false
+
+  # Methods that are never auto-preloaded — they return the serialized object
+  # itself, not an association. Applies to the `:method` option of attributes
+  # with a serializer (or a block) and to the `delegate: {to: ...}` option.
+  config.safe_auto_preload_methods = [:itself, :__getobj__] # default
 
   # Hides attributes by default. Accepts:
   #   false         - nothing hidden (default)

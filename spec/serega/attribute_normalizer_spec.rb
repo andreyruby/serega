@@ -178,6 +178,25 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
           .to raise_error Serega::SeregaError, Serega::SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE
       end
 
+      it "allows a base serializer with its own block attributes when not cyclic" do
+        base_serializer.config.base_serializer = Class.new(Serega)
+        base_serializer.attribute(:meta, method: :itself) { attribute :version }
+
+        nested = nested_serializer_for(proc { attribute :name })
+
+        expect(nested.attributes.keys).to eq %i[meta name]
+      end
+
+      it "raises when the base serializer transitively contains the block attribute being built" do
+        cyclic_base = Class.new(Serega)
+        cyclic_base.config.base_serializer = cyclic_base
+        cyclic_base.attribute(:meta, method: :itself) { attribute :version }
+
+        expect { Class.new(cyclic_base) }.to raise_error Serega::SeregaError,
+          "Can not define a nested serializer for attribute :meta —" \
+          " its base serializer (transitively) contains this same block attribute (cyclic definition)"
+      end
+
       it "labels the nested serializer with current serializer and attribute names" do
         nested = nested_serializer_for(proc { attribute :name })
 
@@ -424,6 +443,27 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
       it "returns no preloads for attributes with :delegate option by default" do
         opts[:delegate] = {to: :bar}
+        expect(norm.preloads).to be_nil
+      end
+
+      it "skips auto preloads for safe methods (:itself, :__getobj__ by default)" do
+        serializer_class.config.auto_preload = true
+
+        opts.merge!(serializer: "bar", method: :itself)
+        expect(norm.preloads).to be_nil
+
+        opts.replace(serializer: "bar", method: :__getobj__)
+        expect(normalizer.new(name: :foo, opts: opts).preloads).to be_nil
+
+        opts.replace(delegate: {to: :itself})
+        expect(normalizer.new(name: :foo, opts: opts).preloads).to be_nil
+      end
+
+      it "skips auto preloads for methods listed in config.safe_auto_preload_methods" do
+        serializer_class.config.auto_preload = true
+        serializer_class.config.safe_auto_preload_methods = %i[current_object]
+
+        opts.merge!(serializer: "bar", method: :current_object)
         expect(norm.preloads).to be_nil
       end
     end

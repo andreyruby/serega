@@ -190,7 +190,28 @@ class Serega
       # the current serializer. Its `inspect` is overridden to
       # `CurrentSerializer.<attribute_name>` so error messages and debugging
       # output point back to the defining attribute.
+      # Guards against cyclic definitions before building: inheriting the base
+      # serializer copies its attributes, and copying a block attribute builds
+      # its nested serializer — meeting the same block again on this stack
+      # means the base serializer (transitively) contains the block attribute
+      # being built, so inheriting from it would recurse forever.
       def prepare_block_serializer(block)
+        blocks_in_progress = Thread.current[:serega_block_serializers_in_progress] ||= []
+        if blocks_in_progress.include?(block)
+          raise SeregaError,
+            "Can not define a nested serializer for attribute :#{name} —" \
+            " its base serializer (transitively) contains this same block attribute (cyclic definition)"
+        end
+
+        blocks_in_progress << block
+        begin
+          build_block_serializer(block)
+        ensure
+          blocks_in_progress.pop
+        end
+      end
+
+      def build_block_serializer(block)
         label = "#{self.class.serializer_class.inspect}.<#{name}>"
 
         serializer = Class.new(block_base_serializer) do
@@ -291,16 +312,25 @@ class Serega
 
         # Auto-preload the delegated association
         if config.auto_preload.fetch(:has_delegate_option) && init_opts[:delegate]
-          return init_opts[:delegate][:to]
+          return auto_preload_value(init_opts[:delegate][:to])
         end
 
         # Auto-preload the nested serializer's association
         # (a block defines a nested serializer, same as the :serializer option)
         if config.auto_preload.fetch(:has_serializer_option) && (init_opts[:serializer] || init_block) && !init_opts.key?(:batch)
-          return method_name
+          return auto_preload_value(method_name)
         end
 
         nil
+      end
+
+      # Skips auto-preloading of methods that return the serialized object
+      # itself (:itself, :__getobj__ by default) — they are not associations,
+      # so preloading them would fail or make no sense.
+      def auto_preload_value(preload_method)
+        return nil if config.safe_auto_preload_methods.include?(preload_method.to_sym)
+
+        preload_method
       end
     end
 

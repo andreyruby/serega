@@ -1,5 +1,48 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- **BREAKING**: an attribute block now defines a **nested serializer** instead
+  of the attribute value. The block is executed in the context of a new
+  serializer class, so everything available in a serializer class body can be
+  used inside. The attribute value (found by name or the
+  `:method`/`:value`/`:delegate`/`:const`/`:batch` option as usual) is
+  serialized with this nested serializer:
+
+  ```ruby
+  attribute :statistics, method: :itself do
+    attribute :likes_count
+    attribute :comments_count
+  end
+  ```
+
+  Defining the attribute value with a block is not supported anymore — use the
+  `value: <callable>` option instead. A block that accepts parameters or
+  defines no attributes raises an error explaining this. Since a block no
+  longer defines a value, it can be combined with any option except
+  `:serializer`.
+
+- New `config.base_serializer` option and `base_serializer:` attribute option.
+  A nested serializer defined with a block is a regular subclass of this base —
+  usually a settings-only serializer holding plugins and configuration
+  (`config.base_serializer = self` in an application base class). The
+  attribute option wins over config; an error is raised when none is chosen.
+  Any serializer can be used as a base — its attributes, if any, are
+  serialized too. Cyclic definitions (the base transitively containing the
+  same block attribute) raise an error instead of recursing forever.
+
+- Nested serializers defined with a block get a readable label in errors and
+  debug output: `UserSerializer.<statistics>`
+  (`when serializing 'comments_count' attribute in UserSerializer.<statistics>`).
+
+- New `config.safe_auto_preload_methods` option (default
+  `[:itself, :__getobj__]`) — methods that are never auto-preloaded, as they
+  return the serialized object itself and not an association. Applies to the
+  `:method` option of attributes with a serializer (or a block) and to the
+  `delegate: {to: ...}` option. Previously `method: :itself` with
+  `auto_preload` enabled generated a bogus `:itself` preload (and made
+  `hide_by_default = :auto` hide the attribute).
+
 ## [0.38.0] - 2026-07-09
 
 - Rework the core serialization engine. Serialization now runs **level by
