@@ -1090,6 +1090,22 @@ RSpec.describe Serega do
       expect(block_result).to eq [1, 2]
     end
 
+    it "serializes attribute with `batch: <loader_name>` short form using default value resolution" do
+      serializer_class.batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
+      serializer_class.attribute(:likes_count, batch: :stats)
+
+      user = double(id: 1)
+      expect(serializer_class.to_h(user)).to eq(likes_count: 10)
+    end
+
+    it "serializes attribute with String `batch: <loader_name>` short form" do
+      serializer_class.batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
+      serializer_class.attribute(:likes_count, batch: "stats")
+
+      user = double(id: 2)
+      expect(serializer_class.to_h(user)).to eq(likes_count: 20)
+    end
+
     it "checks only block or only value provided" do
       # no block and no value
       expect { serializer_class.batch(:foo) }

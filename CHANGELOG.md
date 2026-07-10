@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+- Fix `batch: <loader_name>` short form (Symbol or String) raising a TypeError
+  when the attribute had no explicit `:value` option — the default batch value
+  resolution now supports it:
+
+  ```ruby
+  batch(:stats) { |users| users.to_h { |user| [user.id, Stats.for(user)] } }
+
+  attribute :stats, batch: :stats # previously required a `value:` proc
+  ```
+
 - Plugin `:presenter` — new `presenter do ... end` DSL to define presenter
   methods without reopening the `Presenter` class. The block is evaluated
   inside the serializer's own `Presenter` class; multiple blocks accumulate.
