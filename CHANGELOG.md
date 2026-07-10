@@ -22,6 +22,34 @@
   longer defines a value, it can be combined with any option except
   `:serializer`.
 
+  **Migrating to 0.39:** move the body of every attribute block that computes
+  a value into the `value:` option, keeping the block parameters as-is:
+
+  ```ruby
+  # Before
+  attribute :full_name do |user|
+    "#{user.first_name} #{user.last_name}"
+  end
+  attribute :can_edit do |user, ctx|
+    ctx[:current_user].admin?
+  end
+
+  # After
+  attribute :full_name, value: proc { |user| "#{user.first_name} #{user.last_name}" }
+  attribute :can_edit, value: proc { |user, ctx| ctx[:current_user].admin? }
+  ```
+
+  To find such attributes, search for `do |` and `{ |` blocks in your
+  serializers, for example:
+
+  ```sh
+  grep -rnE "attribute.*(do|\{) \|" app/serializers
+  ```
+
+  There is no risk of missing one: every old-style block (with parameters or
+  without defined attributes) raises an error at serializer definition time,
+  so leftovers show up as soon as the serializer file is loaded.
+
 - New `config.base_serializer` option and `base_serializer:` attribute option.
   A nested serializer defined with a block is a regular subclass of this base —
   usually a settings-only serializer holding plugins and configuration
