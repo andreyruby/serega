@@ -78,8 +78,24 @@ class UserSerializer < Serega
   # serialized object
   attribute :first_name, method: :old_first_name
 
-  # Block is used to define attribute value
-  attribute(:first_name) { |user| user.profile&.first_name }
+  # Attribute blocks below require a base serializer for nested serializers.
+  # See the "Defining a nested serializer with a block" section below.
+  config.base_serializer = Serega
+
+  # Method :itself is handy to serialize the same object with a nested set of
+  # attributes. Note: with the :presenter plugin the serialized value will be
+  # the Presenter instance itself; use `method: :__getobj__` to serialize the
+  # original unwrapped object instead.
+  attribute :statistics, method: :itself do
+    attribute :likes_count
+    attribute :comments_count
+  end
+
+  # Block defines a nested serializer for the attribute value.
+  # See the "Defining a nested serializer with a block" section below.
+  attribute :author do
+    attribute :name
+  end
 
   # Option :value can be used with a Proc or callable object to define
   # attribute value
@@ -120,7 +136,7 @@ class UserSerializer < Serega
 
   # Option `:preload` allows to specify associations to preload to
   # attribute value
-  attribute(:email, preload: :emails) { |user| user.emails.find(&:verified?) }
+  attribute :email, preload: :emails, value: proc { |user| user.emails.find(&:verified?) }
 
   # Options `:if, :unless, :if_value and :unless_value` can be specified
   # when `:if` plugin is enabled. They hide the attribute key and value from the
@@ -138,6 +154,70 @@ class UserSerializer < Serega
   attribute :created_at, format: proc { |time| time.strftime("%Y-%m-%d")}
 end
 ```
+
+### Defining a nested serializer with a block
+
+An attribute block defines an anonymous nested serializer. The attribute value
+is found as usual — by the attribute name or the `:method`, `:value`,
+`:delegate`, `:batch` option — and is serialized by this nested serializer.
+
+The nested serializer is a regular subclass of an explicitly chosen **base
+serializer** — usually a settings-only serializer holding your plugins and
+configuration. Choose it with the `base_serializer:` attribute option or the
+`config.base_serializer` setting (attribute option wins; an error is raised
+when none is set):
+
+```ruby
+class AppSerializer < Serega
+  plugin :activerecord_preloads
+
+  # Nested serializers defined with attribute blocks will inherit from
+  # AppSerializer
+  config.base_serializer = self
+end
+
+class UserSerializer < AppSerializer
+  attribute :first_name
+
+  # Serializes user.author with a nested serializer inherited from AppSerializer
+  attribute :author do
+    attribute :name
+  end
+
+  # Serializes the user itself, exposing only counters
+  attribute :statistics, method: :itself, base_serializer: StatsBaseSerializer do
+    attribute :likes_count
+    attribute :comments_count
+  end
+end
+
+UserSerializer.to_h(user)
+# => {first_name: "Bruce", author: {name: "Bob"}, statistics: {likes_count: 10, comments_count: 3}}
+```
+
+The nested serializer inherits everything the base serializer has — plugins,
+config, attributes, batch loaders, the preload handler — through the regular
+inheritance mechanism. Any serializer can be used as a base: if it has
+attributes, they are serialized by the nested serializer too, together with
+the attributes defined in the block. Anything the base does not provide can
+be declared inside the block:
+
+```ruby
+attribute :statistics, method: :itself do
+  batch(:stats) { |users| Stats.for_users(users) } # => { user_id => stat }
+
+  attribute :likes_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id].likes }
+end
+```
+
+Things to keep in mind:
+
+- The nested serializer is created at the moment the attribute is defined.
+  Changes made to the base serializer later do not affect already defined
+  nested serializers.
+- Errors raised while serializing nested attributes are reported with a
+  readable serializer label, for example:
+  `(when serializing 'comments_count' attribute in UserSerializer.<statistics>)`.
 
 ### Serializing
 
@@ -303,9 +383,9 @@ current_user or any.
 
 ```ruby
 class UserSerializer < Serega
-  attribute(:email) do |user, ctx|
+  attribute :email, value: proc { |user, ctx|
     user.email if ctx[:current_user] == user
-  end
+  }
 end
 
 user = OpenStruct.new(email: 'email@example.com')
@@ -373,13 +453,20 @@ class UserSerializer < Serega
   # Summarize likes
   attribute :likes_count,
     batch: { use: [:facebook_likes, :twitter_likes] },
-    value: { |user, batch:| batch[:facebook_likes][user.id] + batch[:twitter_likes][user.id] }
+    value: proc { |user, batch:| batch[:facebook_likes][user.id] + batch[:twitter_likes][user.id] }
 end
 ```
 
 ## Configuration
 
 Here are the default options. Other options can be added with plugins.
+
+⚠️ Attributes are prepared at the moment they are defined. If a config option
+influences attributes (`auto_preload`, `hide_by_default`, `batch_id_option`,
+formatters, etc.), changing it affects only attributes defined **after** the
+change — including nested serializers defined with attribute blocks, which
+are created at their definition point. Configure the serializer before
+defining attributes.
 
 ```ruby
 class AppSerializer < Serega
@@ -403,6 +490,13 @@ class AppSerializer < Serega
   #   # Attribute values will be resolved as:
   #   proc { |object, batches:| batches[:counter][object.id] }
   config.batch_id_option = :id
+
+  # Parent class for nested serializers defined with attribute blocks.
+  # Usually a settings-only serializer, e.g. `config.base_serializer = self`
+  # in an application base serializer class. There is no default — an
+  # attribute block raises an error when no base serializer is chosen (it can
+  # also be provided per-attribute with the `base_serializer:` option).
+  config.base_serializer = self
 
   # Disable/enable validation of modifiers (`:with, :except, :only`)
   # By default, this validation is enabled.
@@ -970,7 +1064,8 @@ end
 ### Plugin :explicit_many_option
 
 The plugin requires adding a `:many` option when adding relationships
-(attributes with the `:serializer` option).
+(attributes with the `:serializer` option or a block defining a nested
+serializer).
 
 Adding this plugin makes it clearer to find if some relationship is an array or
 a single object.

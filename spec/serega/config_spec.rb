@@ -107,6 +107,31 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#base_serializer" do
+    it "returns default value" do
+      expect(config.base_serializer).to be_nil
+    end
+  end
+
+  describe "#base_serializer=" do
+    it "validates value is a Serega subclass" do
+      expect { config.base_serializer = Serega }.not_to raise_error
+      expect { config.base_serializer = Class.new(Serega) }.not_to raise_error
+      expect { config.base_serializer = nil }
+        .to raise_error Serega::SeregaError, "Must be a Serega subclass, nil provided"
+      expect { config.base_serializer = Object }
+        .to raise_error Serega::SeregaError, "Must be a Serega subclass, Object provided"
+      expect { config.base_serializer = "UserSerializer" }
+        .to raise_error Serega::SeregaError, "Must be a Serega subclass, \"UserSerializer\" provided"
+    end
+
+    it "sets base_serializer option" do
+      base = Class.new(Serega)
+      config.base_serializer = base
+      expect(config.base_serializer).to equal base
+    end
+  end
+
   describe "#auto_preload=" do
     it "validates value is boolean" do
       expect { config.auto_preload = false }.not_to raise_error

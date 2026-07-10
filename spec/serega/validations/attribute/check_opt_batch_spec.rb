@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
-  subject(:check) { described_class.call(serializer, opts, block) }
+  subject(:check) { described_class.call(serializer, opts) }
 
   let(:serializer) { Class.new(Serega) }
   let(:opts) { {} }
-  let(:block) { nil }
 
   before do
     serializer.batch_loaders[:test_loader] = proc {}
@@ -95,14 +94,9 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
       expect { check }.not_to raise_error
     end
 
-    it "allows multiple loaders with block" do
+    it "raises error when multiple loaders without :value option" do
       opts[:batch] = {use: [:loader1, :loader2]}
-      expect { described_class.call(serializer, opts, proc {}) }.not_to raise_error
-    end
-
-    it "raises error when multiple loaders without :value or block" do
-      opts[:batch] = {use: [:loader1, :loader2]}
-      expect { check }.to raise_error Serega::SeregaError, "Attribute :value option or block should be provided when selecting multiple batch loaders"
+      expect { check }.to raise_error Serega::SeregaError, "Attribute :value option should be provided when selecting multiple batch loaders"
     end
 
     it "raises error when multiple loaders with :id option" do
@@ -162,15 +156,10 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
 
     it "prohibits to use :id with :value option" do
       opts.merge!(batch: {use: :test_loader, id: :id}, value: proc {})
-      expect { check }.to raise_error Serega::SeregaError, "Option `batch.id` should not be used when :value or block provided directly"
+      expect { check }.to raise_error Serega::SeregaError, "Option `batch.id` should not be used when :value option provided directly"
     end
 
-    it "prohibits to use :id with block" do
-      opts[:batch] = {use: :test_loader, id: :id}
-      expect { described_class.call(serializer, opts, proc {}) }.to raise_error Serega::SeregaError, "Option `batch.id` should not be used when :value or block provided directly"
-    end
-
-    it "allows :id without :value or block" do
+    it "allows :id without :value option" do
       opts[:batch] = {use: :test_loader, id: :id}
       expect { check }.not_to raise_error
     end

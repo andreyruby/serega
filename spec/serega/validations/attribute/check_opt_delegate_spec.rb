@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaValidations::Attribute::CheckOptDelegate do
-  subject(:check) { described_class.call(opts, block) }
+  subject(:check) { described_class.call(opts) }
 
   let(:opts) { {} }
-  let(:block) { nil }
 
   it "allows no :delegate option" do
     opts[:foo] = nil
@@ -82,11 +81,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptDelegate do
     it "prohibits to use with :batch opt" do
       opts.merge!(delegate: {to: :user}, batch: :test_loader)
       expect { check }.to raise_error Serega::SeregaError, "Option :delegate can not be used together with option :batch"
-    end
-
-    it "prohibits to use with block" do
-      opts[:delegate] = {to: :user}
-      expect { described_class.call(opts, proc {}) }.to raise_error Serega::SeregaError, "Option :delegate can not be used together with block"
     end
   end
 end

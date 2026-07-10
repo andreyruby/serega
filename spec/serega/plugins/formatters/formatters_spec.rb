@@ -84,7 +84,7 @@ RSpec.describe Serega::SeregaPlugins::Formatters do
       end
 
       it "formats result of attribute value" do
-        attribute = serializer.attribute(:a, format: :reverse) { |obj| obj }
+        attribute = serializer.attribute(:a, format: :reverse, value: proc { |obj| obj })
 
         expect(attribute.value("123", nil)).to eq "321"
         expect(attribute.value([1, 2, 3], nil)).to eq [3, 2, 1]
@@ -97,14 +97,14 @@ RSpec.describe Serega::SeregaPlugins::Formatters do
       end
 
       it "returns regular block when no format option specified" do
-        attribute = serializer.attribute(:a) { |obj| obj }
+        attribute = serializer.attribute(:a, value: proc { |obj| obj })
         expect(attribute.value("123", nil)).to eq "123"
       end
     end
 
     context "with block formatter" do
       it "formats result of attribute value" do
-        attribute = serializer.attribute(:a, format: reverse) { |obj| obj }
+        attribute = serializer.attribute(:a, format: reverse, value: proc { |obj| obj })
 
         expect(attribute.value("123", nil)).to eq "321"
         expect(attribute.value([1, 2, 3], nil)).to eq [3, 2, 1]

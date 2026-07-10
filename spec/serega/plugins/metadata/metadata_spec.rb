@@ -12,6 +12,20 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
     end
   end
 
+  describe "block-defined nested serializer" do
+    it "does not receive meta attributes when the base serializer has none" do
+      base = Class.new(serializer) { plugin :metadata }
+      parent = Class.new(base)
+      parent.config.base_serializer = base
+      parent.meta_attribute(:version, const: "1.2.3")
+      parent.attribute(:profile, method: :itself) { attribute :bio }
+
+      nested = parent.attributes[:profile].serializer
+      expect(nested.plugin_used?(:metadata)).to be true
+      expect(nested.meta_attributes).to be_empty
+    end
+  end
+
   describe "inheritance" do
     let(:parent) { Class.new(serializer) { plugin :metadata } }
     let(:child) { Class.new(parent) }

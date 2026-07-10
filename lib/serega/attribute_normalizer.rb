@@ -133,8 +133,7 @@ class Serega
       end
 
       def prepare_value_block
-        init_block \
-          || init_opts[:value] \
+        init_opts[:value] \
           || prepare_const_block \
           || prepare_delegate_block \
           || prepare_batch_loader_block \
@@ -175,7 +174,73 @@ class Serega
       end
 
       def prepare_serializer
-        init_opts[:serializer]
+        block = init_block
+        return init_opts[:serializer] unless block
+
+        prepare_block_serializer(block)
+      end
+
+      # Builds an anonymous nested serializer from the attribute block.
+      #
+      # The serializer is a regular subclass of an explicitly chosen base —
+      # the :base_serializer attribute option or `config.base_serializer` —
+      # so it inherits everything the base has: plugins, config, attributes,
+      # batch loaders, the preload handler. Nested values can be any objects,
+      # which is why the base is chosen explicitly instead of inheriting from
+      # the current serializer. Its `inspect` is overridden to
+      # `CurrentSerializer.<attribute_name>` so error messages and debugging
+      # output point back to the defining attribute.
+      # Guards against cyclic definitions before building: inheriting the base
+      # serializer copies its attributes, and copying a block attribute builds
+      # its nested serializer — meeting the same block again while it is being
+      # built means the base serializer (transitively) contains the block
+      # attribute being built, so inheriting from it would recurse forever.
+      # The "in progress" mark is kept on the block itself — its identity is
+      # what defines the cycle (the same Proc object is shared by all copies
+      # of the attribute).
+      def prepare_block_serializer(block)
+        if block.instance_variable_defined?(:@serega_building_nested_serializer)
+          raise SeregaError,
+            "Can not define a nested serializer for attribute :#{name} —" \
+            " its base serializer #{block_base_serializer.inspect} (transitively)" \
+            " contains this same block attribute (cyclic definition)"
+        end
+
+        block.instance_variable_set(:@serega_building_nested_serializer, true)
+        begin
+          build_block_serializer(block)
+        ensure
+          block.remove_instance_variable(:@serega_building_nested_serializer)
+        end
+      end
+
+      def build_block_serializer(block)
+        label = "#{self.class.serializer_class.inspect}.<#{name}>"
+
+        serializer = Class.new(block_base_serializer) do
+          define_singleton_method(:inspect) { label }
+          define_singleton_method(:to_s) { label }
+          instance_exec(&block)
+        end
+
+        # An empty nested serializer means the block was intended as an
+        # old-style value block — raise the explaining error.
+        raise SeregaError, SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE if serializer.attributes.empty?
+
+        serializer
+      end
+
+      # Base class for the nested serializer. Must be chosen explicitly —
+      # usually a settings-only serializer holding plugins and configuration
+      # (e.g. `config.base_serializer = self` in an application base class).
+      def block_base_serializer
+        base_serializer = init_opts[:base_serializer] || config.base_serializer
+        return base_serializer if base_serializer
+
+        raise SeregaError,
+          "Attribute block requires a base serializer for the nested serializer." \
+          " Provide the `base_serializer: <SerializerClass>` attribute option" \
+          " or set `config.base_serializer = <SerializerClass>`"
       end
 
       def prepare_method_name
@@ -254,7 +319,8 @@ class Serega
         end
 
         # Auto-preload the nested serializer's association
-        if config.auto_preload.fetch(:has_serializer_option) && init_opts[:serializer] && !init_opts.key?(:batch)
+        # (a block defines a nested serializer, same as the :serializer option)
+        if config.auto_preload.fetch(:has_serializer_option) && (init_opts[:serializer] || init_block) && !init_opts.key?(:batch)
           return auto_preload_value(method_name)
         end
 

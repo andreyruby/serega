@@ -38,7 +38,7 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       def rev
       end
     end
-    serializer.attribute(:length) { |obj| obj.size }
+    serializer.attribute(:length, value: proc { |obj| obj.size })
 
     expect(serializer::Presenter.instance_methods).not_to include(:size)
     serializer.new.to_h("")
@@ -52,7 +52,7 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       end
     end
 
-    serializer.attribute(:rev) { |obj| obj.rev }
+    serializer.attribute(:rev, value: proc { |obj| obj.rev })
     result = serializer.new.to_h("123")
     expect(result).to eq({rev: "321"})
   end
@@ -73,8 +73,39 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     expect(serializer::Presenter.private_method_defined?(:__ctx__)).to be true
   end
 
+  it "gives a block-defined nested serializer the base serializer Presenter without current presenter methods" do
+    base = Class.new(Serega) { plugin :presenter }
+    current_serializer = Class.new(base)
+    current_serializer.config.base_serializer = base
+    current_serializer::Presenter.class_exec do
+      def full_name
+        "current serializer presenter method"
+      end
+    end
+
+    current_serializer.attribute(:profile, method: :itself) { attribute :bio }
+    nested = current_serializer.attributes[:profile].serializer
+
+    expect(current_serializer::Presenter.new("Kate", nil).full_name).to eq "current serializer presenter method"
+    expect(nested.plugin_used?(:presenter)).to be true
+    expect(nested::Presenter.method_defined?(:full_name)).to be false
+  end
+
+  it "wraps nested objects with the nested serializer Presenter" do
+    serializer.config.base_serializer = serializer
+    serializer.attribute(:profile, method: :itself) { attribute :bio }
+    nested = serializer.attributes[:profile].serializer
+    nested::Presenter.class_exec do
+      def bio
+        "bio of #{__getobj__}"
+      end
+    end
+
+    expect(serializer.new.to_h("Kate")).to eq(profile: {bio: "bio of Kate"})
+  end
+
   it "exposes context inside Presenter via __ctx__" do
-    serializer.attribute(:greeting) { |obj| obj.greeting }
+    serializer.attribute(:greeting, value: proc { |obj| obj.greeting })
     serializer::Presenter.class_exec do
       def greeting
         "Hello, #{__ctx__[:name]}!"
@@ -145,10 +176,11 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
   describe "skipping wrapping when Presenter has no custom methods" do
     it "does not wrap objects in Presenter" do
       received = nil
-      serializer.attribute(:name) { |obj|
+      value = proc { |obj|
         received = obj
         obj.to_s
       }
+      serializer.attribute(:name, value: value)
 
       serializer.new.to_h("raw object")
 
@@ -158,10 +190,11 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
 
     it "wraps objects when Presenter is reopened after first serialization" do
       received = nil
-      serializer.attribute(:name) { |obj|
+      value = proc { |obj|
         received = obj
         obj.to_s
       }
+      serializer.attribute(:name, value: value)
 
       serializer.new.to_h("raw object")
       expect(received).not_to be_a(SimpleDelegator)

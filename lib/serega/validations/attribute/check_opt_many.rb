@@ -12,28 +12,29 @@ class Serega
           # Checks attribute :many option
           #
           # @param opts [Hash] Attribute options
+          # @param block [nil, Proc] Attribute block
           #
           # @raise [SeregaError] SeregaError that option has invalid value
           #
           # @return [void]
           #
-          def call(opts)
+          def call(opts, block = nil)
             return unless opts.key?(:many)
 
-            check_many_option_makes_sence(opts)
+            check_many_option_makes_sence(opts, block)
             Utils::CheckOptIsBool.call(opts, :many)
           end
 
           private
 
-          def check_many_option_makes_sence(opts)
-            return if many_option_makes_sence?(opts)
+          def check_many_option_makes_sence(opts, block)
+            return if many_option_makes_sence?(opts, block)
 
-            raise SeregaError, "Option :many can be provided only together with :serializer or :batch option"
+            raise SeregaError, "Option :many can be provided only together with :serializer, :batch option or a block"
           end
 
-          def many_option_makes_sence?(opts)
-            opts[:serializer] || opts[:batch]
+          def many_option_makes_sence?(opts, block)
+            opts[:serializer] || opts[:batch] || block
           end
         end
       end

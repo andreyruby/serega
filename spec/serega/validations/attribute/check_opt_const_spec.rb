@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaValidations::Attribute::CheckOptConst do
-  subject(:check) { described_class.call(opts, block) }
+  subject(:check) { described_class.call(opts) }
 
   let(:opts) { {} }
-  let(:block) { nil }
 
   it "allows no :const option" do
     opts[:foo] = nil
@@ -45,11 +44,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptConst do
     it "prohibits to use with :batch opt" do
       opts.merge!(const: 1, batch: :test_loader)
       expect { check }.to raise_error Serega::SeregaError, "Option :const can not be used together with option :batch"
-    end
-
-    it "prohibits to use with block" do
-      opts[:const] = 1
-      expect { described_class.call(opts, proc {}) }.to raise_error Serega::SeregaError, "Option :const can not be used together with block"
     end
   end
 end
