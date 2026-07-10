@@ -19,6 +19,7 @@ end
 
 require_relative "serega/errors"
 require_relative "serega/helpers/serializer_class_helper"
+require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
@@ -254,7 +255,7 @@ class Serega
     # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
     # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Hash] Serialization result
     #
@@ -275,7 +276,7 @@ class Serega
     # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
     # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
     #
@@ -409,7 +410,7 @@ class Serega
     # @param object [Object] Serialized object
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Hash] Serialization result
     #
@@ -431,7 +432,7 @@ class Serega
     # @param object [Object] Serialized object
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable)`)
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Data] Serialization result
     #
@@ -472,7 +473,7 @@ class Serega
 
       opts[:context] ||= {}
       opts[:level_queue] = SeregaEngine::LevelQueue.new
-      opts[:many] = object.is_a?(Enumerable) unless opts.key?(:many)
+      opts[:many] = SeregaUtils::CollectionDetector.call(object) unless opts.key?(:many)
       opts[:plan] = plan
       opts
     end

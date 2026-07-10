@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- Fix Struct objects being serialized as collections. Structs are Enumerable,
+  so the automatic `:many` detection treated them as multiple objects and
+  serialized each member value separately. Now a Struct is serialized as a
+  single object and the `many: false` workaround is not needed anymore.
+
+- Fix Hash objects being serialized as collections of key-value pairs by
+  the automatic `:many` detection. Now a Hash is serialized as a single
+  object (define attribute values with the `value: <callable>` option, as
+  hashes usually have no reader methods).
+
 ## [0.38.0] - 2026-07-09
 
 - Rework the core serialization engine. Serialization now runs **level by

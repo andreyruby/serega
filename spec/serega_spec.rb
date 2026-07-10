@@ -448,6 +448,56 @@ RSpec.describe Serega do
       end
     end
 
+    context "with Struct object" do
+      let(:user_struct) { Struct.new(:first_name, :last_name) }
+      let(:user) { user_struct.new("FIRST_NAME", "LAST_NAME") }
+
+      it "serializes Struct as a single object, not as a collection" do
+        expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME"})
+      end
+
+      it "wraps Struct in an array when :many option is true" do
+        expect(user_serializer.to_h(user, many: true))
+          .to eq([{first_name: "FIRST_NAME", last_name: "LAST_NAME"}])
+      end
+    end
+
+    context "with Hash object" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :first_name, value: proc { |user| user[:first_name] }
+          attribute :last_name, value: proc { |user| user[:last_name] }
+        end
+      end
+      let(:user) { {first_name: "FIRST_NAME", last_name: "LAST_NAME"} }
+
+      it "serializes Hash as a single object, not as a collection of key-value pairs" do
+        expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME"})
+      end
+    end
+
+    context "with object with Struct relation" do
+      let(:statistics_struct) { Struct.new(:likes_count, :comments_count) }
+      let(:statistics_serializer) do
+        Class.new(Serega) do
+          attribute :likes_count
+          attribute :comments_count
+        end
+      end
+
+      let(:user) { double(statistics: statistics_struct.new(10, 20)) }
+      let(:user_serializer) do
+        child_serializer = statistics_serializer
+        Class.new(Serega) do
+          attribute :statistics, serializer: child_serializer
+        end
+      end
+
+      it "serializes Struct relation as a single object, not as a collection" do
+        expect(result).to eq({statistics: {likes_count: 10, comments_count: 20}})
+      end
+    end
+
     context "with object with relation" do
       let(:comment) { double(text: "TEXT") }
       let(:comment_serializer) do
