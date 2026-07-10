@@ -878,7 +878,7 @@ class UserSerializer < Serega
 end
 ```
 
-With the plugin, they move into a clean class:
+With the plugin, they move into a `presenter do ... end` block:
 
 ```ruby
 class UserSerializer < Serega
@@ -887,7 +887,7 @@ class UserSerializer < Serega
   attribute :name
   attribute :role
 
-  class Presenter
+  presenter do
     def name
       [first_name, last_name].compact.join(' ')
     end
@@ -898,6 +898,9 @@ class UserSerializer < Serega
   end
 end
 ```
+
+The block is evaluated inside the serializer's own `Presenter` class, so
+multiple `presenter` blocks accumulate.
 
 `Presenter` inherits from `SimpleDelegator`, so every method of the serialized
 object is available directly inside presenter methods. Any method not explicitly

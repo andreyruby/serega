@@ -27,7 +27,7 @@ class Serega
     #     attribute :name
     #     attribute :role
     #
-    #     class Presenter
+    #     presenter do
     #       def name
     #         [first_name, last_name].compact.join(' ') # first_name/last_name delegated to object
     #       end
@@ -37,6 +37,9 @@ class Serega
     #       end
     #     end
     #   end
+    #
+    # The `presenter do ... end` block is evaluated inside the serializer's own
+    # Presenter class, so multiple blocks accumulate.
     module Presenter
       # @return [Symbol] Plugin name
       def self.plugin_name
@@ -154,6 +157,25 @@ class Serega
       # @see Serega
       #
       module ClassMethods
+        #
+        # Defines presenter methods — evaluates the block inside the
+        # serializer's own Presenter class. Multiple blocks accumulate.
+        #
+        #   presenter do
+        #     def name
+        #       [first_name, last_name].compact.join(" ")
+        #     end
+        #   end
+        #
+        # @return [void]
+        #
+        def presenter(&block)
+          raise SeregaError, "Provide a block with presenter methods: `presenter do ... end`" unless block
+
+          self::Presenter.class_exec(&block)
+          nil
+        end
+
         #
         # Checks if the serializer's Presenter class (or an inherited one) was
         # extended with custom user code. When it was not, serialized objects

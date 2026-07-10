@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+- Plugin `:presenter` — new `presenter do ... end` DSL to define presenter
+  methods without reopening the `Presenter` class. The block is evaluated
+  inside the serializer's own `Presenter` class; multiple blocks accumulate.
+  The old way (`class UserSerializer::Presenter`) still works — it is the same
+  mechanism:
+
+  ```ruby
+  class UserSerializer < Serega
+    plugin :presenter
+
+    attribute :full_name
+
+    presenter do
+      def full_name
+        "#{first_name} #{last_name}"
+      end
+    end
+  end
+  ```
+
 - **BREAKING**: an attribute block now defines a **nested serializer** instead
   of the attribute value. The block is executed in the context of a new
   serializer class, so everything available in a serializer class body can be

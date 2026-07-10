@@ -619,7 +619,7 @@ class UserSerializer < Serega
   attribute :full_name
   attribute :role
 
-  class Presenter # < SimpleDelegator (inherits all methods of the wrapped object)
+  presenter do # evaluated inside Presenter < SimpleDelegator (inherits all methods of the wrapped object)
     def full_name
       "#{first_name} #{last_name}"
     end
