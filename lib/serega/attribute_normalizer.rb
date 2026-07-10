@@ -250,15 +250,24 @@ class Serega
 
         # Auto-preload the delegated association
         if config.auto_preload.fetch(:has_delegate_option) && init_opts[:delegate]
-          return init_opts[:delegate][:to]
+          return auto_preload_value(init_opts[:delegate][:to])
         end
 
         # Auto-preload the nested serializer's association
         if config.auto_preload.fetch(:has_serializer_option) && init_opts[:serializer] && !init_opts.key?(:batch)
-          return method_name
+          return auto_preload_value(method_name)
         end
 
         nil
+      end
+
+      # Skips auto-preloading of methods that return the serialized object
+      # itself (:itself by default) — they are not associations,
+      # so preloading them would fail or make no sense.
+      def auto_preload_value(preload_method)
+        return nil if config.auto_preload_excluded_methods.include?(preload_method.to_sym)
+
+        preload_method
       end
     end
 

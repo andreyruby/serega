@@ -21,6 +21,7 @@ RSpec.describe Serega do
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
         auto_preload
+        auto_preload_excluded_methods
         hide_by_default
         batch_id_option
       ]
@@ -48,6 +49,7 @@ RSpec.describe Serega do
       expect(config.max_cached_plans_per_serializer_count).to eq 0
       expect(config.hide_by_default).to be false
       expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
+      expect(config.auto_preload_excluded_methods).to eq %i[itself]
       expect(config.batch_id_option).to eq :id
     end
   end

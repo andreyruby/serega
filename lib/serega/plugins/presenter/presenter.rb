@@ -62,6 +62,11 @@ class Serega
         presenter_class = Class.new(Presenter)
         presenter_class.serializer_class = serializer_class
         serializer_class.const_set(:Presenter, presenter_class)
+
+        # The presenter's unwrap method returns the serialized object itself,
+        # not an association — it must never be auto-preloaded.
+        config = serializer_class.config
+        config.auto_preload_excluded_methods = config.auto_preload_excluded_methods | [:__getobj__]
       end
 
       # Presenter class

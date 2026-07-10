@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+- New `config.auto_preload_excluded_methods` option (default `[:itself]`) —
+  methods that are never auto-preloaded, as they return the serialized object
+  itself and not an association. Applies to the `:method` option of attributes
+  with a serializer and to the `delegate: {to: ...}` option. The `:presenter`
+  plugin appends its `:__getobj__` unwrap method to the list when loaded.
+  Previously `method: :itself` with `auto_preload` enabled generated a bogus
+  `:itself` preload (and made `hide_by_default = :auto` hide the attribute).
+
 - Fix Struct objects being serialized as collections. Structs are Enumerable,
   so the automatic `:many` detection treated them as multiple objects and
   serialized each member value separately. Now a Struct is serialized as a

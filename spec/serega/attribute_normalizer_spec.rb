@@ -97,6 +97,12 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       it "hides attribute with empty :batch use list (batch key present)" do
         expect(normalizer.new(name: :foo, opts: {batch: {use: []}}).hide).to be(true)
       end
+
+      it "does not hide attribute when auto preload resolves to an excluded method" do
+        serializer_class.config.auto_preload = true
+        norm = normalizer.new(name: :statistics, opts: {serializer: "bar", method: :itself})
+        expect(norm.hide).to be_nil
+      end
     end
 
     context "with hide_by_default: true" do
@@ -341,6 +347,39 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
       it "returns no preloads for attributes with :delegate option by default" do
         opts[:delegate] = {to: :bar}
+        expect(norm.preloads).to be_nil
+      end
+
+      it "skips auto preloads for excluded methods of attributes with serializer" do
+        serializer_class.config.auto_preload = {has_serializer_option: true}
+        opts[:serializer] = "bar"
+        opts[:method] = :itself
+        expect(norm.preloads).to be_nil
+      end
+
+      it "skips auto preloads for excluded methods of attributes with :delegate option" do
+        serializer_class.config.auto_preload = {has_delegate_option: true}
+        opts[:delegate] = {to: :itself}
+        expect(norm.preloads).to be_nil
+      end
+
+      it "skips auto preloads for custom auto_preload_excluded_methods" do
+        serializer_class.config.auto_preload = {has_serializer_option: true}
+        serializer_class.config.auto_preload_excluded_methods = %i[current_object]
+        opts[:serializer] = "bar"
+        opts[:method] = :current_object
+        expect(norm.preloads).to be_nil
+      end
+
+      it "skips auto preloads for excluded methods provided as String" do
+        serializer_class.config.auto_preload = true
+        opts[:delegate] = {to: "itself"}
+        expect(norm.preloads).to be_nil
+      end
+
+      it "returns no auto preloads for attributes with only :method option" do
+        serializer_class.config.auto_preload = true
+        opts[:method] = :profile
         expect(norm.preloads).to be_nil
       end
     end
