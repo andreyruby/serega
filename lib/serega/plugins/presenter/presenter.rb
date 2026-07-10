@@ -15,6 +15,12 @@ class Serega
     # - The original object is accessible via __getobj__ (standard SimpleDelegator API).
     # - The serialization context is accessible via the private method __ctx__.
     #
+    # Objects are wrapped in the Presenter only when the serializer's Presenter
+    # class (or an inherited one) was actually extended with custom methods —
+    # a bare `plugin :presenter` adds no wrapping overhead. The check is
+    # denormalized: `SerializerClass.custom_presenter?` is asked once per
+    # object serializer and the result is reused for the whole level.
+    #
     #   class UserSerializer < Serega
     #     plugin :presenter
     #
@@ -102,6 +108,44 @@ class Serega
         extend SeregaHelpers::SerializerClassHelper
         extend Forwardable
         include InstanceMethods
+
+        # Tracks whether user code was added to the Presenter class.
+        #
+        # These singleton methods are defined after the base class body above,
+        # so the plugin's own includes do not mark the base class as modified.
+        # Lazy delegators defined by #method_missing do mark the class, but
+        # they can appear only on presenters that are already wrapping.
+        class << self
+          #
+          # Checks if this Presenter class (or an inherited one) was extended
+          # with custom user code and therefore objects must be wrapped
+          #
+          # @return [Boolean] whether custom presenter methods were defined
+          #
+          def modified?
+            return true if defined?(@modified)
+            return false if equal?(Presenter) # the plugin's base class — the walk stops here
+
+            superclass.modified?
+          end
+
+          def include(*modules)
+            @modified = true
+            super
+          end
+
+          def prepend(*modules)
+            @modified = true
+            super
+          end
+
+          private
+
+          def method_added(name)
+            @modified = true
+            super
+          end
+        end
       end
 
       #
@@ -110,6 +154,17 @@ class Serega
       # @see Serega
       #
       module ClassMethods
+        #
+        # Checks if the serializer's Presenter class (or an inherited one) was
+        # extended with custom user code. When it was not, serialized objects
+        # are not wrapped in the Presenter at all.
+        #
+        # @return [Boolean] whether custom presenter methods were defined
+        #
+        def custom_presenter?
+          self::Presenter.modified?
+        end
+
         private
 
         def inherited(subclass)
@@ -127,14 +182,25 @@ class Serega
       # @see Serega::SeregaObjectSerializer
       #
       module SeregaObjectSerializerInstanceMethods
+        # The custom-presenter check is made once per object serializer here
+        # and its result is reused for every enqueued chunk of the level.
+        def initialize(**opts)
+          super
+          @wrap_in_presenter = self.class.serializer_class.custom_presenter?
+        end
+
         private
 
         #
         # Wraps each serialized object in Presenter.new(object, ctx) before it is
         # enqueued, so the whole level — value resolution and batch loaders alike —
-        # sees presenters.
+        # sees presenters. Objects are not wrapped when the Presenter class has
+        # no custom methods — such wrapping would only add overhead and break
+        # class checks (object.is_a?, Hash === object) without changing anything.
         #
         def enqueue(objects)
+          return super unless @wrap_in_presenter
+
           presenter = self.class.serializer_class::Presenter
           presenters = objects.map { |object| presenter.new(object, context) }
           super(presenters)

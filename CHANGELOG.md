@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Plugin `:presenter` no longer wraps serialized objects in the Presenter
+  class when it (and its inherited Presenter classes) has no custom methods —
+  a bare `plugin :presenter` in a base serializer now adds no per-object
+  overhead. Wrapping turns on automatically as soon as any method is defined
+  on (or any module is included into / prepended to) the Presenter class, even
+  after serialization already happened. New `SerializerClass.custom_presenter?`
+  method tells whether objects will be wrapped. Note for batch loaders and
+  value callables: they receive presenter-wrapped objects only when the
+  presenter is customized; with an untouched Presenter they now receive the
+  raw objects (so `object.is_a?`/`object.class` checks work again).
+
 - New `config.auto_preload_excluded_methods` option (default `[:itself]`) —
   methods that are never auto-preloaded, as they return the serialized object
   itself and not an association. Applies to the `:method` option of attributes

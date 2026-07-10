@@ -34,6 +34,10 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
   end
 
   it "adds presenter methods used in block after first serialization" do
+    serializer::Presenter.class_exec do
+      def rev
+      end
+    end
     serializer.attribute(:length) { |obj| obj.size }
 
     expect(serializer::Presenter.instance_methods).not_to include(:size)
@@ -123,11 +127,110 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
   end
 
   it "does not auto-preload the :__getobj__ unwrap method" do
+    # objects are wrapped (and __getobj__ is meaningful) only when the
+    # Presenter is customized
+    serializer::Presenter.class_exec do
+      def rating
+      end
+    end
+
     nested_serializer = Class.new(Serega) { attribute :id }
     serializer.config.auto_preload = true
     attribute = serializer.attribute :statistics, serializer: nested_serializer, method: :__getobj__
 
     expect(attribute.preloads).to be_nil
     expect(serializer.to_h(double(id: 1))).to eq(statistics: {id: 1})
+  end
+
+  describe "skipping wrapping when Presenter has no custom methods" do
+    it "does not wrap objects in Presenter" do
+      received = nil
+      serializer.attribute(:name) { |obj|
+        received = obj
+        obj.to_s
+      }
+
+      serializer.new.to_h("raw object")
+
+      expect(received).to eq "raw object"
+      expect(received).not_to be_a(SimpleDelegator)
+    end
+
+    it "wraps objects when Presenter is reopened after first serialization" do
+      received = nil
+      serializer.attribute(:name) { |obj|
+        received = obj
+        obj.to_s
+      }
+
+      serializer.new.to_h("raw object")
+      expect(received).not_to be_a(SimpleDelegator)
+
+      serializer::Presenter.class_exec do
+        def to_s
+          "presented"
+        end
+      end
+
+      result = serializer.new.to_h("raw object")
+      expect(received).to be_a(SimpleDelegator)
+      expect(result).to eq({name: "presented"})
+    end
+  end
+
+  describe ".custom_presenter?" do
+    it "returns false when Presenter was not modified" do
+      expect(serializer.custom_presenter?).to be false
+    end
+
+    it "returns true when a method was defined on Presenter" do
+      serializer::Presenter.class_exec do
+        def name
+        end
+      end
+
+      expect(serializer.custom_presenter?).to be true
+    end
+
+    it "returns true when a module was included into Presenter" do
+      presenter_methods = Module.new do
+        def name
+        end
+      end
+      serializer::Presenter.include(presenter_methods)
+
+      expect(serializer.custom_presenter?).to be true
+    end
+
+    it "returns true when a module was prepended to Presenter" do
+      presenter_methods = Module.new do
+        def name
+        end
+      end
+      serializer::Presenter.prepend(presenter_methods)
+
+      expect(serializer.custom_presenter?).to be true
+    end
+
+    it "returns true for a child of a serializer with modified Presenter" do
+      serializer::Presenter.class_exec do
+        def name
+        end
+      end
+
+      child = Class.new(serializer)
+      expect(child.custom_presenter?).to be true
+    end
+
+    it "stays false on the parent when only the child Presenter is modified" do
+      child = Class.new(serializer)
+      child::Presenter.class_exec do
+        def name
+        end
+      end
+
+      expect(child.custom_presenter?).to be true
+      expect(serializer.custom_presenter?).to be false
+    end
   end
 end
