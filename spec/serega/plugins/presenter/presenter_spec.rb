@@ -9,6 +9,19 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     it "adds serializer::Presenter class" do
       expect(serializer::Presenter).to be_a Class
     end
+
+    it "appends :__getobj__ to auto_preload_excluded_methods" do
+      expect(serializer.config.auto_preload_excluded_methods).to eq %i[itself __getobj__]
+    end
+
+    it "preserves customized auto_preload_excluded_methods when appending :__getobj__" do
+      custom_serializer = Class.new(Serega) do
+        config.auto_preload_excluded_methods = %i[current_object]
+        plugin :presenter
+      end
+
+      expect(custom_serializer.config.auto_preload_excluded_methods).to eq %i[current_object __getobj__]
+    end
   end
 
   describe ".inherited" do
@@ -107,5 +120,14 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
 
     result = base_serializer.new.to_h(struct)
     expect(result).to eq({nested: {rev: "321"}})
+  end
+
+  it "does not auto-preload the :__getobj__ unwrap method" do
+    nested_serializer = Class.new(Serega) { attribute :id }
+    serializer.config.auto_preload = true
+    attribute = serializer.attribute :statistics, serializer: nested_serializer, method: :__getobj__
+
+    expect(attribute.preloads).to be_nil
+    expect(serializer.to_h(double(id: 1))).to eq(statistics: {id: 1})
   end
 end

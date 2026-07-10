@@ -60,6 +60,28 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#auto_preload_excluded_methods" do
+    it "returns default value" do
+      expect(config.auto_preload_excluded_methods).to eq %i[itself]
+    end
+  end
+
+  describe "#auto_preload_excluded_methods=" do
+    it "validates value is an Array of Symbols" do
+      expect { config.auto_preload_excluded_methods = [] }.not_to raise_error
+      expect { config.auto_preload_excluded_methods = %i[itself current_object] }.not_to raise_error
+      expect { config.auto_preload_excluded_methods = :itself }
+        .to raise_error Serega::SeregaError, "Must be an Array of Symbols, :itself provided"
+      expect { config.auto_preload_excluded_methods = ["itself"] }
+        .to raise_error Serega::SeregaError, "Must be an Array of Symbols, [\"itself\"] provided"
+    end
+
+    it "sets auto_preload_excluded_methods option" do
+      config.auto_preload_excluded_methods = %i[current_object]
+      expect(config.auto_preload_excluded_methods).to eq %i[current_object]
+    end
+  end
+
   describe "#hide_by_default=" do
     it "validates value" do
       expect { config.hide_by_default = false }.not_to raise_error
