@@ -25,6 +25,7 @@ class Serega
         preload
         batch
         base_serializer
+        hash_access
       ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
@@ -35,7 +36,8 @@ class Serega
       auto_preload_excluded_methods: %i[itself].freeze,
       hide_by_default: false,
       batch_id_option: :id,
-      base_serializer: nil
+      base_serializer: nil,
+      hash_access: {default_mode: :symbol, default_allow_missing_key: false}
     }.freeze
     # :nocov:
 
@@ -205,6 +207,12 @@ class Serega
           end
       end
 
+      # Returns the hash_access config object
+      # @return [Serega::SeregaConfig::HashAccessConfig] hash_access config object
+      def hash_access
+        @hash_access ||= HashAccessConfig.new(opts.fetch(:hash_access))
+      end
+
       # Returns :max_cached_plans_per_serializer_count config option
       # @return [Boolean] Current :max_cached_plans_per_serializer_count config option
       def max_cached_plans_per_serializer_count
@@ -249,6 +257,57 @@ class Serega
       def batch_id_option=(value)
         raise SeregaError, "Must have Symbol value, #{value.inspect} provided" unless value.is_a?(Symbol)
         opts[:batch_id_option] = value
+      end
+    end
+
+    #
+    # Config for the `hash_access:` attribute option
+    #
+    class HashAccessConfig
+      # @return [Hash] hash_access config options
+      attr_reader :opts
+
+      #
+      # Initializes HashAccessConfig object
+      #
+      # @param opts [Hash] hash_access config options
+      #
+      # @return [Serega::SeregaConfig::HashAccessConfig]
+      #
+      def initialize(opts)
+        @opts = opts
+      end
+
+      # @return [Symbol] mode used by `hash_access: true` (default :symbol)
+      def default_mode
+        opts.fetch(:default_mode)
+      end
+
+      # Sets the mode used by `hash_access: true`
+      # @param value [Symbol] one of :symbol, :string
+      # @return [Symbol] new default mode
+      def default_mode=(value)
+        unless AttributeValueResolvers::HashAccessResolver::MODES.include?(value)
+          raise SeregaError, "Invalid hash_access default_mode #{value.inspect}. Allowed modes: :symbol, :string"
+        end
+
+        opts[:default_mode] = value
+      end
+
+      # @return [Boolean] allow_missing_key used when an attribute omits it
+      def default_allow_missing_key
+        opts.fetch(:default_allow_missing_key)
+      end
+
+      # Sets the allow_missing_key used when an attribute omits it
+      # @param value [Boolean]
+      # @return [Boolean] new default allow_missing_key
+      def default_allow_missing_key=(value)
+        unless value == true || value == false
+          raise SeregaError, "Invalid hash_access default_allow_missing_key #{value.inspect}. Must be a Boolean"
+        end
+
+        opts[:default_allow_missing_key] = value
       end
     end
 

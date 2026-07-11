@@ -159,6 +159,51 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#hash_access" do
+    it "returns the same memoized HashAccessConfig object" do
+      first = config.hash_access
+      second = config.hash_access
+      expect(first).to be second
+    end
+
+    it "returns default_mode :symbol" do
+      expect(config.hash_access.default_mode).to eq(:symbol)
+    end
+
+    it "returns default_allow_missing_key false" do
+      expect(config.hash_access.default_allow_missing_key).to be(false)
+    end
+  end
+
+  describe "#hash_access.default_mode=" do
+    it "sets default_mode" do
+      config.hash_access.default_mode = :string
+      expect(config.hash_access.default_mode).to eq(:string)
+    end
+
+    it "validates the mode" do
+      expect { config.hash_access.default_mode = :fetch }
+        .to raise_error Serega::SeregaError, "Invalid hash_access default_mode :fetch. Allowed modes: :symbol, :string"
+    end
+
+    it "does not allow `true` — true is only an attribute-level shorthand" do
+      expect { config.hash_access.default_mode = true }
+        .to raise_error Serega::SeregaError, "Invalid hash_access default_mode true. Allowed modes: :symbol, :string"
+    end
+  end
+
+  describe "#hash_access.default_allow_missing_key=" do
+    it "sets default_allow_missing_key" do
+      config.hash_access.default_allow_missing_key = true
+      expect(config.hash_access.default_allow_missing_key).to be(true)
+    end
+
+    it "validates the value is a Boolean" do
+      expect { config.hash_access.default_allow_missing_key = nil }
+        .to raise_error Serega::SeregaError, "Invalid hash_access default_allow_missing_key nil. Must be a Boolean"
+    end
+  end
+
   describe "#batch_id_option" do
     it "returns default value" do
       expect(config.batch_id_option).to eq(:id)

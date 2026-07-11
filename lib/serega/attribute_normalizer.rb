@@ -254,7 +254,10 @@ class Serega
       end
 
       def prepare_keyword_block
-        AttributeValueResolvers::KeywordResolver.get(method_name)
+        mode, allow_nil = hash_access
+        return AttributeValueResolvers::KeywordResolver.get(method_name) unless mode
+
+        AttributeValueResolvers::HashAccessResolver.get(method_name, mode, allow_nil)
       end
 
       def prepare_batch_loader_block
@@ -291,15 +294,68 @@ class Serega
         init_opts.fetch(:default) { many ? FROZEN_EMPTY_ARRAY : nil }
       end
 
+      # `delegate: {to_hash_access: ...}` configures hash access for the
+      # intermediate (:to) read, `delegate: {hash_access: ...}` for the
+      # final (:method) read. A step without its sub-option keeps a plain
+      # method read.
       def prepare_delegate_block
         delegate = init_opts[:delegate]
         return unless delegate
 
         key_method_name = delegate[:method] || method_name
         delegate_to = delegate[:to]
+        delegate_allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
 
-        allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
-        AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, allow_nil)
+        to_access = delegate[:to_hash_access]
+        final_access = delegate[:hash_access]
+        unless to_access || final_access
+          return AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, delegate_allow_nil)
+        end
+
+        to_step = delegate_to_step(delegate_to, to_access)
+        final_step = delegate_final_step(key_method_name, final_access)
+        AttributeValueResolvers::HashAccessDelegateResolver.get(to_step, final_step, delegate_allow_nil)
+      end
+
+      def delegate_to_step(delegate_to, access)
+        return AttributeValueResolvers::Keyword.new(delegate_to) unless access
+
+        mode, allow_missing_key = parse_hash_access(access)
+        AttributeValueResolvers::HashAccessKeyword.new(delegate_to, mode, allow_missing_key)
+      end
+
+      def delegate_final_step(key_method_name, access)
+        return AttributeValueResolvers::Keyword.new(key_method_name) unless access
+
+        mode, allow_missing_key = parse_hash_access(access)
+        AttributeValueResolvers::HashAccessKeyword.new(key_method_name, mode, allow_missing_key)
+      end
+
+      # Resolves the :hash_access option of plain attributes
+      # @return [Array(Symbol, Boolean), nil] mode and allow_missing_key pair,
+      #   or nil when hash access is not enabled for this attribute
+      def hash_access
+        option = init_opts[:hash_access]
+        return unless option
+
+        parse_hash_access(option)
+      end
+
+      # Resolves a :hash_access value (`true`, a Symbol mode or a
+      # `{mode:, allow_missing_key:}` Hash) into a mode and allow_missing_key
+      # pair. `true` and a Hash omitting :mode resolve to
+      # `config.hash_access.default_mode`.
+      def parse_hash_access(option)
+        defaults = config.hash_access
+
+        case option
+        when true then [defaults.default_mode, defaults.default_allow_missing_key]
+        when Symbol then [option, defaults.default_allow_missing_key]
+        else
+          mode = option.fetch(:mode) { defaults.default_mode }
+          allow_missing_key = option.fetch(:allow_missing_key) { defaults.default_allow_missing_key }
+          [mode, allow_missing_key]
+        end
       end
 
       # Prepares preloads for this attribute.

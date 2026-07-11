@@ -56,6 +56,81 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptDelegate do
       expect { check }.to raise_error Serega::SeregaError, "Invalid option :allow_nil => 123. Must have a boolean value"
     end
 
+    it "allows :to_hash_access option with boolean, Symbol mode or Hash form" do
+      expect { described_class.call({delegate: {to: :user, to_hash_access: true}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, to_hash_access: false}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, to_hash_access: :symbol}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, to_hash_access: :string}}) }.not_to raise_error
+      expect {
+        described_class.call({delegate: {to: :user, to_hash_access: {mode: :symbol, allow_missing_key: true}}})
+      }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, to_hash_access: {allow_missing_key: true}}}) }.not_to raise_error
+    end
+
+    it "raises error when :to_hash_access mode is unknown" do
+      opts[:delegate] = {to: :user, to_hash_access: :fetch}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid :hash_access mode :fetch. Allowed modes: :symbol, :string"
+    end
+
+    it "raises error when :to_hash_access Hash form has unknown keys" do
+      opts[:delegate] = {to: :user, to_hash_access: {mode: :symbol, foo: nil}}
+      expect { check }.to raise_error Serega::SeregaError, /foo/
+    end
+
+    it "raises error when :to_hash_access :allow_missing_key is not a boolean" do
+      opts[:delegate] = {to: :user, to_hash_access: {allow_missing_key: nil}}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid option :allow_missing_key => nil. Must have a boolean value"
+    end
+
+    it "raises error when :to_hash_access has an invalid type" do
+      value = "symbol"
+      opts[:delegate] = {to: :user, to_hash_access: value}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid delegate option :to_hash_access => #{value.inspect}." \
+        " It must be a Boolean, a Symbol mode (:symbol, :string)" \
+        " or a Hash with :mode and :allow_missing_key keys"
+    end
+
+    it "allows :hash_access option with boolean, Symbol mode or Hash form" do
+      expect { described_class.call({delegate: {to: :user, hash_access: true}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, hash_access: false}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, hash_access: :string}}) }.not_to raise_error
+      expect {
+        described_class.call({delegate: {to: :user, hash_access: {mode: :symbol, allow_missing_key: true}}})
+      }.not_to raise_error
+      expect {
+        described_class.call({delegate: {to: :user, hash_access: {allow_missing_key: true}}})
+      }.not_to raise_error
+    end
+
+    it "raises error when :hash_access mode is unknown" do
+      opts[:delegate] = {to: :user, hash_access: {mode: :fetch}}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid :hash_access mode :fetch. Allowed modes: :symbol, :string"
+    end
+
+    it "raises error when :hash_access Hash form has unknown keys" do
+      opts[:delegate] = {to: :user, hash_access: {mode: :symbol, foo: nil}}
+      expect { check }.to raise_error Serega::SeregaError, /foo/
+    end
+
+    it "raises error when :hash_access :allow_missing_key is not a boolean" do
+      opts[:delegate] = {to: :user, hash_access: {allow_missing_key: nil}}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid option :allow_missing_key => nil. Must have a boolean value"
+    end
+
+    it "raises error when :hash_access has an invalid type" do
+      value = "symbol"
+      opts[:delegate] = {to: :user, hash_access: value}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid delegate option :hash_access => #{value.inspect}." \
+        " It must be a Boolean, a Symbol mode (:symbol, :string)" \
+        " or a Hash with :mode and :allow_missing_key keys"
+    end
+
     it "raises error when unknown options are present" do
       opts[:delegate] = {to: :user, unknown: true}
       expect { check }.to raise_error Serega::SeregaError, /unknown/
