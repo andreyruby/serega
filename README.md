@@ -26,6 +26,7 @@ It has some great features:
   keeping the code dry
 - Conditional attributes - ([if][if] plugin)
 - Auto camelCase keys - [camel_case][camel_case] plugin
+- Serializing Hash records - [hash_access][hash_access] attribute option
 
 ## Installation
 
@@ -74,8 +75,9 @@ class UserSerializer < Serega
   # Regular attribute
   attribute :first_name
 
-  # Option :method specifies the method that must be called on the
-  # serialized object
+  # Option :method specifies the name used to read the attribute's value —
+  # a method called on the serialized object by default, or a Hash key when
+  # combined with :hash_access
   attribute :first_name, method: :old_first_name
 
   # Attribute blocks below require a base serializer for nested serializers.
@@ -494,6 +496,12 @@ class AppSerializer < Serega
   #   proc { |object, batches:| batches[:counter][object.id] }
   config.batch_id_option = :id
 
+  # Defaults for the `hash_access:` attribute option — `default_mode` is
+  # what `hash_access: true` (and a Hash form omitting :mode) resolves to.
+  # See "Serializing Hash records".
+  config.hash_access.default_mode = :symbol # the default
+  config.hash_access.default_allow_missing_key = false # the default
+
   # Parent class for nested serializers defined with attribute blocks.
   # Usually a settings-only serializer, e.g. `config.base_serializer = self`
   # in an application base serializer class. There is no default — an
@@ -663,6 +671,69 @@ end
 ```
 
 ---
+
+## Serializing Hash records
+
+(objects should implement `#[]`, `#fetch`, and `#key?` - Hash already has them)
+
+The `hash_access: <mode>` attribute option makes an attribute read its value from
+Hash keys instead of calling a method.
+
+Allowed `<mode>`:
+
+- `:symbol` reads record[:name]
+- `:string` reads record["name"]
+- `true` shorthand for `config.hash_access.default_mode` (`:symbol` by default)
+
+By default missing keys will raise `KeyError`.
+
+`config.hash_access.default_allow_missing_key = true` will change `KeyError`
+to return `nil` value instead. `config.hash_access.default_mode = <mode>`
+changes what `true` (and a Hash form omitting `:mode`) resolves to.
+
+```ruby
+class UserSerializer < Serega
+  config.hash_access.default_mode = :symbol             # the default
+  config.hash_access.default_allow_missing_key = true    # false by default
+
+  attribute :name, hash_access: true     # reads record[:name] (config.hash_access.default_mode)
+  attribute :name, hash_access: :symbol  # reads record[:name]
+  attribute :name, hash_access: :string  # reads record["name"]
+
+  # Use long form if you need to override `allow_missing_key`
+  attribute :name, hash_access: { allow_missing_key: false }
+  attribute :name, hash_access: { mode: :symbol, allow_missing_key: false }
+  attribute :name, hash_access: { mode: :string, allow_missing_key: false }
+end
+```
+
+Delegated attributes configure hash access **per step**:
+
+- `to_hash_access` configures reading `<mode>` for intermediate object
+- `hash_access` configures reading `<mode>` for final key
+
+```ruby
+# reads `record.address.city` (no hash access)
+attribute :city, delegate: { to: :address } # record.address.city
+
+# reads record.address[:city]
+attribute :city, delegate: { to: :address, hash_access: :symbol }
+
+# reads record[:address].city
+attribute :city, delegate: { to: :address, to_hash_access: :symbol }
+
+# reads record[:address][:city]
+attribute :city, delegate: { to: :address, to_hash_access: :symbol, hash_access: :symbol }
+
+# reads record["address"] and if exists returns record["address"][:city]
+attribute :city,
+  delegate: {
+    to: :address,
+    allow_nil: true,
+    to_hash_access: { mode: :string, allow_missing_key: true },
+    hash_access: { mode: :symbol, allow_missing_key: false }
+  }
+```
 
 ## Plugins
 
@@ -1128,6 +1199,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [context_metadata]: #plugin-context_metadata
 [depth_limit]: #plugin-depth_limit
 [formatters]: #plugin-formatters
+[hash_access]: #serializing-hash-records
 [metadata]: #plugin-metadata
 [preloads]: #preloads
 [presenter]: #plugin-presenter

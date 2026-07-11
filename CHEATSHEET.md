@@ -45,7 +45,7 @@ UserSerializer.to_h(OpenStruct.new(full_name: 'Felonious Gru'))
 
 A block defines a nested serializer for the attribute value. Requires a base
 serializer: the `base_serializer:` option or `config.base_serializer` (see
-[§6 Relations][relations], [§10 Configuration][configuration]).
+[§6 Relations][relations], [§11 Configuration][configuration]).
 
 ```ruby
 class UserSerializer < Serega
@@ -196,7 +196,7 @@ UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@exa
 UserSerializer.to_h(user, context: { current_user: nil }) # => {email: nil}
 ```
 
-Inside `Presenter` methods context is accessed via `__ctx__` (see [§16 Plugin `:presenter`][plugin-presenter]).
+Inside `Presenter` methods context is accessed via `__ctx__` (see [§17 Plugin `:presenter`][plugin-presenter]).
 
 ---
 
@@ -235,7 +235,7 @@ end
 ```
 
 DB preloads for `:serializer` attributes — see [§8 Preloads][preloads].
-Force `many:` on every relation — see [§18 Plugin `:explicit_many_option`][plugin-explicit_many_option].
+Force `many:` on every relation — see [§19 Plugin `:explicit_many_option`][plugin-explicit_many_option].
 
 ---
 
@@ -318,7 +318,7 @@ class AppSerializer < Serega
 end
 ```
 
-[§11 Plugin `:activerecord_preloads`][plugin-activerecord_preloads] registers one
+[§12 Plugin `:activerecord_preloads`][plugin-activerecord_preloads] registers one
 for you (built on `ActiveRecord::Associations::Preloader`), so enabling it loads
 every declared association once, automatically — no N+1. For another ORM — or for
 plain non-ORM objects — register your own handler: it can load data from any
@@ -352,7 +352,66 @@ option's target.
 
 ---
 
-## 9. Sharing Setup via Inheritance
+## 9. Serializing Hash Records (`hash_access:`)
+
+```ruby
+# objects should implement #[] and #fetch — Hash already does
+class UserSerializer < Serega
+  attribute :name, hash_access: true     # record[:name] — true is a shorthand for config.hash_access.default_mode (:symbol by default)
+  attribute :role, hash_access: :string  # record["role"]
+end
+
+UserSerializer.to_h({name: "Kate", "role" => "admin"})
+# => {name: "Kate", role: "admin"}
+```
+
+```ruby
+# allow_missing_key: nil instead of raising KeyError
+class UserSerializer < Serega
+  attribute :middle_name, hash_access: {allow_missing_key: true}
+  attribute :status, hash_access: {allow_missing_key: true}, default: "active"
+end
+
+UserSerializer.to_h({})
+# => {middle_name: nil, status: "active"}
+```
+
+```ruby
+# config.hash_access.default_mode / default_allow_missing_key set the defaults for every attribute
+class UserSerializer < Serega
+  config.hash_access.default_mode = :string
+  config.hash_access.default_allow_missing_key = true
+
+  attribute :middle_name, hash_access: true
+end
+
+UserSerializer.to_h({})
+# => {middle_name: nil}
+```
+
+```ruby
+# delegate: configures hash access per step —
+# to_hash_access: for the intermediate (:to) read, hash_access: for the final read
+class UserSerializer < Serega
+  attribute :city, delegate: {to: :address, hash_access: :symbol} # record.address[:city]
+end
+
+UserSerializer.to_h(OpenStruct.new(address: {city: "Paris"}))
+# => {city: "Paris"}
+```
+
+```ruby
+class UserSerializer < Serega
+  attribute :city, delegate: {to: :address, to_hash_access: :symbol, hash_access: :symbol} # record[:address][:city]
+end
+
+UserSerializer.to_h({address: {city: "Paris"}})
+# => {city: "Paris"}
+```
+
+---
+
+## 10. Sharing Setup via Inheritance
 
 A child serializer inherits attributes, config, and plugins from its parent.
 Define a base serializer once, then put shared setup there.
@@ -375,11 +434,11 @@ end
 
 Both `UserSerializer` and `PostSerializer` now have `:string_modifiers` enabled — no need to opt in twice.
 
-Set defaults in the base class — see [§10 Configuration][configuration], §11–§19 for plugins.
+Set defaults in the base class — see [§11 Configuration][configuration], §12–§20 for plugins.
 
 ---
 
-## 10. Configuration
+## 11. Configuration
 
 ### `config.auto_preload` — auto-add `:preload` from `:delegate` / `:serializer`
 
@@ -503,7 +562,7 @@ so repeated requests with the same modifiers skip rebuilding. Default `0`
 
 ---
 
-## 11. Plugin `:activerecord_preloads`
+## 12. Plugin `:activerecord_preloads`
 
 ```ruby
 class AppSerializer < Serega
@@ -517,7 +576,7 @@ Needs preloads declared on attributes — see [§8 Preloads][preloads].
 
 ---
 
-## 12. Plugin `:string_modifiers`
+## 13. Plugin `:string_modifiers`
 
 ```ruby
 class UserSerializer < Serega
@@ -538,7 +597,7 @@ Old Hash/Array forms still work. Great for `GET ?fields=...` query params.
 
 ---
 
-## 13. Plugin `:camel_case`
+## 14. Plugin `:camel_case`
 
 ```ruby
 class UserSerializer < Serega
@@ -557,7 +616,7 @@ Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
 
 ---
 
-## 14. Plugin `:if` / `:unless`
+## 15. Plugin `:if` / `:unless`
 
 | Option | Sees | Decides before |
 |------------------|------------------|----------------|
@@ -587,7 +646,7 @@ For unconditional hiding, prefer `hide: true` — see [§2 Attribute Options][at
 
 ---
 
-## 15. Plugin `:formatters`
+## 16. Plugin `:formatters`
 
 ```ruby
 class AppSerializer < Serega
@@ -611,7 +670,7 @@ UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, score: 87),
 
 ---
 
-## 16. Plugin `:presenter`
+## 17. Plugin `:presenter`
 
 ```ruby
 class UserSerializer < Serega
@@ -642,7 +701,7 @@ delegator on first call. `__ctx__` exposes the serialization context
 
 ---
 
-## 17. Plugin `:depth_limit`
+## 18. Plugin `:depth_limit`
 
 ```ruby
 class CommentSerializer < Serega
@@ -659,7 +718,7 @@ instantiate before business logic to fail fast on malicious `?with=` queries.
 
 ---
 
-## 18. Plugin `:explicit_many_option`
+## 19. Plugin `:explicit_many_option`
 
 ```ruby
 class AppSerializer < Serega
@@ -683,7 +742,7 @@ end
 
 ---
 
-## 19. Plugin `:root` / `:metadata` / `:context_metadata`
+## 20. Plugin `:root` / `:metadata` / `:context_metadata`
 
 ```ruby
 class UserSerializer < Serega
@@ -750,13 +809,13 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 
 ---
 
-## 20. Errors
+## 21. Errors
 
 | Error | When |
 |--------------------------------|------|
 | `Serega::SeregaError` | base class for everything |
 | `Serega::AttributeNotExist` | unknown attr in [§4][field-selection] — `#serializer`, `#attributes` |
-| `Serega::DepthLimitError` | [§17][plugin-depth_limit] breach — `#details` |
+| `Serega::DepthLimitError` | [§18][plugin-depth_limit] breach — `#details` |
 
 [attributes]: #2-attribute-options
 [field-selection]: #4-field-selection--only-except-with
@@ -764,8 +823,8 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 [relations]: #6-relations
 [batch-loading]: #7-batch-loading-n1
 [preloads]: #8-preloads
-[configuration]: #10-configuration
-[plugin-activerecord_preloads]: #11-plugin-activerecord_preloads
-[plugin-presenter]: #16-plugin-presenter
-[plugin-depth_limit]: #17-plugin-depth_limit
-[plugin-explicit_many_option]: #18-plugin-explicit_many_option
+[configuration]: #11-configuration
+[plugin-activerecord_preloads]: #12-plugin-activerecord_preloads
+[plugin-presenter]: #17-plugin-presenter
+[plugin-depth_limit]: #18-plugin-depth_limit
+[plugin-explicit_many_option]: #19-plugin-explicit_many_option

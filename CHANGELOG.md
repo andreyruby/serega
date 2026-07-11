@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- New `hash_access:` attribute option — reads attribute values from Hash
+  records instead of calling a method. See "Serializing Hash records" in
+  the README for modes, `allow_missing_key:`, and delegate support.
+
+  ```ruby
+  class UserSerializer < Serega
+    config.hash_access.default_mode = :symbol           # the default
+    config.hash_access.default_allow_missing_key = true # false by default
+
+    attribute :name, hash_access: true     # reads record[:name] (config.hash_access.default_mode)
+    attribute :name, hash_access: :symbol  # reads record[:name]
+    attribute :name, hash_access: :string  # reads record["name"]
+  end
+  ```
+
+  Delegated attributes configure hash access per step:
+
+  ```ruby
+  # reads record[:address][:city]
+  attribute :city, delegate: { to: :address, to_hash_access: :symbol, hash_access: :symbol }
+  ```
+
 ## [0.39.0] - 2026-07-11
 
 - Fix `batch: <loader_name>` short form (Symbol or String) raising a TypeError
