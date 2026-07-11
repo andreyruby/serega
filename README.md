@@ -26,6 +26,7 @@ It has some great features:
   keeping the code dry
 - Conditional attributes - ([if][if] plugin)
 - Auto camelCase keys - [camel_case][camel_case] plugin
+- Serializing Hash records - [hash_access][hash_access] attribute option
 
 ## Installation
 
@@ -494,6 +495,11 @@ class AppSerializer < Serega
   #   proc { |object, batches:| batches[:counter][object.id] }
   config.batch_id_option = :id
 
+  # Defaults for the `hash_access:` attribute option (used by
+  # `hash_access: true` and by forms that omit a sub-option).
+  # See "Serializing Hash records".
+  config.hash_access = {default_mode: :symbol, default_allow_nil: false}
+
   # Parent class for nested serializers defined with attribute blocks.
   # Usually a settings-only serializer, e.g. `config.base_serializer = self`
   # in an application base serializer class. There is no default — an
@@ -663,6 +669,108 @@ end
 ```
 
 ---
+
+## Serializing Hash records
+
+By default attribute values are found by calling methods on serialized
+objects. The `hash_access:` attribute option makes an attribute read its value
+from Hash records — parsed JSON, API payloads, aggregation results — with the
+`[]` accessor. Non-Hash objects keep working via methods at the same time
+(every value read checks `object.is_a?(Hash)` at runtime, so mixed collections
+work). Attributes without the option are not affected at all.
+
+```ruby
+class UserSerializer < Serega
+  attribute :name, hash_access: true     # config defaults, hash.fetch(:name)
+  attribute :role, hash_access: :string  # hash.fetch("role")
+  attribute :city, hash_access: :auto    # symbol key -> string key -> method
+  attribute :middle_name, hash_access: {mode: :symbol, allow_nil: true} # missing key -> nil
+end
+
+UserSerializer.to_h({name: "Kate", "role" => "admin", city: "Kyiv", middle_name: nil})
+```
+
+The option accepts:
+
+- `true`/`false` — enable with `config.hash_access` defaults / do nothing;
+- a Symbol mode — `:symbol`, `:string` or `:auto`;
+- a Hash — `{mode: <Symbol>, allow_nil: <Boolean>}`, missing sub-options are
+  filled from config defaults.
+
+Config defaults used by `hash_access: true` (and by forms that omit a
+sub-option):
+
+```ruby
+config.hash_access = {default_mode: :symbol, default_allow_nil: false}
+```
+
+Modes (for non-Hash records every mode calls the public method):
+
+| Mode | Hash record |
+|------|-------------|
+| `:symbol` | `hash.fetch(:name)` |
+| `:string` | `hash.fetch("name")` |
+| `:auto` | first existing accessor: symbol key → string key → method |
+
+`:auto` costs up to two extra `key?` checks per value, so explicit modes are
+preferable for hot paths — it is for prototyping, data with inconsistent key
+types, and mixed hash/object data.
+
+Missing keys are strict by default: a misspelled attribute name raises a
+`SeregaError` (with the usual label naming the attribute and serializer)
+instead of silently emitting `nil`. Set `allow_nil: true` for legitimately
+optional keys — a missing key resolves to nil (combine with the `:default`
+attribute option to replace that nil). In `:auto` mode `allow_nil: true` also
+covers non-Hash objects: an object that does not respond to the method
+resolves to nil too, so mixed hash/object data with optional fields
+serializes uniformly:
+
+```ruby
+attribute :middle_name, hash_access: {allow_nil: true} # sparse JSON field
+attribute :status, hash_access: {allow_nil: true}, default: "active"
+attribute :bio, hash_access: {mode: :auto, allow_nil: true} # optional on hashes AND objects
+```
+
+Delegated attributes configure hash access **per step** with delegate
+sub-options instead of the attribute-level option (combining `hash_access:`
+with `:delegate` raises an error):
+
+- `delegate: {hash_access: ...}` — the intermediate (`:to`) read; accepts
+  `true`/`false` or a Symbol mode. It takes no `allow_nil` form — the
+  delegate's own `allow_nil` option covers the intermediate object being nil
+  or its key missing.
+- `delegate: {method_hash_access: ...}` — the final (`:method`) read; accepts
+  the same forms as the attribute option, including `{mode:, allow_nil:}`.
+
+A step without its sub-option keeps the plain method read, and every
+hash-access step still re-checks its object at runtime — so mixed chains work
+in any combination:
+
+```ruby
+# hash all the way: {address: {city: "Kyiv"}}
+attribute :city, delegate: {to: :address, hash_access: true, method_hash_access: true}
+
+# string outer key, symbol inner key: {"address" => {city: "Kyiv"}}
+attribute :city, delegate: {to: :address, hash_access: :string, method_hash_access: :symbol}
+
+# hash holding objects: {address: <Address>} — final read is a plain method
+attribute :city, delegate: {to: :address, hash_access: :symbol}
+
+# object holding hashes: user.address -> Hash
+attribute :city, delegate: {to: :address, method_hash_access: :symbol}
+
+# optional intermediate key, optional final key
+attribute :city, delegate: {to: :address, allow_nil: true, hash_access: true,
+                            method_hash_access: {allow_nil: true}}
+```
+
+Options that do not read the object by attribute name (`:const`, `:value`,
+`:batch`) can not be combined with `hash_access:`. Hash records taking part
+in batch loading need the batch id extracted with an explicit `value:` proc
+(`config.batch_id_option` calls a method). Preloading (`auto_preload`, the
+`activerecord_preloads` plugin) is meaningless for hash records; the
+`presenter` plugin wraps records in a delegator that is not a Hash, so hash
+access falls back to method calls — do not combine them.
 
 ## Plugins
 
@@ -1128,6 +1236,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [context_metadata]: #plugin-context_metadata
 [depth_limit]: #plugin-depth_limit
 [formatters]: #plugin-formatters
+[hash_access]: #serializing-hash-records
 [metadata]: #plugin-metadata
 [preloads]: #preloads
 [presenter]: #plugin-presenter

@@ -25,6 +25,7 @@ class Serega
         preload
         batch
         base_serializer
+        hash_access
       ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
@@ -35,7 +36,8 @@ class Serega
       auto_preload_excluded_methods: %i[itself].freeze,
       hide_by_default: false,
       batch_id_option: :id,
-      base_serializer: nil
+      base_serializer: nil,
+      hash_access: {default_mode: :symbol, default_allow_nil: false}
     }.freeze
     # :nocov:
 
@@ -203,6 +205,36 @@ class Serega
           else
             raise SeregaError, "Must have boolean value or Hash, #{value.inspect} provided"
           end
+      end
+
+      # Returns hash_access option — defaults for attributes with the
+      # `hash_access: true` option (and for forms that omit a sub-option)
+      # @return [Hash] hash_access option
+      def hash_access
+        opts.fetch(:hash_access)
+      end
+
+      # Validates and sets hash_access option defaults
+      # @param value [Hash] hash with :default_mode and/or :default_allow_nil keys
+      # @return [Hash] New hash_access option
+      def hash_access=(value)
+        raise SeregaError, "Must have Hash value, #{value.inspect} provided" unless value.is_a?(Hash)
+
+        SeregaValidations::Utils::CheckAllowedKeys.call(value, %i[default_mode default_allow_nil], "hash_access")
+
+        current = opts.fetch(:hash_access)
+        mode = value.fetch(:default_mode) { current.fetch(:default_mode) }
+        allow_nil = value.fetch(:default_allow_nil) { current.fetch(:default_allow_nil) }
+
+        unless AttributeValueResolvers::HashAccessResolver::MODES.include?(mode)
+          raise SeregaError, "Invalid hash_access :default_mode #{mode.inspect}. Allowed modes: :symbol, :string, :auto"
+        end
+
+        unless allow_nil == true || allow_nil == false
+          raise SeregaError, "Invalid hash_access :default_allow_nil #{allow_nil.inspect}. Must be a Boolean"
+        end
+
+        opts[:hash_access] = {default_mode: mode, default_allow_nil: allow_nil}
       end
 
       # Returns :max_cached_plans_per_serializer_count config option

@@ -254,7 +254,10 @@ class Serega
       end
 
       def prepare_keyword_block
-        AttributeValueResolvers::KeywordResolver.get(method_name)
+        mode, allow_nil = hash_access
+        return AttributeValueResolvers::KeywordResolver.get(method_name) unless mode
+
+        AttributeValueResolvers::HashAccessResolver.get(method_name, mode, allow_nil)
       end
 
       def prepare_batch_loader_block
@@ -291,15 +294,72 @@ class Serega
         init_opts.fetch(:default) { many ? FROZEN_EMPTY_ARRAY : nil }
       end
 
+      # Delegate steps can be configured to read Hash records independently:
+      # the `delegate: {hash_access: ...}` sub-option covers the intermediate
+      # (:to) read and `delegate: {method_hash_access: ...}` covers the final
+      # read. Steps without hash access keep plain method reads. The delegate
+      # :allow_nil option covers only the intermediate object being nil (or
+      # its key missing) — the final read leniency, when needed, comes from
+      # the `method_hash_access: {allow_nil: true}` form.
       def prepare_delegate_block
         delegate = init_opts[:delegate]
         return unless delegate
 
         key_method_name = delegate[:method] || method_name
         delegate_to = delegate[:to]
+        delegate_allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
 
-        allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
-        AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, allow_nil)
+        to_access = delegate[:hash_access]
+        final_access = delegate[:method_hash_access]
+        unless to_access || final_access
+          return AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, delegate_allow_nil)
+        end
+
+        to_step = delegate_to_step(delegate_to, to_access, delegate_allow_nil)
+        final_step = delegate_final_step(key_method_name, final_access)
+        AttributeValueResolvers::HashAccessDelegateResolver.get(to_step, final_step, delegate_allow_nil)
+      end
+
+      def delegate_to_step(delegate_to, access, delegate_allow_nil)
+        return AttributeValueResolvers::Keyword.new(delegate_to) unless access
+
+        mode = (access == true) ? config.hash_access.fetch(:default_mode) : access
+        AttributeValueResolvers::HashAccessKeyword.new(delegate_to, mode, delegate_allow_nil)
+      end
+
+      def delegate_final_step(key_method_name, access)
+        return AttributeValueResolvers::Keyword.new(key_method_name) unless access
+
+        mode, allow_nil = parse_hash_access(access)
+        AttributeValueResolvers::HashAccessKeyword.new(key_method_name, mode, allow_nil)
+      end
+
+      # Prepares the :hash_access option of plain attributes — how the
+      # attribute value is read from Hash records.
+      #
+      # @return [Array(Symbol, Boolean), nil] mode and allow_nil pair,
+      #   or nil when hash access is not enabled for this attribute
+      def hash_access
+        option = init_opts[:hash_access]
+        return unless option
+
+        parse_hash_access(option)
+      end
+
+      # Resolves a :hash_access option value (`true`, a Symbol mode or a
+      # `{mode:, allow_nil:}` Hash) into a mode and allow_nil pair. Missing
+      # sub-options are filled from `config.hash_access` defaults.
+      def parse_hash_access(option)
+        defaults = config.hash_access
+
+        case option
+        when true then [defaults.fetch(:default_mode), defaults.fetch(:default_allow_nil)]
+        when Symbol then [option, defaults.fetch(:default_allow_nil)]
+        else
+          mode = option.fetch(:mode) { defaults.fetch(:default_mode) }
+          allow_nil = option.fetch(:allow_nil) { defaults.fetch(:default_allow_nil) }
+          [mode, allow_nil]
+        end
       end
 
       # Prepares preloads for this attribute.

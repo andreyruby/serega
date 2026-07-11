@@ -56,6 +56,60 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptDelegate do
       expect { check }.to raise_error Serega::SeregaError, "Invalid option :allow_nil => 123. Must have a boolean value"
     end
 
+    it "allows :hash_access option with boolean or Symbol mode" do
+      expect { described_class.call({delegate: {to: :user, hash_access: true}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, hash_access: false}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, hash_access: :symbol}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, hash_access: :string}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, hash_access: :auto}}) }.not_to raise_error
+    end
+
+    it "raises error when :hash_access mode is unknown" do
+      opts[:delegate] = {to: :user, hash_access: :fetch}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid :hash_access mode :fetch. Allowed modes: :symbol, :string, :auto"
+    end
+
+    it "raises error when :hash_access is not a boolean or Symbol (no Hash form — leniency comes from :allow_nil)" do
+      opts[:delegate] = {to: :user, hash_access: {mode: :symbol}}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid delegate option :hash_access => {mode: :symbol}." \
+        " It must be a Boolean or a Symbol mode (:symbol, :string, :auto)"
+    end
+
+    it "allows :method_hash_access option with boolean, Symbol mode or Hash form" do
+      expect { described_class.call({delegate: {to: :user, method_hash_access: true}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, method_hash_access: false}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, method_hash_access: :string}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, method_hash_access: {mode: :symbol, allow_nil: true}}}) }.not_to raise_error
+      expect { described_class.call({delegate: {to: :user, method_hash_access: {allow_nil: true}}}) }.not_to raise_error
+    end
+
+    it "raises error when :method_hash_access mode is unknown" do
+      opts[:delegate] = {to: :user, method_hash_access: {mode: :fetch}}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid :hash_access mode :fetch. Allowed modes: :symbol, :string, :auto"
+    end
+
+    it "raises error when :method_hash_access Hash form has unknown keys" do
+      opts[:delegate] = {to: :user, method_hash_access: {mode: :symbol, foo: nil}}
+      expect { check }.to raise_error Serega::SeregaError, /foo/
+    end
+
+    it "raises error when :method_hash_access :allow_nil is not a boolean" do
+      opts[:delegate] = {to: :user, method_hash_access: {allow_nil: nil}}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid option :allow_nil => nil. Must have a boolean value"
+    end
+
+    it "raises error when :method_hash_access has an invalid type" do
+      opts[:delegate] = {to: :user, method_hash_access: "symbol"}
+      expect { check }.to raise_error Serega::SeregaError,
+        "Invalid delegate option :method_hash_access => \"symbol\"." \
+        " It must be a Boolean, a Symbol mode (:symbol, :string, :auto)" \
+        " or a Hash with :mode and :allow_nil keys"
+    end
+
     it "raises error when unknown options are present" do
       opts[:delegate] = {to: :user, unknown: true}
       expect { check }.to raise_error Serega::SeregaError, /unknown/

@@ -25,6 +25,7 @@ RSpec.describe Serega do
         hide_by_default
         batch_id_option
         base_serializer
+        hash_access
       ]
 
       expect(config.plugins).to eq []
@@ -43,6 +44,7 @@ RSpec.describe Serega do
           preload
           batch
           base_serializer
+          hash_access
         ]
       )
       expect(config.check_attribute_name).to be true
@@ -54,6 +56,7 @@ RSpec.describe Serega do
       expect(config.auto_preload_excluded_methods).to eq %i[itself]
       expect(config.batch_id_option).to eq :id
       expect(config.base_serializer).to be_nil
+      expect(config.hash_access).to eq(default_mode: :symbol, default_allow_nil: false)
     end
   end
 

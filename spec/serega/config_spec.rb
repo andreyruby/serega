@@ -159,6 +159,44 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#hash_access" do
+    it "returns default value" do
+      expect(config.hash_access).to eq(default_mode: :symbol, default_allow_nil: false)
+    end
+  end
+
+  describe "#hash_access=" do
+    it "validates value is a Hash with allowed keys" do
+      expect { config.hash_access = :symbol }
+        .to raise_error Serega::SeregaError, "Must have Hash value, :symbol provided"
+
+      expect { config.hash_access = {mode: :symbol} }
+        .to raise_error Serega::SeregaError,
+          "Invalid hash_access option :mode. Allowed options are: :default_allow_nil, :default_mode"
+    end
+
+    it "validates :default_mode value" do
+      expect { config.hash_access = {default_mode: :fetch} }
+        .to raise_error Serega::SeregaError, "Invalid hash_access :default_mode :fetch. Allowed modes: :symbol, :string, :auto"
+    end
+
+    it "validates :default_allow_nil value" do
+      expect { config.hash_access = {default_allow_nil: nil} }
+        .to raise_error Serega::SeregaError, "Invalid hash_access :default_allow_nil nil. Must be a Boolean"
+    end
+
+    it "sets hash_access option keeping omitted keys" do
+      config.hash_access = {default_mode: :string}
+      expect(config.hash_access).to eq(default_mode: :string, default_allow_nil: false)
+
+      config.hash_access = {default_allow_nil: true}
+      expect(config.hash_access).to eq(default_mode: :string, default_allow_nil: true)
+
+      config.hash_access = {default_mode: :auto, default_allow_nil: false}
+      expect(config.hash_access).to eq(default_mode: :auto, default_allow_nil: false)
+    end
+  end
+
   describe "#batch_id_option" do
     it "returns default value" do
       expect(config.batch_id_option).to eq(:id)

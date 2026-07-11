@@ -62,6 +62,7 @@ class Serega
           Attribute::CheckOptBaseSerializer.call(opts, block)
           Attribute::CheckOptConst.call(opts)
           Attribute::CheckOptDelegate.call(opts)
+          Attribute::CheckOptHashAccess.call(opts)
           Attribute::CheckOptHide.call(opts)
           Attribute::CheckOptMethod.call(opts)
           Attribute::CheckOptMany.call(opts, block)

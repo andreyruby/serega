@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- New `hash_access:` attribute option — serializes Hash records (parsed JSON,
+  API payloads, aggregation results). Attributes with the option read values
+  from Hash records with the `[]` accessor and keep working with regular
+  objects at the same time; attributes without it are not affected at all.
+  Accepts `true` (use `config.hash_access` defaults), a Symbol mode
+  (`:symbol`, `:string`, `:auto`) or a Hash `{mode:, allow_nil:}`. Missing
+  keys raise a SeregaError unless `allow_nil: true` is set; in `:auto` mode
+  `allow_nil: true` also resolves non-Hash objects missing the method to nil,
+  so mixed hash/object data with optional fields serializes uniformly. It can
+  not be combined with `:const`, `:value` or `:batch` options.
+
+  Delegated attributes configure hash access per step with delegate
+  sub-options instead (attribute-level `hash_access:` with `:delegate`
+  raises): `delegate: {hash_access: ...}` covers the intermediate read
+  (Boolean or Symbol mode; leniency comes from the delegate `allow_nil:`
+  option) and `delegate: {method_hash_access: ...}` covers the final read
+  (same forms as the attribute option):
+
+  ```ruby
+  class UserSerializer < Serega
+    # config.hash_access = {default_mode: :symbol, default_allow_nil: false}
+
+    attribute :name, hash_access: true     # hash.fetch(:name)
+    attribute :role, hash_access: :string  # hash.fetch("role")
+    attribute :middle_name, hash_access: {allow_nil: true} # missing key -> nil
+    attribute :city, delegate: {to: :address, hash_access: true, method_hash_access: true}
+  end
+  ```
+
 ## [0.39.0] - 2026-07-11
 
 - Fix `batch: <loader_name>` short form (Symbol or String) raising a TypeError
