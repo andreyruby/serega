@@ -132,11 +132,15 @@ class Serega
             superclass.modified?
           end
 
+          # Marks the class as modified, then includes the module
+          # @return [void]
           def include(*modules)
             @modified = true
             super
           end
 
+          # Marks the class as modified, then prepends the module
+          # @return [void]
           def prepend(*modules)
             @modified = true
             super

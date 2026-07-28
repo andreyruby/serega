@@ -33,6 +33,12 @@ jobs:
       - name: Markdown linter
         run: bundle exec mdl README.md CHANGELOG.md RELEASE.md
 
+      - name: Check YARD documentation coverage
+        run: |
+          bundle exec yard doc --no-cache --quiet
+          bundle exec yard stats --list-undoc | tee yard_stats.txt
+          grep -q "100.00% documented" yard_stats.txt
+
   build:
     runs-on: ubuntu-24.04
     name: Ruby ${{ matrix.ruby }} (AR ${{ matrix.activerecord }})
