@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.40.0] - 2026-07-28
 
 - New `hash_access:` attribute option — reads attribute values from Hash
   records instead of calling a method. See "Serializing Hash records" in
