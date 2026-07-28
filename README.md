@@ -4,7 +4,8 @@
 [![GitHub Actions][build-badge]][build]
 
 The Serega Ruby Serializer provides easy and powerful DSL to describe your
-objects and serialize them to Hash or JSON.
+objects and serialize them to Hash, ready for further conversion to JSON or
+other formats.
 
 ---
 
