@@ -3,46 +3,34 @@
 class Serega
   module SeregaPlugins
     #
-    # Plugin adds `:if`, `:unless`, `:if_value`, `:unless_value` options to
-    # attributes so we can remove attributes from response in various ways.
+    # Plugin :if
     #
-    # Use `:if` and `:unless` when you want to hide attributes before finding attribute value,
-    # and use `:if_value` and `:unless_value` to hide attributes after we find final value.
+    # Adds `:if`, `:unless`, `:if_value`, `:unless_value` attribute options to
+    # conditionally remove attributes from the response.
     #
-    # Options `:if` and `:unless` accept currently serialized object and context as parameters.
-    # Options `:if_value` and `:unless_value` accept already found serialized value and context as parameters.
+    # `:if`/`:unless` receive the serialized object and context, and are
+    # checked before the attribute value is found. `:if_value`/`:unless_value`
+    # receive the already-found value and context, checked after. The latter
+    # two cannot be used with the `:serializer` option, since a relationship
+    # has no "serialized value" of its own — use `:if`/`:unless` instead.
     #
-    # Options `:if_value` and `:unless_value` cannot be used with :serializer option, as
-    # serialized objects have no "serialized value". Use `:if` and `:unless` in this case.
+    # See also the plugin-free `:hide` option (README.md#selecting-fields),
+    # which hides an attribute unconditionally.
     #
-    # See also a `:hide` option that is available without any plugins to hide
-    # attribute without conditions. Look at README.md#selecting-fields for `:hide` usage examples.
+    # @example
+    #   class UserSerializer < Serega
+    #     attribute :email, if: :active? # if user.active?
+    #     attribute :email, if: proc { |user, ctx| user == ctx[:current_user] } # using context
+    #     attribute :email, if: CustomPolicy.method(:view_email?) # any callable
     #
-    # Examples:
-    #  class UserSerializer < Serega
-    #    attribute :email, if: :active? # if user.active?
-    #    attribute :email, if: proc {|user| user.active?} # same
-    #    attribute :email, if: proc {|user, ctx| user == ctx[:current_user]} # using context
-    #    attribute :email, if: CustomPolicy.method(:view_email?) # You can provide own callable object
-    #
-    #    attribute :email, unless: :hidden? # unless user.hidden?
-    #    attribute :email, unless: proc {|user| user.hidden?} # same
-    #    attribute :email, unless: proc {|user, context| context[:show_emails]} # using context
-    #    attribute :email, unless: CustomPolicy.method(:hide_email?) # You can provide own callable object
-    #
-    #    attribute :email, if_value: :present? # if email.present?
-    #    attribute :email, if_value: proc {|email| email.present?} # same
-    #    attribute :email, if_value: proc {|email, ctx| ctx[:show_emails]} # using context
-    #    attribute :email, if_value: CustomPolicy.method(:view_email?) # You can provide own callable object
-    #
-    #    attribute :email, unless_value: :blank? # unless email.blank?
-    #    attribute :email, unless_value: proc {|email| email.blank?} # same
-    #    attribute :email, unless_value: proc {|email, context| context[:show_emails]} # using context
-    #    attribute :email, unless_value: CustomPolicy.method(:hide_email?) # You can provide own callable object
-    #  end
+    #     attribute :email, unless: :hidden? # unless user.hidden?
+    #     attribute :email, if_value: :present? # if email.present?
+    #     attribute :email, unless_value: :blank? # unless email.blank?
+    #   end
     #
     module If
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :if
       end
@@ -55,6 +43,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         require_relative "validations/check_opt_if"
         require_relative "validations/check_opt_if_value"
@@ -77,6 +66,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **opts)
         serializer_class.config.attribute_keys << :if << :if_value << :unless << :unless_value
       end
@@ -86,6 +76,7 @@ class Serega
       #
       # @see SeregaAttributeNormalizer::AttributeInstanceMethods
       #
+      # @private
       module AttributeNormalizerInstanceMethods
         #
         # Returns prepared attribute :if_options.
@@ -135,6 +126,7 @@ class Serega
       #
       # Resolves keyword-based conditions for if/unless options
       #
+      # @private
       class KeywordConditionResolver
         def initialize(keyword)
           @keyword = keyword
@@ -156,6 +148,7 @@ class Serega
       #
       # @see Serega::SeregaAttribute
       #
+      # @private
       module AttributeInstanceMethods
         # @return [Hash] provided :if options
         attr_reader :opt_if
@@ -177,6 +170,7 @@ class Serega
       #
       # @see Serega::SeregaPlanPoint::InstanceMethods
       #
+      # @private
       module PlanPointInstanceMethods
         #
         # @return [Boolean] Should we show attribute or not
@@ -225,6 +219,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckAttributeParams
       #
+      # @private
       module CheckAttributeParamsInstanceMethods
         private
 
@@ -247,6 +242,7 @@ class Serega
       #
       # @see Serega::SeregaDataBuilder
       #
+      # @private
       module DataBuilderClassMethods
         private
 
@@ -264,6 +260,7 @@ class Serega
       #
       # @see Serega::SeregaObjectSerializer
       #
+      # @private
       module ObjectSerializerInstanceMethods
         private
 

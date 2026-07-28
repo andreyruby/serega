@@ -4,14 +4,17 @@ class Serega
   #
   # Batch feature main module
   #
+  # @private
   module SeregaEngine
     #
     #  Batch loader
     #
+    # @private
     class Loader
       #
       # BatchLoader instance methods
       #
+      # @private
       module InstanceMethods
         # BatchLoader initial params
         # @return [Hash] BatchLoader initial params

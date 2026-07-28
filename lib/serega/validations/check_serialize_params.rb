@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
     #
     # Validations of serialization options
     #
+    # @private
     class CheckSerializeParams
       #
       # Validations of serialization options instance methods
       #
+      # @private
       module InstanceMethods
         attr_reader :opts
 

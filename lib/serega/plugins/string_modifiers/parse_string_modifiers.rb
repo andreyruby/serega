@@ -22,6 +22,7 @@ class Serega
       #
       # Modifiers parser
       #
+      # @private
       class ParseStringModifiers
         COMMA = ","
         COMMA_CODEPOINT = COMMA.ord

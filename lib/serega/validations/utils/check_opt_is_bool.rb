@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
+    # @private
     module Utils
       #
       # Utility to check hash key value is boolean
       #
+      # @private
       class CheckOptIsBool
         # Checks hash key has boolean value
         #

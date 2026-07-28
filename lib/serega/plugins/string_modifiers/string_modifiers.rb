@@ -2,8 +2,27 @@
 
 class Serega
   module SeregaPlugins
+    #
+    # Plugin :string_modifiers
+    #
+    # Allows `:only`, `:except` and `:with` to be given as a single comma-separated
+    # string, with nested attributes in parentheses. Useful for accepting a field
+    # list straight from a query parameter.
+    #
+    # @example
+    #   class UserSerializer < Serega
+    #     plugin :string_modifiers
+    #
+    #     attribute :username
+    #     attribute :first_name
+    #     attribute :addresses, serializer: AddressSerializer, hide: true
+    #   end
+    #
+    #   UserSerializer.to_h(user, only: "username,addresses(line1,line2)")
+    #
     module StringModifiers
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :string_modifiers
       end
@@ -16,6 +35,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class.include(InstanceMethods)
         require_relative "parse_string_modifiers"
@@ -26,6 +46,7 @@ class Serega
       #
       # @see Serega
       #
+      # @private
       module InstanceMethods
         private
 

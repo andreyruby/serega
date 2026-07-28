@@ -5,7 +5,7 @@ class Serega
     #
     # Plugin :root
     #
-    # Allows to add root key to your serialized data
+    # Adds a root key to serialized data.
     #
     # Accepts options:
     #  - :root - specifies root for all responses
@@ -16,14 +16,12 @@ class Serega
     #   - config.root.one
     #   - config.root.many
     #   - config.root.one=
-    #   - config.root_many=
+    #   - config.root.many=
     #
     # Default root is `:data`.
     #
-    # Root also can be changed per serialization.
-    #
-    # Also root can be removed for all responses by providing `root: nil`. In this case no root will be added to response, but
-    # you still can to add it per serialization
+    # Root can also be changed per serialization, or removed entirely by
+    # providing `root: nil` (per serialization it can still be added back).
     #
     # @example Define plugin
     #   class UserSerializer < Serega
@@ -56,6 +54,7 @@ class Serega
       ROOT_DEFAULT = :data
 
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :root
       end
@@ -67,6 +66,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.before_load_plugin(serializer_class, **opts)
         allowed_keys = %i[root root_one root_many]
         opts.each_key do |key|
@@ -88,6 +88,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
@@ -103,6 +104,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **opts)
         config = serializer_class.config
         default = opts.fetch(:root, ROOT_DEFAULT)
@@ -214,6 +216,7 @@ class Serega
       #
       # @see Serega
       #
+      # @private
       module InstanceMethods
         #
         # Serializes provided object to a tree of Ruby Data objects.
@@ -261,6 +264,7 @@ class Serega
       #
       # @see Serega::SeregaDataBuilder
       #
+      # @private
       module DataBuilderClassMethods
         #
         # @param serializer [Serega] Serializer instance carrying the plan

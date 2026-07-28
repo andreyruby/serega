@@ -749,31 +749,38 @@ handler; to use a different ORM, register your own instead.
 ```ruby
 class AppSerializer < Serega
   config.auto_preload = true
-  config.hide_by_default = false
-
   plugin :activerecord_preloads
 end
 
+class AlbumSerializer < AppSerializer
+  # no preloads
+  attribute :title
+
+  # preloads :downloads, as manually specified
+  attribute :downloads_count, preload: :downloads, value: proc { |album| album.downloads.count }
+end
+
 class UserSerializer < AppSerializer
+  # no preloads
   attribute :username
+
+  # preloads :user_stats, as auto_preload is enabled for :delegate attributes
   attribute :comments_count, delegate: { to: :user_stats }
+
+  # preloads :albums, as auto_preload is enabled for :serializer attributes
   attribute :albums, serializer: AlbumSerializer
 end
 
-class AlbumSerializer < AppSerializer
-  attribute :title
-  attribute :downloads_count, preload: :downloads,
-    value: proc { |album| album.downloads.count }
-end
-
-UserSerializer.to_h(user)
-# preloads :user_stats and :albums on the user; the AlbumSerializer level
-# preloads :downloads on the albums
+UserSerializer.to_h(users)
+# 1 query to load :user_stats for all users
+# + 1 query to load :albums for all users
+# + 1 query to load :downloads for all albums
+# = 3 queries total, regardless of how many users/albums are serialized
 ```
 
 ### Plugin :root
 
-Allows to add root key to your serialized data
+Adds a root key to serialized data.
 
 Accepts options:
 
@@ -786,56 +793,47 @@ Adds additional config options:
 - config.root.one
 - config.root.many
 - config.root.one=
-- config.root_many=
+- config.root.many=
 
 The default root is `:data`.
 
-The root key can be changed per serialization.
-
 ```ruby
- # @example Change root per serialization:
+class UserSerializer < Serega
+  plugin :root # default root is :data
+end
 
- class UserSerializer < Serega
-   plugin :root
- end
+class UserSerializer < Serega
+  plugin :root, root: :users
+end
 
- UserSerializer.to_h(nil)              # => {:data=>nil}
- UserSerializer.to_h(nil, root: :user) # => {:user=>nil}
- UserSerializer.to_h(nil, root: nil)   # => nil
+class UserSerializer < Serega
+  plugin :root, root_one: :user, root_many: :people
+end
+
+class UserSerializer < Serega
+  plugin :root, root: nil # no root key by default
+end
 ```
 
-The root key can be removed for all responses by providing the `root: nil`
-plugin option.
-
-In this case, no root key will be added. But it still can be added manually.
+The root key can also be changed per serialization, or removed entirely by
+providing `root: nil` (it can still be added back per serialization).
 
 ```ruby
- #@example Define :root plugin with different options
+class UserSerializer < Serega
+  plugin :root
+end
 
- class UserSerializer < Serega
-   plugin :root # default root is :data
- end
-
- class UserSerializer < Serega
-   plugin :root, root: :users
- end
-
- class UserSerializer < Serega
-   plugin :root, root_one: :user, root_many: :people
- end
-
- class UserSerializer < Serega
-   plugin :root, root: nil # no root key by default
- end
+UserSerializer.to_h(nil)              # => {:data=>nil}
+UserSerializer.to_h(nil, root: :user) # => {:user=>nil}
+UserSerializer.to_h(nil, root: nil)   # => nil
 ```
 
 ### Plugin :metadata
 
 Depends on: [`:root`][root] plugin, that must be loaded first
 
-Adds ability to describe metadata and adds it to serialized response
-
-Adds class-level `.meta_attribute` method. It accepts:
+Adds metadata to the serialized response via the class-level `meta_attribute`
+method, which accepts:
 
 - `*path` [Array of Symbols] - nested hash keys.
 - `**options` [Hash]
@@ -875,7 +873,8 @@ AppSerializer.to_h(nil)
 
 Depends on: [`:root`][root] plugin, that must be loaded first
 
-Allows to provide metadata and attach it to serialized response.
+Adds metadata supplied per serialization call (as opposed to `:metadata`,
+which is defined statically on the serializer).
 
 Accepts option `:context_metadata_key` with the name of the root metadata keyword.
 By default, it has the `:meta` value.
@@ -899,41 +898,39 @@ UserSerializer.to_h(nil, meta: { version: '1.0.1' })
 
 ### Plugin :formatters
 
-Allows to define `formatters` and apply them to attribute values.
+Defines named value formatters once and applies them to any attribute.
 
-Config option `config.formatters.add` can be used to add formatters.
+Use `config.formatters.add()` to register formatters. The `:format`
+attribute option then accepts a formatter name or a callable directly.
 
-Attribute option `:format` can be used with the name of formatter or with
-callable instance.
-
-Formatters can accept up to 2 parameters (formatted object, context)
+Formatters receive up to 2 parameters: the value and the context.
 
 ```ruby
 class AppSerializer < Serega
   plugin :formatters, formatters: {
-    iso8601: ->(value) { time.iso8601.round(6) },
+    iso8601: ->(value) { value.iso8601 },
     on_off: ->(value) { value ? 'ON' : 'OFF' },
-    money: ->(value, ctx) { value / 10**ctx[:digits) }
+    money: ->(value) { value.round(2) },
     date: DateTypeFormatter # callable
   }
 end
 
 class UserSerializer < Serega
-  # Additionally, we can add formatters via config in subclasses
+  # Additionally we can add formatters via config in subclasses
   config.formatters.add(
-    iso8601: ->(value) { time.iso8601.round(6) },
+    iso8601: ->(value) { value.iso8601 },
     on_off: ->(value) { value ? 'ON' : 'OFF' },
     money: ->(value) { value.round(2) }
   )
 
   # Using predefined formatter
   attribute :commission, format: :money
-  attribute :is_logined, format: :on_off
+  attribute :is_logged_in, format: :on_off
   attribute :created_at, format: :iso8601
   attribute :updated_at, format: :iso8601
 
   # Using `callable` formatter
-  attribute :score_percent, format: PercentFormmatter # callable class
+  attribute :score_percent, format: PercentFormatter # callable class
   attribute :score_percent, format: proc { |percent| "#{percent.round(2)}%" }
 end
 ```
@@ -995,12 +992,11 @@ callables keep receiving the raw objects.
 
 ### Plugin :string_modifiers
 
-Allows to specify modifiers as strings.
+Allows `:only`, `:except` and `:with` to be given as a single comma-separated
+string, with nested attributes in parentheses. Useful for accepting a field
+list straight from a query parameter.
 
-Serialized attributes must be split with `,` and nested attributes must be
-defined inside brackets `()`.
-
-Modifiers can still be provided the old way using nested hashes or arrays.
+Modifiers can still be provided the old way, as nested hashes or arrays.
 
 ```ruby
 PostSerializer.plugin :string_modifiers
@@ -1008,25 +1004,19 @@ PostSerializer.new(only: "id,user(id,username)").to_h(post)
 PostSerializer.new(except: "user(username,email)").to_h(post)
 PostSerializer.new(with: "user(email)").to_h(post)
 
-# Modifiers can still be provided the old way using nested hashes or arrays.
 PostSerializer.new(with: {user: %i[email, username]}).to_h(post)
 ```
 
 ### Plugin :if
 
-Plugin adds `:if, :unless, :if_value, :unless_value` options to
-attributes so we can remove attributes from the response in various ways.
+Adds `:if`, `:unless`, `:if_value`, `:unless_value` attribute options to
+conditionally remove attributes from the response.
 
-Use `:if` and `:unless` when you want to hide attributes before finding
-attribute value, and use `:if_value` and `:unless_value` to hide attributes
-after getting the final value.
-
-Options `:if` and `:unless` accept currently serialized object and context as
-parameters. Options `:if_value` and `:unless_value` accept already found
-serialized value and context as parameters.
-
-Options `:if_value` and `:unless_value` cannot be used with the `:serializer` option.
-Use `:if` and `:unless` in this case.
+`:if`/`:unless` receive the serialized object and context, and are checked
+before the attribute value is found. `:if_value`/`:unless_value` receive the
+already-found value and context, checked after. The latter two cannot be
+used with the `:serializer` option, since a relationship has no "serialized
+value" of its own — use `:if`/`:unless` instead.
 
 See also a `:hide` option that is available without any plugins to hide
 attribute without conditions.
@@ -1058,24 +1048,18 @@ Look at [select serialized fields](#selecting-fields) for `:hide` usage examples
 
 ### Plugin :camel_case
 
-By default, when we add an attribute like `attribute :first_name` it means:
+Without this plugin, responding with *camelCased* keys means specifying the
+attribute name and method directly for each attribute:
+`attribute :firstName, method: first_name`
 
-- adding a `:first_name` key to the resulting hash
-- adding a `#first_name` method call result as value
+This plugin camelCases every attribute name automatically, replacing `_x`
+with `X` throughout the string. The transformation runs once, when the
+attribute is defined, not on every serialization.
 
-But it's often desired to respond with *camelCased* keys.
-By default, this can be achieved by specifying the attribute name and method directly
-for each attribute: `attribute :firstName, method: first_name`
+Provide a custom transformation when adding the plugin, for example
+`plugin :camel_case, transform: ->(name) { name.camelize }`
 
-This plugin transforms all attribute names automatically.
-We use a simple regular expression to replace `_x` with `X` for the whole string.
-We make this transformation only once when the attribute is defined.
-
-You can provide custom transformation when adding the plugin,
-for example `plugin :camel_case, transform: ->(name) { name.camelize }`
-
-For any attribute camelCase-behavior can be skipped when
-the `camel_case: false` attribute option provided.
+Skip camelCase for a single attribute with `camel_case: false`.
 
 This plugin transforms only attribute keys, without affecting the `root`,
 `metadata` and `context_metadata` plugins keys.
@@ -1140,27 +1124,25 @@ end
 
 ### Plugin :explicit_many_option
 
-The plugin requires adding a `:many` option when adding relationships
-(attributes with the `:serializer` option or a block defining a nested
-serializer).
-
-Adding this plugin makes it clearer to find if some relationship is an array or
-a single object.
+Requires the `:many` option on every relationship attribute (an attribute
+with the `:serializer` option or a block defining a nested serializer), so
+it's always explicit whether it returns one object or many.
 
 ```ruby
-  class BaseSerializer < Serega
-    plugin :explicit_many_option
-  end
+class BaseSerializer < Serega
+  plugin :explicit_many_option
+  config.base_serializer = self
+end
 
-  class UserSerializer < BaseSerializer
+class PostSerializer < BaseSerializer
+  attribute :text
+
+  attribute :user, many: false do
     attribute :name
   end
 
-  class PostSerializer < BaseSerializer
-    attribute :text
-    attribute :user, serializer: UserSerializer, many: false
-    attribute :comments, serializer: PostSerializer, many: true
-  end
+  attribute :comments, serializer: PostSerializer, many: true
+end
 ```
 
 ## Errors

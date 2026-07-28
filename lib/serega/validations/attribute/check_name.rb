@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
+    # @private
     module Attribute
       #
       # Attribute `name` parameter validator
       #
+      # @private
       class CheckName
         # Regexp for valid attribute name
         FORMAT = /\A[\w~-]+\z/

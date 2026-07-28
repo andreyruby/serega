@@ -4,6 +4,7 @@ class Serega
   #
   # Batch feature main module
   #
+  # @private
   module SeregaEngine
     #
     # One serialization level: all objects serialized under a single plan and the
@@ -12,6 +13,7 @@ class Serega
     # or preload runs once over the whole set. A deeper level (its own plan) loads
     # separately.
     #
+    # @private
     class Level
       # @param serializer [SeregaObjectSerializer] serializer that resolves this level
       def initialize(serializer)

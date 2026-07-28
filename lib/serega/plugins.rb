@@ -17,6 +17,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def register_plugin(name, mod)
         @plugins[name] = mod
       end
@@ -36,6 +37,7 @@ class Serega
       #
       # @return [Class<Module>] Plugin core module
       #
+      # @private
       def find_plugin(name)
         return name if name.is_a?(Module)
         return @plugins[name] if @plugins.key?(name)

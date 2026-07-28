@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
     #
     # Validations that take place when initializing serializer
     #
+    # @private
     module Initiate
       #
       # Modifiers validation
       #
+      # @private
       class CheckModifiers
         #
         # Validates provided fields names are existing attributes

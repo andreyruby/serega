@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
+    # @private
     module Attribute
       #
       # Validator for attribute :preload option
       #
+      # @private
       class CheckOptPreload
         class << self
           #

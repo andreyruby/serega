@@ -4,11 +4,13 @@ class Serega
   #
   # Utilities
   #
+  # @private
   module SeregaUtils
     #
     # Duplicates nested hashes and arrays
     # It does not duplicate any non-Array and non-Hash values
     #
+    # @private
     class EnumDeepDup
       class << self
         #

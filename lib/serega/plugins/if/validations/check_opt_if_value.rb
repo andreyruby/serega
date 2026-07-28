@@ -6,6 +6,7 @@ class Serega
       #
       # Validator for attribute :if_value option
       #
+      # @private
       class CheckOptIfValue
         class << self
           #

@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
+    # @private
     module Attribute
       #
       # Attribute `:const` option validator
       #
+      # @private
       class CheckOptConst
         class << self
           #

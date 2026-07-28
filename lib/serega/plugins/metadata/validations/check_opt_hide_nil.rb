@@ -7,6 +7,7 @@ class Serega
         #
         # Validator for meta_attribute :hide_nil option
         #
+        # @private
         class CheckOptHideNil
           class << self
             #

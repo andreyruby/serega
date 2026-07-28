@@ -7,6 +7,7 @@ class Serega
         #
         # MetaAttribute `:const` option validator
         #
+        # @private
         class CheckOptConst
           class << self
             #

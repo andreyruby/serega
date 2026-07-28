@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaUtils
     #
     # Utility to get frozen string from symbol in any ruby version
     #
+    # @private
     class SymbolName
       class << self
         #

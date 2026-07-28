@@ -3,23 +3,20 @@
 class Serega
   module SeregaPlugins
     #
-    # Plugin `:metadata`
+    # Plugin :metadata
     #
     # Depends on: `:root` plugin, that must be loaded first
     #
-    # Adds ability to describe metadata that must be added to serialized response
+    # Adds metadata to the serialized response via the class-level
+    # `meta_attribute` method, which accepts:
     #
-    # Added class-level method `:meta_attribute`, to define metadata, it accepts:
-    #
-    # - `*path` [Array of Symbols] - nested hash keys.
+    # - `*path` [Array<Symbol>] - nested hash keys
     # - `**options` [Hash]
-    #
-    #   - `:const` - describes metadata value (if it is constant)
-    #   - `:value` - describes metadata value as any `#callable` instance
-    #   - `:hide_nil` - does not show metadata key if value is nil, `false` by default
-    #   - `:hide_empty`, does not show metadata key if value is nil or empty, `false` by default
-    #
-    # - `&block` [Proc] - describes value for current meta attribute
+    #   - `:const` - a constant metadata value
+    #   - `:value` - a `#callable` producing the metadata value
+    #   - `:hide_nil` - hide the key if the value is nil (`false` by default)
+    #   - `:hide_empty` - hide the key if the value is nil or empty (`false` by default)
+    # - `&block` - computes the value for this meta attribute
     #
     # @example
     #  class AppSerializer < Serega
@@ -39,6 +36,7 @@ class Serega
     #
     module Metadata
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :metadata
       end
@@ -50,6 +48,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.before_load_plugin(serializer_class, **_opts)
         unless serializer_class.plugin_used?(:root)
           raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded after the :root plugin. Please load the :root plugin first"
@@ -64,6 +63,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
@@ -91,6 +91,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **_opts)
         serializer_class.config.opts[:metadata] = {attribute_keys: %i[const hide_nil hide_empty value]}
       end
@@ -183,6 +184,7 @@ class Serega
       #
       # @see Serega
       #
+      # @private
       module InstanceMethods
         private
 

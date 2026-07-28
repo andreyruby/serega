@@ -4,6 +4,7 @@ class Serega
   #
   # Batch feature main module
   #
+  # @private
   module SeregaEngine
     #
     # Level-order queue of serialization levels for one serialization run.
@@ -15,6 +16,7 @@ class Serega
     # Processing level-by-level lets a named batch loader and preloads run once per
     # level over all of its objects.
     #
+    # @private
     class LevelQueue
       def initialize
         @levels = []

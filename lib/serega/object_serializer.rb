@@ -9,10 +9,12 @@ class Serega
   # which resolves every attribute for every object and enqueues child levels for
   # relations.
   #
+  # @private
   class SeregaObjectSerializer
     #
     # SeregaObjectSerializer instance methods
     #
+    # @private
     module InstanceMethods
       attr_reader :context, :plan, :many, :opts, :level_queue
 

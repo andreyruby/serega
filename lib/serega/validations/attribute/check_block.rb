@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
     #
     # Attribute parameters validators
     #
+    # @private
     module Attribute
       #
       # Attribute `block` parameter validator
       #
+      # @private
       class CheckBlock
         # Explains the changed attribute block behavior. Shown when the block
         # looks like an old-style value block — it accepts parameters or

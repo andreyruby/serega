@@ -4,10 +4,12 @@ class Serega
   #
   # Combines attribute and nested attributes
   #
+  # @private
   class SeregaPlanPoint
     #
     # SeregaPlanPoint instance methods
     #
+    # @private
     module InstanceMethods
       # Link to current plan this point belongs to
       # @return [SeregaAttribute] Current plan

@@ -5,10 +5,12 @@ class Serega
   # Constructs plan - list of serialized attributes.
   # We will traverse this plan to construct serialized response.
   #
+  # @private
   class SeregaPlan
     #
     # SeregaPlan class methods
     #
+    # @private
     module ClassMethods
       #
       # Constructs plan of attributes that should be serialized.
@@ -68,6 +70,7 @@ class Serega
     #
     # SeregaPlan instance methods
     #
+    # @private
     module InstanceMethods
       # Parent plan point
       # @return [SeregaPlanPoint, nil]

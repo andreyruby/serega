@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaUtils
     #
     # Utility to check if an object should be serialized as a collection.
@@ -8,6 +9,7 @@ class Serega
     # Hashes and Structs are Enumerable, but enumerate their own member
     # values, so they are treated as single objects.
     #
+    # @private
     class CollectionDetector
       class << self
         #
