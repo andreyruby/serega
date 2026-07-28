@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
     #
     # Batch loader parameters validators
     #
+    # @private
     class CheckBatchLoaderParams
       #
       # batch_loader parameters validation instance methods
       #
+      # @private
       module InstanceMethods
         # @return [Symbol] validated batch_loader name
         attr_reader :name

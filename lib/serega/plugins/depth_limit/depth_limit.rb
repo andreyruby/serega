@@ -5,25 +5,23 @@ class Serega
     #
     # Plugin :depth_limit
     #
-    # Helps to secure from malicious queries that require to serialize too much
-    # or from accidental serializing of objects with cyclic relations.
+    # Guards against malicious queries that serialize too much, or against
+    # accidentally serializing objects with cyclic relations.
     #
-    # Depth limit is checked when constructing a serialization plan, that is when
-    # `#new` method is called, ex: `SomeSerializer.new(with: params[:with])`.
-    # It can be useful to instantiate serializer before any other business logic
-    # to get possible errors earlier.
+    # Depth limit is checked when a serialization plan is built, i.e. when
+    # `#new` is called (`SomeSerializer.new(with: params[:with])`) — including
+    # internally by every class-level serialization method. Instantiating the
+    # serializer early surfaces depth errors sooner.
     #
-    # Any class-level serialization methods also check depth limit as they also instantiate serializer.
+    # When the limit is exceeded, `Serega::DepthLimitError` is raised;
+    # details are available via `Serega::DepthLimitError#details`.
     #
-    # When depth limit is exceeded `Serega::DepthLimitError` is raised.
-    # Depth limit error details can be found in additional `Serega::DepthLimitError#details` method
-    #
-    # Limit can be checked or changed with next config options:
+    # Limit can be checked or changed with config options:
     #
     #   - config.depth_limit.limit
     #   - config.depth_limit.limit=
     #
-    # There are no default limit, but it should be set when enabling plugin.
+    # There is no default limit — it must be set when enabling the plugin.
     #
     # @example
     #
@@ -37,6 +35,7 @@ class Serega
     #
     module DepthLimit
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :depth_limit
       end
@@ -48,6 +47,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.before_load_plugin(serializer_class, **opts)
         allowed_keys = %i[limit]
         opts.each_key do |key|
@@ -67,6 +67,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class::SeregaPlan.include(PlanInstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
@@ -80,6 +81,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **opts)
         config = serializer_class.config
         limit = opts.fetch(:limit) { raise SeregaError, "Please provide :limit option. Example: `plugin :depth_limit, limit: 10`" }
@@ -137,6 +139,7 @@ class Serega
       #
       # @see SeregaPlan
       #
+      # @private
       module PlanInstanceMethods
         #
         # Initializes serialization plan

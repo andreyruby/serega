@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
+    # @private
     module Attribute
       #
       # Attribute `:serializer` option validator
       #
+      # @private
       class CheckOptSerializer
         class << self
           #

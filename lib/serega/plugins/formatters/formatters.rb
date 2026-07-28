@@ -5,20 +5,19 @@ class Serega
     #
     # Plugin :formatters
     #
-    # Allows to define value formatters one time and apply them on any attributes.
+    # Defines named value formatters once and applies them to any attribute.
     #
-    # Config option `config.formatters.add()` can be used to add formatters.
+    # Use `config.formatters.add()` to register formatters. The `:format`
+    # attribute option then accepts a formatter name or a callable directly.
     #
-    # Attribute option `:format` now can be used with name of formatter or with callable instance.
-    #
-    # Formatters can accept up to 2 parameters (formatted object, context)
+    # Formatters receive up to 2 parameters: the value and the context.
     #
     # @example
     #   class AppSerializer < Serega
     #     plugin :formatters, formatters: {
-    #       iso8601: ->(value) { time.iso8601.round(6) },
+    #       iso8601: ->(value) { value.iso8601 },
     #       on_off: ->(value) { value ? 'ON' : 'OFF' },
-    #       money: ->(value) { value.round(2) }
+    #       money: ->(value) { value.round(2) },
     #       date: DateTypeFormatter # callable
     #     }
     #   end
@@ -26,24 +25,25 @@ class Serega
     #   class UserSerializer < Serega
     #     # Additionally we can add formatters via config in subclasses
     #     config.formatters.add(
-    #       iso8601: ->(value) { time.iso8601.round(6) },
+    #       iso8601: ->(value) { value.iso8601 },
     #       on_off: ->(value) { value ? 'ON' : 'OFF' },
     #       money: ->(value) { value.round(2) }
     #     )
     #
     #     # Using predefined formatter
     #     attribute :commission, format: :money
-    #     attribute :is_logined, format: :on_off
+    #     attribute :is_logged_in, format: :on_off
     #     attribute :created_at, format: :iso8601
     #     attribute :updated_at, format: :iso8601
     #
     #     # Using `callable` formatter
-    #     attribute :score_percent, format: PercentFormmatter # callable class
+    #     attribute :score_percent, format: PercentFormatter # callable class
     #     attribute :score_percent, format: proc { |percent| "#{percent.round(2)}%" }
     #   end
     #
     module Formatters
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :formatters
       end
@@ -55,6 +55,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.before_load_plugin(serializer_class, **opts)
         allowed_keys = %i[formatters]
         opts.each_key do |key|
@@ -74,6 +75,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
         serializer_class::SeregaAttributeNormalizer.include(AttributeNormalizerInstanceMethods)
@@ -89,6 +91,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **opts)
         config = serializer_class.config
         config.opts[:formatters] = {}
@@ -141,6 +144,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckAttributeParams
       #
+      # @private
       module CheckAttributeParamsInstanceMethods
         private
 
@@ -156,6 +160,7 @@ class Serega
       #
       # @see SeregaAttributeNormalizer
       #
+      # @private
       module AttributeNormalizerInstanceMethods
         # Block or callable instance that will format attribute values
         # @return [Proc, #call, nil] Block or callable instance that will format attribute values
@@ -194,6 +199,7 @@ class Serega
       #
       # @see SeregaAttribute
       #
+      # @private
       module AttributeInstanceMethods
         #
         # Returns formatted attribute value
@@ -229,6 +235,7 @@ class Serega
       #
       # Validator for attribute :format option
       #
+      # @private
       class CheckOptFormat
         class << self
           #
@@ -265,6 +272,7 @@ class Serega
       #
       # Validator for formatters defined as config options or directly as attribute :format option
       #
+      # @private
       class CheckFormatter
         class << self
           #

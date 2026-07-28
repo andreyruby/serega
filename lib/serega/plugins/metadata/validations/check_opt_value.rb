@@ -7,6 +7,7 @@ class Serega
         #
         # Validator for meta_attribute :value option
         #
+        # @private
         class CheckOptValue
           class << self
             #

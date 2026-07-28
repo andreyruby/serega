@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaUtils
     #
     # Utility to transform almost anything to Hash
     #
+    # @private
     class ToHash
       class << self
         #

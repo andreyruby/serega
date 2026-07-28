@@ -4,10 +4,12 @@ class Serega
   #
   # Attribute value resolvers
   #
+  # @private
   module AttributeValueResolvers
     #
     # Builds value resolver class for attributes with :delegate option
     #
+    # @private
     class DelegateResolver
       #
       # Creates resolver that delegates method call to another object
@@ -25,6 +27,7 @@ class Serega
     #
     # Value resolver class for attributes with :delegate (with :allow_nil) option
     #
+    # @private
     class DelegateAllowNil
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to
@@ -49,6 +52,7 @@ class Serega
     #
     # Value resolver class for attributes with :delegate (without :allow_nil) option
     #
+    # @private
     class Delegate
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to

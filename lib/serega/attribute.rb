@@ -4,10 +4,12 @@ class Serega
   #
   # Stores serialized attribute data
   #
+  # @private
   class SeregaAttribute
     #
     # Attribute instance methods
     #
+    # @private
     module AttributeInstanceMethods
       # Attribute initial params
       # @return [Hash] Attribute initial params

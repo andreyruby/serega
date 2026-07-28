@@ -5,21 +5,14 @@ class Serega
     #
     # Plugin :camel_case
     #
-    # By default when we add attribute like `attribute :first_name` this means:
-    # - adding a `:first_name` key to resulted hash
-    # - adding a `#first_name` method call result as value
+    # CamelCases every attribute name automatically, replacing `_x` with `X`
+    # throughout the string. Runs once, when the attribute is defined, not on
+    # every serialization.
     #
-    # But its often desired to response with *camelCased* keys.
-    # Earlier this can be achieved by specifying attribute name and method directly
-    # for each attribute: `attribute :firstName, method: first_name`
+    # Provide a custom transformation with
+    # `plugin :camel_case, transform: ->(name) { name.camelize }`.
     #
-    # Now this plugin transforms all attribute names automatically.
-    # We use simple regular expression to replace `_x` to `X` for the whole string.
-    # You can provide your own callable transformation when defining plugin,
-    # for example `plugin :camel_case, transform: ->(name) { name.camelize }`
-    #
-    # For any attribute camelCase-behavior can be skipped when
-    # `camel_case: false` attribute option provided.
+    # Skip camelCase for a single attribute with `camel_case: false`.
     #
     # @example Define plugin
     #  class AppSerializer < Serega
@@ -44,6 +37,7 @@ class Serega
       }
 
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :camel_case
       end
@@ -55,6 +49,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.before_load_plugin(serializer_class, **opts)
         allowed_keys = %i[transform]
         opts.each_key do |key|
@@ -74,6 +69,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
         serializer_class::SeregaAttributeNormalizer.include(AttributeNormalizerInstanceMethods)
@@ -88,6 +84,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **opts)
         config = serializer_class.config
         config.opts[:camel_case] = {}
@@ -113,6 +110,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckAttributeParams
       #
+      # @private
       module CheckAttributeParamsInstanceMethods
         private
 
@@ -125,6 +123,7 @@ class Serega
       #
       # Validator for attribute :camel_case option
       #
+      # @private
       class CheckOptCamelCase
         class << self
           #
@@ -191,6 +190,7 @@ class Serega
       #
       # @see SeregaAttributeNormalizer::AttributeInstanceMethods
       #
+      # @private
       module AttributeNormalizerInstanceMethods
         private
 

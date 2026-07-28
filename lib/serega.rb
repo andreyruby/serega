@@ -6,10 +6,12 @@ require_relative "serega/version"
 class Serega
   # Frozen hash
   # @return [Hash] frozen hash
+  # @private
   FROZEN_EMPTY_HASH = {}.freeze
 
   # Frozen array
   # @return [Array] frozen array
+  # @private
   FROZEN_EMPTY_ARRAY = [].freeze
 
   # Empty modifiers/serialization options (used when serializing with no opts provided)
@@ -136,6 +138,7 @@ class Serega
     #
     # @return [Boolean] Is plugin used
     #
+    # @private
     def plugin_used?(name)
       plugin_name =
         case name
@@ -151,6 +154,7 @@ class Serega
     #
     # @return [Hash] attributes list
     #
+    # @private
     def attributes
       @attributes ||= {}
     end
@@ -160,6 +164,7 @@ class Serega
     #
     # @return [Hash] batch loaders list
     #
+    # @private
     def batch_loaders
       @batch_loaders ||= {}
     end
@@ -417,6 +422,7 @@ class Serega
     # This plan can be traversed to find serialized attributes and nested attributes.
     #
     # @return [Serega::SeregaPlan] Serialization plan
+    # @private
     attr_reader :plan
 
     #

@@ -15,12 +15,10 @@ class Serega
     # - The original object is accessible via __getobj__ (standard SimpleDelegator API).
     # - The serialization context is accessible via the private method __ctx__.
     #
-    # Objects are wrapped in the Presenter only when the serializer's Presenter
-    # class (or an inherited one) was actually extended with custom methods —
-    # a bare `plugin :presenter` adds no wrapping overhead. The check is
-    # denormalized: `SerializerClass.custom_presenter?` is asked once per
-    # object serializer and the result is reused for the whole level.
+    # The `presenter do ... end` block is evaluated inside the serializer's own
+    # Presenter class, so multiple blocks accumulate.
     #
+    # @example
     #   class UserSerializer < Serega
     #     plugin :presenter
     #
@@ -38,10 +36,9 @@ class Serega
     #     end
     #   end
     #
-    # The `presenter do ... end` block is evaluated inside the serializer's own
-    # Presenter class, so multiple blocks accumulate.
     module Presenter
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :presenter
       end
@@ -54,6 +51,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class.extend(ClassMethods)
         serializer_class::SeregaObjectSerializer.include(SeregaObjectSerializerInstanceMethods)
@@ -67,6 +65,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **_opts)
         presenter_class = Class.new(Presenter)
         presenter_class.serializer_class = serializer_class
@@ -79,8 +78,10 @@ class Serega
       end
 
       # Presenter class
+      # @private
       class Presenter < SimpleDelegator
         # Presenter instance methods
+        # @private
         module InstanceMethods
           #
           # @param object [Object] Serialized object to wrap
@@ -187,6 +188,7 @@ class Serega
         #
         # @return [Boolean] whether custom presenter methods were defined
         #
+        # @private
         def custom_presenter?
           self::Presenter.modified?
         end
@@ -207,6 +209,7 @@ class Serega
       #
       # @see Serega::SeregaObjectSerializer
       #
+      # @private
       module SeregaObjectSerializerInstanceMethods
         # The custom-presenter check is made once per object serializer here
         # and its result is reused for every enqueued chunk of the level.

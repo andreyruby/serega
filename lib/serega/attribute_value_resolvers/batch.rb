@@ -4,10 +4,12 @@ class Serega
   #
   # Attribute value resolvers
   #
+  # @private
   module AttributeValueResolvers
     #
     # Builds value resolver class for attributes with :batch option
     #
+    # @private
     class BatchResolver
       #
       # Generates callable block to find attribute value when attribute with :batch
@@ -55,6 +57,7 @@ class Serega
     #
     # Builds value resolver class for attributes with :batch option
     #
+    # @private
     class Batch
       def initialize(loader_name, id_method)
         @loader_name = loader_name

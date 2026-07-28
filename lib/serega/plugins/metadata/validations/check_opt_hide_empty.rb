@@ -7,6 +7,7 @@ class Serega
         #
         # Validator for meta_attribute :hide_empty option
         #
+        # @private
         class CheckOptHideEmpty
           class << self
             #

@@ -4,10 +4,12 @@ class Serega
   #
   # Utilities
   #
+  # @private
   module SeregaUtils
     #
     # Utility to freeze nested hashes and arrays
     #
+    # @private
     class EnumDeepFreeze
       class << self
         #

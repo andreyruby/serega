@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
     #
     # Validations Utilities
     #
+    # @private
     module Utils
       #
       # Utility to check all hash keys are allowed
       #
+      # @private
       class CheckAllowedKeys
         # Checks hash keys are allowed
         #

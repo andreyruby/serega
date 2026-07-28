@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaUtils
     #
     # Reraises an error, adding which attribute and serializer were being
@@ -8,6 +9,7 @@ class Serega
     # and the batch attach phase so the message stays identical for every
     # attribute, whether its value is resolved inline or during batch loading.
     #
+    # @private
     module SerializedAttributeError
       module_function
 

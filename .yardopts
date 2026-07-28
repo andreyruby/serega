@@ -3,4 +3,5 @@
 --charset utf-8
 --markup markdown
 --markup-provider redcarpet
-lib/**/*.rb'
+--no-private
+lib/**/*.rb

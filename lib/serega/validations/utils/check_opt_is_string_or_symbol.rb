@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
+  # @private
   module SeregaValidations
+    # @private
     module Utils
       #
       # Utility to check hash key value is String or Symbol
       #
+      # @private
       class CheckOptIsStringOrSymbol
         # Checks hash key has String or Symbol value
         #

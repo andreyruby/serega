@@ -4,10 +4,12 @@ class Serega
   #
   # Prepares provided attribute options
   #
+  # @private
   class SeregaAttributeNormalizer
     #
     # AttributeNormalizer instance methods
     #
+    # @private
     module AttributeNormalizerInstanceMethods
       # Attribute initial params
       # @return [Hash] Attribute initial params

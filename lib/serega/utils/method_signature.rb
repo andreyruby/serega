@@ -4,10 +4,12 @@ class Serega
   #
   # Utilities
   #
+  # @private
   module SeregaUtils
     #
     # Utility to make method arguments signature
     #
+    # @private
     class MethodSignature
       SYMBOL_TO_PROC_SIGNATURE_RUBY2 = [[:rest]]
       SYMBOL_TO_PROC_SIGNATURE_RUBY3 = [[:req], [:rest]]

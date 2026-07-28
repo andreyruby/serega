@@ -4,10 +4,12 @@ class Serega
   #
   # Attribute value resolvers
   #
+  # @private
   module AttributeValueResolvers
     #
     # Builds value resolver class for attributes with :const option
     #
+    # @private
     class ConstResolver
       #
       # Creates resolver that returns constant value
@@ -23,6 +25,7 @@ class Serega
     #
     # Value resolver class for attributes with :const option
     #
+    # @private
     class Const
       def initialize(const_value)
         @const_value = const_value

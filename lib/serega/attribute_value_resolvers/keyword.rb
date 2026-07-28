@@ -4,10 +4,12 @@ class Serega
   #
   # Attribute value resolvers
   #
+  # @private
   module AttributeValueResolvers
     #
     # Builds value resolver class for attributes with :keyword option
     #
+    # @private
     class KeywordResolver
       #
       # Creates resolver that calls method on object
@@ -23,6 +25,7 @@ class Serega
     #
     # Value resolver class for attributes with :keyword option
     #
+    # @private
     class Keyword
       def initialize(keyword)
         @keyword = keyword

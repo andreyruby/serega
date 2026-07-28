@@ -5,8 +5,10 @@ class Serega
   # Builds Data objects from serialized hashes.
   # Used by `#to_data` / `.to_data`.
   #
+  # @private
   class SeregaDataBuilder
     # SeregaDataBuilder class methods
+    # @private
     module SeregaDataBuilderClassMethods
       #
       # Converts serialized Hash/Array result into a tree of Ruby Data objects

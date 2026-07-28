@@ -6,6 +6,7 @@ class Serega
       #
       # Validator for attribute :unless option
       #
+      # @private
       class CheckOptUnless
         class << self
           #

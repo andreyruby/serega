@@ -6,6 +6,7 @@ class Serega
       #
       # Validator for attribute :many option
       #
+      # @private
       class CheckOptMany
         class << self
           #

@@ -7,7 +7,8 @@ class Serega
     #
     # Depends on: `:root` plugin, that must be loaded first
     #
-    # Allows to specify metadata to be added to serialized response.
+    # Adds metadata supplied per serialization call (as opposed to `:metadata`,
+    # which is defined statically on the serializer).
     #
     # @example
     #   class UserSerializer < Serega
@@ -23,6 +24,7 @@ class Serega
       DEFAULT_CONTEXT_METADATA_KEY = :meta
 
       # @return [Symbol] Plugin name
+      # @private
       def self.plugin_name
         :context_metadata
       end
@@ -34,6 +36,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.before_load_plugin(serializer_class, **opts)
         allowed_keys = %i[context_metadata_key]
         opts.each_key do |key|
@@ -57,6 +60,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.load_plugin(serializer_class, **_opts)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
@@ -71,6 +75,7 @@ class Serega
       #
       # @return [void]
       #
+      # @private
       def self.after_load_plugin(serializer_class, **opts)
         config = serializer_class.config
         meta_key = opts[:context_metadata_key] || DEFAULT_CONTEXT_METADATA_KEY
@@ -127,6 +132,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckSerializeParams
       #
+      # @private
       module CheckSerializeParamsInstanceMethods
         private
 
@@ -143,6 +149,7 @@ class Serega
       #
       # @see Serega
       #
+      # @private
       module InstanceMethods
         private
 
