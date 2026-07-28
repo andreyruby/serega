@@ -5,8 +5,8 @@ require_relative "lib/serega/version"
 Gem::Specification.new do |spec|
   spec.name = "serega"
   spec.version = Serega::VERSION
-  spec.authors = ["Andrey Glushkov"]
-  spec.email = ["mozart@shakuro.com"]
+  spec.authors = ["Andrey"]
+  spec.email = ["andreyruby@yandex.ru"]
 
   spec.summary = "Ruby Serializer"
   spec.description = <<~DESC.tr("\n", " ").strip
