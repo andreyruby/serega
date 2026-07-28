@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.40.1] - 2026-07-29
+
+- Documentation improvements only.
+
 ## [0.40.0] - 2026-07-28
 
 - New `hash_access:` attribute option — reads attribute values from Hash
