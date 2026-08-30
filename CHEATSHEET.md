@@ -1,6 +1,6 @@
 # Serega Cheatsheet
 
-## 1. Your First Serializer
+## Your First Serializer
 
 ```ruby
 class UserSerializer < Serega
@@ -17,7 +17,7 @@ Each `attribute :name` calls `object.name` and adds it to the hash.
 
 ---
 
-## 2. Attribute Options
+## Attribute Options
 
 ### default — calls method of the same name
 
@@ -45,7 +45,7 @@ UserSerializer.to_h(OpenStruct.new(full_name: 'Felonious Gru'))
 
 A block defines a nested serializer for the attribute value. Requires a base
 serializer: the `base_serializer:` option or `config.base_serializer` (see
-[§6 Relations][relations], [§11 Configuration][configuration]).
+[Relations][relations], [Configuration][configuration]).
 
 ```ruby
 class UserSerializer < Serega
@@ -64,7 +64,7 @@ UserSerializer.to_h(OpenStruct.new(likes_count: 10, comments_count: 3))
 ### `value:` — callable
 
 Signatures: `(obj)`, `(obj, ctx:)`, `(obj, batches:)`, `(obj, ctx:, batches:)`,
-`(obj, context)` (see [§5 Context][context], [§7 Batch Loading][batch-loading]).
+`(obj, context)` (see [Context][context], [Batch Loading][batch-loading]).
 
 ```ruby
 class UserSerializer < Serega
@@ -118,7 +118,7 @@ UserSerializer.to_h(OpenStruct.new(nickname: 'Vector'))
 # => {nickname: "Vector"}
 ```
 
-### `hide:` — skip unless explicitly requested (see [§4 Field Selection][field-selection])
+### `hide:` — skip unless explicitly requested (see [Field Selection][field-selection])
 
 ```ruby
 class UserSerializer < Serega
@@ -137,7 +137,7 @@ UserSerializer.to_h(OpenStruct.new(email: 'gru@example.com', phone: '555-1234'),
 
 ---
 
-## 3. Serialize
+## Serialize
 
 ```ruby
 class UserSerializer < Serega
@@ -153,7 +153,7 @@ UserSerializer.new(only: [:name]).to_h(user) # reuse — serialization plan buil
 
 ---
 
-## 4. Field Selection — `:only` `:except` `:with`
+## Field Selection — `:only` `:except` `:with`
 
 ```ruby
 class UserSerializer < Serega
@@ -184,7 +184,7 @@ UserSerializer.to_h(user, only: [:address], check_initiate_params: false)
 
 ---
 
-## 5. Context
+## Context
 
 ```ruby
 class UserSerializer < Serega
@@ -196,11 +196,11 @@ UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@exa
 UserSerializer.to_h(user, context: { current_user: nil }) # => {email: nil}
 ```
 
-Inside `Presenter` methods context is accessed via `__ctx__` (see [§17 Plugin `:presenter`][plugin-presenter]).
+Inside `Presenter` methods context is accessed via `__ctx__` (see [Plugin `:presenter`][plugin-presenter]).
 
 ---
 
-## 6. Relations
+## Relations
 
 ```ruby
 class CommentSerializer < Serega
@@ -234,12 +234,12 @@ attribute :comments, base_serializer: AppSerializer do
 end
 ```
 
-DB preloads for `:serializer` attributes — see [§8 Preloads][preloads].
-Force `many:` on every relation — see [§19 Plugin `:explicit_many_option`][plugin-explicit_many_option].
+DB preloads for `:serializer` attributes — see [Preloads][preloads].
+Force `many:` on every relation — see [Plugin `:explicit_many_option`][plugin-explicit_many_option].
 
 ---
 
-## 7. Batch Loading (N+1)
+## Batch Loading (N+1)
 
 ```ruby
 class UserSerializer < Serega
@@ -266,11 +266,11 @@ attribute :total_likes, batch: { use: [:fb_likes, :tw_likes] },
 
 ⚠️ Value-proc keyword is **`batches:`** (plural). `config.batch_id_option = :id` is the default ID method.
 
-Pairs well with `:preload` to avoid N+1 inside loaders (see [§8 Preloads][preloads]).
+Pairs well with `:preload` to avoid N+1 inside loaders (see [Preloads][preloads]).
 
 ---
 
-## 8. Preloads
+## Preloads
 
 ```ruby
 class PostSerializer < Serega
@@ -318,7 +318,7 @@ class AppSerializer < Serega
 end
 ```
 
-[§12 Plugin `:activerecord_preloads`][plugin-activerecord_preloads] registers one
+[Plugin `:activerecord_preloads`][plugin-activerecord_preloads] registers one
 for you (built on `ActiveRecord::Associations::Preloader`), so enabling it loads
 every declared association once, automatically — no N+1. For another ORM — or for
 plain non-ORM objects — register your own handler: it can load data from any
@@ -352,7 +352,7 @@ option's target.
 
 ---
 
-## 9. Serializing Hash Records (`hash_access:`)
+## Serializing Hash Records (`hash_access:`)
 
 ```ruby
 # objects should implement #[] and #fetch — Hash already does
@@ -412,7 +412,7 @@ UserSerializer.to_h({address: {city: "Paris"}})
 
 ---
 
-## 10. Sharing Setup via Inheritance
+## Sharing Setup via Inheritance
 
 A child serializer inherits attributes, config, and plugins from its parent.
 Define a base serializer once, then put shared setup there.
@@ -435,11 +435,11 @@ end
 
 Both `UserSerializer` and `PostSerializer` now have `:string_modifiers` enabled — no need to opt in twice.
 
-Set defaults in the base class — see [§11 Configuration][configuration], §12–§20 for plugins.
+Set defaults in the base class — see [Configuration][configuration], and the plugin sections below.
 
 ---
 
-## 11. Configuration
+## Configuration
 
 ### `config.auto_preload` — auto-add `:preload` from `:delegate` / `:serializer`
 
@@ -462,7 +462,7 @@ class UserSerializer < Serega
 end
 ```
 
-See [§8 Preloads][preloads].
+See [Preloads][preloads].
 
 ### `config.hide_by_default` — hide attrs unless explicitly requested
 
@@ -486,7 +486,7 @@ Accepts `false` (default), `true` (hide everything),
 is `auto_preload = true` + `hide_by_default = [:preload]` — every association
 is hidden until the client asks for it, so unrequested fields cost nothing.
 
-See [§4 Field Selection][field-selection].
+See [Field Selection][field-selection].
 
 ### `config.delegate_default_allow_nil` — default `:allow_nil` for every `:delegate`
 
@@ -511,7 +511,7 @@ end
 UserSerializer.to_h([OpenStruct.new(uuid: 'abc')])   # => [{likes: 99}]
 ```
 
-Default `:id`. See [§7 Batch Loading][batch-loading].
+Default `:id`. See [Batch Loading][batch-loading].
 
 ### `config.base_serializer` — parent for block-defined nested serializers
 
@@ -563,7 +563,7 @@ so repeated requests with the same modifiers skip rebuilding. Default `0`
 
 ---
 
-## 12. Plugin `:activerecord_preloads`
+## Plugin `:activerecord_preloads`
 
 ```ruby
 class AppSerializer < Serega
@@ -573,11 +573,11 @@ end
 UserSerializer.to_h(user) # AR Preloader runs declared preloads automatically
 ```
 
-Needs preloads declared on attributes — see [§8 Preloads][preloads].
+Needs preloads declared on attributes — see [Preloads][preloads].
 
 ---
 
-## 13. Plugin `:string_modifiers`
+## Plugin `:string_modifiers`
 
 ```ruby
 class UserSerializer < Serega
@@ -598,7 +598,7 @@ Old Hash/Array forms still work. Great for `GET ?fields=...` query params.
 
 ---
 
-## 14. Plugin `:camel_case`
+## Plugin `:camel_case`
 
 ```ruby
 class UserSerializer < Serega
@@ -617,7 +617,7 @@ Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
 
 ---
 
-## 15. Plugin `:if` / `:unless`
+## Plugin `:if` / `:unless`
 
 | Option | Sees | Decides before |
 |------------------|------------------|----------------|
@@ -644,11 +644,11 @@ Symbol short form: `if: :active?` → calls `object.active?`.
 ⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` — use `if`/`unless` there.
 
 For unconditional hiding, prefer `hide: true` — see
-[§2 Attribute Options][attributes] and [§4 Field Selection][field-selection].
+[Attribute Options][attributes] and [Field Selection][field-selection].
 
 ---
 
-## 16. Plugin `:formatters`
+## Plugin `:formatters`
 
 ```ruby
 class AppSerializer < Serega
@@ -672,7 +672,7 @@ UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, score: 87),
 
 ---
 
-## 17. Plugin `:presenter`
+## Plugin `:presenter`
 
 ```ruby
 class UserSerializer < Serega
@@ -699,11 +699,11 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', id
 
 `__getobj__` returns the wrapped object. `method_missing` installs a real
 delegator on first call. `__ctx__` exposes the serialization context
-(see [§5 Context][context]).
+(see [Context][context]).
 
 ---
 
-## 18. Plugin `:depth_limit`
+## Plugin `:depth_limit`
 
 ```ruby
 class CommentSerializer < Serega
@@ -720,7 +720,7 @@ instantiate before business logic to fail fast on malicious `?with=` queries.
 
 ---
 
-## 19. Plugin `:explicit_many_option`
+## Plugin `:explicit_many_option`
 
 ```ruby
 class AppSerializer < Serega
@@ -744,7 +744,7 @@ end
 
 ---
 
-## 20. Plugin `:root` / `:metadata` / `:context_metadata`
+## Plugin `:root` / `:metadata` / `:context_metadata`
 
 ```ruby
 class UserSerializer < Serega
@@ -811,22 +811,22 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 
 ---
 
-## 21. Errors
+## Errors
 
 | Error | When |
 |--------------------------------|------|
 | `Serega::SeregaError` | base class for everything |
-| `Serega::AttributeNotExist` | unknown attr in [§4][field-selection] — `#serializer`, `#attributes` |
-| `Serega::DepthLimitError` | [§18][plugin-depth_limit] breach — `#details` |
+| `Serega::AttributeNotExist` | unknown attr in [Field Selection][field-selection] — `#serializer`, `#attributes` |
+| `Serega::DepthLimitError` | [Plugin `:depth_limit`][plugin-depth_limit] breach — `#details` |
 
-[attributes]: #2-attribute-options
-[field-selection]: #4-field-selection--only-except-with
-[context]: #5-context
-[relations]: #6-relations
-[batch-loading]: #7-batch-loading-n1
-[preloads]: #8-preloads
-[configuration]: #11-configuration
-[plugin-activerecord_preloads]: #12-plugin-activerecord_preloads
-[plugin-presenter]: #17-plugin-presenter
-[plugin-depth_limit]: #18-plugin-depth_limit
-[plugin-explicit_many_option]: #19-plugin-explicit_many_option
+[attributes]: #attribute-options
+[field-selection]: #field-selection--only-except-with
+[context]: #context
+[relations]: #relations
+[batch-loading]: #batch-loading-n1
+[preloads]: #preloads
+[configuration]: #configuration
+[plugin-activerecord_preloads]: #plugin-activerecord_preloads
+[plugin-presenter]: #plugin-presenter
+[plugin-depth_limit]: #plugin-depth_limit
+[plugin-explicit_many_option]: #plugin-explicit_many_option
