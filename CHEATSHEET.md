@@ -1,5 +1,33 @@
 # Serega Cheatsheet
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Your First Serializer](#your-first-serializer)
+- [Attribute Options](#attribute-options)
+- [Serialize](#serialize)
+- [Field Selection — `:only` `:except` `:with`](#field-selection--only-except-with)
+- [Context](#context)
+- [Relations](#relations)
+- [Batch Loading (N+1)](#batch-loading-n1)
+- [Preloads](#preloads)
+- [Serializing Hash Records (`hash_access:`)](#serializing-hash-records-hash_access)
+- [Sharing Setup via Inheritance](#sharing-setup-via-inheritance)
+- [Configuration](#configuration)
+- [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
+- [Plugin `:string_modifiers`](#plugin-string_modifiers)
+- [Plugin `:camel_case`](#plugin-camel_case)
+- [Plugin `:if` / `:unless`](#plugin-if--unless)
+- [Plugin `:formatters`](#plugin-formatters)
+- [Plugin `:presenter`](#plugin-presenter)
+- [Plugin `:depth_limit`](#plugin-depth_limit)
+- [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
+- [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
+- [Errors](#errors)
+
+<!-- tocstop -->
+
 ## Your First Serializer
 
 ```ruby

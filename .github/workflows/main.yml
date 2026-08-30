@@ -33,6 +33,9 @@ jobs:
       - name: Markdown linter
         run: bundle exec mdl README.md CHEATSHEET.md CHANGELOG.md RELEASE.md
 
+      - name: Check documentation table of contents and links
+        run: bundle exec rake docs:check
+
       - name: Check YARD documentation coverage
         run: |
           bundle exec yard doc --no-cache --quiet
