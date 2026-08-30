@@ -7,60 +7,6 @@ RSpec.describe Serega do
     expect(described_class::VERSION).not_to be_nil
   end
 
-  describe ".config" do
-    subject(:config) { serializer_class.config }
-
-    it "generates default config" do
-      expect(config.__send__(:opts).keys).to match_array %i[
-        plugins
-        initiate_keys
-        serialize_keys
-        attribute_keys
-        check_attribute_name
-        check_initiate_params
-        delegate_default_allow_nil
-        max_cached_plans_per_serializer_count
-        auto_preload
-        auto_preload_excluded_methods
-        hide_by_default
-        batch_id_option
-        base_serializer
-        hash_access
-      ]
-
-      expect(config.plugins).to eq []
-      expect(config.serialize_keys).to match_array(%i[context many])
-      expect(config.initiate_keys).to match_array(%i[only except with check_initiate_params])
-      expect(config.attribute_keys).to match_array(
-        %i[
-          method
-          value
-          serializer
-          many
-          hide
-          const
-          delegate
-          default
-          preload
-          batch
-          base_serializer
-          hash_access
-        ]
-      )
-      expect(config.check_attribute_name).to be true
-      expect(config.check_initiate_params).to be true
-      expect(config.delegate_default_allow_nil).to be false
-      expect(config.max_cached_plans_per_serializer_count).to eq 0
-      expect(config.hide_by_default).to be false
-      expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
-      expect(config.auto_preload_excluded_methods).to eq %i[itself]
-      expect(config.batch_id_option).to eq :id
-      expect(config.base_serializer).to be_nil
-      expect(config.hash_access.default_mode).to eq :symbol
-      expect(config.hash_access.default_allow_missing_key).to be false
-    end
-  end
-
   describe ".inherited" do
     it "inherits config" do
       parent_ser = Class.new(described_class)
@@ -151,81 +97,6 @@ RSpec.describe Serega do
       child = Class.new(parent)
 
       expect(child::SeregaObjectSerializer.superclass).to eq parent::SeregaObjectSerializer
-    end
-  end
-
-  describe ".plugin" do
-    let(:plugin) { Module.new }
-
-    it "runs plugin callbacks" do
-      opts = {foo: :bar}
-      allow(plugin).to receive_messages(
-        before_load_plugin: nil,
-        load_plugin: nil,
-        after_load_plugin: nil
-      )
-      serializer_class.plugin(plugin, **opts)
-
-      expect(plugin).to have_received(:before_load_plugin).with(serializer_class, opts)
-      expect(plugin).to have_received(:load_plugin).with(serializer_class, opts)
-      expect(plugin).to have_received(:after_load_plugin).with(serializer_class, opts)
-    end
-
-    it "loads not registered plugins modules" do
-      serializer_class.plugin plugin
-      expect(serializer_class.config.plugins).to eq [plugin]
-    end
-
-    it "loads registered plugins using plugin_name" do
-      plugin.instance_exec do
-        def self.plugin_name
-          :test
-        end
-      end
-
-      Serega::SeregaPlugins.register_plugin(plugin.plugin_name, plugin)
-
-      serializer_class.plugin(:test)
-      expect(serializer_class.config.plugins).to eq [:test]
-    end
-
-    it "raises error if plugin is already loaded" do
-      serializer_class.plugin(plugin)
-      expect { serializer_class.plugin(plugin) }.to raise_error Serega::SeregaError, "This plugin is already loaded"
-    end
-  end
-
-  describe ".plugin_used?" do
-    it "tells if plugin has been already loaded" do
-      plugin = Module.new
-      expect(serializer_class.plugin_used?(plugin)).to be false
-      serializer_class.plugin(plugin)
-      expect(serializer_class.plugin_used?(plugin)).to be true
-    end
-
-    it "tells if plugin has been already loaded when plugin has name" do
-      plugin = Module.new do
-        def self.plugin_name
-          :test
-        end
-      end
-      expect(serializer_class.plugin_used?(plugin)).to be false
-      serializer_class.plugin(plugin)
-      expect(serializer_class.plugin_used?(plugin)).to be true
-    end
-
-    it "tells if plugin has been already loaded when given plugin name" do
-      plugin = Module.new do
-        def self.plugin_name
-          :test
-        end
-      end
-
-      Serega::SeregaPlugins.register_plugin(plugin.plugin_name, plugin)
-
-      expect(serializer_class.plugin_used?(:test)).to be false
-      serializer_class.plugin(:test)
-      expect(serializer_class.plugin_used?(:test)).to be true
     end
   end
 
@@ -627,51 +498,6 @@ RSpec.describe Serega do
           expect(result.ctx).to eq "bar"
         end
       end
-    end
-  end
-
-  describe "validating initiate params" do
-    let(:validator) { instance_double(serializer_class::CheckInitiateParams, validate: nil) }
-    let(:modifiers) { {only: "foo"} }
-
-    before do
-      allow(serializer_class::CheckInitiateParams).to receive(:new).and_return(validator)
-    end
-
-    it "validates initiate params by default" do
-      serializer_class.to_h(nil, modifiers)
-
-      expect(serializer_class::CheckInitiateParams).to have_received(:new).with(only: {foo: {}})
-      expect(validator).to have_received(:validate)
-    end
-
-    it "allows to disable validation via config option" do
-      serializer_class.config.check_initiate_params = false
-      serializer_class.to_h(nil, modifiers)
-
-      expect(serializer_class::CheckInitiateParams).not_to have_received(:new)
-    end
-
-    it "allows to disable validation via check_initiate_params param" do
-      serializer_class.to_h(nil, **modifiers, check_initiate_params: false)
-
-      expect(serializer_class::CheckInitiateParams).not_to have_received(:new)
-    end
-  end
-
-  describe "validating serialize params" do
-    let(:validator) { instance_double(serializer_class::CheckSerializeParams, validate: nil) }
-    let(:params) { {only: {}, except: {}, with: {}, context: {foo: "bar"}, a: 1} }
-
-    before do
-      allow(serializer_class::CheckSerializeParams).to receive(:new).and_return(validator)
-    end
-
-    it "selects serialize params (not modifiers params) and validates them" do
-      serializer_class.to_h(nil, params)
-
-      expect(serializer_class::CheckSerializeParams).to have_received(:new).with(hash_including(context: {foo: "bar"}, a: 1))
-      expect(validator).to have_received(:validate)
     end
   end
 

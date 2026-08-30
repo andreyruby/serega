@@ -21,4 +21,22 @@ RSpec.describe Serega::SeregaValidations::CheckSerializeParams do
     expect(Serega::SeregaValidations::Utils::CheckOptIsHash).to have_received(:call).with(opts, :context)
     expect(Serega::SeregaValidations::Utils::CheckOptIsBool).to have_received(:call).with(opts, :many)
   end
+
+  describe "validating serialize params" do
+    let(:serializer_class) { Class.new(Serega) }
+
+    let(:validator) { instance_double(serializer_class::CheckSerializeParams, validate: nil) }
+    let(:params) { {only: {}, except: {}, with: {}, context: {foo: "bar"}, a: 1} }
+
+    before do
+      allow(serializer_class::CheckSerializeParams).to receive(:new).and_return(validator)
+    end
+
+    it "selects serialize params (not modifiers params) and validates them" do
+      serializer_class.to_h(nil, params)
+
+      expect(serializer_class::CheckSerializeParams).to have_received(:new).with(hash_including(context: {foo: "bar"}, a: 1))
+      expect(validator).to have_received(:validate)
+    end
+  end
 end
