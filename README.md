@@ -29,9 +29,49 @@ It has some great features:
 - Auto camelCase keys - [camel_case][camel_case] plugin
 - Serializing Hash records - [hash_access][hash_access] attribute option
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Installation](#installation)
+- [Usage](#usage)
+   - [Define serializers](#define-serializers)
+   - [Adding attributes](#adding-attributes)
+   - [Defining a nested serializer with a block](#defining-a-nested-serializer-with-a-block)
+   - [Serializing](#serializing)
+   - [Selecting Fields](#selecting-fields)
+   - [Using Context](#using-context)
+   - [Batch Loading](#batch-loading)
+- [Configuration](#configuration)
+- [Preloads](#preloads)
+   - [Serializing the same object in association](#serializing-the-same-object-in-association)
+   - [Custom preloading](#custom-preloading)
+- [Serializing Hash records](#serializing-hash-records)
+- [Plugins](#plugins)
+   - [Plugin :activerecord_preloads](#plugin-activerecord_preloads)
+   - [Plugin :root](#plugin-root)
+   - [Plugin :metadata](#plugin-metadata)
+   - [Plugin :context_metadata](#plugin-context_metadata)
+   - [Plugin :formatters](#plugin-formatters)
+   - [Plugin :presenter](#plugin-presenter)
+   - [Plugin :string_modifiers](#plugin-string_modifiers)
+   - [Plugin :if](#plugin-if)
+   - [Plugin :camel_case](#plugin-camel_case)
+   - [Plugin :depth_limit](#plugin-depth_limit)
+   - [Plugin :explicit_many_option](#plugin-explicit_many_option)
+- [Errors](#errors)
+- [Release](#release)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
+<!-- tocstop -->
+
 ## Installation
 
 `bundle add serega`
+
+## Usage
 
 ### Define serializers
 
@@ -592,7 +632,7 @@ end
 
 ---
 
-### SPECIFIC CASE: Serializing the same object in association
+### Serializing the same object in association
 
 For example, you show your current user as "user" and use the same user object
 to serialize "user_stats". `UserStatSerializer` relies on user fields and any

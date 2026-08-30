@@ -7,6 +7,8 @@ RSpec::Core::RakeTask.new(:spec)
 
 require "standard/rake"
 
+Dir["tasks/*.rake"].each { |file| load file }
+
 task default: %i[spec standard]
 
 desc "Run all examples scripts (check they work without raising errors)"
