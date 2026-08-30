@@ -229,6 +229,8 @@ class Serega
         # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
         #
         def to_data(object, opts = nil)
+          opts = normalize_serialization_opts(opts)
+          object = prepare_objects(object, opts[:context])
           opts = prepare_initial_serialization_opts(object, opts)
           serialized_data = serialize(object, opts)
           self.class::SeregaDataBuilder.call(self, serialized_data, opts)

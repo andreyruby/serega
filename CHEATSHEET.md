@@ -14,6 +14,7 @@
 - [Preloads](#preloads)
 - [Serializing Hash Records (`hash_access:`)](#serializing-hash-records-hash_access)
 - [Sharing Setup via Inheritance](#sharing-setup-via-inheritance)
+- [Prepare Initial Objects](#prepare-initial-objects)
 - [Configuration](#configuration)
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
 - [Plugin `:string_modifiers`](#plugin-string_modifiers)
@@ -178,6 +179,9 @@ UserSerializer.to_h([user]) # auto array detection => [{name: "Felonious Gru"}]
 UserSerializer.to_data(user) # Ruby Data object (3.2+) => #<data name="Felonious Gru">
 UserSerializer.new(only: [:name]).to_h(user) # reuse — serialization plan built once
 ```
+
+To serialize ids or other references, see
+[Prepare Initial Objects][prepare-initial-objects].
 
 ---
 
@@ -464,6 +468,32 @@ end
 Both `UserSerializer` and `PostSerializer` now have `:string_modifiers` enabled — no need to opt in twice.
 
 Set defaults in the base class — see [Configuration][configuration], and the plugin sections below.
+
+---
+
+## Prepare Initial Objects
+
+```ruby
+class UserSerializer < Serega
+  prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+
+  attribute :first_name
+end
+
+UserSerializer.to_h(["17"]) # => [{first_name: "Ann"}]
+```
+
+Other forms:
+
+```ruby
+prepare_initial_objects { |ids, ctx| User.where(id: ids, account: ctx[:account]) } # context
+prepare_initial_objects { |ids, ctx:| User.where(id: ids, account: ctx[:account]) } # keyword context
+prepare_initial_objects UsersLoader # callable value
+```
+
+⚠️ Runs for the **serialized objects only**, not for objects of nested
+serializers. Runs before `:many` is detected, so it may turn a single object
+into a collection.
 
 ---
 
@@ -852,6 +882,7 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 [context]: #context
 [relations]: #relations
 [batch-loading]: #batch-loading-n1
+[prepare-initial-objects]: #prepare-initial-objects
 [preloads]: #preloads
 [configuration]: #configuration
 [plugin-activerecord_preloads]: #plugin-activerecord_preloads

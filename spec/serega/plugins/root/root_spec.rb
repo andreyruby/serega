@@ -241,4 +241,42 @@ RSpec.describe Serega::SeregaPlugins::Root do
       end
     end
   end
+
+  describe "prepare_initial_objects" do
+    let(:records) { {"1" => double(first_name: "Ann"), "2" => double(first_name: "Bob")} }
+
+    it "serializes prepared objects to hash" do
+      data = records
+      user_serializer = Class.new(Serega) do
+        plugin :root
+        prepare_initial_objects { |ids| ids.map { |id| data[id] } }
+        attribute :first_name
+      end
+
+      expect(user_serializer.to_h(["1"])).to eq(data: [{first_name: "Ann"}])
+    end
+
+    it "serializes prepared objects to data" do
+      data = records
+      user_serializer = Class.new(Serega) do
+        plugin :root
+        prepare_initial_objects { |ids| ids.map { |id| data[id] } }
+        attribute :first_name
+      end
+
+      result = user_serializer.to_data(["1"])
+      expect(result.data.first.first_name).to eq "Ann"
+    end
+
+    it "uses many root key when a single object is prepared into a collection" do
+      data = records
+      user_serializer = Class.new(Serega) do
+        plugin :root, root_one: "user", root_many: "users"
+        prepare_initial_objects { |id| [data[id]] }
+        attribute :first_name
+      end
+
+      expect(user_serializer.to_h("1")).to eq("users" => [{first_name: "Ann"}])
+    end
+  end
 end

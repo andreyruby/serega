@@ -266,6 +266,63 @@ class Serega
     end
 
     #
+    # Registers (or returns) the handler that replaces the serialized objects
+    # before serialization starts.
+    #
+    # The handler is called once per serialization with the objects provided to
+    # `.call`/`.to_h`/`.to_data` and the serialization context. Its result is
+    # serialized instead of the provided objects, which allows to accept ids or
+    # other references and load the records in one place.
+    #
+    # The handler runs before the `:many` option is detected, so it may turn a
+    # single object into a collection and back. A provided `:many` serialization
+    # option is still used as is.
+    #
+    # The handler runs only for the serialized objects, and not for objects of
+    # nested serializers.
+    #
+    # @example with a block
+    #   prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+    #
+    # @example with a context
+    #   prepare_initial_objects { |user_ids, ctx| User.where(id: user_ids, account: ctx[:account]) }
+    #
+    # @example with a keyword context
+    #   prepare_initial_objects { |user_ids, ctx:| User.where(id: user_ids, account: ctx[:account]) }
+    #
+    # @example with a callable value
+    #   prepare_initial_objects UsersLoader
+    #
+    # @param value [#call, nil] Handler accepting (objects), (objects, context) or (objects, ctx:)
+    # @param block [Proc] Handler accepting (objects), (objects, context) or (objects, ctx:)
+    #
+    # @return [#call, nil] The registered handler
+    #
+    def prepare_initial_objects(value = nil, &block)
+      return @prepare_initial_objects if value.nil? && block.nil?
+      raise SeregaError, "prepare_initial_objects accepts a single callable or a block, not both" if value && block
+
+      handler = value || block
+      raise SeregaError, "prepare_initial_objects value must be a Proc or respond to #call" if !handler.is_a?(Proc) && !handler.respond_to?(:call)
+
+      signature = SeregaUtils::MethodSignature.call(handler, pos_limit: 2, keyword_args: [:ctx])
+      raise SeregaError, prepare_initial_objects_signature_error unless %w[1 2 1_ctx].include?(signature)
+
+      @prepare_initial_objects_signature = signature
+      @prepare_initial_objects = handler
+    end
+
+    #
+    # Signature of the registered prepare_initial_objects handler
+    #
+    # @return [String, nil] Handler signature
+    #
+    # @private
+    def prepare_initial_objects_signature
+      @prepare_initial_objects_signature
+    end
+
+    #
     # Serializes provided object to Hash
     #
     # @param object [Object] Serialized object
@@ -386,7 +443,19 @@ class Serega
       # Assign same preload handler
       subclass.preload_with(preload_with) if preload_with
 
+      # Assign same initial objects handler
+      subclass.prepare_initial_objects(prepare_initial_objects) if prepare_initial_objects
+
       super
+    end
+
+    def prepare_initial_objects_signature_error
+      <<~ERR.strip
+        prepare_initial_objects handler arguments should have one of this signatures:
+        - (objects)        # one argument
+        - (objects, ctx)   # two arguments
+        - (objects, ctx:)  # one argument and one :ctx keyword argument
+      ERR
     end
   end
 
@@ -436,6 +505,8 @@ class Serega
     # @return [Hash] Serialization result
     #
     def call(object, opts = nil)
+      opts = normalize_serialization_opts(opts)
+      object = prepare_objects(object, opts[:context])
       opts = prepare_initial_serialization_opts(object, opts)
       serialize(object, opts)
     end
@@ -458,6 +529,8 @@ class Serega
     # @return [Data] Serialization result
     #
     def to_data(object, opts = nil)
+      opts = normalize_serialization_opts(opts)
+      object = prepare_objects(object, opts[:context])
       opts = prepare_initial_serialization_opts(object, opts)
       serialized_data = serialize(object, opts)
       self.class::SeregaDataBuilder.call(self, serialized_data)
@@ -488,11 +561,26 @@ class Serega
       SeregaUtils::ToHash.call(value)
     end
 
-    def prepare_initial_serialization_opts(object, opts)
+    def normalize_serialization_opts(opts)
       opts = opts ? opts.transform_keys(&:to_sym) : {}
       self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
 
       opts[:context] ||= {}
+      opts
+    end
+
+    def prepare_objects(objects, context)
+      handler = self.class.prepare_initial_objects
+      return objects unless handler
+
+      case self.class.prepare_initial_objects_signature
+      when "1" then handler.call(objects)
+      when "2" then handler.call(objects, context)
+      else handler.call(objects, ctx: context) # "1_ctx"
+      end
+    end
+
+    def prepare_initial_serialization_opts(object, opts)
       opts[:level_queue] = SeregaEngine::LevelQueue.new
       opts[:many] = SeregaUtils::CollectionDetector.call(object) unless opts.key?(:many)
       opts[:plan] = plan
