@@ -19,6 +19,7 @@ It has some great features:
 - Secure from malicious queries with [depth_limit][depth_limit] plugin
 - Solutions for N+1 problem (via built-in [batch loading](#batch-loading), [preloads][preloads] or
   [activerecord_preloads][activerecord_preloads] plugin)
+- Load serialized objects by ids ([prepare_initial_objects](#prepare-initial-objects))
 - Built-in object presenter ([presenter][presenter] plugin)
 - Adding custom metadata (via [metadata][metadata] or
   [context_metadata][context_metadata] plugins)
@@ -42,6 +43,7 @@ It has some great features:
    - [Selecting Fields](#selecting-fields)
    - [Using Context](#using-context)
    - [Batch Loading](#batch-loading)
+   - [Prepare Initial Objects](#prepare-initial-objects)
 - [Configuration](#configuration)
 - [Preloads](#preloads)
    - [Serializing the same object in association](#serializing-the-same-object-in-association)
@@ -502,6 +504,69 @@ class UserSerializer < Serega
     value: proc { |user, batches:| batches[:facebook_likes][user.id] + batches[:twitter_likes][user.id] }
 end
 ```
+
+### Prepare Initial Objects
+
+`prepare_initial_objects` replaces the serialized objects before serialization
+starts, so a serializer can accept ids or other references and load the records
+itself.
+
+```ruby
+class UserSerializer < Serega
+  prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+
+  attribute :first_name
+end
+
+UserSerializer.to_h(["17", "42"]) # => [{first_name: "Ann"}, {first_name: "Bob"}]
+```
+
+The handler accepts the serialization context as a second positional or a
+`:ctx` keyword argument, and can be provided as a callable value:
+
+```ruby
+class UserSerializer < Serega
+  prepare_initial_objects { |user_ids, ctx| User.where(id: user_ids, account: ctx[:account]) }
+  # or
+  prepare_initial_objects { |user_ids, ctx:| User.where(id: user_ids, account: ctx[:account]) }
+  # or
+  prepare_initial_objects UsersLoader
+end
+```
+
+The handler runs once per serialization, before the `:many` option is detected,
+so it can turn a single object into a collection and back:
+
+```ruby
+class UserSerializer < Serega
+  prepare_initial_objects { |user_id| User.where(id: user_id) }
+
+  attribute :first_name
+end
+
+UserSerializer.to_h("17") # => [{first_name: "Ann"}] - an array, as the handler returned a collection
+```
+
+A provided `:many` option is used as is. A handler returning `nil` serializes
+`nil`, and errors raised inside the handler are not wrapped.
+
+Declared preloads are applied to the prepared objects, so the handler pairs
+with [preloads][preloads] and the
+[activerecord_preloads][activerecord_preloads] plugin:
+
+```ruby
+class UserSerializer < Serega
+  plugin :activerecord_preloads
+
+  prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+
+  attribute :albums_count, preload: :albums, value: proc { |user| user.albums.size }
+end
+```
+
+The handler runs for the serialized objects only, and not for objects of nested
+serializers. It is inherited by subclasses, so declare it on concrete
+serializers rather than on a base serializer shared by all of them.
 
 ## Configuration
 

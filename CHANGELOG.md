@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- New `prepare_initial_objects` DSL — replaces the serialized objects before
+  serialization starts, so a serializer can accept ids or other references and
+  load the records itself. See "Prepare Initial Objects" in the README.
+
+  ```ruby
+  class UserSerializer < Serega
+    prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+
+    attribute :first_name
+  end
+
+  UserSerializer.to_h(["17", "42"])
+  ```
+
 ## [0.40.1] - 2026-07-29
 
 - Documentation improvements only.

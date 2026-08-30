@@ -337,4 +337,22 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       expect(serializer.custom_presenter?).to be false
     end
   end
+
+  describe "prepare_initial_objects" do
+    it "wraps prepared objects in the Presenter" do
+      records = {"1" => double(first_name: "Ann")}
+      user_serializer = Class.new(Serega) do
+        plugin :presenter
+        prepare_initial_objects { |ids| ids.map { |id| records[id] } }
+        attribute :first_name
+        presenter do
+          def first_name
+            super.upcase
+          end
+        end
+      end
+
+      expect(user_serializer.to_h(["1"])).to eq [{first_name: "ANN"}]
+    end
+  end
 end

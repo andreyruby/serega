@@ -246,4 +246,22 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
       expect(result.links.last.href).to eq "/next"
     end
   end
+
+  describe "prepare_initial_objects" do
+    it "provides prepared objects to metadata attributes" do
+      records = {"1" => double(first_name: "Ann"), "2" => double(first_name: "Bob")}
+      user_serializer = Class.new(Serega) do
+        plugin :root
+        plugin :metadata
+        prepare_initial_objects { |ids| ids.map { |id| records[id] } }
+        attribute :first_name
+        meta_attribute(:total) { |objects| objects.size }
+      end
+
+      expect(user_serializer.to_h(["1", "2"])).to eq(
+        data: [{first_name: "Ann"}, {first_name: "Bob"}],
+        total: 2
+      )
+    end
+  end
 end
