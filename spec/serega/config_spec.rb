@@ -221,4 +221,58 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.batch_id_option).to eq :uuid
     end
   end
+
+  describe "defaults" do
+    subject(:config) { serializer_class.config }
+
+    it "generates default config" do
+      expect(config.__send__(:opts).keys).to match_array %i[
+        plugins
+        initiate_keys
+        serialize_keys
+        attribute_keys
+        check_attribute_name
+        check_initiate_params
+        delegate_default_allow_nil
+        max_cached_plans_per_serializer_count
+        auto_preload
+        auto_preload_excluded_methods
+        hide_by_default
+        batch_id_option
+        base_serializer
+        hash_access
+      ]
+
+      expect(config.plugins).to eq []
+      expect(config.serialize_keys).to match_array(%i[context many])
+      expect(config.initiate_keys).to match_array(%i[only except with check_initiate_params])
+      expect(config.attribute_keys).to match_array(
+        %i[
+          method
+          value
+          serializer
+          many
+          hide
+          const
+          delegate
+          default
+          preload
+          batch
+          base_serializer
+          hash_access
+        ]
+      )
+      expect(config.check_attribute_name).to be true
+      expect(config.check_initiate_params).to be true
+      expect(config.delegate_default_allow_nil).to be false
+      expect(config.max_cached_plans_per_serializer_count).to eq 0
+      expect(config.hide_by_default).to be false
+      expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
+      expect(config.auto_preload_excluded_methods).to eq %i[itself]
+      expect(config.batch_id_option).to eq :id
+      expect(config.base_serializer).to be_nil
+      expect(config.hash_access.default_mode).to eq :symbol
+      expect(config.hash_access.default_allow_missing_key).to be false
+    end
+  end
 end

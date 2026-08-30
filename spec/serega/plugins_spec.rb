@@ -54,4 +54,83 @@ RSpec.describe Serega::SeregaPlugins do
       Dir.unlink(plugin_dir)
     end
   end
+
+  describe ".plugin" do
+    let(:serializer_class) { Class.new(Serega) }
+
+    let(:plugin) { Module.new }
+
+    it "runs plugin callbacks" do
+      opts = {foo: :bar}
+      allow(plugin).to receive_messages(
+        before_load_plugin: nil,
+        load_plugin: nil,
+        after_load_plugin: nil
+      )
+      serializer_class.plugin(plugin, **opts)
+
+      expect(plugin).to have_received(:before_load_plugin).with(serializer_class, opts)
+      expect(plugin).to have_received(:load_plugin).with(serializer_class, opts)
+      expect(plugin).to have_received(:after_load_plugin).with(serializer_class, opts)
+    end
+
+    it "loads not registered plugins modules" do
+      serializer_class.plugin plugin
+      expect(serializer_class.config.plugins).to eq [plugin]
+    end
+
+    it "loads registered plugins using plugin_name" do
+      plugin.instance_exec do
+        def self.plugin_name
+          :test
+        end
+      end
+
+      described_class.register_plugin(plugin.plugin_name, plugin)
+
+      serializer_class.plugin(:test)
+      expect(serializer_class.config.plugins).to eq [:test]
+    end
+
+    it "raises error if plugin is already loaded" do
+      serializer_class.plugin(plugin)
+      expect { serializer_class.plugin(plugin) }.to raise_error Serega::SeregaError, "This plugin is already loaded"
+    end
+  end
+
+  describe ".plugin_used?" do
+    let(:serializer_class) { Class.new(Serega) }
+
+    it "tells if plugin has been already loaded" do
+      plugin = Module.new
+      expect(serializer_class.plugin_used?(plugin)).to be false
+      serializer_class.plugin(plugin)
+      expect(serializer_class.plugin_used?(plugin)).to be true
+    end
+
+    it "tells if plugin has been already loaded when plugin has name" do
+      plugin = Module.new do
+        def self.plugin_name
+          :test
+        end
+      end
+      expect(serializer_class.plugin_used?(plugin)).to be false
+      serializer_class.plugin(plugin)
+      expect(serializer_class.plugin_used?(plugin)).to be true
+    end
+
+    it "tells if plugin has been already loaded when given plugin name" do
+      plugin = Module.new do
+        def self.plugin_name
+          :test
+        end
+      end
+
+      described_class.register_plugin(plugin.plugin_name, plugin)
+
+      expect(serializer_class.plugin_used?(:test)).to be false
+      serializer_class.plugin(:test)
+      expect(serializer_class.plugin_used?(:test)).to be true
+    end
+  end
 end
