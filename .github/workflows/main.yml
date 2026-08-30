@@ -31,7 +31,7 @@ jobs:
         run: bundle exec rubocop
 
       - name: Markdown linter
-        run: bundle exec mdl README.md CHANGELOG.md RELEASE.md
+        run: bundle exec mdl README.md CHEATSHEET.md CHANGELOG.md RELEASE.md
 
       - name: Check YARD documentation coverage
         run: |

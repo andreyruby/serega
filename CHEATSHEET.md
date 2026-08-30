@@ -357,7 +357,8 @@ option's target.
 ```ruby
 # objects should implement #[] and #fetch — Hash already does
 class UserSerializer < Serega
-  attribute :name, hash_access: true     # record[:name] — true is a shorthand for config.hash_access.default_mode (:symbol by default)
+  # `true` is a shorthand for config.hash_access.default_mode (:symbol by default)
+  attribute :name, hash_access: true     # record[:name]
   attribute :role, hash_access: :string  # record["role"]
 end
 
@@ -642,7 +643,8 @@ Symbol short form: `if: :active?` → calls `object.active?`.
 
 ⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` — use `if`/`unless` there.
 
-For unconditional hiding, prefer `hide: true` — see [§2 Attribute Options][attributes] and [§4 Field Selection][field-selection].
+For unconditional hiding, prefer `hide: true` — see
+[§2 Attribute Options][attributes] and [§4 Field Selection][field-selection].
 
 ---
 
