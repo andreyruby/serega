@@ -475,7 +475,8 @@ Set defaults in the base class — see [Configuration][configuration], and the p
 
 ```ruby
 class UserSerializer < Serega
-  prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+  # OccamsRecord — faster, low-memory, read-only records
+  prepare_initial_objects { |user_ids| OccamsRecord.query(User.where(id: user_ids)).run }
 
   attribute :first_name
 end
@@ -486,9 +487,14 @@ UserSerializer.to_h(["17"]) # => [{first_name: "Ann"}]
 Other forms:
 
 ```ruby
-prepare_initial_objects { |ids, ctx| User.where(id: ids, account: ctx[:account]) } # context
-prepare_initial_objects { |ids, ctx:| User.where(id: ids, account: ctx[:account]) } # keyword context
-prepare_initial_objects UsersLoader # callable value
+# context as a second positional argument
+prepare_initial_objects { |ids, ctx| OccamsRecord.query(User.where(id: ids, account: ctx[:account])).run }
+
+# context as a :ctx keyword argument
+prepare_initial_objects { |ids, ctx:| OccamsRecord.query(User.where(id: ids, account: ctx[:account])).run }
+
+# any callable value
+prepare_initial_objects UsersLoader
 ```
 
 ⚠️ Runs for the **serialized objects only**, not for objects of nested
