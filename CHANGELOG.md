@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.41.0] - 2026-09-04
 
 - New `prepare_initial_objects` DSL — replaces the serialized objects before
   serialization starts, so a serializer can accept ids or other references and
@@ -8,13 +8,18 @@
 
   ```ruby
   class UserSerializer < Serega
-    prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+    # OccamsRecord — faster, low-memory, read-only records
+    prepare_initial_objects { |user_ids| OccamsRecord.query(User.where(id: user_ids)).run }
 
     attribute :first_name
   end
 
   UserSerializer.to_h(["17", "42"])
   ```
+
+  The `:preload` option needs ActiveRecord objects — when the handler returns
+  anything else, preloading raises during serialization. Use batch loading for
+  such records instead.
 
 ## [0.40.1] - 2026-07-29
 

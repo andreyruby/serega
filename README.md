@@ -513,7 +513,9 @@ itself.
 
 ```ruby
 class UserSerializer < Serega
-  prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+  # OccamsRecord returns read-only records — faster and with a much lower
+  # memory footprint than ActiveRecord models
+  prepare_initial_objects { |user_ids| OccamsRecord.query(User.where(id: user_ids)).run }
 
   attribute :first_name
 end
@@ -526,9 +528,9 @@ The handler accepts the serialization context as a second positional or a
 
 ```ruby
 class UserSerializer < Serega
-  prepare_initial_objects { |user_ids, ctx| User.where(id: user_ids, account: ctx[:account]) }
+  prepare_initial_objects { |ids, ctx| OccamsRecord.query(User.where(id: ids, account: ctx[:account])).run }
   # or
-  prepare_initial_objects { |user_ids, ctx:| User.where(id: user_ids, account: ctx[:account]) }
+  prepare_initial_objects { |ids, ctx:| OccamsRecord.query(User.where(id: ids, account: ctx[:account])).run }
   # or
   prepare_initial_objects UsersLoader
 end
@@ -539,7 +541,7 @@ so it can turn a single object into a collection and back:
 
 ```ruby
 class UserSerializer < Serega
-  prepare_initial_objects { |user_id| User.where(id: user_id) }
+  prepare_initial_objects { |user_id| OccamsRecord.query(User.where(id: user_id)).run }
 
   attribute :first_name
 end
@@ -563,6 +565,12 @@ class UserSerializer < Serega
   attribute :albums_count, preload: :albums, value: proc { |user| user.albums.size }
 end
 ```
+
+⚠️ The `:preload` option needs ActiveRecord objects. When the handler returns
+anything else — OccamsRecord read-only records, Structs, Hashes, plain objects
+— preloading raises `Serega::SeregaError` (`Can't preload ... to ...`) during
+serialization. Load that data with [batch loading](#batch-loading) instead,
+which works with any objects.
 
 The handler runs for the serialized objects only, and not for objects of nested
 serializers. It is inherited by subclasses, so declare it on concrete
