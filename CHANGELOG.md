@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- Fix `Can't preload` error raised when the `:presenter` plugin wraps the
+  serialized objects. Presenters are unwrapped before the `preload_with` handler
+  runs, so it receives the serialized objects themselves.
+
 ## [0.41.0] - 2026-09-04
 
 - New `prepare_initial_objects` DSL — replaces the serialized objects before

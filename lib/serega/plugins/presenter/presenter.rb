@@ -55,6 +55,7 @@ class Serega
       def self.load_plugin(serializer_class, **_opts)
         serializer_class.extend(ClassMethods)
         serializer_class::SeregaObjectSerializer.include(SeregaObjectSerializerInstanceMethods)
+        serializer_class::SeregaPlanPoint.include(SeregaPlanPointInstanceMethods)
       end
 
       #
@@ -233,6 +234,24 @@ class Serega
           presenter = self.class.serializer_class::Presenter
           presenters = objects.map { |object| presenter.new(object, context) }
           super(presenters)
+        end
+      end
+
+      #
+      # SeregaPlanPoint additional/patched instance methods
+      #
+      # @see Serega::SeregaPlanPoint
+      #
+      # @private
+      module SeregaPlanPointInstanceMethods
+        #
+        # Unwraps presenters before preloading, as preload handlers work with
+        # the serialized objects themselves.
+        #
+        def run_preloads(objects)
+          return super unless self.class.serializer_class.custom_presenter?
+
+          super(objects.map(&:__getobj__))
         end
       end
     end

@@ -4,6 +4,7 @@ require "support/activerecord"
 require "support/matchers/run_queries"
 
 load_plugin_code :activerecord_preloads
+load_plugin_code :presenter
 
 RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
   describe "loading" do
@@ -16,37 +17,6 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
     it "raises error when any option was provided" do
       error = "Plugin :activerecord_preloads does not accept the :foo option. No options are allowed"
       expect { serializer.plugin(:activerecord_preloads, foo: :bar) }.to raise_error Serega::SeregaError, error
-    end
-  end
-
-  describe ".records" do
-    let(:serializer) { Class.new(Serega) }
-
-    it "returns objects unchanged when the :presenter plugin is not used" do
-      serializer.plugin(:activerecord_preloads)
-      objects = [Object.new, Object.new]
-      expect(described_class.records(serializer, objects)).to equal objects
-    end
-
-    it "returns objects unchanged when the Presenter class has no custom methods" do
-      serializer.plugin(:activerecord_preloads)
-      serializer.plugin(:presenter)
-
-      objects = [Object.new, Object.new]
-      expect(described_class.records(serializer, objects)).to equal objects
-    end
-
-    it "unwraps presenter-wrapped objects to their underlying records when custom presenter is used" do
-      serializer.plugin(:activerecord_preloads)
-      serializer.plugin(:presenter)
-      serializer.presenter do
-        def name
-        end
-      end
-      record1, record2 = Object.new, Object.new
-
-      objects = [SimpleDelegator.new(record1), SimpleDelegator.new(record2)]
-      expect(described_class.records(serializer, objects)).to eq [record1, record2]
     end
   end
 
@@ -364,6 +334,50 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       # posts + :user + :comments = 3 queries (each association preloaded separately)
       expect { data = post_serializer.call(AR::Post.where(id: post1.id)) }.to run_queries(3)
       expect(data).to eq([{text: "post1", author_name: "Bruce", comments_count: 1}])
+    end
+  end
+
+  context "with a presenter", :with_rollback do
+    let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }
+    let(:user2) { AR::User.create!(first_name: "Clark", last_name: "Kent") }
+
+    let(:app_serializer) do
+      Class.new(Serega) do
+        plugin :activerecord_preloads
+        plugin :presenter
+      end
+    end
+
+    let(:post_serializer) do
+      Class.new(app_serializer) { attribute :text }
+    end
+
+    let(:user_serializer) do
+      ps = post_serializer
+      Class.new(app_serializer) do
+        attribute :full_name
+        attribute :posts, serializer: -> { ps }, preload: :posts
+
+        presenter do
+          def full_name
+            "#{__getobj__.first_name} #{__getobj__.last_name}"
+          end
+        end
+      end
+    end
+
+    before do
+      AR::Post.create!(user: user1, text: "post1")
+      AR::Post.create!(user: user2, text: "post2")
+    end
+
+    it "preloads associations onto the underlying records (no N+1)" do
+      data = nil
+      expect { data = user_serializer.call(AR::User.all) }.to run_queries(2)
+      expect(data).to eq [
+        {full_name: "Bruce Wayne", posts: [{text: "post1"}]},
+        {full_name: "Clark Kent", posts: [{text: "post2"}]}
+      ]
     end
   end
 end

@@ -85,6 +85,9 @@ class Serega
       # Runs this point's declared preloads over the given objects using the
       # serializer's registered preload handler.
       #
+      # Patched in:
+      # - plugin :presenter (unwraps presenters before running preloads)
+      #
       # @param objects [Array] objects serialized at this point's level
       # @return [void]
       def run_preloads(objects)
