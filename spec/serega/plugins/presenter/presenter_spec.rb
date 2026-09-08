@@ -211,6 +211,109 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     end
   end
 
+  describe "unwrapping objects before preloads" do
+    subject(:serialize) { serializer.to_h(["raw object"]) }
+
+    let(:preloaded) { [] }
+
+    let(:app_serializer) do
+      records = preloaded
+      Class.new(Serega) do
+        plugin :presenter
+        preload_with { |objects, _preloads| records.concat(objects) }
+      end
+    end
+
+    context "when Presenter has no custom methods" do
+      let(:serializer) do
+        Class.new(app_serializer) do
+          attribute :name, preload: :assoc, value: proc { |obj| obj.to_s }
+        end
+      end
+
+      it "passes objects to the preload handler unchanged" do
+        serialize
+
+        expect(preloaded).to eq ["raw object"]
+        expect(preloaded.first).not_to be_a SimpleDelegator
+      end
+    end
+
+    context "when the serializer that registers the handler has presenter methods" do
+      let(:serializer) do
+        records = preloaded
+        Class.new(Serega) do
+          plugin :presenter
+          preload_with { |objects, _preloads| records.concat(objects) }
+          attribute :name, preload: :assoc
+
+          presenter do
+            def name
+              "presented"
+            end
+          end
+        end
+      end
+
+      it "passes underlying objects to the preload handler" do
+        serialize
+
+        expect(preloaded).to eq ["raw object"]
+        expect(preloaded.first).not_to be_a SimpleDelegator
+      end
+    end
+
+    context "when a subclass has presenter methods" do
+      let(:serializer) do
+        Class.new(app_serializer) do
+          attribute :name, preload: :assoc
+
+          presenter do
+            def name
+              "presented"
+            end
+          end
+        end
+      end
+
+      it "passes underlying objects to the preload handler" do
+        serialize
+
+        expect(preloaded).to eq ["raw object"]
+        expect(preloaded.first).not_to be_a SimpleDelegator
+      end
+    end
+
+    context "when a subclass loads the plugin and has presenter methods" do
+      let(:base_serializer) do
+        records = preloaded
+        Class.new(Serega) do
+          preload_with { |objects, _preloads| records.concat(objects) }
+        end
+      end
+
+      let(:serializer) do
+        Class.new(base_serializer) do
+          plugin :presenter
+          attribute :name, preload: :assoc
+
+          presenter do
+            def name
+              "presented"
+            end
+          end
+        end
+      end
+
+      it "passes underlying objects to the preload handler" do
+        serialize
+
+        expect(preloaded).to eq ["raw object"]
+        expect(preloaded.first).not_to be_a SimpleDelegator
+      end
+    end
+  end
+
   describe ".presenter" do
     it "defines presenter methods evaluated inside the Presenter class" do
       serializer.attribute :full_name
