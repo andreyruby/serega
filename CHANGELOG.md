@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.42.0] - 2026-09-08
 
 - **BREAKING**: Moved presenter functionality from the `:presenter` plugin to
   core, where `presenter do ... end` is the only way to define presenter methods.
