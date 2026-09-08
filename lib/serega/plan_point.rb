@@ -85,15 +85,18 @@ class Serega
       # Runs this point's declared preloads over the given objects using the
       # serializer's registered preload handler.
       #
-      # Patched in:
-      # - plugin :presenter (unwraps presenters before running preloads)
+      # Presenters are unwrapped first, as preload handlers work with the
+      # serialized objects themselves.
       #
       # @param objects [Array] objects serialized at this point's level
       # @return [void]
       def run_preloads(objects)
         return unless preloads
 
-        handler = self.class.serializer_class.preload_with
+        serializer_class = self.class.serializer_class
+        objects = objects.map(&:__getobj__) if serializer_class.presenter
+
+        handler = serializer_class.preload_with
         unless handler
           raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
         end

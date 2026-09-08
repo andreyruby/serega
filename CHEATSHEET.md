@@ -16,12 +16,12 @@
 - [Sharing Setup via Inheritance](#sharing-setup-via-inheritance)
 - [Prepare Initial Objects](#prepare-initial-objects)
 - [Configuration](#configuration)
+- [Presenter](#presenter)
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
 - [Plugin `:string_modifiers`](#plugin-string_modifiers)
 - [Plugin `:camel_case`](#plugin-camel_case)
 - [Plugin `:if` / `:unless`](#plugin-if--unless)
 - [Plugin `:formatters`](#plugin-formatters)
-- [Plugin `:presenter`](#plugin-presenter)
 - [Plugin `:depth_limit`](#plugin-depth_limit)
 - [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
 - [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
@@ -228,7 +228,7 @@ UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@exa
 UserSerializer.to_h(user, context: { current_user: nil }) # => {email: nil}
 ```
 
-Inside `Presenter` methods context is accessed via `__ctx__` (see [Plugin `:presenter`][plugin-presenter]).
+Inside presenter methods context is accessed via `__ctx__` (see [Presenter][presenter]).
 
 ---
 
@@ -627,6 +627,34 @@ so repeated requests with the same modifiers skip rebuilding. Default `0`
 
 ---
 
+## Presenter
+
+```ruby
+class UserSerializer < Serega
+  attribute :full_name
+  attribute :role
+
+  presenter do # methods of the wrapped object are available directly
+    def full_name
+      "#{first_name} #{last_name}"
+    end
+
+    def role
+      id == __ctx__[:current_user_id] ? :self : :other # context via __ctx__
+    end
+  end
+end
+
+UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', id: 1),
+                    context: { current_user_id: 1 })
+# => {full_name: "Felonious Gru", role: :self}
+```
+
+`__getobj__` returns the wrapped object. `__ctx__` exposes the serialization
+context (see [Context][context]).
+
+---
+
 ## Plugin `:activerecord_preloads`
 
 ```ruby
@@ -733,37 +761,6 @@ UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, score: 87),
                     context: { digits: 2 })
 # => {balance: "$1000", active: "yes", score: "87%"}
 ```
-
----
-
-## Plugin `:presenter`
-
-```ruby
-class UserSerializer < Serega
-  plugin :presenter
-
-  attribute :full_name
-  attribute :role
-
-  presenter do # evaluated inside Presenter < SimpleDelegator (inherits all methods of the wrapped object)
-    def full_name
-      "#{first_name} #{last_name}"
-    end
-
-    def role
-      id == __ctx__[:current_user_id] ? :self : :other # context via __ctx__
-    end
-  end
-end
-
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', id: 1),
-                    context: { current_user_id: 1 })
-# => {full_name: "Felonious Gru", role: :self}
-```
-
-`__getobj__` returns the wrapped object. `method_missing` installs a real
-delegator on first call. `__ctx__` exposes the serialization context
-(see [Context][context]).
 
 ---
 
@@ -892,6 +889,6 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 [preloads]: #preloads
 [configuration]: #configuration
 [plugin-activerecord_preloads]: #plugin-activerecord_preloads
-[plugin-presenter]: #plugin-presenter
+[presenter]: #presenter
 [plugin-depth_limit]: #plugin-depth_limit
 [plugin-explicit_many_option]: #plugin-explicit_many_option

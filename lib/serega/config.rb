@@ -33,7 +33,7 @@ class Serega
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 0,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
-      auto_preload_excluded_methods: %i[itself].freeze,
+      auto_preload_excluded_methods: %i[itself __getobj__].freeze,
       hide_by_default: false,
       batch_id_option: :id,
       base_serializer: nil,
