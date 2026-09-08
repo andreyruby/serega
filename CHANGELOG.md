@@ -2,9 +2,32 @@
 
 ## [Unreleased]
 
-- Fix `Can't preload` error raised when the `:presenter` plugin wraps the
-  serialized objects. Presenters are unwrapped before the `preload_with` handler
-  runs, so it receives the serialized objects themselves.
+- **BREAKING**: Moved presenter functionality from the `:presenter` plugin to
+  core, where `presenter do ... end` is the only way to define presenter methods.
+
+  Remove `plugin :presenter` from your serializers — loading it raises
+  `Plugin 'presenter' does not exist`.
+
+  ```ruby
+  class UserSerializer < Serega
+    attribute :name
+
+    presenter do
+      def name
+        [first_name, last_name].compact.join(" ")
+      end
+    end
+  end
+  ```
+
+  A serializer no longer holds a presenter class of its own. Reopening
+  `class Presenter` inside a serializer defines an unrelated class: no error is
+  raised, its methods are never called, and attributes resolve against the raw
+  object. Search your serializers for `class Presenter` and `::Presenter`.
+
+- Fix `Can't preload` error raised when serialized objects are wrapped in a
+  presenter. Presenters are unwrapped before the `preload_with` handler runs,
+  so it receives the serialized objects themselves.
 
 ## [0.41.0] - 2026-09-04
 

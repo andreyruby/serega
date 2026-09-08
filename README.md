@@ -20,7 +20,7 @@ It has some great features:
 - Solutions for N+1 problem (via built-in [batch loading](#batch-loading), [preloads][preloads] or
   [activerecord_preloads][activerecord_preloads] plugin)
 - Load serialized objects by ids ([prepare_initial_objects](#prepare-initial-objects))
-- Built-in object presenter ([presenter][presenter] plugin)
+- Built-in object presenter ([presenter][presenter])
 - Adding custom metadata (via [metadata][metadata] or
   [context_metadata][context_metadata] plugins)
 - Value formatters ([formatters][formatters] plugin) helps to transform
@@ -49,13 +49,13 @@ It has some great features:
    - [Serializing the same object in association](#serializing-the-same-object-in-association)
    - [Custom preloading](#custom-preloading)
 - [Serializing Hash records](#serializing-hash-records)
+- [Presenter](#presenter)
 - [Plugins](#plugins)
    - [Plugin :activerecord_preloads](#plugin-activerecord_preloads)
    - [Plugin :root](#plugin-root)
    - [Plugin :metadata](#plugin-metadata)
    - [Plugin :context_metadata](#plugin-context_metadata)
    - [Plugin :formatters](#plugin-formatters)
-   - [Plugin :presenter](#plugin-presenter)
    - [Plugin :string_modifiers](#plugin-string_modifiers)
    - [Plugin :if](#plugin-if)
    - [Plugin :camel_case](#plugin-camel_case)
@@ -128,8 +128,8 @@ class UserSerializer < Serega
   config.base_serializer = Serega
 
   # Method :itself is handy to serialize the same object with a nested set of
-  # attributes. Note: with the :presenter plugin the serialized value will be
-  # the Presenter instance itself; use `method: :__getobj__` to serialize the
+  # attributes. Note: with a custom presenter the serialized value will be
+  # the presenter instance itself; use `method: :__getobj__` to serialize the
   # original unwrapped object instead.
   attribute :statistics, method: :itself do
     attribute :likes_count
@@ -849,6 +849,62 @@ attribute :city,
   }
 ```
 
+## Presenter
+
+Moves computed attribute logic out of `:value` blocks and into a
+`presenter do ... end` block, keeping serializers readable as schemas rather
+than bags of lambdas.
+
+Computed attributes can be written as inline blocks:
+
+```ruby
+class UserSerializer < Serega
+  attribute :name, value: proc { |user| [user.first_name, user.last_name].compact.join(' ') }
+  attribute :role, value: proc { |user, ctx| user.id == ctx[:current_user_id] ? :self : :other }
+end
+```
+
+They can also be written as methods in a `presenter do ... end` block:
+
+```ruby
+class UserSerializer < Serega
+  attribute :name
+  attribute :role
+
+  presenter do
+    def name
+      [first_name, last_name].compact.join(' ')
+    end
+
+    def role
+      id == __ctx__[:current_user_id] ? :self : :other
+    end
+  end
+end
+
+user = OpenStruct.new(id: 1, first_name: 'Bruce', last_name: 'Wayne')
+UserSerializer.to_h(user, context: {current_user_id: 1})
+# => {name: "Bruce Wayne", role: :self}
+```
+
+Multiple `presenter` blocks accumulate. A child serializer runs its parent's
+blocks followed by its own, so it gets the parent's presenter methods while its
+own stay out of the parent. The parent's blocks are copied when the child class
+is created, so a `presenter` block added to a parent afterwards does not reach it.
+
+Presenter methods run on a `SimpleDelegator` wrapping the serialized object, so
+every method of that object is available directly. Any method not defined in a
+`presenter` block is delegated to the object on the first call, and a real
+delegator method is defined for it — so all subsequent serializations call it
+directly.
+
+The wrapped object is accessible via `__getobj__` when you need an unambiguous
+reference to it. The serialization context is accessible via `__ctx__`.
+
+Objects are wrapped only when the serializer has presenter methods. A serializer
+without them costs nothing — its attribute values, batch loaders and value
+callables receive the raw objects.
+
 ## Plugins
 
 ### Plugin :activerecord_preloads
@@ -1049,61 +1105,6 @@ class UserSerializer < Serega
 end
 ```
 
-### Plugin :presenter
-
-Moves computed attribute logic out of blocks and into a dedicated `Presenter` class,
-keeping serializers readable as schemas rather than bags of lambdas.
-
-Without the plugin, computed attributes live as inline blocks:
-
-```ruby
-class UserSerializer < Serega
-  attribute :name, value: proc { |u| [u.first_name, u.last_name].compact.join(' ') }
-  attribute :role, value: proc { |u, ctx| u == ctx[:current_user] ? :self : :other }
-end
-```
-
-With the plugin, they move into a `presenter do ... end` block:
-
-```ruby
-class UserSerializer < Serega
-  plugin :presenter
-
-  attribute :name
-  attribute :role
-
-  presenter do
-    def name
-      [first_name, last_name].compact.join(' ')
-    end
-
-    def role
-      id == __ctx__[:current_user_id] ? :self : :other
-    end
-  end
-end
-```
-
-The block is evaluated inside the serializer's own `Presenter` class, so
-multiple `presenter` blocks accumulate.
-
-`Presenter` inherits from `SimpleDelegator`, so every method of the serialized
-object is available directly inside presenter methods. Any method not explicitly
-defined on `Presenter` is resolved via `method_missing` on the first call, which
-also defines a real delegator method — so all subsequent serializations call it
-directly, without going through `method_missing` again.
-
-The original wrapped object is accessible via `__getobj__` (standard
-`SimpleDelegator` API) when you need an unambiguous reference to it.
-
-The serialization context is accessible via the private method `__ctx__`.
-
-Objects are wrapped in the `Presenter` only when the serializer's `Presenter`
-class (or an inherited one) actually defines custom methods. Loading the
-plugin in a base serializer adds no overhead to serializers that don't
-customize their presenters — their attribute values, batch loaders and value
-callables keep receiving the raw objects.
-
 ### Plugin :string_modifiers
 
 Allows `:only`, `:except` and `:with` to be given as a single comma-separated
@@ -1298,7 +1299,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [hash_access]: #serializing-hash-records
 [metadata]: #plugin-metadata
 [preloads]: #preloads
-[presenter]: #plugin-presenter
+[presenter]: #presenter
 [root]: #plugin-root
 [string_modifiers]: #plugin-string_modifiers
 [if]: #plugin-if

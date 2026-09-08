@@ -30,10 +30,10 @@ class Serega
       # @raise [SeregaError] Raises SeregaError when plugin was not found
       #
       # @example Find plugin when providing name
-      #   SeregaPlugins.find_plugin(:presenter) # => SeregaPlugins::Presenter
+      #   SeregaPlugins.find_plugin(:root) # => SeregaPlugins::Root
       #
       # @example Find plugin when providing plugin itself
-      #   SeregaPlugins.find_plugin(Presenter) # => Presenter
+      #   SeregaPlugins.find_plugin(Root) # => Root
       #
       # @return [Class<Module>] Plugin core module
       #

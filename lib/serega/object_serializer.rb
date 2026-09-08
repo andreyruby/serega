@@ -16,7 +16,7 @@ class Serega
     #
     # @private
     module InstanceMethods
-      attr_reader :context, :plan, :many, :opts, :level_queue
+      attr_reader :context, :plan, :many, :opts, :level_queue, :presenter
 
       # @param plan [SeregaPlan] Serialization plan
       # @param context [Hash] Serialization context
@@ -30,6 +30,8 @@ class Serega
         @many = many
         @opts = opts
         @level_queue = opts[:level_queue]
+        # Looked up once here and reused for every enqueued chunk of the level.
+        @presenter = self.class.serializer_class.presenter
       end
 
       # Enqueues this level and returns its result container(s). The containers are
@@ -78,9 +80,14 @@ class Serega
       # containers. This is where objects enter their level, so every object a
       # point resolves against and a batch loader receives has the same shape.
       #
-      # Patched in:
-      # - plugin :presenter (wraps each object in a Presenter before enqueueing)
+      # Each object is wrapped in the serializer's presenter before it is enqueued,
+      # so the whole level — value resolution and batch loaders alike — sees
+      # presenters. Serializers without a presenter enqueue the objects as they
+      # are — wrapping would only add overhead and break class checks
+      # (object.is_a?, Hash === object) without changing anything.
       def enqueue(objects)
+        objects = objects.map { |object| presenter.new(object, context) } if presenter
+
         level_queue.enqueue(self, objects)
       end
 

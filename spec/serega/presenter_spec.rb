@@ -1,48 +1,49 @@
 # frozen_string_literal: true
 
-load_plugin_code :presenter
-
-RSpec.describe Serega::SeregaPlugins::Presenter do
-  let(:serializer) { Class.new(Serega) { plugin :presenter } }
-
-  describe "loading" do
-    it "adds serializer::Presenter class" do
-      expect(serializer::Presenter).to be_a Class
-    end
-
-    it "appends :__getobj__ to auto_preload_excluded_methods" do
-      expect(serializer.config.auto_preload_excluded_methods).to eq %i[itself __getobj__]
-    end
-
-    it "preserves customized auto_preload_excluded_methods when appending :__getobj__" do
-      custom_serializer = Class.new(Serega) do
-        config.auto_preload_excluded_methods = %i[current_object]
-        plugin :presenter
-      end
-
-      expect(custom_serializer.config.auto_preload_excluded_methods).to eq %i[current_object __getobj__]
-    end
-  end
+RSpec.describe Serega::SeregaPresenter do
+  let(:serializer) { Class.new(Serega) }
 
   describe ".inherited" do
-    let(:parent) { serializer }
+    let(:parent) do
+      Class.new(Serega) do
+        presenter do
+          def name
+          end
+        end
+      end
+    end
 
-    it "inherits Presenter class" do
+    it "builds the child presenter by replaying the parent blocks" do
       child = Class.new(parent)
-      expect(parent::Presenter).to be child::Presenter.superclass
+
+      expect(child.presenter).not_to be parent.presenter
+      expect(child.presenter.method_defined?(:name)).to be true
+    end
+
+    it "copies the parent blocks once per generation" do
+      child = Class.new(parent)
+      child.presenter do
+        def other
+        end
+      end
+      grandchild = Class.new(child)
+
+      expect(grandchild.presenter_blocks.size).to eq 2
+      expect(grandchild.presenter.method_defined?(:name)).to be true
+      expect(grandchild.presenter.method_defined?(:other)).to be true
     end
   end
 
-  it "adds presenter methods used in block after first serialization" do
+  it "defines a real delegator method after the first method_missing hit" do
     serializer.presenter do
       def rev
       end
     end
     serializer.attribute(:length, value: proc { |obj| obj.size })
 
-    expect(serializer::Presenter.instance_methods).not_to include(:size)
+    expect(serializer.presenter.instance_methods).not_to include(:size)
     serializer.new.to_h("")
-    expect(serializer::Presenter.instance_methods).to include(:size)
+    expect(serializer.presenter.instance_methods).to include(:size)
   end
 
   it "allows to use custom presenter methods" do
@@ -70,11 +71,11 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
   end
 
   it "makes __ctx__ private" do
-    expect(serializer::Presenter.private_method_defined?(:__ctx__)).to be true
+    expect(described_class.private_method_defined?(:__ctx__)).to be true
   end
 
   it "gives a block-defined nested serializer the base serializer Presenter without current presenter methods" do
-    base = Class.new(Serega) { plugin :presenter }
+    base = Class.new(Serega)
     current_serializer = Class.new(base)
     current_serializer.config.base_serializer = base
     current_serializer.presenter do
@@ -86,12 +87,11 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     current_serializer.attribute(:profile, method: :itself) { attribute :bio }
     nested = current_serializer.attributes[:profile].serializer
 
-    expect(current_serializer::Presenter.new("Kate", nil).full_name).to eq "current serializer presenter method"
-    expect(nested.plugin_used?(:presenter)).to be true
-    expect(nested::Presenter.method_defined?(:full_name)).to be false
+    expect(current_serializer.presenter.new("Kate", nil).full_name).to eq "current serializer presenter method"
+    expect(nested.presenter).to be_nil
   end
 
-  it "wraps nested objects with the nested serializer Presenter" do
+  it "wraps nested objects with the nested serializer SeregaPresenter" do
     serializer.config.base_serializer = serializer
     serializer.attribute(:profile, method: :itself) { attribute :bio }
     nested = serializer.attributes[:profile].serializer
@@ -104,7 +104,7 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     expect(serializer.new.to_h("Kate")).to eq(profile: {bio: "bio of Kate"})
   end
 
-  it "exposes context inside Presenter via __ctx__" do
+  it "exposes context inside SeregaPresenter via __ctx__" do
     serializer.attribute(:greeting, value: proc { |obj| obj.greeting })
     serializer.presenter do
       def greeting
@@ -123,7 +123,7 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       received = objects
       objects.to_h { |object| [object.id, object.id * 10] }
     })
-    # Presenter overrides #id, so the batch key must come from the presenter too,
+    # The presenter overrides #id, so the batch key must come from the presenter too,
     # or the loaded value would not be found.
     serializer.presenter do
       def id
@@ -159,7 +159,7 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
 
   it "does not auto-preload the :__getobj__ unwrap method" do
     # objects are wrapped (and __getobj__ is meaningful) only when the
-    # Presenter is customized
+    # presenter is customized
     serializer.presenter do
       def rating
       end
@@ -173,8 +173,8 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     expect(serializer.to_h(double(id: 1))).to eq(statistics: {id: 1})
   end
 
-  describe "skipping wrapping when Presenter has no custom methods" do
-    it "does not wrap objects in Presenter" do
+  describe "skipping wrapping when SeregaPresenter has no custom methods" do
+    it "does not wrap objects in SeregaPresenter" do
       received = nil
       value = proc { |obj|
         received = obj
@@ -219,12 +219,11 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
     let(:app_serializer) do
       records = preloaded
       Class.new(Serega) do
-        plugin :presenter
         preload_with { |objects, _preloads| records.concat(objects) }
       end
     end
 
-    context "when Presenter has no custom methods" do
+    context "when SeregaPresenter has no custom methods" do
       let(:serializer) do
         Class.new(app_serializer) do
           attribute :name, preload: :assoc, value: proc { |obj| obj.to_s }
@@ -243,7 +242,6 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       let(:serializer) do
         records = preloaded
         Class.new(Serega) do
-          plugin :presenter
           preload_with { |objects, _preloads| records.concat(objects) }
           attribute :name, preload: :assoc
 
@@ -283,39 +281,10 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
         expect(preloaded.first).not_to be_a SimpleDelegator
       end
     end
-
-    context "when a subclass loads the plugin and has presenter methods" do
-      let(:base_serializer) do
-        records = preloaded
-        Class.new(Serega) do
-          preload_with { |objects, _preloads| records.concat(objects) }
-        end
-      end
-
-      let(:serializer) do
-        Class.new(base_serializer) do
-          plugin :presenter
-          attribute :name, preload: :assoc
-
-          presenter do
-            def name
-              "presented"
-            end
-          end
-        end
-      end
-
-      it "passes underlying objects to the preload handler" do
-        serialize
-
-        expect(preloaded).to eq ["raw object"]
-        expect(preloaded.first).not_to be_a SimpleDelegator
-      end
-    end
   end
 
   describe ".presenter" do
-    it "defines presenter methods evaluated inside the Presenter class" do
+    it "defines presenter methods evaluated inside the SeregaPresenter class" do
       serializer.attribute :full_name
       serializer.presenter do
         def full_name
@@ -344,15 +313,6 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       expect(serializer.to_h("user")).to eq(first_name: "Kate", last_name: "Nash")
     end
 
-    it "marks the presenter as customized" do
-      serializer.presenter do
-        def name
-        end
-      end
-
-      expect(serializer.custom_presenter?).to be true
-    end
-
     it "does not leak methods defined in a child serializer to the parent" do
       child = Class.new(serializer)
       child.presenter do
@@ -360,11 +320,11 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
         end
       end
 
-      expect(child::Presenter.method_defined?(:name)).to be true
-      expect(serializer::Presenter.method_defined?(:name)).to be false
+      expect(child.presenter.method_defined?(:name)).to be true
+      expect(serializer.presenter).to be_nil
     end
 
-    it "can be used inside an attribute block when base serializer has the plugin" do
+    it "can be used inside an attribute block" do
       serializer.config.base_serializer = serializer
       serializer.attribute(:account, method: :itself) do
         attribute :login
@@ -379,73 +339,80 @@ RSpec.describe Serega::SeregaPlugins::Presenter do
       expect(serializer.to_h("kate")).to eq(account: {login: "@kate"})
     end
 
-    it "raises an error when called without a block" do
-      expect { serializer.presenter }.to raise_error Serega::SeregaError,
-        "Provide a block with presenter methods: `presenter do ... end`"
-    end
-  end
-
-  describe ".custom_presenter?" do
-    it "returns false when Presenter was not modified" do
-      expect(serializer.custom_presenter?).to be false
+    it "returns nil when no block was given" do
+      expect(serializer.presenter).to be_nil
     end
 
-    it "returns true when a presenter method was defined" do
-      serializer.presenter do
+    it "returns the presenter class when a block was given" do
+      presenter_class = serializer.presenter do
         def name
         end
       end
 
-      expect(serializer.custom_presenter?).to be true
+      expect(presenter_class).to be < described_class
+      expect(serializer.presenter).to be presenter_class
     end
 
-    it "returns true when a module was included into Presenter" do
+    it "evaluates the block so a module can be included" do
       presenter_methods = Module.new do
         def name
+          "included"
         end
       end
-      serializer::Presenter.include(presenter_methods)
+      serializer.attribute :name
+      serializer.presenter { include presenter_methods }
 
-      expect(serializer.custom_presenter?).to be true
+      expect(serializer.to_h("user")).to eq(name: "included")
     end
 
-    it "returns true when a module was prepended to Presenter" do
+    it "evaluates the block so a module can be prepended" do
       presenter_methods = Module.new do
         def name
+          "prepended"
         end
       end
-      serializer::Presenter.prepend(presenter_methods)
+      serializer.attribute :name
+      serializer.presenter { prepend presenter_methods }
 
-      expect(serializer.custom_presenter?).to be true
+      expect(serializer.to_h("user")).to eq(name: "prepended")
     end
 
-    it "returns true for a child of a serializer with modified Presenter" do
+    it "returns a presenter with the parent methods for a child that defines none" do
       serializer.presenter do
         def name
         end
       end
 
       child = Class.new(serializer)
-      expect(child.custom_presenter?).to be true
+      expect(child.presenter.method_defined?(:name)).to be true
     end
 
-    it "stays false on the parent when only the child Presenter is modified" do
+    it "does not reach an existing child when the parent defines a presenter later" do
+      child = Class.new(serializer)
+      serializer.presenter do
+        def name
+        end
+      end
+
+      expect(child.presenter).to be_nil
+    end
+
+    it "stays nil on the parent when only the child defines a presenter" do
       child = Class.new(serializer)
       child.presenter do
         def name
         end
       end
 
-      expect(child.custom_presenter?).to be true
-      expect(serializer.custom_presenter?).to be false
+      expect(child.presenter).to be_a Class
+      expect(serializer.presenter).to be_nil
     end
   end
 
   describe "prepare_initial_objects" do
-    it "wraps prepared objects in the Presenter" do
+    it "wraps prepared objects in the SeregaPresenter" do
       records = {"1" => double(first_name: "Ann")}
       user_serializer = Class.new(Serega) do
-        plugin :presenter
         prepare_initial_objects { |ids| ids.map { |id| records[id] } }
         attribute :first_name
         presenter do

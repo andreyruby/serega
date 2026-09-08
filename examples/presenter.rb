@@ -10,7 +10,6 @@ gemfile(true, quiet: true) do
 end
 
 class AppSerializer < Serega
-  plugin :presenter
 end
 
 class UserSerializer < AppSerializer
@@ -18,7 +17,7 @@ class UserSerializer < AppSerializer
   attribute :name
   attribute :profile, serializer: "ProfileSerializer"
 
-  class Presenter
+  presenter do
     def name
       [first_name, last_name].join(" ")
     end
@@ -30,7 +29,7 @@ class ProfileSerializer < AppSerializer
   attribute :location
   attribute :followers_count
 
-  class Presenter
+  presenter do
     def location
       "Gotham City"
     end

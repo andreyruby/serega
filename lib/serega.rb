@@ -62,6 +62,7 @@ require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_serialize_params"
 
 require_relative "serega/config"
+require_relative "serega/presenter"
 require_relative "serega/object_serializer"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
@@ -70,6 +71,7 @@ require_relative "serega/plugins"
 
 class Serega
   @config = SeregaConfig.new
+  @presenter_class = nil
 
   # Validates `Serializer.attribute` params
   check_attribute_params_class = Class.new(SeregaValidations::CheckAttributeParams)
@@ -170,10 +172,17 @@ class Serega
     end
 
     #
-    # Adds attribute
+    # Lists blocks given to `presenter`, in definition order
     #
-    # Patched in:
-    # - plugin :presenter (additionally adds method in Presenter class)
+    # @return [Array<Proc>] presenter blocks list
+    #
+    # @private
+    def presenter_blocks
+      @presenter_blocks ||= []
+    end
+
+    #
+    # Adds attribute
     #
     # @param name [Symbol] Attribute name. Attribute value will be found by executing `object.<name>`
     # @param opts [Hash] Options to serialize attribute
@@ -231,6 +240,30 @@ class Serega
 
       batch_loader = self::SeregaEngineLoader.new(name: name, block: value || block)
       batch_loaders[batch_loader.name] = batch_loader
+    end
+
+    #
+    # Defines presenter methods — evaluates the block inside the serializer's own
+    # presenter class. Multiple blocks accumulate.
+    #
+    #   presenter do
+    #     def name
+    #       [first_name, last_name].compact.join(" ")
+    #     end
+    #   end
+    #
+    # @param block [Proc] Presenter methods
+    #
+    # @return [Class<SeregaPresenter>, nil] the serializer presenter class,
+    #   nil when the serializer has none
+    #
+    def presenter(&block)
+      return @presenter_class unless block
+
+      @presenter_class ||= Class.new(SeregaPresenter)
+      @presenter_class.class_exec(&block)
+      presenter_blocks << block
+      @presenter_class
     end
 
     #
@@ -378,7 +411,6 @@ class Serega
 
     # Patched in:
     # - plugin :metadata (defines MetaAttribute and copies meta_attributes to subclasses)
-    # - plugin :presenter (defines Presenter)
     def inherited(subclass)
       config_class = Class.new(self::SeregaConfig)
       config_class.serializer_class = subclass
@@ -445,6 +477,11 @@ class Serega
 
       # Assign same initial objects handler
       subclass.prepare_initial_objects(prepare_initial_objects) if prepare_initial_objects
+
+      # Assign same presenter blocks
+      presenter_blocks.each do |presenter_block|
+        subclass.presenter(&presenter_block)
+      end
 
       super
     end

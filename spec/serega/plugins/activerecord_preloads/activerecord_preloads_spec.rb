@@ -4,7 +4,6 @@ require "support/activerecord"
 require "support/matchers/run_queries"
 
 load_plugin_code :activerecord_preloads
-load_plugin_code :presenter
 
 RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
   describe "loading" do
@@ -344,7 +343,6 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
     let(:app_serializer) do
       Class.new(Serega) do
         plugin :activerecord_preloads
-        plugin :presenter
       end
     end
 
