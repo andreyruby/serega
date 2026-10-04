@@ -25,15 +25,6 @@ RSpec.describe Serega::SeregaPlanPoint do
   describe "#run_preloads" do
     let(:objects) { [double(:obj1), double(:obj2)] }
 
-    it "returns nil without calling the handler when there are no preloads" do
-      serializer = Class.new(base) do
-        attribute :name
-        preload_with(->(_objects, _preloads) { raise "should not be called" })
-      end
-
-      expect(point_for(serializer, :name).run_preloads(objects)).to be_nil
-    end
-
     it "passes the objects and preloads to the registered handler" do
       received = nil
       serializer = Class.new(base) do
@@ -64,11 +55,6 @@ RSpec.describe Serega::SeregaPlanPoint do
   end
 
   describe "#load_batches" do
-    it "is nil when the point needs no batch loaders" do
-      serializer = Class.new(base) { attribute :name }
-      expect(point_for(serializer, :name).load_batches(double(:level))).to be_nil
-    end
-
     it "fetches each needed loader from the level once and returns them keyed by name" do
       serializer = Class.new(base) do
         attribute :name
@@ -97,11 +83,6 @@ RSpec.describe Serega::SeregaPlanPoint do
   describe "#child_serializer" do
     let(:context) { {locale: :en} }
     let(:level_queue) { Serega::SeregaEngine::LevelQueue.new }
-
-    it "is nil for a plain attribute with no child plan" do
-      serializer = Class.new(base) { attribute :name }
-      expect(point_for(serializer, :name).child_serializer(context: context, level_queue: level_queue)).to be_nil
-    end
 
     it "builds the child object serializer with the point's child plan, many and the given runtime opts" do
       child = child_serializer_class

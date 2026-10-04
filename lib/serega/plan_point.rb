@@ -90,8 +90,6 @@ class Serega
       # @param objects [Array] objects serialized at this point's level
       # @return [void]
       def run_preloads(objects)
-        return unless preloads
-
         serializer_class = self.class.serializer_class
         objects = objects.map(&:__getobj__) if serializer_class.presenter
 
@@ -109,13 +107,10 @@ class Serega
       # level, and returns them keyed by loader name for #value to read from.
       #
       # @param level [SeregaEngine::Level] level whose objects are loaded for
-      # @return [Hash, nil] loaded data per loader name, or nil when none are needed
+      # @return [Hash] loaded data per loader name
       def load_batches(level)
-        names = batch_loaders
-        return if names.empty?
-
         loaders = self.class.serializer_class.batch_loaders
-        names.each_with_object({}) do |name, batches|
+        batch_loaders.each_with_object({}) do |name, batches|
           batches[name] = level.fetch(loaders[name])
         end
       rescue => error
@@ -129,17 +124,14 @@ class Serega
         serializer::SeregaObjectSerializer
       end
 
-      # Builds the object serializer that serializes this point's relation, or nil
-      # when the point has no child plan (a plain attribute). The point owns the
-      # static config (child plan, serializer class, `many`); the caller injects the
-      # runtime `context` and `opts`.
+      # Builds the object serializer that serializes this point's relation. The
+      # point owns the static config (child plan, serializer class, `many`); the
+      # caller injects the runtime `context` and `opts`.
       #
       # @param context [Hash] serialization context
       # @param opts [Hash] extra object-serializer options (e.g. the level queue)
-      # @return [SeregaObjectSerializer, nil] serializer for the child level
+      # @return [SeregaObjectSerializer] serializer for the child level
       def child_serializer(context:, **opts)
-        return unless child_plan
-
         child_object_serializer.new(context: context, plan: child_plan, many: many, **opts)
       end
 
