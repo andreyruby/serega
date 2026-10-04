@@ -458,7 +458,7 @@ class Serega
       subclass.const_set(:CheckSerializeParams, check_serialize_params_class)
 
       check_batch_loader_params_class = Class.new(self::CheckBatchLoaderParams)
-      check_batch_loader_params_class.serializer_class = self
+      check_batch_loader_params_class.serializer_class = subclass
       subclass.const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
 
       # Assign same attributes
