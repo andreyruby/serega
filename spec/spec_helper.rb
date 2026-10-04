@@ -6,7 +6,10 @@ if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.7.0")
   Warning[:performance] = true if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.3.0")
 end
 
-if RUBY_ENGINE == "ruby" && RUBY_VERSION.start_with?("3.4.") && (ARGV.none? || ARGV == ["spec"] || ARGV == ["spec/"])
+# CI checks coverage on the latest Ruby only (COVERAGE=true in the workflow)
+coverage = ENV.fetch("COVERAGE") { ENV["CI"] ? "false" : "true" } == "true"
+
+if coverage && RUBY_ENGINE == "ruby" && (ARGV.none? || ARGV == ["spec"] || ARGV == ["spec/"])
   begin
     require "simplecov"
 
