@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Serializers are locked once they serialize something. Changing
+  a locked serializer raises an error. See "Define serializers" in the README.
 - Faster serialization.
 - Fix `NoMethodError` raised by the plan cache when serializing with the
   `:check_initiate_params` option.

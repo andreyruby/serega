@@ -187,28 +187,6 @@ RSpec.describe Serega::SeregaPresenter do
       expect(received).to eq "raw object"
       expect(received).not_to be_a(SimpleDelegator)
     end
-
-    it "wraps objects when presenter methods are added after first serialization" do
-      received = nil
-      value = proc { |obj|
-        received = obj
-        obj.to_s
-      }
-      serializer.attribute(:name, value: value)
-
-      serializer.new.to_h("raw object")
-      expect(received).not_to be_a(SimpleDelegator)
-
-      serializer.presenter do
-        def to_s
-          "presented"
-        end
-      end
-
-      result = serializer.new.to_h("raw object")
-      expect(received).to be_a(SimpleDelegator)
-      expect(result).to eq({name: "presented"})
-    end
   end
 
   describe "unwrapping objects before preloads" do

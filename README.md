@@ -103,6 +103,13 @@ class CommentSerializer < AppSerializer
 end
 ```
 
+Configure serializers fully before the first serialization. Serializers are
+locked once they serialize something, directly or as nested serializers.
+Adding attributes, plugins, batch loaders, presenter methods, meta attributes,
+`preload_with` or `prepare_initial_objects` handlers to a locked serializer
+raises `Serega::SeregaError`, changing its config raises `FrozenError`.
+Subclasses of a locked serializer can be changed.
+
 ### Adding attributes
 
 ⚠️ Attribute names are checked to include only "a-z", "A-Z", "0-9", "\_", "-",

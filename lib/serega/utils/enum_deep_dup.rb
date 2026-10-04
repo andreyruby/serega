@@ -7,19 +7,19 @@ class Serega
   # @private
   module SeregaUtils
     #
-    # Duplicates nested hashes and arrays
-    # It does not duplicate any non-Array and non-Hash values
+    # Duplicates nested hashes, arrays and strings
+    # It does not duplicate any other values
     #
     # @private
     class EnumDeepDup
       class << self
         #
-        # Deeply duplicate provided Array or Hash data
-        # It does not duplicate any non-Array and non-Hash values
+        # Deeply duplicate provided Array, Hash or String data
+        # It does not duplicate any other values
         #
-        # @param data [Hash, Array] Data to duplicate
+        # @param data [Hash, Array, String] Data to duplicate
         #
-        # @return [Hash, Array] Duplicated data
+        # @return [Hash, Array, String] Duplicated data
         #
         def call(data)
           case data
@@ -30,9 +30,11 @@ class Serega
           when Array
             data = data.dup
             dup_array_values(data)
+          when String
+            data.dup
+          else
+            data
           end
-
-          data
         end
 
         private
