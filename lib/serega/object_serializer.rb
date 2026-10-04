@@ -58,6 +58,7 @@ class Serega
       # @return [void]
       def process(level)
         objects = level.objects
+        containers = level.containers
 
         plan.points.each do |point|
           point.run_preloads(objects)
@@ -66,11 +67,7 @@ class Serega
           # instead of one per object — child objects are grouped into one child level anyway.
           child_serializer = point.child_serializer(context: context, **opts)
 
-          objects.each_with_index do |object, index|
-            resolve_point(object, point, level.containers[index], batches, child_serializer)
-          rescue => error
-            SeregaUtils::SerializedAttributeError.call(error, point)
-          end
+          process_point(point, objects, containers, batches, child_serializer)
         end
       end
 
@@ -91,18 +88,25 @@ class Serega
         level_queue.enqueue(self, objects)
       end
 
+      # Resolves one point's value for every object of the level and assigns it
+      # to the object's container.
+      #
       # Patched in:
-      # - plugin :if (skips the point for objects failing an :if/:unless condition)
-      def resolve_point(object, point, container, batches, child_serializer)
-        value = point.value(object, context, batches: batches)
-        final_value = child_serializer ? child_serializer.serialize(value) : value
-        write_value(final_value, point, container)
-      end
+      # - plugin :if (skips objects and values failing :if/:unless/:if_value/:unless_value conditions)
+      def process_point(point, objects, containers, batches, child_serializer)
+        attribute = point.attribute
+        name = point.name
+        context = @context
+        index = 0
+        size = objects.size
 
-      # Patched in:
-      # - plugin :if (skips assigning when an :if_value/:unless_value condition fails)
-      def write_value(final_value, point, container)
-        container[point.name] = final_value
+        while index < size
+          value = attribute.value(objects[index], context, batches: batches)
+          containers[index][name] = child_serializer ? child_serializer.serialize(value) : value
+          index += 1
+        end
+      rescue => error
+        SeregaUtils::SerializedAttributeError.call(error, point)
       end
 
       # How to serialize `object`, deciding whether the result is a collection or a
