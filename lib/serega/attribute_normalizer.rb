@@ -26,6 +26,7 @@ class Serega
         @init_name = initials[:name]
         @init_opts = initials[:opts]
         @init_block = initials[:block]
+        @method_name = nil
       end
 
       #

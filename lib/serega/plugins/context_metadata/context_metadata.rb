@@ -123,7 +123,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [Serega::SeregaPlugins::ContextMetadata::ContextMetadataConfig] context_metadata config
         def context_metadata
-          @context_metadata ||= ContextMetadataConfig.new(opts.fetch(:context_metadata))
+          @plugin_configs[:context_metadata] ||= ContextMetadataConfig.new(opts.fetch(:context_metadata))
         end
       end
 

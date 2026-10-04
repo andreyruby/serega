@@ -101,7 +101,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [Serega::SeregaPlugins::CamelCase::CamelCaseConfig] `camel_case` plugin config
         def camel_case
-          @camel_case ||= CamelCaseConfig.new(opts.fetch(:camel_case))
+          @plugin_configs[:camel_case] ||= CamelCaseConfig.new(opts.fetch(:camel_case))
         end
       end
 

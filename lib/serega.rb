@@ -72,7 +72,10 @@ require_relative "serega/plugins"
 
 class Serega
   @config = SeregaConfig.new
+  @attributes = {}
+  @batch_loaders = {}
   @presenter_class = nil
+  @presenter_blocks = []
 
   # Validates `Serializer.attribute` params
   check_attribute_params_class = Class.new(SeregaValidations::CheckAttributeParams)
@@ -155,7 +158,7 @@ class Serega
     #
     # @private
     def attributes
-      @attributes ||= {}
+      @attributes
     end
 
     #
@@ -165,7 +168,7 @@ class Serega
     #
     # @private
     def batch_loaders
-      @batch_loaders ||= {}
+      @batch_loaders
     end
 
     #
@@ -175,7 +178,7 @@ class Serega
     #
     # @private
     def plan_cache
-      @plan_cache ||= self::SeregaPlanCache.new
+      @plan_cache
     end
 
     #
@@ -185,7 +188,7 @@ class Serega
     #
     # @private
     def presenter_blocks
-      @presenter_blocks ||= []
+      @presenter_blocks
     end
 
     #
@@ -469,6 +472,14 @@ class Serega
       config_class.serializer_class = subclass
       subclass.const_set(:SeregaConfig, config_class)
       subclass.instance_variable_set(:@config, subclass::SeregaConfig.new(config.opts))
+      subclass.instance_variable_set(:@attributes, {})
+      subclass.instance_variable_set(:@batch_loaders, {})
+      subclass.instance_variable_set(:@presenter_class, nil)
+      subclass.instance_variable_set(:@presenter_blocks, [])
+      subclass.instance_variable_set(:@preload_with, nil)
+      subclass.instance_variable_set(:@prepare_initial_objects, nil)
+      subclass.instance_variable_set(:@prepare_initial_objects_signature, nil)
+      subclass.instance_variable_set(:@locked, false)
 
       attribute_class = Class.new(self::SeregaAttribute)
       attribute_class.serializer_class = subclass
@@ -497,6 +508,7 @@ class Serega
       plan_cache_class = Class.new(self::SeregaPlanCache)
       plan_cache_class.serializer_class = subclass
       subclass.const_set(:SeregaPlanCache, plan_cache_class)
+      subclass.instance_variable_set(:@plan_cache, plan_cache_class.new)
 
       engine_loader_class = Class.new(self::SeregaEngineLoader)
       engine_loader_class.serializer_class = subclass

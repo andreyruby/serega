@@ -43,7 +43,7 @@ class Serega
         @plan = plan
         @attribute = attribute
         @name = attribute.name
-        @child_plan = serializer::SeregaPlan.new(self, modifiers || FROZEN_EMPTY_HASH) if serializer
+        @child_plan = serializer ? serializer::SeregaPlan.new(self, modifiers || FROZEN_EMPTY_HASH) : nil
       end
 
       # Attribute `many` option

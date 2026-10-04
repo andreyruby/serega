@@ -68,6 +68,7 @@ class Serega
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
+        serializer_class.instance_variable_set(:@meta_attributes, {})
 
         require_relative "meta_attribute"
         require_relative "validations/check_block"
@@ -130,7 +131,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [Serega::SeregaPlugins::Metadata::MetadataConfig] metadata config
         def metadata
-          @metadata ||= MetadataConfig.new(opts.fetch(:metadata))
+          @plugin_configs[:metadata] ||= MetadataConfig.new(opts.fetch(:metadata))
         end
       end
 
@@ -146,7 +147,7 @@ class Serega
         # @return [Hash<Symbol => Serega::SeregaPlugins::Metadata::MetaAttribute>] Added metadata attributes
         #
         def meta_attributes
-          @meta_attributes ||= {}
+          @meta_attributes
         end
 
         #
@@ -172,6 +173,7 @@ class Serega
           meta_attribute_class = Class.new(self::MetaAttribute)
           meta_attribute_class.serializer_class = subclass
           subclass.const_set(:MetaAttribute, meta_attribute_class)
+          subclass.instance_variable_set(:@meta_attributes, {})
 
           # Assign same metadata attributes
           meta_attributes.each_value do |attr|
