@@ -38,9 +38,9 @@ class Serega
       # @return [Array<SeregaPlanPoint>] points to serialize
       attr_reader :points
 
-      # Named serialization points
-      # @return [Hash] Named points
-      attr_reader :points_hash
+      # Serialization points with child plans
+      # @return [Array<SeregaPlanPoint>] points to serialize with nested serializers
+      attr_reader :relation_points
 
       #
       # Instantiate new serialization plan
@@ -60,7 +60,7 @@ class Serega
         serializer_class.lock
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
-        @points_hash = points.to_h { |point| [point.name, point] }
+        @relation_points = points.select(&:child_plan).freeze
       end
 
       #
