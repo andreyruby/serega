@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "delegate"
-require "forwardable"
 
 class Serega
   #
@@ -36,6 +35,10 @@ class Serega
   #
   # @private
   class SeregaPresenter < SimpleDelegator
+    # Method names of delegators defined with a compiled `def`
+    PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
+    private_constant :PLAIN_METHOD_NAME
+
     #
     # Includes into each presenter class its own `Delegators` module.
     # Delegators to serialized object methods are defined there after the
@@ -48,9 +51,31 @@ class Serega
     #
     def self.inherited(subclass)
       super
-      delegators = Module.new { extend Forwardable }
+      delegators = Module.new
       subclass.const_set(:Delegators, delegators)
       subclass.include(delegators)
+    end
+
+    #
+    # Defines a method that delegates to the serialized object in the
+    # presenter class `Delegators` module
+    #
+    # @param name [Symbol] Method name
+    #
+    # @return [void]
+    #
+    def self.define_delegator(name)
+      delegators = self::Delegators
+
+      if PLAIN_METHOD_NAME.match?(name)
+        delegators.module_eval(<<~RUBY, __FILE__, __LINE__ + 1)
+          def #{name}(...)
+            __getobj__.#{name}(...)
+          end
+        RUBY
+      else
+        delegators.define_method(name) { |*args, **kwargs, &block| __getobj__.public_send(name, *args, **kwargs, &block) }
+      end
     end
 
     #
@@ -69,13 +94,13 @@ class Serega
     #
     # Delegates all missing methods to serialized object.
     #
-    # Creates delegator method after first #method_missing hit to improve
-    # performance of following serializations.
+    # Creates delegator method for public methods of serialized object after
+    # first #method_missing hit to improve performance of following serializations.
     #
     def method_missing(name, ...) # rubocop:disable Style/MissingRespondToMissing -- base SimpleDelegator class has this method
-      super.tap do
-        self.class::Delegators.def_delegator :__getobj__, name
-      end
+      result = super
+      self.class.define_delegator(name) if __getobj__.respond_to?(name)
+      result
     end
   end
 end
