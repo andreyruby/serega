@@ -58,6 +58,8 @@ class Serega
       def initialize(opts = nil)
         opts ||= DEFAULTS
         @opts = SeregaUtils::EnumDeepDup.call(opts)
+        @hash_access = nil
+        @plugin_configs = {}
       end
 
       #

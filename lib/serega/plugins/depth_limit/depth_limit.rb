@@ -130,7 +130,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [Serega::SeregaPlugins::DepthLimit::DepthLimitConfig] current depth_limit config
         def depth_limit
-          @depth_limit ||= DepthLimitConfig.new(opts.fetch(:depth_limit))
+          @plugin_configs[:depth_limit] ||= DepthLimitConfig.new(opts.fetch(:depth_limit))
         end
       end
 

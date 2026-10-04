@@ -194,7 +194,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [Serega::SeregaPlugins::Root::RootConfig] current root config
         def root
-          @root ||= RootConfig.new(opts.fetch(:root))
+          @plugin_configs[:root] ||= RootConfig.new(opts.fetch(:root))
         end
 
         # Set root for one-object and many-objects serialization types

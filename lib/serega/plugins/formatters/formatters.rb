@@ -135,7 +135,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [SeregaPlugins::Formatters::FormattersConfig] current formatters config
         def formatters
-          @formatters ||= FormattersConfig.new(opts.fetch(:formatters))
+          @plugin_configs[:formatters] ||= FormattersConfig.new(opts.fetch(:formatters))
         end
       end
 

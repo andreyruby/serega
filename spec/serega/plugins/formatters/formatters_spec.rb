@@ -46,6 +46,18 @@ RSpec.describe Serega::SeregaPlugins::Formatters do
       serializer.config.formatters.add({foo: formatter})
       expect(serializer.config.formatters.opts).to eq({foo: formatter})
     end
+
+    context "with a child serializer" do
+      let(:child_serializer) { Class.new(serializer) }
+
+      it "adds formatters to the child serializer only" do
+        formatter = proc { |*args| }
+        child_serializer.config.formatters.add({foo: formatter})
+
+        expect(child_serializer.config.formatters.opts).to eq({foo: formatter})
+        expect(serializer.config.formatters.opts).to eq({})
+      end
+    end
   end
 
   describe "validations" do

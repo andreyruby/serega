@@ -14,6 +14,14 @@ class Serega
       # @private
       class CheckModifiers
         #
+        # Instantiates modifiers validator
+        #
+        def initialize
+          @parents_names = nil
+          @error_attributes = nil
+        end
+
+        #
         # Validates provided fields names are existing attributes
         #
         # @param serializer_class [Serega]
@@ -85,7 +93,7 @@ class Serega
         end
 
         def any_error?
-          defined?(@error_attributes)
+          !@error_attributes.nil?
         end
       end
     end
