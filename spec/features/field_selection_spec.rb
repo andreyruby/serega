@@ -255,6 +255,16 @@ RSpec.describe Serega do
       expect { user_serializer.new(only: :name, foo: 1) }.to raise_error Serega::SeregaError, /foo/
     end
 
+    it "skips validation when no initiate options provided" do
+      serializer = user_serializer
+      allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call).and_call_original
+
+      serializer.to_h(nil)
+      serializer.new({})
+
+      expect(Serega::SeregaValidations::Utils::CheckAllowedKeys).not_to have_received(:call)
+    end
+
     it "allows to disable validation via config option" do
       user_serializer.config.check_initiate_params = false
 

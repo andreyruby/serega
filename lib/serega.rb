@@ -549,7 +549,7 @@ class Serega
           parse_modifiers(opts)
         end
 
-      check_initiate_params = opts&.fetch(:check_initiate_params) { config.check_initiate_params }
+      check_initiate_params = !@opts.empty? && opts.fetch(:check_initiate_params) { config.check_initiate_params }
       check_option_names(@opts) if check_initiate_params
 
       @plan = self.class.plan_cache.fetch(@opts[:only], @opts[:with], @opts[:except], check_initiate_params: check_initiate_params)
