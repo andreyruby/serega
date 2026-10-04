@@ -68,6 +68,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
     let(:obj) { double(first_name: "FIRST_NAME") }
     let(:opts) { {meta: {version: "1.2.3"}} }
     let(:base_serializer) { Class.new(serializer) { plugin :context_metadata } }
+
     let(:user_serializer) do
       Class.new(base_serializer) do
         attribute :first_name
@@ -143,6 +144,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
   describe "serialization to data" do
     let(:obj) { double(first_name: "FIRST_NAME") }
     let(:base_serializer) { Class.new(serializer) { plugin :context_metadata } }
+
     let(:user_serializer) do
       Class.new(base_serializer) do
         attribute :first_name

@@ -2,6 +2,7 @@
 
 RSpec.describe Serega::SeregaPlan do
   let(:base_class) { Class.new(Serega) }
+
   let(:a) do
     serializer = Class.new(base_class)
 
@@ -14,6 +15,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :d, serializer: d
     serializer
   end
+
   let(:b) do
     serializer = Class.new(base_class)
     serializer.attribute :b1
@@ -21,6 +23,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :b3, hide: true
     serializer
   end
+
   let(:c) do
     serializer = Class.new(base_class)
     serializer.attribute :c1
@@ -28,6 +31,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :c3, hide: true
     serializer
   end
+
   let(:d) do
     serializer = Class.new(base_class)
     serializer.attribute :d1
@@ -35,6 +39,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :d3, hide: true
     serializer
   end
+
   let(:current_serializer) { a }
   let(:described_class) { current_serializer::SeregaPlan }
 

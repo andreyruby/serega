@@ -10,6 +10,7 @@ RSpec.describe Serega do
         attribute :last_name
       end
     end
+
     let(:context) { {} }
     let(:modifiers) { {} }
 
@@ -50,6 +51,7 @@ RSpec.describe Serega do
           attribute :last_name, value: proc { |user| user[:last_name] }
         end
       end
+
       let(:user) { {first_name: "FIRST_NAME", last_name: "LAST_NAME"} }
 
       it "serializes Hash as a single object, not as a collection of key-value pairs" do

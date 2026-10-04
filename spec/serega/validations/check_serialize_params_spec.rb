@@ -6,6 +6,7 @@ RSpec.describe Serega::SeregaValidations::CheckSerializeParams do
   let(:serializer) do
     Class.new(Serega)
   end
+
   let(:opts) { {only: :foo, except: :bar, with: :bazz} }
   let(:described_class) { serializer::CheckSerializeParams }
 

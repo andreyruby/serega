@@ -2,6 +2,7 @@
 
 RSpec.describe Serega::SeregaPlanPoint do
   let(:base) { Class.new(Serega) }
+
   let(:child_serializer_class) do
     Class.new(base) { attribute :name }
   end

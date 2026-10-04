@@ -14,6 +14,7 @@ RSpec.describe Serega::SeregaPlugins::StringModifiers do
 
     let(:user) { double(first_name: "FIRST NAME", post: post) }
     let(:post) { double(title: "TITLE", text: "TEXT") }
+
     let(:user_serializer) do
       post_ser = post_serializer
       Class.new(base_serializer) do

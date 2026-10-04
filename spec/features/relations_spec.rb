@@ -9,6 +9,7 @@ RSpec.describe Serega do
 
     context "with object with Struct relation" do
       let(:statistics_struct) { Struct.new(:likes_count, :comments_count) }
+
       let(:statistics_serializer) do
         Class.new(Serega) do
           attribute :likes_count
@@ -17,6 +18,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(statistics: statistics_struct.new(10, 20)) }
+
       let(:user_serializer) do
         child_serializer = statistics_serializer
         Class.new(Serega) do
@@ -31,6 +33,7 @@ RSpec.describe Serega do
 
     context "with object with relation" do
       let(:comment) { double(text: "TEXT") }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
@@ -38,6 +41,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do
@@ -59,6 +63,7 @@ RSpec.describe Serega do
 
     context "with object with array relation" do
       let(:comments) { [double(text: "TEXT")] }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
@@ -66,6 +71,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comments: comments) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do

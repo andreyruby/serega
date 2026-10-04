@@ -10,11 +10,13 @@ RSpec.describe Serega do
         attribute :last_name
       end
     end
+
     let(:context) { {} }
     let(:modifiers) { {} }
 
     context "with object with hidden attribute" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name, hide: true
@@ -29,6 +31,7 @@ RSpec.describe Serega do
 
     context "with `:with` context option" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name, hide: true
@@ -45,6 +48,7 @@ RSpec.describe Serega do
 
     context "with `:only` context option" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name, hide: true
@@ -70,6 +74,7 @@ RSpec.describe Serega do
 
     context "with `:with` context option provided as Array" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name, hide: true
@@ -86,6 +91,7 @@ RSpec.describe Serega do
 
     context "with `:only` context option provided as Array" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", middle_name: "MIDDLE_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name, hide: true
@@ -103,6 +109,7 @@ RSpec.describe Serega do
 
     context "with :except option provided as Array" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", middle_name: "MIDDLE_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name
@@ -120,6 +127,7 @@ RSpec.describe Serega do
 
     context "with `:with` context option provided as Hash" do
       let(:comment) { double(text: "TEXT") }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text, hide: true
@@ -127,6 +135,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do
@@ -145,6 +154,7 @@ RSpec.describe Serega do
 
     context "with `:only` context option provided as Hash" do
       let(:comment) { double(text: "TEXT") }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
@@ -152,6 +162,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do
@@ -170,6 +181,7 @@ RSpec.describe Serega do
 
     context "with :except option provided as Hash" do
       let(:comment) { double(text: "TEXT") }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
@@ -177,6 +189,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do
@@ -195,6 +208,7 @@ RSpec.describe Serega do
 
     context "with :except of relation" do
       let(:comment) { double(text: "TEXT") }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
@@ -202,6 +216,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do
@@ -220,6 +235,7 @@ RSpec.describe Serega do
 
     context "with :only relation" do
       let(:comment) { double(text: "TEXT") }
+
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
@@ -227,6 +243,7 @@ RSpec.describe Serega do
       end
 
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
       let(:user_serializer) do
         child_serializer = comment_serializer
         Class.new(Serega) do
