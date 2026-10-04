@@ -639,6 +639,7 @@ class AppSerializer < Serega
   # Next time serialization happens with the same modifiers (`only, except, with`),
   # we will reuse already prepared `plans`.
   # This defines storage size (count of stored `plans` with different modifiers).
+  # The plan without modifiers is always stored.
   config.max_cached_plans_per_serializer_count = 50 # default is 0, disabled
 end
 ```

@@ -14,6 +14,8 @@ class Serega
     module ClassMethods
       #
       # Constructs plan of attributes that should be serialized.
+      # The plan without modifiers is always cached; plans with modifiers are
+      # cached when `max_cached_plans_per_serializer_count` is positive.
       #
       # @param opts Serialization parameters
       # @option opts [Hash] :only The only attributes to serialize
@@ -23,6 +25,8 @@ class Serega
       # @return [SeregaPlan] Serialization plan
       #
       def call(opts)
+        return @default_plan ||= new(nil, opts) if without_modifiers?(opts)
+
         max_cache_size = serializer_class.config.max_cached_plans_per_serializer_count
         return new(nil, opts) if max_cache_size.zero?
 
@@ -42,6 +46,10 @@ class Serega
       end
 
       private
+
+      def without_modifiers?(opts)
+        %i[only with except].none? { |key| opts[key]&.any? }
+      end
 
       def cached_plan_for(opts, max_cache_size)
         @cache ||= {}
