@@ -43,7 +43,13 @@ class Serega
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @relation_points = points.select(&:child_plan).freeze
-        @result_shapes = {}
+        @batch_points = points.any? { |point| !point.batch_loaders.empty? }
+        @builders = {}
+      end
+
+      # @return [Boolean] Whether any point uses batch loaders
+      def batch_points?
+        @batch_points
       end
 
       #
@@ -54,14 +60,14 @@ class Serega
       end
 
       #
-      # Result shape of this plan in the serialization mode
+      # Builder of results of this plan in the serialization mode
       #
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       #
-      # @return [SeregaResultShape] Result shape
+      # @return [Object] Builder with the generated `#call(objects, context, batches, relations)` method
       #
-      def result_shape(mode)
-        @result_shapes[mode] ||= serializer_class::SeregaResultShape.new(mode, points)
+      def builder(mode)
+        @builders[mode] ||= serializer_class::SeregaResultShape.builder(mode, points)
       end
 
       private

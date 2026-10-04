@@ -181,31 +181,26 @@ class Serega
       #
       # @private
       module ResultShapeInstanceMethods
-        #
-        # Instantiates new result shape and prepares a template of :data
-        # containers when the plan has conditional attributes
-        #
-        # @see Serega::SeregaResultShape::InstanceMethods#initialize
-        #
-        def initialize(mode, points)
-          super
-          conditional = mode == :data && points.any?(&:conditional?)
-          @nil_hash = conditional ? points.to_h { |point| [point.name, nil] }.freeze : nil
+        private
+
+        # Code that assigns the value of a conditional attribute, or SKIP when
+        # the attribute fails its conditions
+        def assign_value_code(point, index)
+          return super if !point.conditional? || point.child_plan
+
+          <<~RUBY.chomp
+            value_#{index} =
+              if point_#{index}.satisfy_if_conditions?(object, context)
+                value_#{index} = #{read_value_code(point, index)}
+                point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : skip
+              else
+                skip
+              end
+          RUBY
         end
 
-        #
-        # Builds :data containers of plans with conditional attributes with all
-        # attribute names and nil values, so skipped attributes stay nil.
-        #
-        # @param count [Integer] Number of containers
-        #
-        # @return [Array<Hash, Struct>] Empty containers
-        #
-        def build_containers(count)
-          template = @nil_hash
-          return super unless template
-
-          Array.new(count) { template.dup }
+        def skippable?(point)
+          point.conditional?
         end
       end
 
@@ -293,25 +288,18 @@ class Serega
       module ObjectSerializerInstanceMethods
         private
 
-        def process_point(point, objects, containers, batches, child_serializer)
+        def read_relations(point, objects, batches, child_serializer)
           return super unless point.conditional?
 
           attribute = point.attribute
-          name = point.name
           context = @context
-          index = 0
-          size = objects.size
+          skip = SeregaEngine::SKIP
 
-          while index < size
-            object = objects[index]
+          objects.map do |object|
+            next skip unless point.satisfy_if_conditions?(object, context)
 
-            if point.satisfy_if_conditions?(object, context)
-              value = attribute.value(object, context, batches: batches)
-              final_value = child_serializer ? child_serializer.serialize(value) : value
-              containers[index][name] = final_value if point.satisfy_if_value_conditions?(final_value, context)
-            end
-
-            index += 1
+            value = attribute.value(object, context, batches: batches)
+            child_serializer.serialize(value)
           end
         rescue => error
           SeregaUtils::SerializedAttributeError.call(error, point)

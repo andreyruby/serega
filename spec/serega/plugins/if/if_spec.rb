@@ -25,47 +25,6 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
   end
 
-  describe "SeregaResultShape#build_containers" do
-    subject(:containers) { serializer::SeregaPlan.new(nil, {}).result_shape(mode).build_containers(2) }
-
-    let(:serializer) do
-      Class.new(Serega) do
-        plugin :if
-        attribute :name
-        attribute :email, if: :admin
-      end
-    end
-
-    let(:mode) { :data }
-
-    it "returns separate hashes with nil values of all attributes" do
-      expect(containers).to eq [{name: nil, email: nil}, {name: nil, email: nil}]
-      expect(containers[0]).not_to equal containers[1]
-      expect(containers[0]).not_to be_frozen
-    end
-
-    context "with the :hash mode" do
-      let(:mode) { :hash }
-
-      it "returns empty hashes" do
-        expect(containers).to eq [{}, {}]
-      end
-    end
-
-    context "when no attribute has conditions" do
-      let(:serializer) do
-        Class.new(Serega) do
-          plugin :if
-          attribute :name
-        end
-      end
-
-      it "returns empty hashes" do
-        expect(containers).to eq [{}, {}]
-      end
-    end
-  end
-
   describe "SeregaPlanPoint methods" do
     before { serializer.plugin :if }
 
@@ -263,6 +222,22 @@ RSpec.describe Serega::SeregaPlugins::If do
 
       expect { serializer.new.to_h(1) }.to raise_error RuntimeError,
         a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
+    end
+
+    it "annotates errors raised while reading a conditional relation" do
+      serializer.plugin :if
+      serializer.attribute(:foo, serializer: Class.new(Serega), value: proc { raise "boom in relation" }, if: proc { true })
+
+      expect { serializer.new.to_h(1) }.to raise_error RuntimeError,
+        a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
+    end
+
+    it "serializes relations without conditions" do
+      serializer.plugin :if
+      serializer.attribute(:bar, const: "bar")
+      serializer.attribute(:foo, serializer: serializer, const: 1, hide: true)
+
+      expect(serializer.new(with: :foo).to_h(1)).to eq(bar: "bar", foo: {bar: "bar"})
     end
 
     it "keeps attributes in declared order when :if skips one for an earlier object only" do

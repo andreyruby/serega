@@ -7,11 +7,10 @@ class Serega
   # @private
   module SeregaEngine
     #
-    # One serialization level: all objects serialized under a single plan and the
-    # result containers they fill. Objects from different parents that share a plan
-    # (e.g. every user's posts) accumulate into one level, so a named batch loader
-    # or preload runs once over the whole set. A deeper level (its own plan) loads
-    # separately.
+    # One serialization level: all objects serialized under a single plan and
+    # their results. Objects from different parents that share a plan accumulate
+    # into one level, so a named batch loader or preload runs once over the whole
+    # set.
     #
     # @private
     class Level
@@ -19,42 +18,46 @@ class Serega
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       def initialize(serializer, mode)
         @serializer = serializer
-        @result_shape = serializer.plan.result_shape(mode)
+        @mode = mode
         @objects = []
-        @containers = []
-        @results = {}.compare_by_identity
+        @relation_references = nil
+        @results = nil
+        @loaded = {}.compare_by_identity
       end
 
       # @return [Array] Objects serialized at this level
       attr_reader :objects
 
-      # @return [Array<Hash, Struct>] Result container per object (filled in place)
-      attr_reader :containers
+      # @return [Array<Hash, Struct, Data>] Result per object
+      attr_reader :results
 
-      # Accumulates a chunk of objects into this level, creating one empty result
-      # container per object. The containers are returned so the caller can hand
-      # them to its parent; they are filled in place later during #process.
+      # Adds objects to this level.
       #
       # @param objects [Array] objects serialized at this level
-      # @return [Array<Hash, Struct>] the created containers, aligned with objects
+      # @return [Integer] index of the first added object
       def add(objects)
-        containers = @result_shape.build_containers(objects.size)
+        first_index = @objects.size
         @objects.concat(objects)
-        @containers.concat(containers)
-        containers
+        first_index
       end
 
-      # Resolves every attribute of this level onto the containers.
+      # Runs preloads and adds levels of related objects.
       # @return [void]
-      def process
-        @serializer.process(self)
+      def discover
+        @relation_references = @serializer.discover(self)
+      end
+
+      # Builds results of this level.
+      # @return [void]
+      def build
+        @results = @serializer.build(self, @mode, @relation_references)
       end
 
       # Loads a named batch loader once for this level's objects.
       # @param loader [SeregaEngine::Loader] Named batch loader
       # @return [Object] Loaded values
       def fetch(loader)
-        @results[loader] ||= loader.load(@objects, @serializer.context)
+        @loaded[loader] ||= loader.load(@objects, @serializer.context)
       end
     end
   end

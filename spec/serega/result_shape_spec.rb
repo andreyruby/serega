@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaResultShape do
-  subject(:result_shape) { serializer::SeregaResultShape.new(mode, plan.points) }
-
   let(:serializer) do
     Class.new(Serega) do
       attribute :name
@@ -63,53 +61,81 @@ RSpec.describe Serega::SeregaResultShape do
     end
   end
 
-  describe "#data_class" do
-    it "returns a Data class with the plan attribute names as members" do
-      expect(result_shape.data_class.members).to eq %i[name email]
+  describe ".builder" do
+    subject(:builder) { serializer::SeregaResultShape.builder(mode, plan.points) }
+
+    let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
+
+    it "builds a hash per object" do
+      expect(builder.call([user], {}, nil, nil)).to eq [{name: "Ann", email: "ann@example.com"}]
     end
 
-    it "returns the same Data class for result shapes with the same attributes" do
-      other_shape = serializer::SeregaResultShape.new(mode, plan.points)
-
-      expect(result_shape.data_class).to equal other_shape.data_class
-    end
-  end
-
-  describe "#struct_class" do
-    it "returns a Struct class with the plan attribute names as members" do
-      expect(result_shape.struct_class.members).to eq %i[name email]
+    it "returns the same builder for the same attributes and mode" do
+      expect(builder).to equal serializer::SeregaResultShape.builder(mode, serializer::SeregaPlan.new(nil, {}).points)
     end
 
-    it "returns the same Struct class for result shapes with the same attributes" do
-      other_shape = serializer::SeregaResultShape.new(mode, plan.points)
-
-      expect(result_shape.struct_class).to equal other_shape.struct_class
-    end
-  end
-
-  describe "#build_containers" do
-    subject(:containers) { result_shape.build_containers(2) }
-
-    it "returns separate empty hashes" do
-      expect(containers).to eq [{}, {}]
-      expect(containers[0]).not_to equal containers[1]
-    end
-
-    context "with the :data mode" do
-      let(:mode) { :data }
-
-      it "returns separate empty hashes" do
-        expect(containers).to eq [{}, {}]
-        expect(containers[0]).not_to equal containers[1]
-      end
+    it "returns separate builders for different modes" do
+      expect(builder).not_to equal serializer::SeregaResultShape.builder(:struct, plan.points)
     end
 
     context "with the :struct mode" do
       let(:mode) { :struct }
 
-      it "returns separate structs with nil members" do
-        expect(containers.map(&:to_h)).to eq [{name: nil, email: nil}, {name: nil, email: nil}]
-        expect(containers[0]).not_to equal containers[1]
+      it "builds a struct per object" do
+        expect(builder.call([user], {}, nil, nil)).to eq [serializer::SeregaResultShape.struct_class_for(%i[name email]).new("Ann", "ann@example.com")]
+      end
+    end
+
+    context "with the :data mode" do
+      let(:mode) { :data }
+
+      it "builds a Data object per object" do
+        expect(builder.call([user], {}, nil, nil)).to eq [serializer::SeregaResultShape.data_class_for(%i[name email]).new("Ann", "ann@example.com")]
+      end
+    end
+
+    context "with a relation" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name
+          attribute :posts, serializer: Class.new(Serega)
+        end
+      end
+
+      it "reads relation values from the built child results" do
+        expect(builder.call([user], {}, nil, [[["POST"]]])).to eq [{name: "Ann", posts: ["POST"]}]
+      end
+    end
+
+    context "with batch attributes" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name, batch: {use: proc { |ids| ids }, id: :email}
+        end
+      end
+
+      it "reads values from the loaded batches" do
+        expect(builder.call([user], {}, [{name: {"ann@example.com" => "Batch Ann"}}], nil)).to eq [{name: "Batch Ann"}]
+      end
+    end
+
+    context "when an attribute raises an error" do
+      let(:user) { Struct.new(:name).new("Ann") }
+
+      it "adds the attribute name to the error message" do
+        expect { builder.call([user], {}, nil, nil) }
+          .to raise_error(NoMethodError, /when serializing 'email' attribute/)
+      end
+    end
+
+    context "when the cache is full" do
+      before { stub_const("#{described_class}::MAX_BUILDERS", 1) }
+
+      it "removes the oldest builder" do
+        builder
+        serializer::SeregaResultShape.builder(:struct, plan.points)
+
+        expect(builder).not_to equal serializer::SeregaResultShape.builder(mode, plan.points)
       end
     end
   end

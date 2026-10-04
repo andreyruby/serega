@@ -67,7 +67,6 @@ require_relative "serega/plan_point"
 require_relative "serega/plan"
 require_relative "serega/result_shape"
 require_relative "serega/plan_cache"
-require_relative "serega/data_builder"
 require_relative "serega/plugins"
 
 class Serega
@@ -489,10 +488,6 @@ class Serega
       attribute_normalizer_class.serializer_class = subclass
       subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
 
-      data_builder_class = Class.new(self::SeregaDataBuilder)
-      data_builder_class.serializer_class = subclass
-      subclass.const_set(:SeregaDataBuilder, data_builder_class)
-
       plan_class = Class.new(self::SeregaPlan)
       plan_class.serializer_class = subclass
       subclass.const_set(:SeregaPlan, plan_class)
@@ -632,8 +627,7 @@ class Serega
       opts = normalize_serialization_opts(opts)
       object = prepare_objects(object, opts[:context])
       opts = prepare_initial_serialization_opts(object, opts, :data)
-      serialized_data = serialize(object, opts)
-      self.class::SeregaDataBuilder.call(self, serialized_data)
+      serialize(object, opts)
     end
 
     #
@@ -700,9 +694,12 @@ class Serega
         level_queue: opts[:level_queue],
         many: opts[:many]
       )
-      result = object_serializer.serialize(object)
-      opts[:level_queue].run
-      result
+      level_queue = opts[:level_queue]
+      reference = object_serializer.serialize(object)
+      return unless reference
+
+      level_queue.run
+      level_queue.level(object_serializer).results[reference]
     end
   end
 

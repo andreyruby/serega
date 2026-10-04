@@ -6,15 +6,16 @@ class Serega
   #
   # @private
   module SeregaEngine
+    # Result of an attribute skipped by its conditions
+    SKIP = Object.new.freeze
+
     #
     # Level-order queue of serialization levels for one serialization run.
     #
-    # `#serialize` on the object serializer enqueues a level (objects + their result
-    # containers) instead of resolving values inline. `#run` then processes the
-    # queue: each level resolves its attributes and, for relations, enqueues child
-    # levels — which the loop picks up because it re-reads the size each iteration.
-    # Processing level-by-level lets a named batch loader and preloads run once per
-    # level over all of its objects.
+    # `#run` processes the queue in two passes. The first pass goes top-down: each
+    # level runs its preloads and reads its relation values, enqueuing the related
+    # objects as child levels. The second pass goes bottom-up: each level builds
+    # its results, with the results of its child levels already built.
     #
     # @private
     class LevelQueue
@@ -25,23 +26,30 @@ class Serega
         @levels_by_plan = {}.compare_by_identity
       end
 
-      # Adds objects to the level for their plan (creating it on first use), so
-      # objects serialized under the same plan — even from different parents —
-      # share one level and load once. The level creates a result container per
-      # object and returns them for the caller to embed in its parent.
+      # Adds objects to the level of their plan. Objects from different
+      # parents that share a plan go to one level.
       #
       # @param serializer [SeregaObjectSerializer] serializer that resolves the level
       # @param objects [Array] objects serialized at this level
       #
-      # @return [Array<Hash, Struct>] the created result containers, aligned with objects
+      # @return [Integer] index of the first added object in the level
       def enqueue(serializer, objects)
-        level = @levels_by_plan[serializer.plan]
-        unless level
-          level = Level.new(serializer, @mode)
-          @levels_by_plan[serializer.plan] = level
-          @levels << level
-        end
-        level.add(objects)
+        level(serializer).add(objects)
+      end
+
+      # Returns the level of the serializer plan, and creates it on first use.
+      #
+      # @param serializer [SeregaObjectSerializer] serializer that resolves the level
+      # @return [SeregaEngine::Level] level of the serializer plan
+      def level(serializer)
+        plan = serializer.plan
+        level = @levels_by_plan[plan]
+        return level if level
+
+        level = Level.new(serializer, @mode)
+        @levels_by_plan[plan] = level
+        @levels << level
+        level
       end
 
       # Processes every level, including child levels enqueued while processing.
@@ -49,9 +57,11 @@ class Serega
       def run
         i = 0
         while i < @levels.size
-          @levels[i].process
+          @levels[i].discover
           i += 1
         end
+
+        @levels.reverse_each(&:build)
       end
     end
   end

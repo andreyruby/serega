@@ -14,9 +14,10 @@ RSpec.describe Serega::SeregaObjectSerializer do
   describe "serialization" do
     def serialize(object)
       level_queue = Serega::SeregaEngine::LevelQueue.new
-      result = object_serializer.new(context: context, plan: plan, level_queue: level_queue).serialize(object)
+      serializer = object_serializer.new(context: context, plan: plan, level_queue: level_queue)
+      reference = serializer.serialize(object)
       level_queue.run
-      result
+      level_queue.level(serializer).results[reference]
     end
 
     let(:serializer_class) do
@@ -57,6 +58,13 @@ RSpec.describe Serega::SeregaObjectSerializer do
           hash: {foo: "bar"},
           array: [{foo: "bar"}, {foo: "bar"}]
         )
+      end
+
+      it "raises relation errors with additional serializer name and attribute name in error message" do
+        serializer_class.attribute(:hash, serializer: Class.new(Serega), value: proc { raise "boom" })
+
+        expect { serializer_class.call(1) }
+          .to raise_error RuntimeError, end_with("(when serializing 'hash' attribute in #{serializer_class})")
       end
     end
   end
