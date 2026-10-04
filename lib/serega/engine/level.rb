@@ -23,7 +23,7 @@ class Serega
         @objects = objects
         @relation_references = nil
         @results = nil
-        @loaded = {}.compare_by_identity
+        @loaded = nil
       end
 
       # @return [Array] Objects serialized at this level
@@ -48,7 +48,8 @@ class Serega
       # @param loader [SeregaEngine::Loader] Named batch loader
       # @return [Object] Loaded values
       def fetch(loader)
-        @loaded[loader] ||= loader.load(@objects, @serializer.context)
+        loaded = (@loaded ||= {}.compare_by_identity)
+        loaded[loader] ||= loader.load(@objects, @serializer.context)
       end
     end
   end

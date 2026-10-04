@@ -64,6 +64,11 @@ class Serega
       def collect(object, objects)
         return if object.nil?
 
+        if many != false && object.instance_of?(Array)
+          objects.concat(object)
+          return object.size
+        end
+
         case serialize_mode(object)
         when :many
           collection = object.to_a
@@ -95,9 +100,7 @@ class Serega
       def discover(level)
         objects = level.objects
 
-        plan.points.each do |point|
-          point.run_preloads(objects) if point.preloads
-        end
+        plan.preload_points.each { |point| point.run_preloads(objects) }
 
         relation_points = plan.relation_points
         return if relation_points.empty?

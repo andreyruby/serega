@@ -43,9 +43,14 @@ class Serega
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @relation_points = points.select(&:child_plan).freeze
+        @preload_points = points.select(&:preloads).freeze
         @batch_points = points.any? { |point| !point.batch_loaders.empty? }
         @builders = {}
       end
+
+      # Serialization points with preloads
+      # @return [Array<SeregaPlanPoint>] points to run preloads for
+      attr_reader :preload_points
 
       # @return [Boolean] Whether any point uses batch loaders
       def batch_points?
