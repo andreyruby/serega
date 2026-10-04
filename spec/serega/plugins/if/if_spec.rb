@@ -33,14 +33,22 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
 
     describe "#conditional?" do
-      it "is false when attribute has no conditions" do
-        expect(point(serializer.attribute(:foo))).not_to be_conditional
+      context "without conditions" do
+        let(:attribute) { serializer.attribute(:foo) }
+
+        it "returns false" do
+          expect(point(attribute)).not_to be_conditional
+        end
       end
 
-      it "is true when attribute has any condition" do
-        %i[if unless if_value unless_value].each do |option|
-          attribute = serializer.attribute(:foo, option => proc { true })
-          expect(point(attribute)).to be_conditional, option.to_s
+      context "with a condition" do
+        let(:condition_options) { %i[if unless if_value unless_value] }
+
+        it "returns true for each condition option" do
+          condition_options.each do |option|
+            attribute = serializer.attribute(:foo, option => proc { true })
+            expect(point(attribute)).to be_conditional, option.to_s
+          end
         end
       end
     end
@@ -415,7 +423,7 @@ RSpec.describe Serega::SeregaPlugins::If do
     it "excludes relation hidden by :if condition" do
       child_serializer = Class.new(Serega) { attribute(:baz, const: "baz") }
       serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, serializer: child_serializer, const: 1, if: proc { |obj| obj != 1 })
+      serializer.attribute(:bar, serializer: child_serializer, const: 1, if: proc { |object| object != 1 })
       result = serializer.new.to_data([1, 2])
 
       expect(result.map(&:members)).to eq [[:foo], [:foo, :bar]]

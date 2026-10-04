@@ -61,14 +61,22 @@ RSpec.describe Serega::SeregaPlugins::StringModifiers do
       expect(response).to eq(first_name: "FIRST NAME")
     end
 
-    it "parses string modifiers of cached plans once" do
-      user_serializer.config.max_cached_plans_per_serializer_count = 1
-      allow(described_class::ParseStringModifiers).to receive(:parse).and_call_original
+    context "with plan caching" do
+      let(:base_serializer) do
+        Class.new(Serega) do
+          plugin :string_modifiers
+          config.max_cached_plans_per_serializer_count = 1
+        end
+      end
 
-      responses = Array.new(2) { user_serializer.new(only: "post(title)").to_h(user) }
+      before { allow(described_class::ParseStringModifiers).to receive(:parse).and_call_original }
 
-      expect(responses).to all eq(post: {title: "TITLE"})
-      expect(described_class::ParseStringModifiers).to have_received(:parse).once
+      it "parses the string modifiers once" do
+        responses = Array.new(2) { user_serializer.new(only: "post(title)").to_h(user) }
+
+        expect(responses).to all eq(post: {title: "TITLE"})
+        expect(described_class::ParseStringModifiers).to have_received(:parse).once
+      end
     end
   end
 end

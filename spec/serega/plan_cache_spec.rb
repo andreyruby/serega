@@ -1,44 +1,30 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaPlanCache do
-  let(:base_class) { Class.new(Serega) }
-  let(:a) do
-    serializer = Class.new(base_class)
+  let(:address_serializer) do
+    Class.new(Serega) do
+      attribute :city
+      attribute :zip
+    end
+  end
 
-    serializer.attribute :a1
-    serializer.attribute :a2
-    serializer.attribute :a3, hide: true
+  let(:user_serializer) do
+    address = address_serializer
+    max_cached_plans = max_cached_plans_count
 
-    serializer.attribute :b, serializer: b, hide: true
-    serializer.attribute :c, serializer: c, hide: true
-    serializer.attribute :d, serializer: d
-    serializer
+    Class.new(Serega) do
+      config.max_cached_plans_per_serializer_count = max_cached_plans
+
+      attribute :first_name
+      attribute :last_name
+      attribute :address, serializer: address
+    end
   end
-  let(:b) do
-    serializer = Class.new(base_class)
-    serializer.attribute :b1
-    serializer.attribute :b2
-    serializer.attribute :b3, hide: true
-    serializer
-  end
-  let(:c) do
-    serializer = Class.new(base_class)
-    serializer.attribute :c1
-    serializer.attribute :c2
-    serializer.attribute :c3, hide: true
-    serializer
-  end
-  let(:d) do
-    serializer = Class.new(base_class)
-    serializer.attribute :d1
-    serializer.attribute :d2
-    serializer.attribute :d3, hide: true
-    serializer
-  end
-  let(:current_serializer) { a }
+
+  let(:max_cached_plans_count) { 0 }
 
   def plan(modifiers)
-    current_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except])
+    user_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except])
   end
 
   def satisfy_attribute_names(names)
@@ -53,124 +39,115 @@ RSpec.describe Serega::SeregaPlanCache do
     end
   end
 
-  describe "caching the plan without modifiers" do
-    it "reuses the plan without modifiers when plans cache is disabled" do
-      result1 = plan({})
-      result2 = plan(only: {}, with: {}, except: {})
+  context "without plan caching" do
+    let(:max_cached_plans_count) { 0 }
 
-      expect(result1).to satisfy_attribute_names(a1: nil, a2: nil, d: {d1: nil, d2: nil})
-      expect(result1).to equal result2
+    it "reuses one plan for missing and empty modifiers" do
+      plan_without_modifiers = plan({})
+      plan_with_empty_modifiers = plan(only: {}, with: {}, except: {})
+
+      expect(plan_without_modifiers).to satisfy_attribute_names(first_name: nil, last_name: nil, address: {city: nil, zip: nil})
+      expect(plan_with_empty_modifiers).to equal plan_without_modifiers
+    end
+
+    it "builds a new plan for each call with modifiers" do
+      result1 = plan(only: {first_name: {}})
+      result2 = plan(only: {first_name: {}})
+
+      expect(result1).to satisfy_attribute_names(first_name: nil)
+      expect(result2).to satisfy_attribute_names(first_name: nil)
+      expect(result1).not_to equal result2
     end
   end
 
-  describe "saving plans to cache" do
-    it "does not save plans to cache when not configured to do so" do
-      result1 = plan(only: {a1: {}})
-      result2 = plan(only: {a1: {}})
+  context "with plan caching" do
+    let(:max_cached_plans_count) { 1 }
 
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result2).to satisfy_attribute_names(a1: nil)
-      expect(result1).not_to equal result2
+    it "reuses the cached plan for the same modifiers" do
+      result1 = plan(only: {first_name: {}})
+      result2 = plan(only: {first_name: {}})
+
+      expect(result1).to satisfy_attribute_names(first_name: nil)
+      expect(result2).to equal result1
     end
 
-    it "saves plans to cache and uses them when configured to use cache" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      result1 = plan(only: {a1: {}})
-      result2 = plan(only: {a1: {}})
+    it "caches the plans of serializers built with other initiate options" do
+      result1 = user_serializer.new(only: :first_name, check_initiate_params: false).plan
+      result2 = user_serializer.new(only: :first_name, check_initiate_params: false).plan
 
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result2).to satisfy_attribute_names(a1: nil)
-      expect(result1).to equal result2
+      expect(result1).to satisfy_attribute_names(first_name: nil)
+      expect(result2).to equal result1
     end
 
-    it "caches plans built with other initiate options" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      result1 = current_serializer.new(only: :a1, check_initiate_params: false).plan
-      result2 = current_serializer.new(only: :a1, check_initiate_params: false).plan
-
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result1).to equal result2
-    end
-
-    it "caches plans with the same attribute names in different nesting separately" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 2
-      nested = plan(only: {d: {d1: {}}})
-      flat = plan(only: {d: {}, d1: {}})
-
-      expect(nested).to satisfy_attribute_names(d: {d1: nil})
-      expect(flat).to satisfy_attribute_names(d: {d1: nil, d2: nil})
-    end
-
-    it "keeps cached plans when provided modifiers are changed later" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      only = {a1: {}}
+    it "keeps the cached plan after the caller changes the modifiers hash" do
+      only = {first_name: {}}
       result1 = plan(only: only)
-      only[:a2] = {}
+      only[:last_name] = {}
 
-      expect(plan(only: {a1: {}})).to equal result1
+      expect(plan(only: {first_name: {}})).to equal result1
     end
 
-    it "does not parse modifiers of cached plans" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      current_serializer.new(only: [:a1])
-      allow(Serega::SeregaUtils::ToHash).to receive(:call).and_call_original
+    it "keeps the cached plan after the caller changes the modifiers string" do
+      only = +"first_name"
+      result1 = user_serializer.new(only: only).plan
+      only.replace("last_name")
 
-      current_serializer.new(only: [:a1])
-
-      expect(Serega::SeregaUtils::ToHash).not_to have_received(:call)
+      expect(user_serializer.new(only: "first_name").plan).to equal result1
     end
 
-    it "keeps cached plans when provided string modifiers are changed later" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      only = +"a1"
-      result1 = current_serializer.new(only: only).plan
-      only.replace("a2")
-
-      expect(current_serializer.new(only: "a1").plan).to equal result1
-    end
-
-    it "validates cached modifiers once" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      allow(Serega::SeregaValidations::Initiate::CheckModifiers).to receive(:new).and_call_original
-
-      2.times { current_serializer.new(only: :a1) }
-
-      expect(Serega::SeregaValidations::Initiate::CheckModifiers).to have_received(:new).once
-    end
-
-    it "shares cached plans between calls with and without validation" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      result1 = current_serializer.plan_cache.fetch({a1: {}}, nil, nil, check_initiate_params: false)
-      result2 = current_serializer.plan_cache.fetch({a1: {}}, nil, nil, check_initiate_params: true)
+    it "shares the cached plan between calls with and without validation" do
+      result1 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: false)
+      result2 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: true)
 
       expect(result2).to equal result1
     end
 
-    it "validates cached modifiers that were not validated when cached" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      current_serializer.new(only: :foo, check_initiate_params: false)
+    it "validates the modifiers of a plan that was cached without validation" do
+      user_serializer.new(only: :email, check_initiate_params: false)
 
-      expect { current_serializer.new(only: :foo) }.to raise_error Serega::AttributeNotExist
+      expect { user_serializer.new(only: :email) }.to raise_error Serega::AttributeNotExist
     end
 
-    it "validates other initiate options with cached modifiers" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      current_serializer.new(only: :a1)
+    it "validates the other initiate options of a cached plan" do
+      user_serializer.new(only: :first_name)
 
-      expect { current_serializer.new(only: :a1, foo: 1) }.to raise_error Serega::SeregaError, /foo/
+      expect { user_serializer.new(only: :first_name, foo: 1) }.to raise_error Serega::SeregaError, /foo/
     end
 
-    it "removes from cache oldest plans if cached keys count more than configured" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
+    it "removes the oldest plan from a full cache" do
+      result1 = plan(only: {first_name: {}})
+      plan(only: {last_name: {}})
+      result2 = plan(only: {first_name: {}})
 
-      result1 = plan(only: {a1: {}})
-      plan(only: {a2: {}}) # replace cached result1
+      expect(result1).to satisfy_attribute_names(first_name: nil)
+      expect(result2).to satisfy_attribute_names(first_name: nil)
+      expect(result2).not_to equal result1
+    end
 
-      result2 = plan(only: {a1: {}})
+    context "when two serializers use the same modifiers" do
+      before do
+        allow(Serega::SeregaUtils::ToHash).to receive(:call).and_call_original
+        allow(Serega::SeregaValidations::Initiate::CheckModifiers).to receive(:new).and_call_original
+      end
 
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result2).to satisfy_attribute_names(a1: nil)
-      expect(result1).not_to equal result2
+      it "parses and validates the modifiers once" do
+        2.times { user_serializer.new(only: [:first_name]) }
+
+        expect(Serega::SeregaUtils::ToHash).to have_received(:call).with([:first_name]).once
+        expect(Serega::SeregaValidations::Initiate::CheckModifiers).to have_received(:new).once
+      end
+    end
+  end
+
+  context "with room for two cached plans" do
+    let(:max_cached_plans_count) { 2 }
+
+    it "caches the same attribute names at different nesting levels separately" do
+      nested = plan(only: {address: {city: {}}})
+      flat = plan(only: {address: {}, city: {}})
+
+      expect(nested).to satisfy_attribute_names(address: {city: nil})
+      expect(flat).to satisfy_attribute_names(address: {city: nil, zip: nil})
     end
   end
 end
