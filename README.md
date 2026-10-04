@@ -1154,6 +1154,10 @@ already-found value and context, checked after. The latter two cannot be
 used with the `:serializer` option, since a relationship has no "serialized
 value" of its own — use `:if`/`:unless` instead.
 
+`.to_h` omits skipped attributes. `.to_data` and `.to_struct` return `nil`
+for skipped attributes, so all objects serialized with the same fields have
+the same members.
+
 See also a `:hide` option that is available without any plugins to hide
 attribute without conditions.
 Look at [select serialized fields](#selecting-fields) for `:hide` usage examples.

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Plugin `:if`: `.to_data` returns `nil` for skipped attributes.
+  See "Plugin :if" in the README.
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
   objects. See "Serializing" in the README.
 - **BREAKING**: Serializers are locked once they serialize something. Changing

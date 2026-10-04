@@ -36,7 +36,7 @@ class Serega
       def hash_to_data(hash, plan)
         plan.relation_points.each do |point|
           name = point.name
-          hash[name] = build(hash[name], point.child_plan) if hash.key?(name)
+          hash[name] = build(hash[name], point.child_plan)
         end
 
         build_data_object(plan, hash)
