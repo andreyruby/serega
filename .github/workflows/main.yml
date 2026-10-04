@@ -58,6 +58,7 @@ jobs:
           #   bundle_force_ruby_platform: "1"
           - ruby: "4.0"
             activerecord: "8.1"
+            coverage: true
           - ruby: "3.4"
             activerecord: "8.1"
           - ruby: "3.3"
@@ -70,6 +71,7 @@ jobs:
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.activerecord }}.gemfile
       BUNDLE_FORCE_RUBY_PLATFORM: ${{ matrix.bundle_force_ruby_platform || '' }}
+      COVERAGE: ${{ matrix.coverage && 'true' || 'false' }}
 
     steps:
       # https://github.com/actions/checkout
