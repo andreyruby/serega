@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
+  under the root key. See "Plugin :root" in the README.
 - **BREAKING**: Plugin `:if`: `.to_data` returns `nil` for skipped attributes.
   See "Plugin :if" in the README.
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`

@@ -195,58 +195,47 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
   end
 
   describe "serialization to data" do
-    let(:obj) { double(first_name: "FIRST_NAME") }
-    let(:base_serializer) { Class.new(serializer) { plugin :metadata } }
+    subject(:result) { user_serializer.to_data(user) }
 
     let(:user_serializer) do
-      Class.new(base_serializer) do
+      Class.new(serializer) do
+        plugin :metadata
         attribute :first_name
+        meta_attribute(:version, const: "1.2.3")
+        meta_attribute(:meta, :paging, :page, const: 1)
       end
     end
 
-    before { user_serializer.meta_attribute(:version, const: "1.2.3") }
+    let(:user) { double(first_name: "FIRST_NAME") }
 
-    it "wraps data under root key and keeps metadata as plain values" do
-      result = user_serializer.to_data(obj)
-      expect(result).to be_a Data
-      expect(result.members).to contain_exactly(:data, :version)
-      expect(result.data.first_name).to eq "FIRST_NAME"
-      expect(result.version).to eq "1.2.3"
+    it "adds metadata to the result Hash as it is" do
+      expect(result.keys).to eq %i[data version meta]
+      expect(result[:data].to_h).to eq(first_name: "FIRST_NAME")
+      expect(result[:version]).to eq "1.2.3"
+      expect(result[:meta]).to eq(paging: {page: 1})
+    end
+  end
+
+  describe "serialization to structs" do
+    subject(:result) { user_serializer.to_struct(user) }
+
+    let(:user_serializer) do
+      Class.new(serializer) do
+        plugin :metadata
+        attribute :first_name
+        meta_attribute(:version, const: "1.2.3")
+        meta_attribute(:meta, :paging, :page, const: 1)
+      end
     end
 
-    it "works with a collection" do
-      result = user_serializer.to_data([obj])
-      expect(result.members).to contain_exactly(:data, :version)
-      expect(result.data).to be_an Array
-      expect(result.data.first.first_name).to eq "FIRST_NAME"
-      expect(result.version).to eq "1.2.3"
-    end
+    let(:user) { double(first_name: "FIRST_NAME") }
 
-    it "returns plain Data without metadata when root is nil" do
-      user_serializer.config.root = {one: nil, many: nil}
-      result = user_serializer.to_data(obj)
-      expect(result.members).to eq [:first_name]
-    end
-
-    it "converts nested metadata hashes to Data objects" do
-      user_serializer.meta_attribute(:meta, :paging, :page, const: 1)
-      user_serializer.meta_attribute(:meta, :paging, :per_page, const: 10)
-      result = user_serializer.to_data(obj)
-      expect(result.members).to contain_exactly(:data, :version, :meta)
-      expect(result.meta).to be_a Data
-      expect(result.meta.paging).to be_a Data
-      expect(result.meta.paging.page).to eq 1
-      expect(result.meta.paging.per_page).to eq 10
-    end
-
-    it "converts hashes inside metadata arrays to Data objects" do
-      user_serializer.meta_attribute(:links, const: [{href: "/prev", rel: "prev"}, {href: "/next", rel: "next"}])
-      result = user_serializer.to_data(obj)
-      expect(result.links).to be_an Array
-      expect(result.links.first).to be_a Data
-      expect(result.links.first.href).to eq "/prev"
-      expect(result.links.first.rel).to eq "prev"
-      expect(result.links.last.href).to eq "/next"
+    it "adds metadata to the result Hash as it is" do
+      expect(result.keys).to eq %i[data version meta]
+      expect(result[:data]).to be_a(Struct)
+      expect(result[:data].to_h).to eq(first_name: "FIRST_NAME")
+      expect(result[:version]).to eq "1.2.3"
+      expect(result[:meta]).to eq(paging: {page: 1})
     end
   end
 
