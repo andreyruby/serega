@@ -3,6 +3,11 @@
 RSpec.describe Serega::SeregaPresenter do
   let(:serializer) { Class.new(Serega) }
 
+  # Any presenter method makes the serializer wrap objects in the presenter
+  def add_presenter(serializer_class)
+    serializer_class.presenter { define_method(:unused) {} }
+  end
+
   describe ".inherited" do
     let(:parent) do
       Class.new(Serega) do
@@ -47,13 +52,8 @@ RSpec.describe Serega::SeregaPresenter do
   end
 
   it "keeps delegators of each serializer presenter separate" do
-    report_serializer = Class.new(Serega) do
-      attribute :format
-      presenter do
-        def unused
-        end
-      end
-    end
+    report_serializer = Class.new(Serega) { attribute :format }
+    add_presenter(report_serializer)
     price_serializer = Class.new(Serega) do
       attribute :label
       presenter do
@@ -73,11 +73,9 @@ RSpec.describe Serega::SeregaPresenter do
     record_class = Class.new do
       def greet(greeting, punctuation: ".") = "#{greeting}#{punctuation}"
     end
+
     serializer.attribute :greeting, value: proc { |record| record.greet("Hi", punctuation: "!") }
-    serializer.presenter do
-      def unused
-      end
-    end
+    add_presenter(serializer)
 
     expect(serializer.to_h(record_class.new)).to eq(greeting: "Hi!")
   end
@@ -90,14 +88,12 @@ RSpec.describe Serega::SeregaPresenter do
 
       def greet(greeting, punctuation: ".") = "#{greeting}, #{name}#{punctuation}#{yield}"
     end
+
     serializer.attribute :result, value: proc { |record|
       record.name = "Kate"
       [record[:key], record.greet("Hi", punctuation: "!") { "?" }, record.name]
     }
-    serializer.presenter do
-      def unused
-      end
-    end
+    add_presenter(serializer)
 
     2.times do
       expect(serializer.to_h(record_class.new)).to eq(result: ["key!", "Hi, Kate!?", "Kate"])
@@ -122,6 +118,7 @@ RSpec.describe Serega::SeregaPresenter do
         super.upcase
       end
     end
+
     user = Struct.new(:upcase_name).new("Kate")
 
     2.times { expect(serializer.to_h(user)).to eq(upcase_name: "KATE") }

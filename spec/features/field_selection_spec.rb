@@ -245,34 +245,64 @@ RSpec.describe Serega do
   end
 
   describe "validating initiate options" do
-    let(:user_serializer) { Class.new(Serega) { attribute :name } }
+    subject(:serializer) { user_serializer.new(initiate_options) }
 
-    it "raises when modifiers have not existing attributes" do
-      expect { user_serializer.new(only: :email) }.to raise_error Serega::AttributeNotExist
+    let!(:user_serializer) do
+      check_initiate_params = check_initiate_params_config
+
+      Class.new(Serega) do
+        config.check_initiate_params = check_initiate_params
+
+        attribute :name
+      end
     end
 
-    it "raises when options are not allowed" do
-      expect { user_serializer.new(only: :name, foo: 1) }.to raise_error Serega::SeregaError, /foo/
+    let(:check_initiate_params_config) { true }
+    let(:initiate_options) { {only: :name} }
+
+    context "with a missing attribute in the modifiers" do
+      let(:initiate_options) { {only: :email} }
+
+      it "raises an AttributeNotExist error" do
+        expect { serializer }.to raise_error Serega::AttributeNotExist
+      end
     end
 
-    it "skips validation when no initiate options provided" do
-      serializer = user_serializer
-      allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call).and_call_original
+    context "with an unknown option" do
+      let(:initiate_options) { {only: :name, foo: 1} }
 
-      serializer.to_h(nil)
-      serializer.new({})
-
-      expect(Serega::SeregaValidations::Utils::CheckAllowedKeys).not_to have_received(:call)
+      it "raises a SeregaError that names the option" do
+        expect { serializer }.to raise_error Serega::SeregaError, /foo/
+      end
     end
 
-    it "allows to disable validation via config option" do
-      user_serializer.config.check_initiate_params = false
+    context "without initiate options" do
+      let(:initiate_options) { {} }
 
-      expect(user_serializer.new(only: :email, foo: 1).plan.points).to be_empty
+      before { allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call).and_call_original }
+
+      it "skips the validation" do
+        serializer
+
+        expect(Serega::SeregaValidations::Utils::CheckAllowedKeys).not_to have_received(:call)
+      end
     end
 
-    it "allows to disable validation via check_initiate_params option" do
-      expect(user_serializer.new(only: :email, check_initiate_params: false).plan.points).to be_empty
+    context "when the config disables the validation" do
+      let(:check_initiate_params_config) { false }
+      let(:initiate_options) { {only: :email, foo: 1} }
+
+      it "builds an empty plan" do
+        expect(serializer.plan.points).to be_empty
+      end
+    end
+
+    context "when the check_initiate_params option disables the validation" do
+      let(:initiate_options) { {only: :email, check_initiate_params: false} }
+
+      it "builds an empty plan" do
+        expect(serializer.plan.points).to be_empty
+      end
     end
   end
 end
