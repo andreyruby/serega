@@ -106,6 +106,27 @@ class Serega
       end
 
       #
+      # Ruby code that reads the attribute value of the object
+      #
+      # Patched in:
+      # - plugin :formatters (formatted attributes have no code)
+      #
+      # @param object_variable [String] Name of the serialized object variable in the code
+      #
+      # @return [String, nil] Code, or nil when the value is read with #value
+      #
+      def value_code(object_variable)
+        return unless @default.nil?
+
+        case @value_block
+        when AttributeValueResolvers::Keyword,
+             AttributeValueResolvers::Delegate,
+             AttributeValueResolvers::DelegateAllowNil
+          @value_block.code(object_variable)
+        end
+      end
+
+      #
       # Checks if attribute must be added to serialized response
       #
       # @param modifiers [Hash] Serialization modifiers

@@ -56,6 +56,30 @@ RSpec.describe Serega::AttributeValueResolvers do
         end
       end
     end
+
+    describe "#code" do
+      subject(:code) { described_class.new(delegate_to, method_name).code("object") }
+
+      it "returns the delegated method call code" do
+        expect(code).to eq "object.profile&.name"
+      end
+
+      context "with a not plain delegate method name" do
+        let(:delegate_to) { :"user-profile" }
+
+        it "returns nil" do
+          expect(code).to be_nil
+        end
+      end
+
+      context "with a not plain method name" do
+        let(:method_name) { :"full-name" }
+
+        it "returns nil" do
+          expect(code).to be_nil
+        end
+      end
+    end
   end
 
   describe described_class::Delegate do
@@ -89,6 +113,30 @@ RSpec.describe Serega::AttributeValueResolvers do
 
         it "raises NoMethodError" do
           expect { resolver.call(object) }.to raise_error(NoMethodError)
+        end
+      end
+    end
+
+    describe "#code" do
+      subject(:code) { described_class.new(delegate_to, method_name).code("object") }
+
+      it "returns the delegated method call code" do
+        expect(code).to eq "object.profile.name"
+      end
+
+      context "with a not plain delegate method name" do
+        let(:delegate_to) { :"user-profile" }
+
+        it "returns nil" do
+          expect(code).to be_nil
+        end
+      end
+
+      context "with a not plain method name" do
+        let(:method_name) { :"full-name" }
+
+        it "returns nil" do
+          expect(code).to be_nil
         end
       end
     end

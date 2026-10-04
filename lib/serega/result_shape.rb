@@ -6,7 +6,8 @@ class Serega
   #
   # The shape generates Ruby code of a builder. The builder makes the results
   # of a level in one loop. It reads all values of an object, then makes its
-  # result in one step: a Hash literal, `Struct.new` or `Data.new`.
+  # result in one step: a Hash literal, `Struct.new` or `Data.new`. The code
+  # calls simple attribute readers directly, for example `object.name`.
   #
   # Generated code for a plan with `attribute :id` and
   # `attribute :posts, serializer: PostSerializer` in the :hash mode:
@@ -25,7 +26,7 @@ class Serega
   #     while object_index < size
   #       object = objects[object_index]
   #       point_index = 0
-  #       value_0 = attribute_0.value(object, context, batches: batches_0)
+  #       value_0 = object.id
   #       point_index = 1
   #       value_1 = relation_values_1[object_index]
   #       result = {:id => value_0, :posts => value_1}
@@ -47,6 +48,9 @@ class Serega
 
     # Maximum count of cached builders per serializer
     MAX_BUILDERS = 1000
+
+    # Method names called directly in generated code
+    PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
 
     #
     # SeregaResultShape class methods
@@ -212,7 +216,7 @@ class Serega
       def read_value_code(point, index)
         return "relation_values_#{index}[object_index]" if point.child_plan
 
-        "attribute_#{index}.value(object, context, batches: batches_#{index})"
+        point.attribute.value_code("object") || "attribute_#{index}.value(object, context, batches: batches_#{index})"
       end
 
       # Whether the point value can be SKIP

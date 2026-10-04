@@ -179,6 +179,40 @@ RSpec.describe Serega::SeregaAttribute do
     end
   end
 
+  describe "#value_code" do
+    subject(:code) { attribute_class.new(name: :name, opts: opts).value_code("object") }
+
+    let(:opts) { {} }
+
+    it "returns the code of the value reader" do
+      expect(code).to eq "object.name"
+    end
+
+    context "with the :delegate option" do
+      let(:opts) { {delegate: {to: :profile}} }
+
+      it "returns the code of the delegate reader" do
+        expect(code).to eq "object.profile.name"
+      end
+    end
+
+    context "with the :default option" do
+      let(:opts) { {default: "Ann"} }
+
+      it "returns nil" do
+        expect(code).to be_nil
+      end
+    end
+
+    context "with the :value option" do
+      let(:opts) { {value: proc { |user| user.name }} }
+
+      it "returns nil" do
+        expect(code).to be_nil
+      end
+    end
+  end
+
   describe "#visible?" do
     def default
       {except: {}, only: {}, with: {}}

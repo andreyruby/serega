@@ -119,6 +119,20 @@ RSpec.describe Serega::SeregaResultShape do
       end
     end
 
+    context "with a not plain method name" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name, method: :"full-name"
+        end
+      end
+
+      let(:user) { double("full-name": "Ann Smith") }
+
+      it "calls the method" do
+        expect(builder.call([user], {}, nil, nil)).to eq [{name: "Ann Smith"}]
+      end
+    end
+
     context "when an attribute raises an error" do
       let(:user) { Struct.new(:name).new("Ann") }
 

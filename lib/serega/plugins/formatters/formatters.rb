@@ -221,6 +221,17 @@ class Serega
           end
         end
 
+        #
+        # Ruby code that reads the attribute value of the object
+        #
+        # @param object_variable [String] Name of the serialized object variable in the code
+        #
+        # @return [String, nil] Code, or nil when the value is formatted
+        #
+        def value_code(object_variable)
+          super unless @formatter
+        end
+
         private
 
         def set_normalized_vars(normalizer)

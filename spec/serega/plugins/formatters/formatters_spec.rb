@@ -155,5 +155,23 @@ RSpec.describe Serega::SeregaPlugins::Formatters do
         expect(attribute.value(123, {money_digits: 2})).to eq 1.23
       end
     end
+
+    describe "#value_code" do
+      subject(:code) { attribute.value_code("object") }
+
+      let(:attribute) { serializer.attribute(:name, format: reverse) }
+
+      it "returns nil" do
+        expect(code).to be_nil
+      end
+
+      context "without the :format option" do
+        let(:attribute) { serializer.attribute(:name) }
+
+        it "returns the code of the value reader" do
+          expect(code).to eq "object.name"
+        end
+      end
+    end
   end
 end
