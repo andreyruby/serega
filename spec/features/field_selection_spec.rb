@@ -243,4 +243,26 @@ RSpec.describe Serega do
       end
     end
   end
+
+  describe "validating initiate options" do
+    let(:user_serializer) { Class.new(Serega) { attribute :name } }
+
+    it "raises when modifiers have not existing attributes" do
+      expect { user_serializer.new(only: :email) }.to raise_error Serega::AttributeNotExist
+    end
+
+    it "raises when options are not allowed" do
+      expect { user_serializer.new(only: :name, foo: 1) }.to raise_error Serega::SeregaError, /foo/
+    end
+
+    it "allows to disable validation via config option" do
+      user_serializer.config.check_initiate_params = false
+
+      expect(user_serializer.new(only: :email, foo: 1).plan.points).to be_empty
+    end
+
+    it "allows to disable validation via check_initiate_params option" do
+      expect(user_serializer.new(only: :email, check_initiate_params: false).plan.points).to be_empty
+    end
+  end
 end

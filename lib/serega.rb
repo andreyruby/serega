@@ -57,7 +57,6 @@ require_relative "serega/validations/attribute/check_opt_serializer"
 require_relative "serega/validations/attribute/check_opt_value"
 require_relative "serega/validations/initiate/check_modifiers"
 require_relative "serega/validations/check_attribute_params"
-require_relative "serega/validations/check_initiate_params"
 require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_serialize_params"
 
@@ -66,6 +65,7 @@ require_relative "serega/presenter"
 require_relative "serega/object_serializer"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
+require_relative "serega/plan_cache"
 require_relative "serega/data_builder"
 require_relative "serega/plugins"
 
@@ -77,11 +77,6 @@ class Serega
   check_attribute_params_class = Class.new(SeregaValidations::CheckAttributeParams)
   check_attribute_params_class.serializer_class = self
   const_set(:CheckAttributeParams, check_attribute_params_class)
-
-  # Validates `Serializer#new` params
-  check_initiate_params_class = Class.new(SeregaValidations::CheckInitiateParams)
-  check_initiate_params_class.serializer_class = self
-  const_set(:CheckInitiateParams, check_initiate_params_class)
 
   # Validates `serializer#call(obj, PARAMS)` params
   check_serialize_params_class = Class.new(SeregaValidations::CheckSerializeParams)
@@ -170,6 +165,16 @@ class Serega
     # @private
     def batch_loaders
       @batch_loaders ||= {}
+    end
+
+    #
+    # Cached serialization plans
+    #
+    # @return [SeregaPlanCache] Serialization plans cache
+    #
+    # @private
+    def plan_cache
+      @plan_cache ||= self::SeregaPlanCache.new
     end
 
     #
@@ -463,6 +468,10 @@ class Serega
       plan_point_class.serializer_class = subclass
       subclass.const_set(:SeregaPlanPoint, plan_point_class)
 
+      plan_cache_class = Class.new(self::SeregaPlanCache)
+      plan_cache_class.serializer_class = subclass
+      subclass.const_set(:SeregaPlanCache, plan_cache_class)
+
       engine_loader_class = Class.new(self::SeregaEngineLoader)
       engine_loader_class.serializer_class = subclass
       subclass.const_set(:SeregaEngineLoader, engine_loader_class)
@@ -474,10 +483,6 @@ class Serega
       check_attribute_params_class = Class.new(self::CheckAttributeParams)
       check_attribute_params_class.serializer_class = subclass
       subclass.const_set(:CheckAttributeParams, check_attribute_params_class)
-
-      check_initiate_params_class = Class.new(self::CheckInitiateParams)
-      check_initiate_params_class.serializer_class = subclass
-      subclass.const_set(:CheckInitiateParams, check_initiate_params_class)
 
       check_serialize_params_class = Class.new(self::CheckSerializeParams)
       check_serialize_params_class.serializer_class = subclass
@@ -544,9 +549,10 @@ class Serega
           parse_modifiers(opts)
         end
 
-      self.class::CheckInitiateParams.new(@opts).validate if opts&.fetch(:check_initiate_params) { config.check_initiate_params }
+      check_initiate_params = opts&.fetch(:check_initiate_params) { config.check_initiate_params }
+      check_option_names(@opts) if check_initiate_params
 
-      @plan = self.class::SeregaPlan.call(@opts)
+      @plan = self.class.plan_cache.fetch(@opts[:only], @opts[:with], @opts[:except], check_initiate_params: check_initiate_params)
     end
 
     #
@@ -605,6 +611,10 @@ class Serega
 
     def config
       self.class.config
+    end
+
+    def check_option_names(opts)
+      SeregaValidations::Utils::CheckAllowedKeys.call(opts, config.initiate_keys, :initiate)
     end
 
     def parse_modifiers(opts)
