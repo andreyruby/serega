@@ -17,6 +17,14 @@ RSpec.describe Serega::SeregaUtils::EnumDeepDup do
       expect(hash[:key2][0][:key22]).not_to equal dup[:key2][0][:key22]
     end
 
+    it "duplicates strings" do
+      string = +"value"
+      dup = described_class.call({key: [string]})
+
+      expect(dup[:key][0]).to eq string
+      expect(dup[:key][0]).not_to equal string
+    end
+
     it "does not duplicates non-enumerable objects" do
       hash = {key1: Serega, key2: [-> {}]}
       dup = described_class.call(hash)

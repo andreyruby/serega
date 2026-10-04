@@ -14,6 +14,15 @@ RSpec.describe Serega::SeregaUtils::EnumDeepFreeze do
     expect(hash[:key2][0][:key22]).to be_frozen
   end
 
+  it "replaces strings with frozen copies" do
+    string = +"value"
+    hash = described_class.call({key: [string]})
+
+    expect(hash[:key][0]).to eq "value"
+    expect(hash[:key][0]).to be_frozen
+    expect(string).not_to be_frozen
+  end
+
   it "does not freeze non-hash and non-array objects" do
     obj = Object.new
     described_class.call(obj)

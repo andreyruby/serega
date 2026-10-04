@@ -95,6 +95,7 @@ class Serega
       # @return [SeregaPlan] Serialization plan
       #
       def initialize(parent_plan_point, modifiers)
+        serializer_class.lock
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @points_hash = points.to_h { |point| [point.name, point] }
