@@ -37,17 +37,17 @@ class Serega
       #
       # @private
       def self.load_plugin(serializer_class, **_opts)
-        serializer_class.include(InstanceMethods)
+        serializer_class::SeregaPlanCache.include(PlanCacheInstanceMethods)
         require_relative "parse_string_modifiers"
       end
 
       #
-      # Serega additional/patched instance methods
+      # SeregaPlanCache additional/patched instance methods
       #
-      # @see Serega
+      # @see Serega::SeregaPlanCache
       #
       # @private
-      module InstanceMethods
+      module PlanCacheInstanceMethods
         private
 
         def parse_modifier(value)

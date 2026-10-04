@@ -110,6 +110,25 @@ RSpec.describe Serega::SeregaPlanCache do
       expect(plan(only: {a1: {}})).to equal result1
     end
 
+    it "does not parse modifiers of cached plans" do
+      current_serializer.config.max_cached_plans_per_serializer_count = 1
+      current_serializer.new(only: [:a1])
+      allow(Serega::SeregaUtils::ToHash).to receive(:call).and_call_original
+
+      current_serializer.new(only: [:a1])
+
+      expect(Serega::SeregaUtils::ToHash).not_to have_received(:call)
+    end
+
+    it "keeps cached plans when provided string modifiers are changed later" do
+      current_serializer.config.max_cached_plans_per_serializer_count = 1
+      only = +"a1"
+      result1 = current_serializer.new(only: only).plan
+      only.replace("a2")
+
+      expect(current_serializer.new(only: "a1").plan).to equal result1
+    end
+
     it "validates cached modifiers once" do
       current_serializer.config.max_cached_plans_per_serializer_count = 1
       allow(Serega::SeregaValidations::Initiate::CheckModifiers).to receive(:new).and_call_original
