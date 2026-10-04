@@ -45,7 +45,7 @@ class Serega
 
       def cached_plan_for(opts, max_cache_size)
         @cache ||= {}
-        cache_key = construct_cache_key(opts)
+        cache_key = construct_cache_key(opts.slice(:only, :with, :except))
 
         plan = @cache[cache_key] ||= new(nil, opts)
         @cache.shift if @cache.length > max_cache_size
