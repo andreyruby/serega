@@ -65,6 +65,7 @@ require_relative "serega/presenter"
 require_relative "serega/object_serializer"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
+require_relative "serega/result_shape"
 require_relative "serega/plan_cache"
 require_relative "serega/data_builder"
 require_relative "serega/plugins"
@@ -410,6 +411,27 @@ class Serega
       new(modifiers_opts).to_data(object, serialize_opts)
     end
 
+    #
+    # Serializes provided object to a tree of Ruby Struct objects
+    #
+    # @param object [Object] Serialized object
+    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
+    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
+    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
+    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
+    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
+    # @option opts [Hash] :context Serialization context
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    #
+    # @return [Struct, Array<Struct>, nil] Serialization result as Struct object(s)
+    #
+    def to_struct(object, opts = nil)
+      opts = opts&.transform_keys(&:to_sym)
+      modifiers_opts = init_modifier_opts(opts)
+      serialize_opts = init_serialize_opts(opts)
+      new(modifiers_opts).to_struct(object, serialize_opts)
+    end
+
     alias_method :to_h, :call
 
     #
@@ -463,6 +485,10 @@ class Serega
       plan_class = Class.new(self::SeregaPlan)
       plan_class.serializer_class = subclass
       subclass.const_set(:SeregaPlan, plan_class)
+
+      result_shape_class = Class.new(self::SeregaResultShape)
+      result_shape_class.serializer_class = subclass
+      subclass.const_set(:SeregaResultShape, result_shape_class)
 
       plan_point_class = Class.new(self::SeregaPlanPoint)
       plan_point_class.serializer_class = subclass
@@ -593,9 +619,26 @@ class Serega
     def to_data(object, opts = nil)
       opts = normalize_serialization_opts(opts)
       object = prepare_objects(object, opts[:context])
-      opts = prepare_initial_serialization_opts(object, opts)
+      opts = prepare_initial_serialization_opts(object, opts, :data)
       serialized_data = serialize(object, opts)
       self.class::SeregaDataBuilder.call(self, serialized_data)
+    end
+
+    #
+    # Serializes provided object to Struct objects
+    #
+    # @param object [Object] Serialized object
+    # @param opts [Hash, nil] Serializing options
+    # @option opts [Hash] :context Serialization context
+    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    #
+    # @return [Struct, Array<Struct>, nil] Serialization result
+    #
+    def to_struct(object, opts = nil)
+      opts = normalize_serialization_opts(opts)
+      object = prepare_objects(object, opts[:context])
+      opts = prepare_initial_serialization_opts(object, opts, :struct)
+      serialize(object, opts)
     end
 
     private
@@ -627,8 +670,8 @@ class Serega
       end
     end
 
-    def prepare_initial_serialization_opts(object, opts)
-      opts[:level_queue] = SeregaEngine::LevelQueue.new
+    def prepare_initial_serialization_opts(object, opts, mode = :hash)
+      opts[:level_queue] = SeregaEngine::LevelQueue.new(mode: mode)
       opts[:many] = SeregaUtils::CollectionDetector.call(object) unless opts.key?(:many)
       opts[:plan] = plan
       opts

@@ -102,55 +102,23 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
-  describe ".data_class_for" do
-    it "returns a Data subclass with the given members" do
-      data_class = described_class.data_class_for(%i[x y])
-      expect(data_class).to be < Data
-      expect(data_class.members).to eq %i[x y]
+  describe "#result_shape" do
+    let(:current_plan) { plan(only: {a1: {}}) }
+
+    it "returns a result shape of the plan attributes in the mode" do
+      result_shape = current_plan.result_shape(:struct)
+
+      expect(result_shape).to be_a current_serializer::SeregaResultShape
+      expect(result_shape.mode).to eq :struct
+      expect(result_shape.struct_class.members).to eq [:a1]
     end
 
-    it "returns the same object on repeated calls with the same names" do
-      first = described_class.data_class_for(%i[a b])
-      second = described_class.data_class_for(%i[a b])
-      expect(first).to equal second
+    it "returns the same result shape for the same mode" do
+      expect(current_plan.result_shape(:struct)).to equal current_plan.result_shape(:struct)
     end
 
-    it "returns different objects for different names" do
-      one = described_class.data_class_for(%i[a])
-      two = described_class.data_class_for(%i[b])
-      expect(one).not_to equal two
-    end
-
-    it "caches independently per plan class (per serializer)" do
-      other_plan = Class.new(base_class)::SeregaPlan
-      klass_a = described_class.data_class_for(%i[x])
-      klass_b = other_plan.data_class_for(%i[x])
-      expect(klass_a).not_to equal klass_b
-    end
-  end
-
-  describe "#data_class" do
-    it "returns a Data subclass whose members match the plan's visible fields" do
-      p = plan(only: {a1: {}, a2: {}})
-      expect(p.data_class.members).to match_array(%i[a1 a2])
-    end
-
-    it "returns the same Data class on repeated calls for the same plan" do
-      p = plan(only: {a1: {}})
-      expect(p.data_class).to equal p.data_class
-    end
-
-    it "returns the same Data class for plans with identical fields across instances" do
-      p1 = plan(only: {a1: {}})
-      p2 = plan(only: {a1: {}})
-      expect(p1).not_to equal p2
-      expect(p1.data_class).to equal p2.data_class
-    end
-
-    it "returns different Data classes for plans with different fields" do
-      p1 = plan(only: {a1: {}})
-      p2 = plan(only: {a2: {}})
-      expect(p1.data_class).not_to equal p2.data_class
+    it "returns separate result shapes for different modes" do
+      expect(current_plan.result_shape(:hash)).not_to equal current_plan.result_shape(:struct)
     end
   end
 end

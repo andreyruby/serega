@@ -18,7 +18,9 @@ class Serega
     #
     # @private
     class LevelQueue
-      def initialize
+      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
+      def initialize(mode: :hash)
+        @mode = mode
         @levels = []
         @levels_by_plan = {}.compare_by_identity
       end
@@ -31,11 +33,11 @@ class Serega
       # @param serializer [SeregaObjectSerializer] serializer that resolves the level
       # @param objects [Array] objects serialized at this level
       #
-      # @return [Array<Hash>] the created result containers, aligned with objects
+      # @return [Array<Hash, Struct>] the created result containers, aligned with objects
       def enqueue(serializer, objects)
         level = @levels_by_plan[serializer.plan]
         unless level
-          level = Level.new(serializer)
+          level = Level.new(serializer, @mode)
           @levels_by_plan[serializer.plan] = level
           @levels << level
         end

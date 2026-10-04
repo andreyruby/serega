@@ -43,7 +43,7 @@ class Serega
       end
 
       def build_data_object(plan, hash_data)
-        plan.data_class.new(**hash_data)
+        plan.result_shape(:data).data_class.new(**hash_data)
       end
     end
 

@@ -2,9 +2,10 @@
 
 RSpec.describe Serega::SeregaEngine do
   describe Serega::SeregaEngine::LevelQueue do
-    subject(:queue) { described_class.new }
+    subject(:queue) { described_class.new(mode: mode) }
 
-    let(:plan) { double(:plan) }
+    let(:mode) { :hash }
+    let(:plan) { Class.new(Serega) { attribute :name }::SeregaPlan.new(nil, {}) }
     let(:serializer) { double(plan: plan) }
 
     describe "#enqueue" do
@@ -21,13 +22,21 @@ RSpec.describe Serega::SeregaEngine do
       end
 
       it "uses separate levels for different plans" do
-        serializer2 = double(plan: double(:plan2))
+        serializer2 = double(plan: Class.new(Serega)::SeregaPlan.new(nil, {}))
         queue.enqueue(serializer, [1])
         queue.enqueue(serializer2, [2])
 
         levels = queue.instance_variable_get(:@levels)
         expect(levels.size).to eq 2
         expect(levels.map(&:objects)).to eq [[1], [2]]
+      end
+
+      context "with the :struct mode" do
+        let(:mode) { :struct }
+
+        it "returns plan structs as containers" do
+          expect(queue.enqueue(serializer, [1])).to eq [plan.result_shape(:struct).struct_class.new]
+        end
       end
     end
 

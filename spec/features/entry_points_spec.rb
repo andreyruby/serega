@@ -114,5 +114,90 @@ RSpec.describe Serega do
         end
       end
     end
+
+    describe "#to_struct" do
+      it "returns a Struct object with serialized attributes" do
+        result = serializer.to_struct("foo", serialize_opts)
+
+        expect(result).to be_a(Struct)
+        expect(result.to_h).to eq(obj: "foo", ctx: "bar")
+      end
+
+      it "returns nil when object is nil" do
+        expect(serializer.to_struct(nil, serialize_opts)).to be_nil
+      end
+
+      context "with string opts" do
+        before do
+          modifiers.transform_keys!(&:to_s)
+          serialize_opts.transform_keys!(&:to_s)
+        end
+
+        it "returns a Struct object with serialized attributes" do
+          expect(serializer.to_struct("foo", serialize_opts).to_h).to eq(obj: "foo", ctx: "bar")
+        end
+      end
+    end
+
+    describe ".to_struct" do
+      it "returns a Struct object with serialized attributes" do
+        expect(serializer_class.to_struct("foo", modifiers.merge(serialize_opts)).to_h).to eq(obj: "foo", ctx: "bar")
+      end
+
+      it "returns nil when object is nil" do
+        expect(serializer_class.to_struct(nil, modifiers.merge(serialize_opts))).to be_nil
+      end
+
+      context "with string opts" do
+        before do
+          modifiers.transform_keys!(&:to_s)
+          serialize_opts.transform_keys!(&:to_s)
+        end
+
+        it "returns a Struct object with serialized attributes" do
+          expect(serializer_class.to_struct("foo", modifiers.merge(serialize_opts)).to_h).to eq(obj: "foo", ctx: "bar")
+        end
+      end
+    end
+  end
+
+  describe "serializing to Struct objects" do
+    subject(:result) { user_serializer.to_struct(users, only: only) }
+
+    let(:post_serializer) do
+      Class.new(described_class) do
+        attribute :title
+      end
+    end
+
+    let(:user_serializer) do
+      posts = post_serializer
+
+      Class.new(described_class) do
+        attribute :name
+        attribute :posts, serializer: posts
+      end
+    end
+
+    let(:post_class) { Struct.new(:title) }
+    let(:user_class) { Struct.new(:name, :posts) }
+    let(:users) { [user_class.new("Ann", [post_class.new("Hello")])] }
+    let(:only) { nil }
+
+    it "returns nested Struct objects for relations" do
+      user = result.first
+
+      expect(user.name).to eq "Ann"
+      expect(user.posts).to all be_a(Struct)
+      expect(user.posts.map(&:to_h)).to eq [{title: "Hello"}]
+    end
+
+    context "when only names some attributes" do
+      let(:only) { :name }
+
+      it "returns Struct objects with these attributes as members" do
+        expect(result.map(&:to_h)).to eq [{name: "Ann"}]
+      end
+    end
   end
 end

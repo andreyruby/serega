@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
+  objects. See "Serializing" in the README.
 - **BREAKING**: Serializers are locked once they serialize something. Changing
   a locked serializer raises an error. See "Define serializers" in the README.
 - Faster serialization.

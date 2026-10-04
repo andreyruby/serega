@@ -203,8 +203,10 @@ RSpec.describe Serega do
       serializer.new.call("1")
       serializer.new.to_h("1")
       serializer.new.to_data("1")
+      serializer.to_struct("1")
+      serializer.new.to_struct("1")
 
-      expect(count).to eq 6
+      expect(count).to eq 8
     end
 
     it "prepares objects once per serialization regardless of objects count" do
@@ -230,6 +232,16 @@ RSpec.describe Serega do
       end
 
       expect(serializer.to_data(["1"]).first.name).to eq "Ann"
+    end
+
+    it "prepares objects to Struct objects" do
+      data = records
+      serializer = Class.new(described_class) do
+        prepare_initial_objects { |ids| ids.map { |id| data[id] } }
+        attribute :name, value: proc { |record| record[:name] }
+      end
+
+      expect(serializer.to_struct(["1"]).first.name).to eq "Ann"
     end
 
     it "returns nil from to_data when the handler returns nil" do

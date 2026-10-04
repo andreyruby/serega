@@ -261,7 +261,7 @@ class Serega
 
         def build_data_object(plan, hash_data)
           if hash_data.size < plan.points.size
-            plan.class.data_class_for(hash_data.keys).new(**hash_data)
+            plan.serializer_class::SeregaResultShape.data_class_for(hash_data.keys).new(**hash_data)
           else
             super
           end
