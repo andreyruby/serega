@@ -67,6 +67,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
     let(:obj) { double(first_name: "FIRST_NAME") }
     let(:context) { {} }
     let(:base_serializer) { Class.new(serializer) { plugin :metadata } }
+
     let(:user_serializer) do
       Class.new(base_serializer) do
         attribute :first_name
@@ -93,6 +94,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
 
     context "with metadata with parameters" do
       let(:context) { {page: 2, per_page: 3} }
+
       let(:block) do
         proc do |obj, context|
           {
@@ -195,6 +197,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
   describe "serialization to data" do
     let(:obj) { double(first_name: "FIRST_NAME") }
     let(:base_serializer) { Class.new(serializer) { plugin :metadata } }
+
     let(:user_serializer) do
       Class.new(base_serializer) do
         attribute :first_name

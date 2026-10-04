@@ -85,6 +85,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
     context "with default root" do
       let(:base_serializer) { Class.new(Serega) { plugin :root } }
       let(:user) { double(first_name: "FIRST_NAME") }
+
       let(:user_serializer) do
         Class.new(base_serializer) do
           attribute :first_name
@@ -104,6 +105,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
     context "with different root key for one or many serialized resources" do
       let(:user) { double(first_name: "FIRST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           plugin :root, root_one: "user", root_many: "users"
@@ -124,6 +126,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
     context "with root provided as DSL method" do
       let(:user) { double(first_name: "FIRST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           plugin :root
@@ -146,6 +149,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
     context "with root provided as serialization option" do
       let(:user) { double(first_name: "FIRST_NAME") }
+
       let(:user_serializer) do
         Class.new(Serega) do
           plugin :root

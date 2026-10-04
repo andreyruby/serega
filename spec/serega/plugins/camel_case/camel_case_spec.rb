@@ -82,6 +82,7 @@ RSpec.describe Serega::SeregaPlugins::CamelCase do
     let(:response) { user_serializer.new.to_h(user) }
 
     let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", full_name: "FULL_NAME") }
+
     let(:user_serializer) do
       Class.new(base_serializer) do
         attribute :first_name

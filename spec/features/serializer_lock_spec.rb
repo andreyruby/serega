@@ -7,6 +7,7 @@ RSpec.describe Serega do
     let(:user) { user_class.new("Bruce", post_class.new("Hello")) }
 
     let(:post_serializer) { Class.new(described_class) { attribute :title } }
+
     let(:user_serializer) do
       posts = post_serializer
 

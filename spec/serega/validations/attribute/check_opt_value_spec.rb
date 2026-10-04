@@ -6,6 +6,7 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptValue do
   let(:opts) { {} }
 
   let(:type_error) { "Option :value value must be a Proc or respond to #call" }
+
   let(:signature_error) do
     <<~ERROR.strip
       Invalid attribute :value option parameters, valid parameters signatures:
