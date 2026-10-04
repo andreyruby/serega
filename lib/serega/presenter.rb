@@ -72,7 +72,7 @@ class Serega
     # Creates delegator method after first #method_missing hit to improve
     # performance of following serializations.
     #
-    def method_missing(name, *_args, &_block) # rubocop:disable Style/MissingRespondToMissing -- base SimpleDelegator class has this method
+    def method_missing(name, ...) # rubocop:disable Style/MissingRespondToMissing -- base SimpleDelegator class has this method
       super.tap do
         self.class::Delegators.def_delegator :__getobj__, name
       end
