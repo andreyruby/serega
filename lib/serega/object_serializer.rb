@@ -61,11 +61,9 @@ class Serega
         containers = level.containers
 
         plan.points.each do |point|
-          point.run_preloads(objects)
-          batches = point.load_batches(level)
-          # One child serializer per relation point per level (reused for every object),
-          # instead of one per object — child objects are grouped into one child level anyway.
-          child_serializer = point.child_serializer(context: context, **opts)
+          point.run_preloads(objects) if point.preloads
+          batches = point.load_batches(level) unless point.batch_loaders.empty?
+          child_serializer = point.child_serializer(context: context, **opts) if point.child_plan
 
           process_point(point, objects, containers, batches, child_serializer)
         end
