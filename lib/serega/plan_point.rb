@@ -27,10 +27,6 @@ class Serega
       # @return [SeregaPlan, nil] Attribute serialization plan
       attr_reader :child_plan
 
-      # Child fields to serialize
-      # @return [Hash] Attributes to serialize
-      attr_reader :modifiers
-
       #
       # Initializes plan point
       #
@@ -47,14 +43,7 @@ class Serega
         @plan = plan
         @attribute = attribute
         @name = attribute.name
-        @modifiers = modifiers
-        set_normalized_vars
-      end
-
-      # Attribute `value`
-      # @see SeregaAttribute::AttributeInstanceMethods#value
-      def value(obj, ctx, batches: nil)
-        attribute.value(obj, ctx, batches: batches)
+        @child_plan = serializer::SeregaPlan.new(self, modifiers || FROZEN_EMPTY_HASH) if serializer
       end
 
       # Attribute `many` option
@@ -117,13 +106,6 @@ class Serega
         SeregaUtils::SerializedAttributeError.call(error, self)
       end
 
-      #
-      # @return [Class<SeregaObjectSerializer>] object serializer class for child plan
-      #
-      def child_object_serializer
-        serializer::SeregaObjectSerializer
-      end
-
       # Builds the object serializer that serializes this point's relation. The
       # point owns the static config (child plan, serializer class, `many`); the
       # caller injects the runtime `context` and `level_queue`.
@@ -132,21 +114,7 @@ class Serega
       # @param level_queue [SeregaEngine::LevelQueue] queue of serialization levels
       # @return [SeregaObjectSerializer] serializer for the child level
       def child_serializer(context:, level_queue:)
-        child_object_serializer.new(context: context, plan: child_plan, level_queue: level_queue, many: many)
-      end
-
-      private
-
-      def set_normalized_vars
-        @child_plan = prepare_child_plan
-      end
-
-      def prepare_child_plan
-        return unless serializer
-
-        fields = modifiers || FROZEN_EMPTY_HASH
-
-        serializer::SeregaPlan.new(self, fields)
+        serializer::SeregaObjectSerializer.new(context: context, plan: child_plan, level_queue: level_queue, many: many)
       end
     end
 
