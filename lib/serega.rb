@@ -541,18 +541,11 @@ class Serega
     # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
     #
     def initialize(opts = nil)
-      @opts =
-        if opts.nil? || opts.empty?
-          FROZEN_EMPTY_HASH
-        else
-          opts.transform_keys!(&:to_sym)
-          parse_modifiers(opts)
-        end
+      opts = (opts.nil? || opts.empty?) ? FROZEN_EMPTY_HASH : opts.transform_keys!(&:to_sym)
+      check_initiate_params = !opts.empty? && opts.fetch(:check_initiate_params) { config.check_initiate_params }
+      check_option_names(opts) if check_initiate_params
 
-      check_initiate_params = !@opts.empty? && opts.fetch(:check_initiate_params) { config.check_initiate_params }
-      check_option_names(@opts) if check_initiate_params
-
-      @plan = self.class.plan_cache.fetch(@opts[:only], @opts[:with], @opts[:except], check_initiate_params: check_initiate_params)
+      @plan = self.class.plan_cache.fetch(opts[:only], opts[:with], opts[:except], check_initiate_params: check_initiate_params)
     end
 
     #
@@ -607,31 +600,12 @@ class Serega
 
     private
 
-    attr_reader :opts
-
     def config
       self.class.config
     end
 
     def check_option_names(opts)
       SeregaValidations::Utils::CheckAllowedKeys.call(opts, config.initiate_keys, :initiate)
-    end
-
-    def parse_modifiers(opts)
-      result = {}
-
-      opts.each do |key, value|
-        value = parse_modifier(value) if (key == :only) || (key == :except) || (key == :with)
-        result[key] = value
-      end
-
-      result
-    end
-
-    # Patched in:
-    # - plugin :string_modifiers (parses string modifiers differently)
-    def parse_modifier(value)
-      SeregaUtils::ToHash.call(value)
     end
 
     def normalize_serialization_opts(opts)

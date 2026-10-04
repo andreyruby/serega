@@ -17,18 +17,18 @@ class Serega
         # Validates provided fields names are existing attributes
         #
         # @param serializer_class [Serega]
-        # @param only [Hash, nil] `only` modifier
-        # @param with [Hash, nil] `with` modifier
-        # @param except [Hash, nil] `except` modifier
+        # @param only [Hash] `only` modifier
+        # @param with [Hash] `with` modifier
+        # @param except [Hash] `except` modifier
         #
         # @raise [Serega::AttributeNotExist] when some checked modifier has not existing attribute
         #
         # @return [void]
         #
         def call(serializer_class, only, with, except)
-          validate(serializer_class, only) if only
-          validate(serializer_class, with) if with
-          validate(serializer_class, except) if except
+          validate(serializer_class, only)
+          validate(serializer_class, with)
+          validate(serializer_class, except)
 
           raise_errors(serializer_class) if any_error?
         end
