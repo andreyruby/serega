@@ -16,11 +16,6 @@ RSpec.describe Serega::SeregaEngine::Loader do
       expect(loader.block).to eq(block)
     end
 
-    it "freezes initials" do
-      expect(loader.initials).to be_frozen
-      expect(loader.initials[:name]).to be_frozen
-    end
-
     context "when name is string" do
       let(:name) { "test_attribute" }
 

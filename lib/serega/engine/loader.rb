@@ -16,10 +16,6 @@ class Serega
       #
       # @private
       module InstanceMethods
-        # BatchLoader initial params
-        # @return [Hash] BatchLoader initial params
-        attr_reader :initials
-
         # BatchLoader name
         # @return [Symbol] BatchLoader name
         attr_reader :name
@@ -38,7 +34,6 @@ class Serega
           serializer_class = self.class.serializer_class
           serializer_class::CheckBatchLoaderParams.new(name, block).validate
 
-          @initials = SeregaUtils::EnumDeepFreeze.call(name: name, block: block)
           @name = name.to_sym
           @block = block
           @signature = SeregaUtils::MethodSignature.call(block, pos_limit: 2, keyword_args: [:ctx])
