@@ -623,7 +623,8 @@ Default `true` — names must match `[a-zA-Z0-9_-~]`.
 
 Caches prepared serialization plans by `:only` / `:except` / `:with` signature
 so repeated requests with the same modifiers skip rebuilding. Default `0`
-(disabled). No effect on output — purely a performance tuning knob.
+(disabled); the plan without modifiers is always cached. No effect on
+output — purely a performance tuning knob.
 
 ---
 

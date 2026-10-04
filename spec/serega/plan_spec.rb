@@ -97,6 +97,16 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "caching the plan without modifiers" do
+    it "reuses the plan without modifiers when plans cache is disabled" do
+      result1 = plan({})
+      result2 = plan(only: {}, with: {}, except: {})
+
+      expect(result1).to satisfy_attribute_names(a1: nil, a2: nil, d: {d1: nil, d2: nil})
+      expect(result1).to equal result2
+    end
+  end
+
   describe "saving plans to cache" do
     it "does not save plans to cache when not configured to do so" do
       result1 = plan(only: {a1: {}})
