@@ -13,27 +13,6 @@ class Serega
     # @private
     module ClassMethods
       #
-      # Constructs plan of attributes that should be serialized.
-      # The plan without modifiers is always cached; plans with modifiers are
-      # cached when `max_cached_plans_per_serializer_count` is positive.
-      #
-      # @param opts Serialization parameters
-      # @option opts [Hash] :only The only attributes to serialize
-      # @option opts [Hash] :except Attributes to hide
-      # @option opts [Hash] :with Attributes (usually marked `hide: true`) to serialize additionally
-      #
-      # @return [SeregaPlan] Serialization plan
-      #
-      def call(opts)
-        return @default_plan ||= new(nil, opts) if without_modifiers?(opts)
-
-        max_cache_size = serializer_class.config.max_cached_plans_per_serializer_count
-        return new(nil, opts) if max_cache_size.zero?
-
-        cached_plan_for(opts, max_cache_size)
-      end
-
-      #
       # Returns (and caches) the Data class for the given set of field names.
       # Uses the Array as cache key so the same Data class is reused across
       # all plan instances with identical fields.
@@ -43,31 +22,6 @@ class Serega
       #
       def data_class_for(point_names)
         (@data_classes ||= {})[point_names] ||= Data.define(*point_names)
-      end
-
-      private
-
-      def without_modifiers?(opts)
-        %i[only with except].none? { |key| opts[key]&.any? }
-      end
-
-      def cached_plan_for(opts, max_cache_size)
-        @cache ||= {}
-        cache_key = [
-          opts[:only] || FROZEN_EMPTY_HASH,
-          opts[:with] || FROZEN_EMPTY_HASH,
-          opts[:except] || FROZEN_EMPTY_HASH
-        ]
-        plan = @cache[cache_key]
-        return plan if plan
-
-        plan = @cache[frozen_copy(cache_key)] = new(nil, opts)
-        @cache.shift if @cache.length > max_cache_size
-        plan
-      end
-
-      def frozen_copy(cache_key)
-        SeregaUtils::EnumDeepFreeze.call(SeregaUtils::EnumDeepDup.call(cache_key))
       end
     end
 

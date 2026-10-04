@@ -39,7 +39,7 @@ RSpec.describe Serega::SeregaPlan do
   let(:described_class) { current_serializer::SeregaPlan }
 
   def plan(opts)
-    current_serializer::SeregaPlan.call(opts)
+    current_serializer::SeregaPlan.new(nil, opts)
   end
 
   def satisfy_attribute_names(names)
@@ -54,7 +54,7 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
-  describe ".call" do
+  describe "#initialize" do
     it "returns plan with all not hidden attributes by default" do
       result = plan({})
 
@@ -94,77 +94,6 @@ RSpec.describe Serega::SeregaPlan do
         c: {c1: nil, c2: nil, c3: nil},
         d: {d1: nil, d2: nil}
       )
-    end
-  end
-
-  describe "caching the plan without modifiers" do
-    it "reuses the plan without modifiers when plans cache is disabled" do
-      result1 = plan({})
-      result2 = plan(only: {}, with: {}, except: {})
-
-      expect(result1).to satisfy_attribute_names(a1: nil, a2: nil, d: {d1: nil, d2: nil})
-      expect(result1).to equal result2
-    end
-  end
-
-  describe "saving plans to cache" do
-    it "does not save plans to cache when not configured to do so" do
-      result1 = plan(only: {a1: {}})
-      result2 = plan(only: {a1: {}})
-
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result2).to satisfy_attribute_names(a1: nil)
-      expect(result1).not_to equal result2
-    end
-
-    it "saves plans to cache and uses them when configured to use cache" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      result1 = plan(only: {a1: {}})
-      result2 = plan(only: {a1: {}})
-
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result2).to satisfy_attribute_names(a1: nil)
-      expect(result1).to equal result2
-    end
-
-    it "caches plans built with other initiate options" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      result1 = plan(only: {a1: {}}, check_initiate_params: false)
-      result2 = plan(only: {a1: {}}, check_initiate_params: false)
-
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result1).to equal result2
-    end
-
-    it "caches plans with the same attribute names in different nesting separately" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 2
-      nested = plan(only: {d: {d1: {}}})
-      flat = plan(only: {d: {}, d1: {}})
-
-      expect(nested).to satisfy_attribute_names(d: {d1: nil})
-      expect(flat).to satisfy_attribute_names(d: {d1: nil, d2: nil})
-    end
-
-    it "keeps cached plans when provided modifiers are changed later" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-      only = {a1: {}}
-      result1 = plan(only: only)
-      only[:a2] = {}
-
-      expect(plan(only: {a1: {}})).to equal result1
-    end
-
-    it "removes from cache oldest plans if cached keys count more than configured" do
-      current_serializer.config.max_cached_plans_per_serializer_count = 1
-
-      result1 = plan(only: {a1: {}})
-      plan(only: {a2: {}}) # replace cached result1
-
-      result2 = plan(only: {a1: {}})
-
-      expect(result1).to satisfy_attribute_names(a1: nil)
-      expect(result2).to satisfy_attribute_names(a1: nil)
-      expect(result1).not_to equal result2
     end
   end
 
