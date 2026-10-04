@@ -211,19 +211,17 @@ class Serega
         #
         def value(object, context, batches: nil)
           result = super # `:batches` parameter is needed to find unformatted result
-          return result unless formatter
+          return result unless @formatter
 
-          case formatter_signature
-          when "1" then formatter.call(result)
-          when "1_ctx" then formatter.call(result, ctx: context)
+          case @formatter_signature
+          when "1" then @formatter.call(result)
+          when "1_ctx" then @formatter.call(result, ctx: context)
           else # "2"
-            formatter.call(result, context)
+            @formatter.call(result, context)
           end
         end
 
         private
-
-        attr_reader :formatter, :formatter_signature
 
         def set_normalized_vars(normalizer)
           super

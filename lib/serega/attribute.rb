@@ -92,17 +92,17 @@ class Serega
       def value(object, context, batches: nil)
         # Signatures should match allowed signatures in CheckOptValue
         result =
-          case value_block_signature
-          when "1" then value_block.call(object)
-          when "1_ctx" then value_block.call(object, ctx: context)
-          when "1_batches" then value_block.call(object, batches: batches)
-          when "1_batches_ctx" then value_block.call(object, ctx: context, batches: batches)
-          when "2" then value_block.call(object, context)
-          when "2_batches_ctx" then value_block.call(object, context, ctx: context, batches: batches)
-          else value_block.call # signature is "0" - no parameters
+          case @value_block_signature
+          when "1" then @value_block.call(object)
+          when "1_ctx" then @value_block.call(object, ctx: context)
+          when "1_batches" then @value_block.call(object, batches: batches)
+          when "1_batches_ctx" then @value_block.call(object, ctx: context, batches: batches)
+          when "2" then @value_block.call(object, context)
+          when "2_batches_ctx" then @value_block.call(object, context, ctx: context, batches: batches)
+          else @value_block.call # signature is "0" - no parameters
           end
 
-        result.nil? ? default : result
+        result.nil? ? @default : result
       end
 
       #
@@ -129,8 +129,6 @@ class Serega
       end
 
       private
-
-      attr_reader :value_block, :value_block_signature
 
       def set_normalized_vars(normalizer)
         @name = normalizer.name
