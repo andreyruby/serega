@@ -46,6 +46,41 @@ RSpec.describe Serega::SeregaPresenter do
     expect(serializer.presenter.instance_methods).to include(:size)
   end
 
+  it "keeps delegators of each serializer presenter separate" do
+    report_serializer = Class.new(Serega) do
+      attribute :format
+      presenter do
+        def unused
+        end
+      end
+    end
+    price_serializer = Class.new(Serega) do
+      attribute :label
+      presenter do
+        def label
+          format("%.2f", __getobj__)
+        end
+      end
+    end
+
+    report_serializer.to_h(Struct.new(:format).new("pdf"))
+
+    expect(price_serializer.presenter.method_defined?(:format)).to be false
+    expect(price_serializer.to_h(1.5)).to eq(label: "1.50")
+  end
+
+  it "keeps presenter methods that call super" do
+    serializer.attribute :upcase_name
+    serializer.presenter do
+      def upcase_name
+        super.upcase
+      end
+    end
+    user = Struct.new(:upcase_name).new("Kate")
+
+    2.times { expect(serializer.to_h(user)).to eq(upcase_name: "KATE") }
+  end
+
   it "allows to use custom presenter methods" do
     serializer.presenter do
       def rev
