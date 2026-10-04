@@ -252,14 +252,14 @@ class Serega
       def prepare_const_block
         return unless init_opts.key?(:const)
 
-        AttributeValueResolvers::ConstResolver.get(init_opts[:const])
+        AttributeValueResolvers::Const.new(init_opts[:const])
       end
 
       def prepare_keyword_block
         mode, allow_nil = hash_access
-        return AttributeValueResolvers::KeywordResolver.get(method_name) unless mode
+        return AttributeValueResolvers::Keyword.new(method_name) unless mode
 
-        AttributeValueResolvers::HashAccessResolver.get(method_name, mode, allow_nil)
+        AttributeValueResolvers::HashAccessKeyword.new(method_name, mode, allow_nil)
       end
 
       def prepare_batch_loader_block

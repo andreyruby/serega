@@ -1,17 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::AttributeValueResolvers do
-  describe described_class::KeywordResolver do
-    let(:keyword) { :name }
-
-    describe ".get" do
-      it "creates Keyword resolver with given keyword" do
-        resolver = described_class.get(keyword)
-        expect(resolver).to be_a(Serega::AttributeValueResolvers::Keyword)
-      end
-    end
-  end
-
   describe described_class::Keyword do
     let(:keyword) { :name }
 
