@@ -98,6 +98,19 @@ RSpec.describe Serega do
 
       expect(child::SeregaObjectSerializer.superclass).to eq parent::SeregaObjectSerializer
     end
+
+    it "links internal classes to the child serializer" do
+      parent = Class.new(described_class)
+      child = Class.new(parent)
+
+      %i[
+        SeregaConfig SeregaAttribute SeregaAttributeNormalizer SeregaDataBuilder
+        SeregaPlan SeregaPlanPoint SeregaEngineLoader SeregaObjectSerializer
+        CheckAttributeParams CheckInitiateParams CheckSerializeParams CheckBatchLoaderParams
+      ].each do |const_name|
+        expect(child.const_get(const_name).serializer_class).to eq(child), const_name.to_s
+      end
+    end
   end
 
   describe ".attribute" do
