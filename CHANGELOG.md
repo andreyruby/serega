@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- Fix `NoMethodError` raised by the plan cache when serializing with the
+  `:check_initiate_params` option.
+
 ## [0.42.0] - 2026-09-08
 
 - **BREAKING**: Moved presenter functionality from the `:presenter` plugin to

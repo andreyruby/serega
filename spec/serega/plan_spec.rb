@@ -117,6 +117,15 @@ RSpec.describe Serega::SeregaPlan do
       expect(result1).to equal result2
     end
 
+    it "caches plans built with other initiate options" do
+      current_serializer.config.max_cached_plans_per_serializer_count = 1
+      result1 = plan(only: {a1: {}}, check_initiate_params: false)
+      result2 = plan(only: {a1: {}}, check_initiate_params: false)
+
+      expect(result1).to satisfy_attribute_names(a1: nil)
+      expect(result1).to equal result2
+    end
+
     it "removes from cache oldest plans if cached keys count more than configured" do
       current_serializer.config.max_cached_plans_per_serializer_count = 1
 
