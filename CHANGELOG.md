@@ -7,6 +7,8 @@
 - Faster serialization.
 - Cache the serialization plan built without `:only`/`:except`/`:with`
   modifiers.
+- Fix presenter methods that call `super` being replaced by delegators after
+  the first serialization.
 - Fix `NoMethodError` raised by the plan cache when serializing with the
   `:check_initiate_params` option.
 - Fix the plan cache returning a plan of other modifiers that list the same

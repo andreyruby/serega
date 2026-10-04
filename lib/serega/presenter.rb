@@ -37,6 +37,23 @@ class Serega
   # @private
   class SeregaPresenter < SimpleDelegator
     #
+    # Includes into each presenter class its own `Delegators` module.
+    # Delegators to serialized object methods are defined there after the
+    # first #method_missing hit. Presenter methods override them and can call
+    # them via `super`.
+    #
+    # @param subclass [Class<SeregaPresenter>] New presenter class
+    #
+    # @return [void]
+    #
+    def self.inherited(subclass)
+      super
+      delegators = Module.new { extend Forwardable }
+      subclass.const_set(:Delegators, delegators)
+      subclass.include(delegators)
+    end
+
+    #
     # @param object [Object] Serialized object to wrap
     # @param ctx [Hash, nil] Serialization context
     #
@@ -57,10 +74,8 @@ class Serega
     #
     def method_missing(name, *_args, &_block) # rubocop:disable Style/MissingRespondToMissing -- base SimpleDelegator class has this method
       super.tap do
-        self.class.def_delegator :__getobj__, name
+        self.class::Delegators.def_delegator :__getobj__, name
       end
     end
-
-    extend Forwardable
   end
 end
