@@ -14,6 +14,9 @@ class Serega
     # two cannot be used with the `:serializer` option, since a relationship
     # has no "serialized value" of its own — use `:if`/`:unless` instead.
     #
+    # `to_h` omits skipped attributes. `to_data` and `to_struct` return `nil`
+    # for skipped attributes.
+    #
     # See also the plugin-free `:hide` option (README.md#selecting-fields),
     # which hides an attribute unconditionally.
     #
@@ -52,10 +55,10 @@ class Serega
 
         serializer_class::SeregaAttribute.include(AttributeInstanceMethods)
         serializer_class::SeregaAttributeNormalizer.include(AttributeNormalizerInstanceMethods)
+        serializer_class::SeregaResultShape.include(ResultShapeInstanceMethods)
         serializer_class::SeregaPlanPoint.include(PlanPointInstanceMethods)
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
         serializer_class::SeregaObjectSerializer.include(ObjectSerializerInstanceMethods)
-        serializer_class::SeregaDataBuilder.extend(DataBuilderClassMethods)
       end
 
       #
@@ -172,6 +175,41 @@ class Serega
       end
 
       #
+      # Serega::SeregaResultShape additional/patched instance methods
+      #
+      # @see Serega::SeregaResultShape::InstanceMethods
+      #
+      # @private
+      module ResultShapeInstanceMethods
+        #
+        # Instantiates new result shape and prepares a template of :data
+        # containers when the plan has conditional attributes
+        #
+        # @see Serega::SeregaResultShape::InstanceMethods#initialize
+        #
+        def initialize(mode, points)
+          super
+          conditional = mode == :data && points.any?(&:conditional?)
+          @nil_hash = conditional ? points.to_h { |point| [point.name, nil] }.freeze : nil
+        end
+
+        #
+        # Builds :data containers of plans with conditional attributes with all
+        # attribute names and nil values, so skipped attributes stay nil.
+        #
+        # @param count [Integer] Number of containers
+        #
+        # @return [Array<Hash, Struct>] Empty containers
+        #
+        def build_containers(count)
+          template = @nil_hash
+          return super unless template
+
+          Array.new(count) { template.dup }
+        end
+      end
+
+      #
       # Serega::SeregaPlanPoint additional/patched instance methods
       #
       # @see Serega::SeregaPlanPoint::InstanceMethods
@@ -243,28 +281,6 @@ class Serega
           CheckOptUnless.call(opts)
           CheckOptIfValue.call(opts)
           CheckOptUnlessValue.call(opts)
-        end
-      end
-
-      #
-      # SeregaDataBuilder additional/patched class methods
-      #
-      # Overrides `build_data_object` to handle plans where some keys were skipped
-      # by `:if`/`:unless`/`:if_value`/`:unless_value` conditions, so the Data class
-      # is built from the actually-present keys rather than the full plan.
-      #
-      # @see Serega::SeregaDataBuilder
-      #
-      # @private
-      module DataBuilderClassMethods
-        private
-
-        def build_data_object(plan, hash_data)
-          if hash_data.size < plan.points.size
-            plan.serializer_class::SeregaResultShape.data_class_for(hash_data.keys).new(**hash_data)
-          else
-            super
-          end
         end
       end
 

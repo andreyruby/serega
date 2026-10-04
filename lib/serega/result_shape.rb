@@ -85,6 +85,9 @@ class Serega
       #
       # Builds empty result containers filled in place during serialization.
       #
+      # Patched in:
+      # - plugin :if (builds :data containers with nil values of all attributes)
+      #
       # @param count [Integer] Number of containers
       #
       # @return [Array<Hash, Struct>] Empty containers

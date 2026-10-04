@@ -25,6 +25,47 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
   end
 
+  describe "SeregaResultShape#build_containers" do
+    subject(:containers) { serializer::SeregaPlan.new(nil, {}).result_shape(mode).build_containers(2) }
+
+    let(:serializer) do
+      Class.new(Serega) do
+        plugin :if
+        attribute :name
+        attribute :email, if: :admin
+      end
+    end
+
+    let(:mode) { :data }
+
+    it "returns separate hashes with nil values of all attributes" do
+      expect(containers).to eq [{name: nil, email: nil}, {name: nil, email: nil}]
+      expect(containers[0]).not_to equal containers[1]
+      expect(containers[0]).not_to be_frozen
+    end
+
+    context "with the :hash mode" do
+      let(:mode) { :hash }
+
+      it "returns empty hashes" do
+        expect(containers).to eq [{}, {}]
+      end
+    end
+
+    context "when no attribute has conditions" do
+      let(:serializer) do
+        Class.new(Serega) do
+          plugin :if
+          attribute :name
+        end
+      end
+
+      it "returns empty hashes" do
+        expect(containers).to eq [{}, {}]
+      end
+    end
+  end
+
   describe "SeregaPlanPoint methods" do
     before { serializer.plugin :if }
 
@@ -396,97 +437,75 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
   end
 
-  describe "serializing to data" do
-    before { serializer.plugin :if }
+  describe "serializing skipped attributes to Data and Struct objects" do
+    subject(:result) { user_serializer.public_send(serialization_method, users) }
 
-    it "includes all attributes when no conditions hide them" do
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, const: "bar")
-      result = serializer.new.to_data(1)
-
-      expect(result).to be_a Data
-      expect(result.members).to eq [:foo, :bar]
-      expect(result.foo).to eq "foo"
-      expect(result.bar).to eq "bar"
-    end
-
-    it "excludes attribute hidden by :if condition" do
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, const: "bar", if: proc { |obj| obj != 1 })
-      result = serializer.new.to_data(1)
-
-      expect(result.members).to eq [:foo]
-      expect(result.foo).to eq "foo"
-      expect { result.bar }.to raise_error NoMethodError
-    end
-
-    it "excludes relation hidden by :if condition" do
-      child_serializer = Class.new(Serega) { attribute(:baz, const: "baz") }
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, serializer: child_serializer, const: 1, if: proc { |object| object != 1 })
-      result = serializer.new.to_data([1, 2])
-
-      expect(result.map(&:members)).to eq [[:foo], [:foo, :bar]]
-      expect(result[1].bar.baz).to eq "baz"
-    end
-
-    it "excludes attribute hidden by :unless condition" do
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, const: "bar", unless: proc { |obj| obj == 1 })
-      result = serializer.new.to_data(1)
-
-      expect(result.members).to eq [:foo]
-      expect(result.foo).to eq "foo"
-    end
-
-    it "excludes attribute hidden by :if_value condition" do
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, const: nil, if_value: proc { |val| !val.nil? })
-      result = serializer.new.to_data(1)
-
-      expect(result.members).to eq [:foo]
-    end
-
-    it "excludes attribute hidden by :unless_value condition" do
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, const: nil, unless_value: :nil?)
-      result = serializer.new.to_data(1)
-
-      expect(result.members).to eq [:foo]
-    end
-
-    it "uses context when evaluating conditions" do
-      serializer.attribute(:foo, const: "foo")
-      serializer.attribute(:bar, const: "bar", if: proc { |_obj, ctx| ctx[:show] })
-      result_without = serializer.new.to_data(1, context: {show: false})
-      result_with = serializer.new.to_data(1, context: {show: true})
-
-      expect(result_without.members).to eq [:foo]
-      expect(result_with.members).to eq [:foo, :bar]
-    end
-
-    it "handles collection — each element gets its own Data shape" do
-      serializer.attribute(:val, if: proc { |obj| obj != 2 }, value: proc { |obj| obj })
-      result = serializer.new.to_data([1, 2, 3])
-
-      expect(result).to be_an Array
-      expect(result[0].members).to eq [:val]
-      expect(result[0].val).to eq 1
-      expect(result[1].members).to eq []
-      expect(result[2].val).to eq 3
-    end
-
-    it "handles nested relation with hidden attributes" do
-      nested = Class.new(Serega) do
-        plugin :if
-        attribute :x, const: "x"
-        attribute :y, const: "y", if: proc { false }
+    let(:post_serializer) do
+      Class.new(Serega) do
+        attribute :title
       end
-      serializer.attribute(:nested, const: double(x: "x"), serializer: nested)
-      result = serializer.new.to_data(1)
+    end
 
-      expect(result.nested).to be_a Data
-      expect(result.nested.members).to eq [:x]
+    let(:user_serializer) do
+      posts = post_serializer
+
+      Class.new(Serega) do
+        plugin :if
+        attribute :name
+        attribute :email, if: :admin
+        attribute :age, if_value: proc { |age| age >= 18 }
+        attribute :posts, serializer: posts, unless: :admin
+      end
+    end
+
+    let(:user_class) { Struct.new(:name, :email, :age, :admin, :posts) }
+
+    let(:users) do
+      [
+        user_class.new("Ann", "ann@example.com", 30, true, []),
+        user_class.new("Bob", "bob@example.com", 12, false, [])
+      ]
+    end
+
+    context "with to_data" do
+      let(:serialization_method) { :to_data }
+
+      it "returns nil for skipped attributes" do
+        expect(result.map(&:to_h)).to eq [
+          {name: "Ann", email: "ann@example.com", age: 30, posts: nil},
+          {name: "Bob", email: nil, age: nil, posts: []}
+        ]
+      end
+
+      it "returns objects of one Data class" do
+        expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultShape.data_class_for(%i[name email age posts])]
+      end
+    end
+
+    context "with to_struct" do
+      let(:serialization_method) { :to_struct }
+
+      it "returns nil for skipped attributes" do
+        expect(result.map(&:to_h)).to eq [
+          {name: "Ann", email: "ann@example.com", age: 30, posts: nil},
+          {name: "Bob", email: nil, age: nil, posts: []}
+        ]
+      end
+
+      it "returns objects of one Struct class" do
+        expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultShape.struct_class_for(%i[name email age posts])]
+      end
+    end
+
+    context "with to_h" do
+      let(:serialization_method) { :to_h }
+
+      it "omits skipped attributes" do
+        expect(result).to eq [
+          {name: "Ann", email: "ann@example.com", age: 30},
+          {name: "Bob", posts: []}
+        ]
+      end
     end
   end
 end
