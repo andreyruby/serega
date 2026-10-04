@@ -84,7 +84,7 @@ RSpec.describe Serega::SeregaPlanPoint do
     let(:context) { {locale: :en} }
     let(:level_queue) { Serega::SeregaEngine::LevelQueue.new }
 
-    it "builds the child object serializer with the point's child plan, many and the given runtime opts" do
+    it "builds the child object serializer with the point's child plan, many, context and level queue" do
       child = child_serializer_class
       serializer = Class.new(base) { attribute :posts, serializer: child, many: true }
       point = point_for(serializer, :posts)

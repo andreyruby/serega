@@ -126,13 +126,13 @@ class Serega
 
       # Builds the object serializer that serializes this point's relation. The
       # point owns the static config (child plan, serializer class, `many`); the
-      # caller injects the runtime `context` and `opts`.
+      # caller injects the runtime `context` and `level_queue`.
       #
       # @param context [Hash] serialization context
-      # @param opts [Hash] extra object-serializer options (e.g. the level queue)
+      # @param level_queue [SeregaEngine::LevelQueue] queue of serialization levels
       # @return [SeregaObjectSerializer] serializer for the child level
-      def child_serializer(context:, **opts)
-        child_object_serializer.new(context: context, plan: child_plan, many: many, **opts)
+      def child_serializer(context:, level_queue:)
+        child_object_serializer.new(context: context, plan: child_plan, level_queue: level_queue, many: many)
       end
 
       private

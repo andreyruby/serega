@@ -639,7 +639,13 @@ class Serega
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
-      result = self.class::SeregaObjectSerializer.new(**opts).serialize(object)
+      object_serializer = self.class::SeregaObjectSerializer.new(
+        context: opts[:context],
+        plan: opts[:plan],
+        level_queue: opts[:level_queue],
+        many: opts[:many]
+      )
+      result = object_serializer.serialize(object)
       opts[:level_queue].run
       result
     end

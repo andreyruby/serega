@@ -16,20 +16,19 @@ class Serega
     #
     # @private
     module InstanceMethods
-      attr_reader :context, :plan, :many, :opts, :level_queue, :presenter
+      attr_reader :context, :plan, :many, :level_queue, :presenter
 
       # @param plan [SeregaPlan] Serialization plan
       # @param context [Hash] Serialization context
+      # @param level_queue [SeregaEngine::LevelQueue] Queue of serialization levels
       # @param many [Boolean] is object is enumerable
-      # @param opts [Hash] Any custom options
       #
       # @return [SeregaObjectSerializer] New SeregaObjectSerializer
-      def initialize(context:, plan:, many: nil, **opts)
+      def initialize(context:, plan:, level_queue:, many: nil)
         @context = context
         @plan = plan
+        @level_queue = level_queue
         @many = many
-        @opts = opts
-        @level_queue = opts[:level_queue]
         # Looked up once here and reused for every enqueued chunk of the level.
         @presenter = self.class.serializer_class.presenter
       end
@@ -63,7 +62,7 @@ class Serega
         plan.points.each do |point|
           point.run_preloads(objects) if point.preloads
           batches = point.load_batches(level) unless point.batch_loaders.empty?
-          child_serializer = point.child_serializer(context: context, **opts) if point.child_plan
+          child_serializer = point.child_serializer(context: context, level_queue: level_queue) if point.child_plan
 
           process_point(point, objects, containers, batches, child_serializer)
         end
