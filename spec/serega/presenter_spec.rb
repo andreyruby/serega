@@ -69,6 +69,19 @@ RSpec.describe Serega::SeregaPresenter do
     expect(price_serializer.to_h(1.5)).to eq(label: "1.50")
   end
 
+  it "delegates keyword arguments" do
+    record_class = Class.new do
+      def greet(greeting, punctuation: ".") = "#{greeting}#{punctuation}"
+    end
+    serializer.attribute :greeting, value: proc { |record| record.greet("Hi", punctuation: "!") }
+    serializer.presenter do
+      def unused
+      end
+    end
+
+    expect(serializer.to_h(record_class.new)).to eq(greeting: "Hi!")
+  end
+
   it "keeps presenter methods that call super" do
     serializer.attribute :upcase_name
     serializer.presenter do
