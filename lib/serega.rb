@@ -694,12 +694,7 @@ class Serega
         level_queue: opts[:level_queue],
         many: opts[:many]
       )
-      level_queue = opts[:level_queue]
-      reference = object_serializer.serialize(object)
-      return unless reference
-
-      level_queue.run
-      level_queue.level(object_serializer).results[reference]
+      object_serializer.serialize(object)
     end
   end
 

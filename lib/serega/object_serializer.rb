@@ -17,6 +17,10 @@ class Serega
     #
     # @private
     module InstanceMethods
+      # Reference to the result of one object. A reference to the results of a
+      # collection is the count of its objects.
+      SINGLE_OBJECT = -1
+
       attr_reader :context, :plan, :many, :level_queue, :presenter
 
       # @param plan [SeregaPlan] Serialization plan
@@ -34,28 +38,56 @@ class Serega
         @presenter = self.class.serializer_class.presenter
       end
 
-      # Adds the object(s) to the level of the plan.
+      # Serializes the root object(s). Adds the root level and runs the level queue.
       #
       # @param object [Object] Serialized object(s)
       #
-      # @return [Integer, Range, nil] Reference to the results in the level:
-      #   index for one object, range for a collection, or nil for nil
+      # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
       def serialize(object)
+        objects = []
+        reference = collect(object, objects)
+        return if reference.nil?
+
+        level = level_queue.add(self, wrap(objects))
+        level_queue.run
+        results = level.results
+        (reference == SINGLE_OBJECT) ? results[0] : results
+      end
+
+      # Adds the serialized object(s) to the objects list.
+      #
+      # @param object [Object] Serialized object(s)
+      # @param objects [Array] Objects list
+      #
+      # @return [Integer, nil] Reference to the results: SINGLE_OBJECT, count of
+      #   objects of a collection, or nil for nil
+      def collect(object, objects)
         return if object.nil?
 
         case serialize_mode(object)
         when :many
-          objects = object.to_a
-          first_index = enqueue(objects)
-          first_index...(first_index + objects.size)
+          collection = object.to_a
+          objects.concat(collection)
+          collection.size
         when :many_for_one # `many` on, but a sole object was given — wrap it, don't raise
-          first_index = enqueue([object])
-          first_index...(first_index + 1)
-        else enqueue([object]) # :one
+          objects << object
+          1
+        else # :one
+          objects << object
+          SINGLE_OBJECT
         end
       end
 
-      # Runs the preloads of one level and adds the related objects to child levels.
+      # Wraps objects in the serializer's presenter, so the whole level — value
+      # resolution and batch loaders alike — sees presenters.
+      #
+      # @param objects [Array] Serialized objects
+      # @return [Array] Objects or presenters
+      def wrap(objects)
+        presenter ? objects.map { |object| presenter.new(object, context) } : objects
+      end
+
+      # Runs the preloads of one level and adds a child level per relation.
       #
       # @param level [SeregaEngine::Level] level to discover
       # @return [Array<Array(SeregaEngine::Level, Array)>, nil] child level and
@@ -73,8 +105,10 @@ class Serega
         relation_points.map do |point|
           batches = point.load_batches(level) unless point.batch_loaders.empty?
           child_serializer = point.child_serializer(context: context, level_queue: level_queue)
-          references = read_relations(point, objects, batches, child_serializer)
-          [level_queue.level(child_serializer), references]
+          child_objects = []
+          references = read_relations(point, objects, batches, child_serializer, child_objects)
+          child_level = level_queue.add(child_serializer, child_serializer.wrap(child_objects))
+          [child_level, references]
         end
       end
 
@@ -92,44 +126,46 @@ class Serega
 
       private
 
-      # Adds objects to the level of the plan and returns the index of the
-      # first one in the level.
-      #
-      # Each object is wrapped in the serializer's presenter, so the whole
-      # level — value resolution and batch loaders alike — sees presenters.
-      def enqueue(objects)
-        objects = objects.map { |object| presenter.new(object, context) } if presenter
-
-        level_queue.enqueue(self, objects)
-      end
-
       # Reads the relation value of every object of the level, and adds the
-      # related objects to the child level.
+      # related objects to child_objects.
       #
       # Patched in:
       # - plugin :if (skips objects failing :if/:unless conditions)
       #
       # @return [Array] Result reference per object
-      def read_relations(point, objects, batches, child_serializer)
+      def read_relations(point, objects, batches, child_serializer, child_objects)
         attribute = point.attribute
         context = @context
 
         objects.map do |object|
           value = attribute.value(object, context, batches: batches)
-          child_serializer.serialize(value)
+          child_serializer.collect(value, child_objects)
         end
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, point)
       end
 
-      # Converts result references to relation values. An index takes one
-      # child result, and a range takes an Array of child results. nil and
-      # SKIP stay as they are.
+      # Converts result references to relation values.
+      #
+      # The child results follow the order of the references, thus the method
+      # takes them one after another:
+      # - SINGLE_OBJECT takes one result.
+      # - A count takes an Array of this count of results.
+      # - nil and SKIP stay as they are.
       def relation_values(child_results, references)
         skip = SeregaEngine::SKIP
+        next_result_index = 0
 
         references.map do |reference|
-          (reference.nil? || skip.equal?(reference)) ? reference : child_results[reference]
+          if reference.nil? || skip.equal?(reference)
+            reference
+          elsif reference == SINGLE_OBJECT
+            next_result_index += 1
+            child_results[next_result_index - 1]
+          else
+            next_result_index += reference
+            child_results[next_result_index - reference, reference]
+          end
         end
       end
 

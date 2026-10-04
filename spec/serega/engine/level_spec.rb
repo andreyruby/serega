@@ -1,21 +1,12 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaEngine::Level do
-  subject(:level) { described_class.new(serializer, :struct) }
+  subject(:level) { described_class.new(serializer, :struct, [1, 2]) }
 
   let(:serializer) { double(context: context, discover: relations, build: results) }
   let(:context) { "CONTEXT" }
   let(:relations) { [["CHILD_LEVEL", [nil, nil]]] }
   let(:results) { %w[RESULT1 RESULT2] }
-
-  describe "#add" do
-    it "adds objects and returns the index of the first added object" do
-      expect(level.add([1, 2])).to eq 0
-      expect(level.add([3])).to eq 2
-
-      expect(level.objects).to eq [1, 2, 3]
-    end
-  end
 
   describe "#discover" do
     it "asks its serializer to discover the level" do
@@ -38,8 +29,6 @@ RSpec.describe Serega::SeregaEngine::Level do
   describe "#fetch" do
     let(:batch_loader) { double(load: batch_data) }
     let(:batch_data) { {1 => "John", 2 => "Jane"} }
-
-    before { level.add([1, 2]) }
 
     it "loads values for the objects and the serializer context" do
       expect(level.fetch(batch_loader)).to eq batch_data

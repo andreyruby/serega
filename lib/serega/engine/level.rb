@@ -16,10 +16,11 @@ class Serega
     class Level
       # @param serializer [SeregaObjectSerializer] serializer that resolves this level
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-      def initialize(serializer, mode)
+      # @param objects [Array] objects serialized at this level
+      def initialize(serializer, mode, objects)
         @serializer = serializer
         @mode = mode
-        @objects = []
+        @objects = objects
         @relation_references = nil
         @results = nil
         @loaded = {}.compare_by_identity
@@ -30,16 +31,6 @@ class Serega
 
       # @return [Array<Hash, Struct, Data>] Result per object
       attr_reader :results
-
-      # Adds objects to this level.
-      #
-      # @param objects [Array] objects serialized at this level
-      # @return [Integer] index of the first added object
-      def add(objects)
-        first_index = @objects.size
-        @objects.concat(objects)
-        first_index
-      end
 
       # Runs preloads and adds levels of related objects.
       # @return [void]

@@ -288,7 +288,7 @@ class Serega
       module ObjectSerializerInstanceMethods
         private
 
-        def read_relations(point, objects, batches, child_serializer)
+        def read_relations(point, objects, batches, child_serializer, child_objects)
           return super unless point.conditional?
 
           attribute = point.attribute
@@ -299,7 +299,7 @@ class Serega
             next skip unless point.satisfy_if_conditions?(object, context)
 
             value = attribute.value(object, context, batches: batches)
-            child_serializer.serialize(value)
+            child_serializer.collect(value, child_objects)
           end
         rescue => error
           SeregaUtils::SerializedAttributeError.call(error, point)

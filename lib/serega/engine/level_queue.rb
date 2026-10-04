@@ -23,31 +23,16 @@ class Serega
       def initialize(mode: :hash)
         @mode = mode
         @levels = []
-        @levels_by_plan = {}.compare_by_identity
       end
 
-      # Adds objects to the level of their plan. Objects from different
-      # parents that share a plan go to one level.
+      # Adds a level of the serializer plan. Each plan has one level, as each
+      # plan belongs to one relation point.
       #
       # @param serializer [SeregaObjectSerializer] serializer that resolves the level
       # @param objects [Array] objects serialized at this level
-      #
-      # @return [Integer] index of the first added object in the level
-      def enqueue(serializer, objects)
-        level(serializer).add(objects)
-      end
-
-      # Returns the level of the serializer plan, and creates it on first use.
-      #
-      # @param serializer [SeregaObjectSerializer] serializer that resolves the level
-      # @return [SeregaEngine::Level] level of the serializer plan
-      def level(serializer)
-        plan = serializer.plan
-        level = @levels_by_plan[plan]
-        return level if level
-
-        level = Level.new(serializer, @mode)
-        @levels_by_plan[plan] = level
+      # @return [SeregaEngine::Level] new level
+      def add(serializer, objects)
+        level = Level.new(serializer, @mode, objects)
         @levels << level
         level
       end
