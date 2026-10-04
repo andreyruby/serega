@@ -16,8 +16,10 @@ class Serega
     # @private
     class Level
       # @param serializer [SeregaObjectSerializer] serializer that resolves this level
-      def initialize(serializer)
+      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
+      def initialize(serializer, mode)
         @serializer = serializer
+        @result_shape = serializer.plan.result_shape(mode)
         @objects = []
         @containers = []
         @results = {}.compare_by_identity
@@ -26,7 +28,7 @@ class Serega
       # @return [Array] Objects serialized at this level
       attr_reader :objects
 
-      # @return [Array<Hash>] Result container per object (filled in place)
+      # @return [Array<Hash, Struct>] Result container per object (filled in place)
       attr_reader :containers
 
       # Accumulates a chunk of objects into this level, creating one empty result
@@ -34,9 +36,9 @@ class Serega
       # them to its parent; they are filled in place later during #process.
       #
       # @param objects [Array] objects serialized at this level
-      # @return [Array<Hash>] the created containers, aligned with objects
+      # @return [Array<Hash, Struct>] the created containers, aligned with objects
       def add(objects)
-        containers = Array.new(objects.size) { {} }
+        containers = @result_shape.build_containers(objects.size)
         @objects.concat(objects)
         @containers.concat(containers)
         containers

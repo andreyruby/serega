@@ -231,7 +231,7 @@ class Serega
         def to_data(object, opts = nil)
           opts = normalize_serialization_opts(opts)
           object = prepare_objects(object, opts[:context])
-          opts = prepare_initial_serialization_opts(object, opts)
+          opts = prepare_initial_serialization_opts(object, opts, :data)
           serialized_data = serialize(object, opts)
           self.class::SeregaDataBuilder.call(self, serialized_data, opts)
         end

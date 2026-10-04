@@ -8,24 +8,6 @@ class Serega
   # @private
   class SeregaPlan
     #
-    # SeregaPlan class methods
-    #
-    # @private
-    module ClassMethods
-      #
-      # Returns (and caches) the Data class for the given set of field names.
-      # Uses the Array as cache key so the same Data class is reused across
-      # all plan instances with identical fields.
-      #
-      # @param point_names [Array<Symbol>] Attribute names for the Data members
-      # @return [Class] Subclass of Data
-      #
-      def data_class_for(point_names)
-        (@data_classes ||= {})[point_names] ||= Data.define(*point_names)
-      end
-    end
-
-    #
     # SeregaPlan instance methods
     #
     # @private
@@ -61,6 +43,7 @@ class Serega
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @relation_points = points.select(&:child_plan).freeze
+        @result_shapes = {}
       end
 
       #
@@ -70,13 +53,15 @@ class Serega
         self.class.serializer_class
       end
 
-      # Returns the Data class whose members match this plan's serialized fields.
-      # Delegates to the class-level cache so identical field sets share one Data class.
       #
-      # @return [Class] Subclass of Data
+      # Result shape of this plan in the serialization mode
       #
-      def data_class
-        @data_class ||= self.class.data_class_for(point_names)
+      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
+      #
+      # @return [SeregaResultShape] Result shape
+      #
+      def result_shape(mode)
+        @result_shapes[mode] ||= serializer_class::SeregaResultShape.new(mode, points)
       end
 
       private
@@ -102,13 +87,8 @@ class Serega
 
         points.freeze
       end
-
-      def point_names
-        @point_names ||= points.map(&:name)
-      end
     end
 
-    extend ClassMethods
     include InstanceMethods
     extend SeregaHelpers::SerializerClassHelper
   end

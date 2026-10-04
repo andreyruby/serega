@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaEngine::Level do
-  subject(:level) { described_class.new(serializer) }
+  subject(:level) { described_class.new(serializer, mode) }
 
-  let(:serializer) { double(context: context) }
+  let(:serializer) { double(context: context, plan: plan) }
+  let(:plan) { Class.new(Serega) { attribute :name }::SeregaPlan.new(nil, {}) }
+  let(:mode) { :hash }
   let(:context) { "CONTEXT" }
   let(:batch_loader) { double(load: batch_data) }
   let(:batch_data) { {1 => "John", 2 => "Jane"} }
@@ -21,8 +23,19 @@ RSpec.describe Serega::SeregaEngine::Level do
 
     it "returns the same container instances it stores, to be filled in place" do
       containers = level.add([1, 2])
-      containers[0][:a] = 1
+      containers[0][:name] = "Ann"
       expect(level.containers[0]).to equal containers[0]
+    end
+
+    context "with the :struct mode" do
+      let(:mode) { :struct }
+
+      it "returns an empty plan struct per object" do
+        containers = level.add([1, 2])
+
+        expect(containers).to eq [plan.result_shape(:struct).struct_class.new, plan.result_shape(:struct).struct_class.new]
+        expect(containers[0]).not_to equal containers[1]
+      end
     end
   end
 

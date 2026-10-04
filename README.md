@@ -299,6 +299,18 @@ result.username # => "serega"
 UserSerializer.to_data([user]) # => [#<data username="serega">]
 ```
 
+Use `.to_struct` / `#to_struct` to get the result as Ruby `Struct` objects.
+Serialization fills the `Struct` objects directly, so it is as fast as `.to_h`.
+Nested serialized relations are also `Struct` objects.
+
+```ruby
+result = UserSerializer.to_struct(user)
+result          # => #<struct username="serega">
+result.username # => "serega"
+
+UserSerializer.to_struct([user]) # => [#<struct username="serega">]
+```
+
 If serialized fields are constant, then it's a good idea to initiate the
 serializer and reuse it.
 It will be a bit faster (the serialization plan will be prepared only once).
