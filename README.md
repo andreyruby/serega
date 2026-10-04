@@ -1019,6 +1019,14 @@ UserSerializer.to_h(nil, root: :user) # => {:user=>nil}
 UserSerializer.to_h(nil, root: nil)   # => nil
 ```
 
+`.to_data` and `.to_struct` also return a Hash. The `Data` or `Struct` objects
+are under the root key, and metadata values are kept as they are.
+
+```ruby
+UserSerializer.to_data(user)   # => {:data=>#<data username="serega">}
+UserSerializer.to_struct(user) # => {:data=>#<struct username="serega">}
+```
+
 ### Plugin :metadata
 
 Depends on: [`:root`][root] plugin, that must be loaded first

@@ -93,7 +93,6 @@ class Serega
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
-        serializer_class::SeregaDataBuilder.extend(DataBuilderClassMethods)
       end
 
       #
@@ -220,20 +219,24 @@ class Serega
       module InstanceMethods
         #
         # Serializes provided object to a tree of Ruby Data objects.
-        # When a root key is configured, the result is wrapped in an outer Data object
-        # whose members include the root key plus any metadata keys.
+        # When a root key is configured, returns a Hash with Data objects under
+        # the root key, plus any metadata keys.
         #
         # @param object [Object] Serialized object
         # @param opts [Hash, nil] Serializing options (`:root`, `:many`, `:context`, etc.)
         #
-        # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
+        # @return [Hash, Data, Array<Data>, nil] Serialization result
         #
         def to_data(object, opts = nil)
           opts = normalize_serialization_opts(opts)
           object = prepare_objects(object, opts[:context])
           opts = prepare_initial_serialization_opts(object, opts, :data)
-          serialized_data = serialize(object, opts)
-          self.class::SeregaDataBuilder.call(self, serialized_data, opts)
+          result = serialize(object, opts)
+          root = build_root(object, opts)
+          return self.class::SeregaDataBuilder.call(self, result) unless root
+
+          result[root] = self.class::SeregaDataBuilder.call(self, result[root])
+          result
         end
 
         private
@@ -250,70 +253,6 @@ class Serega
 
           root = self.class.config.root
           (opts.fetch(:many) { SeregaUtils::CollectionDetector.call(object) }) ? root.many : root.one
-        end
-      end
-
-      #
-      # SeregaDataBuilder additional/patched class methods
-      #
-      # Overrides `call` to handle the root key: the serialized result is
-      # unwrapped from the root key, converted to a Data tree by the base
-      # implementation, and then re-wrapped together with any metadata keys
-      # in an outer Data object. Metadata values (arbitrary hashes/arrays)
-      # are recursively converted to Data objects via `deep_hash_to_data`.
-      #
-      # When the root key is `nil` (disabled), delegates directly to the base.
-      #
-      # @see Serega::SeregaDataBuilder
-      #
-      # @private
-      module DataBuilderClassMethods
-        #
-        # @param serializer [Serega] Serializer instance carrying the plan
-        # @param serialized_result [Hash, Array, nil] Full serialized output (possibly wrapped under root key)
-        # @param serialization_opts [Hash] Serialization options used to determine the root key
-        #
-        # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
-        #
-        def call(serializer, serialized_result, serialization_opts)
-          root_key = resolve_root_key(serializer, serialization_opts)
-          return super(serializer, serialized_result) unless root_key
-
-          root_data = super(serializer, serialized_result.fetch(root_key))
-          build_data_objects(serialized_result, root_key, root_data)
-        end
-
-        private
-
-        def resolve_root_key(serializer, serialization_opts)
-          if serialization_opts.key?(:root)
-            serialization_opts[:root]
-          else
-            config_root = serializer.class.config.root
-            serialization_opts[:many] ? config_root.many : config_root.one
-          end
-        end
-
-        def build_data_objects(serialized_result, root_key, root_data)
-          converted_hash =
-            serialized_result.to_h do |key, val|
-              value = (key == root_key) ? root_data : deep_hash_to_data(val)
-              [key, value]
-            end
-
-          Data.define(*converted_hash.keys).new(**converted_hash)
-        end
-
-        def deep_hash_to_data(value)
-          case value
-          when Hash
-            converted = value.transform_values { |nested| deep_hash_to_data(nested) }
-            Data.define(*value.keys).new(**converted)
-          when Array
-            value.map { |item| deep_hash_to_data(item) }
-          else
-            value
-          end
         end
       end
     end

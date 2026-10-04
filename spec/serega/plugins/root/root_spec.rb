@@ -175,73 +175,87 @@ RSpec.describe Serega::SeregaPlugins::Root do
   end
 
   describe "serialization to data" do
+    subject(:result) { user_serializer.to_data(users, serialize_opts) }
+
+    let(:user_serializer) do
+      Class.new(Serega) do
+        plugin :root, root_one: :user, root_many: :users
+        attribute :first_name
+      end
+    end
+
     let(:user) { double(first_name: "FIRST_NAME") }
+    let(:users) { user }
+    let(:serialize_opts) { {} }
 
-    context "with default root (config-computed)" do
-      let(:user_serializer) do
-        Class.new(Serega) do
-          plugin :root
-          attribute :first_name
-        end
-      end
+    it "returns a Hash with a Data object under the one-root key" do
+      expect(result.keys).to eq [:user]
+      expect(result[:user]).to be_a(Data)
+      expect(result[:user].to_h).to eq(first_name: "FIRST_NAME")
+    end
 
-      it "wraps single object in a Data with default root key" do
-        result = user_serializer.to_data(user)
-        expect(result).to be_a(Data)
-        expect(result.members).to eq [:data]
-        expect(result.data).to be_a(Data)
-        expect(result.data.first_name).to eq "FIRST_NAME"
-      end
+    context "with a collection" do
+      let(:users) { [user] }
 
-      it "wraps collection in a Data with default root key" do
-        result = user_serializer.to_data([user])
-        expect(result).to be_a(Data)
-        expect(result.members).to eq [:data]
-        expect(result.data).to be_an(Array)
-        expect(result.data.first.first_name).to eq "FIRST_NAME"
+      it "returns a Hash with Data objects under the many-root key" do
+        expect(result.keys).to eq [:users]
+        expect(result[:users].map(&:to_h)).to eq [{first_name: "FIRST_NAME"}]
       end
     end
 
-    context "with different root keys for one and many" do
-      let(:user_serializer) do
-        Class.new(Serega) do
-          plugin :root, root_one: :user, root_many: :users
-          attribute :first_name
-        end
-      end
+    context "with the root serialization option" do
+      let(:serialize_opts) { {root: :customer} }
 
-      it "uses one-root key for single object" do
-        result = user_serializer.to_data(user)
-        expect(result.members).to eq [:user]
-        expect(result.user.first_name).to eq "FIRST_NAME"
-      end
-
-      it "uses many-root key for collection" do
-        result = user_serializer.to_data([user])
-        expect(result.members).to eq [:users]
-        expect(result.users.first.first_name).to eq "FIRST_NAME"
+      it "returns a Hash with the provided root key" do
+        expect(result.keys).to eq [:customer]
       end
     end
 
-    context "with root provided as serialization option" do
-      let(:user_serializer) do
-        Class.new(Serega) do
-          plugin :root
-          attribute :first_name
-        end
-      end
+    context "with the nil root serialization option" do
+      let(:serialize_opts) { {root: nil} }
 
-      it "uses explicit root key" do
-        result = user_serializer.to_data(user, root: :customer)
-        expect(result.members).to eq [:customer]
-        expect(result.customer.first_name).to eq "FIRST_NAME"
-      end
-
-      it "returns plain Data (no root wrapper) when root: nil" do
-        result = user_serializer.to_data(user, root: nil)
+      it "returns the Data object" do
         expect(result).to be_a(Data)
-        expect(result.members).to eq [:first_name]
-        expect(result.first_name).to eq "FIRST_NAME"
+        expect(result.to_h).to eq(first_name: "FIRST_NAME")
+      end
+    end
+  end
+
+  describe "serialization to structs" do
+    subject(:result) { user_serializer.to_struct(users, serialize_opts) }
+
+    let(:user_serializer) do
+      Class.new(Serega) do
+        plugin :root, root_one: :user, root_many: :users
+        attribute :first_name
+      end
+    end
+
+    let(:user) { double(first_name: "FIRST_NAME") }
+    let(:users) { user }
+    let(:serialize_opts) { {} }
+
+    it "returns a Hash with a Struct object under the one-root key" do
+      expect(result.keys).to eq [:user]
+      expect(result[:user]).to be_a(Struct)
+      expect(result[:user].to_h).to eq(first_name: "FIRST_NAME")
+    end
+
+    context "with a collection" do
+      let(:users) { [user] }
+
+      it "returns a Hash with Struct objects under the many-root key" do
+        expect(result.keys).to eq [:users]
+        expect(result[:users].map(&:to_h)).to eq [{first_name: "FIRST_NAME"}]
+      end
+    end
+
+    context "with the nil root serialization option" do
+      let(:serialize_opts) { {root: nil} }
+
+      it "returns the Struct object" do
+        expect(result).to be_a(Struct)
+        expect(result.to_h).to eq(first_name: "FIRST_NAME")
       end
     end
   end
@@ -269,7 +283,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
       end
 
       result = user_serializer.to_data(["1"])
-      expect(result.data.first.first_name).to eq "Ann"
+      expect(result[:data].first.first_name).to eq "Ann"
     end
 
     it "uses many root key when a single object is prepared into a collection" do

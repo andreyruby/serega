@@ -607,7 +607,7 @@ class Serega
     #
     # Serializes provided object to Data objects
     # Patched in:
-    # - plugin :root (adds a data-object for a root level keys)
+    # - plugin :root (returns a Hash with Data objects under the root key)
     #
     # @param object [Object] Serialized object
     # @param opts [Hash, nil] Serializing options
