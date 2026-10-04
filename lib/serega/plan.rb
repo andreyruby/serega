@@ -45,25 +45,21 @@ class Serega
 
       def cached_plan_for(opts, max_cache_size)
         @cache ||= {}
-        cache_key = construct_cache_key(opts.slice(:only, :with, :except))
+        cache_key = [
+          opts[:only] || FROZEN_EMPTY_HASH,
+          opts[:with] || FROZEN_EMPTY_HASH,
+          opts[:except] || FROZEN_EMPTY_HASH
+        ]
+        plan = @cache[cache_key]
+        return plan if plan
 
-        plan = @cache[cache_key] ||= new(nil, opts)
+        plan = @cache[frozen_copy(cache_key)] = new(nil, opts)
         @cache.shift if @cache.length > max_cache_size
         plan
       end
 
-      def construct_cache_key(opts, cache_key = nil)
-        return nil if opts.empty?
-
-        cache_key ||= +""
-
-        opts.each do |key, nested_opts|
-          cache_key.insert(-1, SeregaUtils::SymbolName.call(key))
-          cache_key.insert(-1, "-")
-          construct_cache_key(nested_opts, cache_key)
-        end
-
-        cache_key
+      def frozen_copy(cache_key)
+        SeregaUtils::EnumDeepFreeze.call(SeregaUtils::EnumDeepDup.call(cache_key))
       end
     end
 

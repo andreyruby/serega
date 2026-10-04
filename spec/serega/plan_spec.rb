@@ -126,6 +126,24 @@ RSpec.describe Serega::SeregaPlan do
       expect(result1).to equal result2
     end
 
+    it "caches plans with the same attribute names in different nesting separately" do
+      current_serializer.config.max_cached_plans_per_serializer_count = 2
+      nested = plan(only: {d: {d1: {}}})
+      flat = plan(only: {d: {}, d1: {}})
+
+      expect(nested).to satisfy_attribute_names(d: {d1: nil})
+      expect(flat).to satisfy_attribute_names(d: {d1: nil, d2: nil})
+    end
+
+    it "keeps cached plans when provided modifiers are changed later" do
+      current_serializer.config.max_cached_plans_per_serializer_count = 1
+      only = {a1: {}}
+      result1 = plan(only: only)
+      only[:a2] = {}
+
+      expect(plan(only: {a1: {}})).to equal result1
+    end
+
     it "removes from cache oldest plans if cached keys count more than configured" do
       current_serializer.config.max_cached_plans_per_serializer_count = 1
 

@@ -4,6 +4,8 @@
 
 - Fix `NoMethodError` raised by the plan cache when serializing with the
   `:check_initiate_params` option.
+- Fix the plan cache returning a plan of other modifiers that list the same
+  attribute names in different nesting.
 
 ## [0.42.0] - 2026-09-08
 
