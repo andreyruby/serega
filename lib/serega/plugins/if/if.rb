@@ -156,12 +156,18 @@ class Serega
         # @return [Hash] signatures for provided :if options
         attr_reader :opt_if_signatures
 
+        # @return [Boolean] Whether attribute has any :if/:unless/:if_value/:unless_value condition
+        def conditional?
+          @conditional
+        end
+
         private
 
         def set_normalized_vars(normalizer)
           super
           @opt_if = normalizer.if_options
           @opt_if_signatures = normalizer.if_options_signatures
+          @conditional = @opt_if.any? { |_option_name, condition| condition }
         end
       end
 
@@ -172,6 +178,13 @@ class Serega
       #
       # @private
       module PlanPointInstanceMethods
+        #
+        # @return [Boolean] Whether attribute has any :if/:unless/:if_value/:unless_value condition
+        #
+        def conditional?
+          attribute.conditional?
+        end
+
         #
         # @return [Boolean] Should we show attribute or not
         #   Conditions for this checks are specified by :if and :unless attribute options.
@@ -264,20 +277,28 @@ class Serega
       module ObjectSerializerInstanceMethods
         private
 
-        # Skip the whole point for this object (its value is never resolved).
-        def resolve_point(object, point, _container, _batches, _child_plan)
-          return unless point.satisfy_if_conditions?(object, context)
+        def process_point(point, objects, containers, batches, child_serializer)
+          return super unless point.conditional?
 
-          super
-        end
+          attribute = point.attribute
+          name = point.name
+          context = @context
+          index = 0
+          size = objects.size
 
-        # Skip only the assignment based on the resolved value. Levels resolve
-        # points in attribute order, so simply not assigning keeps the remaining
-        # keys in declared order — no slot to reserve or delete.
-        def write_value(value, point, _container)
-          return unless point.satisfy_if_value_conditions?(value, context)
+          while index < size
+            object = objects[index]
 
-          super
+            if point.satisfy_if_conditions?(object, context)
+              value = attribute.value(object, context, batches: batches)
+              final_value = child_serializer ? child_serializer.serialize(value) : value
+              containers[index][name] = final_value if point.satisfy_if_value_conditions?(final_value, context)
+            end
+
+            index += 1
+          end
+        rescue => error
+          SeregaUtils::SerializedAttributeError.call(error, point)
         end
       end
     end

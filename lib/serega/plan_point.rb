@@ -19,6 +19,10 @@ class Serega
       # @return [SeregaAttribute] Current attribute
       attr_reader :attribute
 
+      # Attribute `name`
+      # @return [Symbol] Attribute name
+      attr_reader :name
+
       # Shows child plan if exists
       # @return [SeregaPlan, nil] Attribute serialization plan
       attr_reader :child_plan
@@ -42,6 +46,7 @@ class Serega
       def initialize(plan, attribute, modifiers = nil)
         @plan = plan
         @attribute = attribute
+        @name = attribute.name
         @modifiers = modifiers
         set_normalized_vars
       end
@@ -50,12 +55,6 @@ class Serega
       # @see SeregaAttribute::AttributeInstanceMethods#value
       def value(obj, ctx, batches: nil)
         attribute.value(obj, ctx, batches: batches)
-      end
-
-      # Attribute `name`
-      # @see SeregaAttribute::AttributeInstanceMethods#value
-      def name
-        attribute.name
       end
 
       # Attribute `many` option

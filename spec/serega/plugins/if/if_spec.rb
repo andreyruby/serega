@@ -32,6 +32,19 @@ RSpec.describe Serega::SeregaPlugins::If do
       attribute.class.serializer_class::SeregaPlanPoint.new("plan", attribute, nil)
     end
 
+    describe "#conditional?" do
+      it "is false when attribute has no conditions" do
+        expect(point(serializer.attribute(:foo))).not_to be_conditional
+      end
+
+      it "is true when attribute has any condition" do
+        %i[if unless if_value unless_value].each do |option|
+          attribute = serializer.attribute(:foo, option => proc { true })
+          expect(point(attribute)).to be_conditional, option.to_s
+        end
+      end
+    end
+
     describe "#satisfy_if_conditions?" do
       let(:ctx) { {} }
 
