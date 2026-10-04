@@ -82,6 +82,39 @@ RSpec.describe Serega::SeregaPresenter do
     expect(serializer.to_h(record_class.new)).to eq(greeting: "Hi!")
   end
 
+  it "delegates methods with any names and arguments" do
+    record_class = Class.new do
+      attr_accessor :name
+
+      def [](key) = "#{key}!"
+
+      def greet(greeting, punctuation: ".") = "#{greeting}, #{name}#{punctuation}#{yield}"
+    end
+    serializer.attribute :result, value: proc { |record|
+      record.name = "Kate"
+      [record[:key], record.greet("Hi", punctuation: "!") { "?" }, record.name]
+    }
+    serializer.presenter do
+      def unused
+      end
+    end
+
+    2.times do
+      expect(serializer.to_h(record_class.new)).to eq(result: ["key!", "Hi, Kate!?", "Kate"])
+    end
+  end
+
+  it "calls private Kernel methods on the presenter" do
+    serializer.attribute :formatted
+    serializer.presenter do
+      def formatted
+        format("%05d", __getobj__)
+      end
+    end
+
+    2.times { expect(serializer.to_h(42)).to eq(formatted: "00042") }
+  end
+
   it "keeps presenter methods that call super" do
     serializer.attribute :upcase_name
     serializer.presenter do
