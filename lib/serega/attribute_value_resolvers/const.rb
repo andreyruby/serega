@@ -7,22 +7,6 @@ class Serega
   # @private
   module AttributeValueResolvers
     #
-    # Builds value resolver class for attributes with :const option
-    #
-    # @private
-    class ConstResolver
-      #
-      # Creates resolver that returns constant value
-      #
-      # @param const_value [Object] constant value to return
-      # @return [Const] resolver instance
-      #
-      def self.get(const_value)
-        Const.new(const_value)
-      end
-    end
-
-    #
     # Value resolver class for attributes with :const option
     #
     # @private

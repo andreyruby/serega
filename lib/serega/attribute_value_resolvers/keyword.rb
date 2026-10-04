@@ -7,22 +7,6 @@ class Serega
   # @private
   module AttributeValueResolvers
     #
-    # Builds value resolver class for attributes with :keyword option
-    #
-    # @private
-    class KeywordResolver
-      #
-      # Creates resolver that calls method on object
-      #
-      # @param keyword [Symbol] method name to call on object
-      # @return [Keyword] resolver instance
-      #
-      def self.get(keyword)
-        Keyword.new(keyword)
-      end
-    end
-
-    #
     # Value resolver class for attributes with :keyword option
     #
     # @private

@@ -4,25 +4,12 @@ class Serega
   # @private
   module AttributeValueResolvers
     #
-    # Builds value resolver for attributes with the :hash_access option
+    # Settings of the :hash_access option
     #
     # @private
     class HashAccessResolver
       # Allowed hash access modes
       MODES = %i[symbol string].freeze
-
-      #
-      # Creates resolver that reads a key from Hash records
-      #
-      # @param name [Symbol, String] hash key
-      # @param mode [Symbol] hash access mode (:symbol, :string)
-      # @param allow_missing_key [Boolean] whether a missing key is read via `record[key]` rather than raising
-      #
-      # @return [HashAccessKeyword] resolver instance
-      #
-      def self.get(name, mode, allow_missing_key)
-        HashAccessKeyword.new(name, mode, allow_missing_key)
-      end
     end
 
     #
