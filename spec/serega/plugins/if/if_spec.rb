@@ -412,6 +412,16 @@ RSpec.describe Serega::SeregaPlugins::If do
       expect { result.bar }.to raise_error NoMethodError
     end
 
+    it "excludes relation hidden by :if condition" do
+      child_serializer = Class.new(Serega) { attribute(:baz, const: "baz") }
+      serializer.attribute(:foo, const: "foo")
+      serializer.attribute(:bar, serializer: child_serializer, const: 1, if: proc { |obj| obj != 1 })
+      result = serializer.new.to_data([1, 2])
+
+      expect(result.map(&:members)).to eq [[:foo], [:foo, :bar]]
+      expect(result[1].bar.baz).to eq "baz"
+    end
+
     it "excludes attribute hidden by :unless condition" do
       serializer.attribute(:foo, const: "foo")
       serializer.attribute(:bar, const: "bar", unless: proc { |obj| obj == 1 })
