@@ -31,7 +31,7 @@ class Serega
       check_attribute_name: true,
       check_initiate_params: true,
       delegate_default_allow_nil: false,
-      max_cached_plans_per_serializer_count: 0,
+      max_cached_plans_per_serializer_count: 20,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
       auto_preload_excluded_methods: %i[itself __getobj__].freeze,
       hide_by_default: false,

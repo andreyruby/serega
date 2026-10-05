@@ -64,6 +64,7 @@ require_relative "serega/presenter"
 require_relative "serega/object_group"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
+require_relative "serega/result_code"
 require_relative "serega/result_builder"
 require_relative "serega/plan_cache"
 require_relative "serega/plugins"
@@ -92,6 +93,10 @@ class Serega
 
   # Batch loaders of Serega validate params with Serega::CheckBatchLoaderParams
   SeregaBatchLoader.serializer_class = self
+
+  # Result builders of Serega generate code with Serega::SeregaResultCode
+  SeregaResultBuilder.serializer_class = self
+  SeregaResultCode.serializer_class = self
 
   #
   # Serializers class methods
@@ -492,6 +497,10 @@ class Serega
       result_builder_class = Class.new(self::SeregaResultBuilder)
       result_builder_class.serializer_class = subclass
       subclass.const_set(:SeregaResultBuilder, result_builder_class)
+
+      result_code_class = Class.new(self::SeregaResultCode)
+      result_code_class.serializer_class = subclass
+      subclass.const_set(:SeregaResultCode, result_code_class)
 
       plan_point_class = Class.new(self::SeregaPlanPoint)
       plan_point_class.serializer_class = subclass

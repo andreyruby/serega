@@ -11,6 +11,8 @@
 - **BREAKING**: Serializers are locked once they serialize something. Changing
   a locked serializer raises an error. See "Define serializers" in the README.
 - Faster serialization.
+- `config.max_cached_plans_per_serializer_count` is 20 by default. See
+  "Configuration" in the README.
 - Cache the serialization plan built without `:only`/`:except`/`:with`
   modifiers.
 - Fix keyword arguments of methods called on presenters.

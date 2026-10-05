@@ -31,7 +31,8 @@ The first plan locks the class. Later definition calls raise.
 
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
-- `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode. It makes empty containers (`{}` for `:hash` and `:data`, a `Struct` for `:struct`), and builds the serialized objects from the filled containers: a `Data` object from each Hash in the `:data` mode, or the containers themselves.
+- `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlanCache` keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of an object, then makes the serialized object in one step: a Hash literal, `Struct.new` or `Data.new`.
 
 ### 3. Run
 
@@ -59,12 +60,9 @@ Run.call(plan, object, many:, mode:, context:)
 │
 ├─ build pass, from the last group up
 │  └─ object_group.build
-│     ├─ containers = result_builder.build_containers(size)
-│     ├─ for each point
-│     │  ├─ relation: containers[index][name] = child_group.serialized_for(reference)   already built
-│     │  └─ other: batches_for(point)                                                 once per group
-│     │            serialize_point: containers[index][name] = attribute.value(object, ...)
-│     └─ serialized = result_builder.build(containers)
+│     ├─ batches = batches_for(point)                     once per group
+│     ├─ relation values = child_group.serialized_for(reference)   already built
+│     └─ serialized = plan.result_builder(mode).call(objects, context, batches, relations)
 │
 └─ root_group.serialized_for(reference)
 ```
@@ -76,7 +74,7 @@ Run.call(plan, object, many:, mode:, context:)
 - `#build` builds the serialized objects. The groups of the relation plans are built before it.
 - `#serialized_for(reference)` returns the serialized object(s) of a reference from `#add`.
 
-The keys of a serialized object follow the order of the plan points. The values are read point by point, for all objects of a group. Relation values and preloads of a group are read in the discover pass, before the other values.
+The keys of a serialized object follow the order of the plan points. The values are read object by object. Relation values and preloads of a group are read in the discover pass, before the other values.
 
 ### Example
 
@@ -120,10 +118,10 @@ Each serializer class gets subclasses of the internal classes in its `inherited`
 
 | plugin | patched method | change |
 |---|---|---|
-| `:if` | `SeregaObjectGroup#serialize_point` | skips values failing `:if`, `:unless`, `:if_value` or `:unless_value` |
+| `:if` | `SeregaResultCode#assign_value_code` | generates code that assigns `If::SKIP` to values failing `:if`, `:unless`, `:if_value` or `:unless_value` |
+| `:if` | `SeregaResultCode#variables_code`, `#skippable?` | adds the `skip` and `point_N` variables for conditional points |
+| `:if` | `SeregaResultCode#hash_assign_code`, `#argument_code` | a serialized Hash has no key for a skipped value, a serialized Struct or Data has nil |
 | `:if` | `SeregaObjectGroup#read_relations` | returns `If::SKIP` for relations of objects failing `:if` or `:unless` |
-| `:if` | `SeregaObjectGroup#assign_relation_values` | skips `If::SKIP` relation values |
-| `:if` | `SeregaResultBuilder#build_containers` | makes `:data` containers with nil values, thus skipped attributes are nil |
 | `:root` | `Serega#serialize` | wraps the serialized object(s): `{root => serialized}` |
 | `:metadata`, `:context_metadata` | `Serega#serialize` | add metadata keys next to the root key |
 | `:formatters` | `SeregaAttribute` | formats the value after it is read |

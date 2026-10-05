@@ -87,27 +87,15 @@ class Serega
         end
       end
 
-      # Builds the serialized objects. Fills a container per object, one point
-      # at a time. Relation values are the serialized objects of the built
-      # child groups.
+      # Builds the serialized objects.
       #
       # @return [void]
       def build
-        result_builder = plan.result_builder(run.mode)
-        objects = @objects
-        containers = result_builder.build_containers(objects.size)
-
-        plan.points.each do |point|
-          if point.child_plan
-            child_group, references = @relation_references[point]
-            values = references.map { |reference| child_group.serialized_for(reference) }
-            assign_relation_values(point, values, containers)
-          else
-            serialize_point(point, objects, containers, batches_for(point))
-          end
+        batches = plan.points.map { |point| batches_for(point) } if plan.batch_points?
+        relations = @relation_references&.transform_values do |child_group, references|
+          references.map { |reference| child_group.serialized_for(reference) }
         end
-
-        @serialized = result_builder.build(containers)
+        @serialized = plan.result_builder(run.mode).call(@objects, @context, batches, relations)
       end
 
       # Returns the serialized object(s) of a reference from #add: one
@@ -173,38 +161,6 @@ class Serega
         end
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, point)
-      end
-
-      # Reads the value of one point for every object and assigns it to the
-      # object's container.
-      #
-      # Patched in:
-      # - plugin :if (skips objects and values failing :if/:unless/:if_value/:unless_value conditions)
-      def serialize_point(point, objects, containers, batches)
-        attribute = point.attribute
-        name = point.name
-        context = @context
-        index = 0
-        size = objects.size
-
-        while index < size
-          containers[index][name] = attribute.value(objects[index], context, batches: batches)
-          index += 1
-        end
-      rescue => error
-        SeregaUtils::SerializedAttributeError.call(error, point)
-      end
-
-      # Assigns the relation values to the containers.
-      #
-      # Patched in:
-      # - plugin :if (skips relations of objects failing :if/:unless conditions)
-      def assign_relation_values(point, values, containers)
-        name = point.name
-
-        values.each_with_index do |value, index|
-          containers[index][name] = value
-        end
       end
 
       # Reads the relation value of every object, and adds the related objects

@@ -3,8 +3,10 @@
 class Serega
   #
   # Builds the serialized objects (Hash, Struct or Data) of one plan in one
-  # serialization mode: empty containers filled in place during
-  # serialization, then the serialized objects from the filled containers.
+  # serialization mode.
+  #
+  # The builder gets the code of its `#call` method from SeregaResultCode.
+  # The method builds the serialized objects of an object group in one loop.
   #
   # @private
   class SeregaResultBuilder
@@ -55,67 +57,32 @@ class Serega
       attr_reader :mode
 
       #
-      # Instantiates new result builder
+      # Instantiates new result builder and generates its `#call` method:
+      #
+      #   call(objects, context, batches, relations) -> Array<Hash, Struct, Data>
+      #
+      # - `batches` holds the loaded batches per point, or nil.
+      # - `relations` holds the relation values of all objects per relation
+      #   point, or nil.
       #
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       # @param points [Array<SeregaPlanPoint>] Serialized plan points
       #
       def initialize(mode, points)
         @mode = mode
-        @point_names = points.map(&:name).freeze
-        @data_class = nil
-        @struct_class = nil
+        @points = points
+        @result_class = result_class
+        call_code = self.class.serializer_class::SeregaResultCode.new(mode, points).to_s
+        singleton_class.class_eval(call_code, __FILE__, __LINE__)
       end
 
-      # Returns the Data class whose members match the serialized fields.
-      #
-      # @return [Class] Subclass of Data
-      #
-      def data_class
-        @data_class ||= self.class.data_class_for(@point_names)
-      end
+      private
 
-      # Returns the Struct class whose members match the serialized fields.
-      #
-      # @return [Class] Subclass of Struct
-      #
-      def struct_class
-        @struct_class ||= self.class.struct_class_for(@point_names)
-      end
-
-      #
-      # Empty containers filled in place during serialization.
-      #
-      # Patched in:
-      # - plugin :if (builds :data containers with nil values of all attributes)
-      #
-      # @param count [Integer] Number of containers
-      #
-      # @return [Array<Hash, Struct>] Empty containers
-      #
-      def build_containers(count)
+      def result_class
         case mode
-        when :struct
-          struct_class = self.struct_class
-          Array.new(count) { struct_class.new }
-        else Array.new(count) { {} } # :hash, :data
+        when :struct then self.class.struct_class_for(@points.map(&:name))
+        when :data then self.class.data_class_for(@points.map(&:name))
         end
-      end
-
-      #
-      # Builds the serialized objects from the filled containers. The :data
-      # mode makes a Data object from each Hash container. Other modes return
-      # the containers.
-      #
-      # @param containers [Array<Hash, Struct>] Filled containers
-      #
-      # @return [Array<Hash, Struct, Data>] Serialized objects
-      #
-      def build(containers)
-        return containers unless mode == :data
-
-        data_class = self.data_class
-        containers.map { |container| data_class.new(**container) }
       end
     end
 

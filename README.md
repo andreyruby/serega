@@ -653,7 +653,7 @@ class AppSerializer < Serega
   # This defines storage size (count of stored `plans` with different modifiers).
   # Modifiers are compared as provided, so `[:id, :name]` and `"id,name"` are
   # stored separately. The plan without modifiers is always stored.
-  config.max_cached_plans_per_serializer_count = 50 # default is 0, disabled
+  config.max_cached_plans_per_serializer_count = 50 # default is 20, 0 disables it
 end
 ```
 
