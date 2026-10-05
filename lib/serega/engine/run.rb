@@ -95,7 +95,7 @@ class Serega
       def collect(object, many, objects)
         return if object.nil?
 
-        if many != false && SeregaUtils::CollectionDetector.call(object)
+        if many != false && (object.instance_of?(Array) || SeregaUtils::CollectionDetector.call(object))
           collection = object.to_a
           objects.concat(collection)
           collection.size

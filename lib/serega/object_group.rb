@@ -56,7 +56,7 @@ class Serega
         @references = references
         @child_groups = nil
         @serialized = nil
-        @loaded_batches = {}.compare_by_identity
+        @loaded_batches = nil
       end
 
       # Runs the preloads, and adds one child group of related objects per
@@ -143,7 +143,7 @@ class Serega
         return if names.empty?
 
         loaders = self.class.serializer_class.batch_loaders
-        loaded_batches = @loaded_batches
+        loaded_batches = (@loaded_batches ||= {}.compare_by_identity)
         names.to_h do |name|
           loader = loaders[name]
           [name, loaded_batches[loader] ||= loader.load(@objects, @context)]
