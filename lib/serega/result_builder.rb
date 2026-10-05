@@ -2,16 +2,16 @@
 
 class Serega
   #
-  # Shape of serialization results of one plan in one serialization mode.
-  # Builds empty result containers filled in place during serialization.
+  # Builds serialization results of one plan in one serialization mode:
+  # empty result containers filled in place during serialization.
   #
   # @private
-  class SeregaResultShape
+  class SeregaResultBuilder
     @data_classes = {}
     @struct_classes = {}
 
     #
-    # SeregaResultShape class methods
+    # SeregaResultBuilder class methods
     #
     # @private
     module ClassMethods
@@ -45,7 +45,7 @@ class Serega
     end
 
     #
-    # SeregaResultShape instance methods
+    # SeregaResultBuilder instance methods
     #
     # @private
     module InstanceMethods
@@ -54,7 +54,7 @@ class Serega
       attr_reader :mode
 
       #
-      # Instantiates new result shape
+      # Instantiates new result builder
       #
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       # @param points [Array<SeregaPlanPoint>] Serialized plan points
@@ -83,7 +83,7 @@ class Serega
       end
 
       #
-      # Builds empty result containers filled in place during serialization.
+      # empty result containers filled in place during serialization.
       #
       # Patched in:
       # - plugin :if (builds :data containers with nil values of all attributes)

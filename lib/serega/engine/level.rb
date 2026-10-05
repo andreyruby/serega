@@ -19,7 +19,7 @@ class Serega
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       def initialize(serializer, mode)
         @serializer = serializer
-        @result_shape = serializer.plan.result_shape(mode)
+        @result_builder = serializer.plan.result_builder(mode)
         @objects = []
         @containers = []
         @results = {}.compare_by_identity
@@ -38,7 +38,7 @@ class Serega
       # @param objects [Array] objects serialized at this level
       # @return [Array<Hash, Struct>] the created containers, aligned with objects
       def add(objects)
-        containers = @result_shape.build_containers(objects.size)
+        containers = @result_builder.build_containers(objects.size)
         @objects.concat(objects)
         @containers.concat(containers)
         containers

@@ -35,7 +35,7 @@ RSpec.describe Serega::SeregaEngine do
         let(:mode) { :struct }
 
         it "returns plan structs as containers" do
-          expect(queue.enqueue(serializer, [1])).to eq [plan.result_shape(:struct).struct_class.new]
+          expect(queue.enqueue(serializer, [1])).to eq [plan.result_builder(:struct).struct_class.new]
         end
       end
     end

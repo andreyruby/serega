@@ -25,8 +25,8 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
   end
 
-  describe "SeregaResultShape#build_containers" do
-    subject(:containers) { serializer::SeregaPlan.new(nil, {}).result_shape(mode).build_containers(2) }
+  describe "SeregaResultBuilder#build_containers" do
+    subject(:containers) { serializer::SeregaPlan.new(nil, {}).result_builder(mode).build_containers(2) }
 
     let(:serializer) do
       Class.new(Serega) do
@@ -478,7 +478,7 @@ RSpec.describe Serega::SeregaPlugins::If do
       end
 
       it "returns objects of one Data class" do
-        expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultShape.data_class_for(%i[name email age posts])]
+        expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultBuilder.data_class_for(%i[name email age posts])]
       end
     end
 
@@ -493,7 +493,7 @@ RSpec.describe Serega::SeregaPlugins::If do
       end
 
       it "returns objects of one Struct class" do
-        expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultShape.struct_class_for(%i[name email age posts])]
+        expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultBuilder.struct_class_for(%i[name email age posts])]
       end
     end
 
