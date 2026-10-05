@@ -37,7 +37,6 @@ require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
 require_relative "serega/engine/level_queue"
 require_relative "serega/engine/level"
-require_relative "serega/engine/loader"
 require_relative "serega/validations/utils/check_allowed_keys"
 require_relative "serega/validations/utils/check_opt_is_bool"
 require_relative "serega/validations/utils/check_opt_is_hash"
@@ -60,6 +59,7 @@ require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_serialize_params"
 
+require_relative "serega/batch_loader"
 require_relative "serega/config"
 require_relative "serega/presenter"
 require_relative "serega/object_serializer"
@@ -92,10 +92,8 @@ class Serega
   check_batch_loader_params_class.serializer_class = self
   const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
 
-  # Assigns `SeregaEngineLoader` constant to current class
-  engine_loader_class = Class.new(SeregaEngine::Loader)
-  engine_loader_class.serializer_class = self
-  const_set(:SeregaEngineLoader, engine_loader_class)
+  # Batch loaders of Serega validate params with Serega::CheckBatchLoaderParams
+  SeregaBatchLoader.serializer_class = self
 
   #
   # Serializers class methods
@@ -250,7 +248,7 @@ class Serega
       check_unlocked
       raise SeregaError, "Batch loader must be defined with a callable value or block" if (value && block) || (!value && !block)
 
-      batch_loader = self::SeregaEngineLoader.new(name: name, block: value || block)
+      batch_loader = self::SeregaBatchLoader.new(name: name, block: value || block)
       batch_loaders[batch_loader.name] = batch_loader
     end
 
@@ -510,9 +508,9 @@ class Serega
       subclass.const_set(:SeregaPlanCache, plan_cache_class)
       subclass.instance_variable_set(:@plan_cache, plan_cache_class.new)
 
-      engine_loader_class = Class.new(self::SeregaEngineLoader)
-      engine_loader_class.serializer_class = subclass
-      subclass.const_set(:SeregaEngineLoader, engine_loader_class)
+      batch_loader_class = Class.new(self::SeregaBatchLoader)
+      batch_loader_class.serializer_class = subclass
+      subclass.const_set(:SeregaBatchLoader, batch_loader_class)
 
       object_serializer_class = Class.new(self::SeregaObjectSerializer)
       object_serializer_class.serializer_class = subclass

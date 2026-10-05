@@ -51,7 +51,7 @@ class Serega
       end
 
       # Loads a named batch loader once for this level's objects.
-      # @param loader [SeregaEngine::Loader] Named batch loader
+      # @param loader [SeregaBatchLoader] Named batch loader
       # @return [Object] Loaded values
       def fetch(loader)
         @results[loader] ||= loader.load(@objects, @serializer.context)
