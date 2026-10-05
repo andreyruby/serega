@@ -92,11 +92,11 @@ RSpec.describe Serega do
       expect(parent.prepare_initial_objects).to equal parent_handler
     end
 
-    it "inherits serialization class" do
+    it "inherits object group class" do
       parent = Class.new(described_class)
       child = Class.new(parent)
 
-      expect(child::SeregaObjectSerializer.superclass).to eq parent::SeregaObjectSerializer
+      expect(child::SeregaObjectGroup.superclass).to eq parent::SeregaObjectGroup
     end
 
     it "links internal classes to the child serializer" do
@@ -105,7 +105,7 @@ RSpec.describe Serega do
 
       %i[
         SeregaConfig SeregaAttribute SeregaAttributeNormalizer SeregaDataBuilder
-        SeregaPlan SeregaPlanPoint SeregaPlanCache SeregaResultBuilder SeregaBatchLoader SeregaObjectSerializer
+        SeregaPlan SeregaPlanPoint SeregaPlanCache SeregaResultBuilder SeregaBatchLoader SeregaObjectGroup
         CheckAttributeParams CheckSerializeParams CheckBatchLoaderParams
       ].each do |const_name|
         expect(child.const_get(const_name).serializer_class).to eq(child), const_name.to_s
