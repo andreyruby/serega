@@ -35,8 +35,7 @@ require_relative "serega/attribute_value_resolvers/hash_access"
 require_relative "serega/attribute_value_resolvers/keyword"
 require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
-require_relative "serega/engine/level_queue"
-require_relative "serega/engine/level"
+require_relative "serega/engine/run"
 require_relative "serega/validations/utils/check_allowed_keys"
 require_relative "serega/validations/utils/check_opt_is_bool"
 require_relative "serega/validations/utils/check_opt_is_hash"
@@ -62,7 +61,7 @@ require_relative "serega/validations/check_serialize_params"
 require_relative "serega/batch_loader"
 require_relative "serega/config"
 require_relative "serega/presenter"
-require_relative "serega/object_serializer"
+require_relative "serega/object_group"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
 require_relative "serega/result_builder"
@@ -512,9 +511,9 @@ class Serega
       batch_loader_class.serializer_class = subclass
       subclass.const_set(:SeregaBatchLoader, batch_loader_class)
 
-      object_serializer_class = Class.new(self::SeregaObjectSerializer)
-      object_serializer_class.serializer_class = subclass
-      subclass.const_set(:SeregaObjectSerializer, object_serializer_class)
+      object_group_class = Class.new(self::SeregaObjectGroup)
+      object_group_class.serializer_class = subclass
+      subclass.const_set(:SeregaObjectGroup, object_group_class)
 
       check_attribute_params_class = Class.new(self::CheckAttributeParams)
       check_attribute_params_class.serializer_class = subclass
@@ -681,7 +680,7 @@ class Serega
     end
 
     def prepare_initial_serialization_opts(object, opts, mode = :hash)
-      opts[:level_queue] = SeregaEngine::LevelQueue.new(mode: mode)
+      opts[:run] = SeregaEngine::Run.new(mode: mode, context: opts[:context])
       opts[:many] = SeregaUtils::CollectionDetector.call(object) unless opts.key?(:many)
       opts[:plan] = plan
       opts
@@ -692,15 +691,7 @@ class Serega
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
-      object_serializer = self.class::SeregaObjectSerializer.new(
-        context: opts[:context],
-        plan: opts[:plan],
-        level_queue: opts[:level_queue],
-        many: opts[:many]
-      )
-      result = object_serializer.serialize(object)
-      opts[:level_queue].run
-      result
+      opts[:run].call(opts[:plan], object, many: opts[:many])
     end
   end
 

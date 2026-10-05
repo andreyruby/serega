@@ -3,10 +3,6 @@
 RSpec.describe Serega::SeregaPlanPoint do
   let(:base) { Class.new(Serega) }
 
-  let(:child_serializer_class) do
-    Class.new(base) { attribute :name }
-  end
-
   def point_for(serializer, name)
     serializer::SeregaPlan.new(nil, {}).points.find { |point| point.name == name }
   end
@@ -56,47 +52,28 @@ RSpec.describe Serega::SeregaPlanPoint do
   end
 
   describe "#load_batches" do
-    it "fetches each needed loader from the level once and returns them keyed by name" do
+    it "loads each needed loader from the object group once and returns them keyed by name" do
       serializer = Class.new(base) do
         attribute :name
         attribute :online, batch: proc { |_objects| {} }
       end
       point = point_for(serializer, :online)
       loader = serializer.batch_loaders[:online]
-      level = instance_double(Serega::SeregaEngine::Level)
-      allow(level).to receive(:fetch).with(loader).and_return("LOADED")
+      object_group = instance_double(Serega::SeregaObjectGroup)
+      allow(object_group).to receive(:load_batch).with(loader).and_return("LOADED")
 
-      expect(point.load_batches(level)).to eq(online: "LOADED")
-      expect(level).to have_received(:fetch).with(loader).once
+      expect(point.load_batches(object_group)).to eq(online: "LOADED")
+      expect(object_group).to have_received(:load_batch).with(loader).once
     end
 
     it "wraps loading errors with the attribute name and serializer class" do
       serializer = Class.new(base) { attribute :online, batch: proc { |_objects| {} } }
       point = point_for(serializer, :online)
-      level = instance_double(Serega::SeregaEngine::Level)
-      allow(level).to receive(:fetch).and_raise("boom")
+      object_group = instance_double(Serega::SeregaObjectGroup)
+      allow(object_group).to receive(:load_batch).and_raise("boom")
 
-      expect { point.load_batches(level) }
+      expect { point.load_batches(object_group) }
         .to raise_error RuntimeError, end_with("(when serializing 'online' attribute in #{serializer})")
-    end
-  end
-
-  describe "#child_serializer" do
-    let(:context) { {locale: :en} }
-    let(:level_queue) { Serega::SeregaEngine::LevelQueue.new }
-
-    it "builds the child object serializer with the point's child plan, many, context and level queue" do
-      child = child_serializer_class
-      serializer = Class.new(base) { attribute :posts, serializer: child, many: true }
-      point = point_for(serializer, :posts)
-
-      result = point.child_serializer(context: context, level_queue: level_queue)
-
-      expect(result).to be_a child::SeregaObjectSerializer
-      expect(result.plan).to equal point.child_plan
-      expect(result.context).to equal context
-      expect(result.many).to be true
-      expect(result.level_queue).to equal level_queue
     end
   end
 end

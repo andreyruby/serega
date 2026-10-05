@@ -93,28 +93,17 @@ class Serega
       end
 
       # Loads the batch loaders this point's value needs, each once for the whole
-      # level, and returns them keyed by loader name for #value to read from.
+      # object group, and returns them keyed by loader name for #value to read from.
       #
-      # @param level [SeregaEngine::Level] level whose objects are loaded for
+      # @param object_group [SeregaObjectGroup] object group whose objects are loaded for
       # @return [Hash] loaded data per loader name
-      def load_batches(level)
+      def load_batches(object_group)
         loaders = self.class.serializer_class.batch_loaders
         batch_loaders.each_with_object({}) do |name, batches|
-          batches[name] = level.fetch(loaders[name])
+          batches[name] = object_group.load_batch(loaders[name])
         end
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, self)
-      end
-
-      # Builds the object serializer that serializes this point's relation. The
-      # point owns the static config (child plan, serializer class, `many`); the
-      # caller injects the runtime `context` and `level_queue`.
-      #
-      # @param context [Hash] serialization context
-      # @param level_queue [SeregaEngine::LevelQueue] queue of serialization levels
-      # @return [SeregaObjectSerializer] serializer for the child level
-      def child_serializer(context:, level_queue:)
-        serializer::SeregaObjectSerializer.new(context: context, plan: child_plan, level_queue: level_queue, many: many)
       end
     end
 

@@ -58,7 +58,7 @@ class Serega
         serializer_class::SeregaResultBuilder.include(ResultBuilderInstanceMethods)
         serializer_class::SeregaPlanPoint.include(PlanPointInstanceMethods)
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
-        serializer_class::SeregaObjectSerializer.include(ObjectSerializerInstanceMethods)
+        serializer_class::SeregaObjectGroup.include(ObjectGroupInstanceMethods)
       end
 
       #
@@ -285,19 +285,20 @@ class Serega
       end
 
       #
-      # SeregaObjectSerializer additional/patched class methods
+      # SeregaObjectGroup additional/patched instance methods
       #
-      # @see Serega::SeregaObjectSerializer
+      # @see Serega::SeregaObjectGroup
       #
       # @private
-      module ObjectSerializerInstanceMethods
+      module ObjectGroupInstanceMethods
         private
 
-        def process_point(point, objects, containers, batches, child_serializer)
+        def serialize_point(point, objects, containers, batches, child_group)
           return super unless point.conditional?
 
           attribute = point.attribute
           name = point.name
+          many = point.many
           context = @context
           index = 0
           size = objects.size
@@ -307,7 +308,7 @@ class Serega
 
             if point.satisfy_if_conditions?(object, context)
               value = attribute.value(object, context, batches: batches)
-              final_value = child_serializer ? child_serializer.serialize(value) : value
+              final_value = child_group ? child_group.add(value, many) : value
               containers[index][name] = final_value if point.satisfy_if_value_conditions?(final_value, context)
             end
 
