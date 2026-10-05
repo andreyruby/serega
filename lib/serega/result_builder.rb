@@ -3,7 +3,8 @@
 class Serega
   #
   # Builds serialization results of one plan in one serialization mode:
-  # empty result containers filled in place during serialization.
+  # empty result containers filled in place during serialization, then the
+  # results from the filled containers.
   #
   # @private
   class SeregaResultBuilder
@@ -99,6 +100,22 @@ class Serega
           Array.new(count) { struct_class.new }
         else Array.new(count) { {} } # :hash, :data
         end
+      end
+
+      #
+      # Builds the results from the filled containers. The :data mode makes a
+      # Data object from each Hash container. Other modes return the
+      # containers.
+      #
+      # @param containers [Array<Hash, Struct>] Filled containers
+      #
+      # @return [Array<Hash, Struct, Data>] Results
+      #
+      def build(containers)
+        return containers unless mode == :data
+
+        data_class = self.data_class
+        containers.map { |container| data_class.new(**container) }
       end
     end
 

@@ -104,7 +104,7 @@ RSpec.describe Serega do
       child = Class.new(parent)
 
       %i[
-        SeregaConfig SeregaAttribute SeregaAttributeNormalizer SeregaDataBuilder
+        SeregaConfig SeregaAttribute SeregaAttributeNormalizer
         SeregaPlan SeregaPlanPoint SeregaPlanCache SeregaResultBuilder SeregaBatchLoader SeregaObjectGroup
         CheckAttributeParams CheckSerializeParams CheckBatchLoaderParams
       ].each do |const_name|

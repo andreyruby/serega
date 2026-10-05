@@ -50,7 +50,9 @@ RSpec.describe Serega::SeregaEngine::Run do
       let(:mode) { :struct }
 
       it "serializes the object to a Struct" do
-        expect(result.to_h).to eq(name: "Ann", posts: [plan.relation_points[0].child_plan.result_builder(:struct).struct_class.new("Hello")])
+        post_struct_class = post_serializer::SeregaResultBuilder.struct_class_for(%i[title])
+
+        expect(result.to_h).to eq(name: "Ann", posts: [post_struct_class.new("Hello")])
       end
     end
   end

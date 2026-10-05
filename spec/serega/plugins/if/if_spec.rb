@@ -265,6 +265,22 @@ RSpec.describe Serega::SeregaPlugins::If do
         a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
     end
 
+    it "annotates errors raised while reading a conditional relation" do
+      serializer.plugin :if
+      serializer.attribute(:foo, serializer: Class.new(Serega), value: proc { raise "boom in relation" }, if: proc { true })
+
+      expect { serializer.new.to_h(1) }.to raise_error RuntimeError,
+        a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
+    end
+
+    it "serializes relations without conditions" do
+      serializer.plugin :if
+      serializer.attribute(:bar, const: "bar")
+      serializer.attribute(:foo, serializer: serializer, const: 1, hide: true)
+
+      expect(serializer.new(with: :foo).to_h(1)).to eq(bar: "bar", foo: {bar: "bar"})
+    end
+
     it "keeps attributes in declared order when :if skips one for an earlier object only" do
       serializer.plugin :if
 

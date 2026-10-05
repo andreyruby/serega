@@ -32,6 +32,10 @@ class Serega
     #   end
     #
     module If
+      # Relation reference of an object failing :if/:unless conditions
+      # @private
+      SKIP = Object.new.freeze
+
       # @return [Symbol] Plugin name
       # @private
       def self.plugin_name
@@ -293,12 +297,11 @@ class Serega
       module ObjectGroupInstanceMethods
         private
 
-        def serialize_point(point, objects, containers, batches, child_group)
+        def serialize_point(point, objects, containers, batches)
           return super unless point.conditional?
 
           attribute = point.attribute
           name = point.name
-          many = point.many
           context = @context
           index = 0
           size = objects.size
@@ -308,11 +311,37 @@ class Serega
 
             if point.satisfy_if_conditions?(object, context)
               value = attribute.value(object, context, batches: batches)
-              final_value = child_group ? child_group.add(value, many) : value
-              containers[index][name] = final_value if point.satisfy_if_value_conditions?(final_value, context)
+              containers[index][name] = value if point.satisfy_if_value_conditions?(value, context)
             end
 
             index += 1
+          end
+        rescue => error
+          SeregaUtils::SerializedAttributeError.call(error, point)
+        end
+
+        def assign_relation_values(point, values, containers)
+          return super unless point.conditional?
+
+          name = point.name
+
+          values.each_with_index do |value, index|
+            containers[index][name] = value unless SKIP.equal?(value)
+          end
+        end
+
+        def read_relations(point, batches, child_group)
+          return super unless point.conditional?
+
+          attribute = point.attribute
+          many = point.many
+          context = @context
+
+          @objects.map do |object|
+            next SKIP unless point.satisfy_if_conditions?(object, context)
+
+            value = attribute.value(object, context, batches: batches)
+            child_group.add(value, many)
           end
         rescue => error
           SeregaUtils::SerializedAttributeError.call(error, point)
