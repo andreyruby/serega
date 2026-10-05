@@ -5,7 +5,8 @@ class Serega
   # Generates the Ruby code of the `SeregaResultBuilder#call` method of one
   # plan in one serialization mode. The method reads all values of an
   # object, then makes the serialized object in one step: a Hash literal,
-  # `Struct.new` or `Data.new`.
+  # `Struct.new` or `Data.new`. The code calls simple attribute readers
+  # directly, for example `object.name`.
   #
   # Generated code for a plan with `attribute :id` and
   # `attribute :posts, serializer: PostSerializer` in the :hash mode:
@@ -23,7 +24,7 @@ class Serega
   #     while object_index < size
   #       object = objects[object_index]
   #       point_index = 0
-  #       value_0 = attribute_0.value(object, context, batches: batches_0)
+  #       value_0 = object.id
   #       point_index = 1
   #       value_1 = relation_values_1[object_index]
   #       serialized_hash = {:id => value_0, :posts => value_1}
@@ -39,6 +40,9 @@ class Serega
   #
   # @private
   class SeregaResultCode
+    # Method names called directly in generated code
+    PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
+
     #
     # SeregaResultCode instance methods
     #
@@ -128,7 +132,7 @@ class Serega
       def read_value_code(point, index)
         return "relation_values_#{index}[object_index]" if point.child_plan
 
-        "attribute_#{index}.value(object, context, batches: batches_#{index})"
+        point.attribute.value_code("object") || "attribute_#{index}.value(object, context, batches: batches_#{index})"
       end
 
       # Whether the point value can be skipped

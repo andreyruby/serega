@@ -43,6 +43,18 @@ class Serega
       def call(object)
         object.public_send(@delegate_to)&.public_send(@method_name)
       end
+
+      #
+      # Ruby code that delegates the method call
+      #
+      # @param object_variable [String] Name of the object variable in the code
+      # @return [String, nil] Code, or nil when the method names are not plain
+      #
+      def code(object_variable)
+        return unless SeregaResultCode::PLAIN_METHOD_NAME.match?(@delegate_to) && SeregaResultCode::PLAIN_METHOD_NAME.match?(@method_name)
+
+        "#{object_variable}.#{@delegate_to}&.#{@method_name}"
+      end
     end
 
     #
@@ -63,6 +75,18 @@ class Serega
       #
       def call(object)
         object.public_send(@delegate_to).public_send(@method_name)
+      end
+
+      #
+      # Ruby code that delegates the method call
+      #
+      # @param object_variable [String] Name of the object variable in the code
+      # @return [String, nil] Code, or nil when the method names are not plain
+      #
+      def code(object_variable)
+        return unless SeregaResultCode::PLAIN_METHOD_NAME.match?(@delegate_to) && SeregaResultCode::PLAIN_METHOD_NAME.match?(@method_name)
+
+        "#{object_variable}.#{@delegate_to}.#{@method_name}"
       end
     end
   end

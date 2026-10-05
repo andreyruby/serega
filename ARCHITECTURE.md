@@ -32,7 +32,7 @@ The first plan locks the class. Later definition calls raise.
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
 - `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlanCache` keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them.
-- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of an object, then makes the serialized object in one step: a Hash literal, `Struct.new` or `Data.new`.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of an object, then makes the serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method calls plain attribute methods directly, for example `object.name` or `object.profile&.city` (`SeregaAttribute#value_code`). Other attributes call `SeregaAttribute#value`.
 
 ### 3. Run
 
@@ -124,7 +124,7 @@ Each serializer class gets subclasses of the internal classes in its `inherited`
 | `:if` | `SeregaObjectGroup#read_relations` | returns `If::SKIP` for relations of objects failing `:if` or `:unless` |
 | `:root` | `Serega#serialize` | wraps the serialized object(s): `{root => serialized}` |
 | `:metadata`, `:context_metadata` | `Serega#serialize` | add metadata keys next to the root key |
-| `:formatters` | `SeregaAttribute` | formats the value after it is read |
+| `:formatters` | `SeregaAttribute#value`, `#value_code` | formats the value after it is read; a formatted attribute is not read directly in generated code |
 | `:camel_case` | `SeregaAttributeNormalizer` | camelizes attribute names |
 | `:activerecord_preloads` | `preload_with` handler | runs `ActiveRecord::Associations::Preloader` in `SeregaObjectGroup#run_preloads` |
 | `:depth_limit` | `SeregaPlan#initialize` | raises when the plan is too deep |
