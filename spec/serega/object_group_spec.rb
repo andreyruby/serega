@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaObjectGroup do
-  subject(:object_group) { run.object_group(plan) }
+  subject(:object_group) { user_serializer::SeregaObjectGroup.new(run, plan, [user1, user2], references) }
 
   let(:user_serializer) { Class.new(Serega) { attribute :name } }
   let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
   let(:run) { Serega::SeregaEngine::Run.new(mode: :hash, context: context) }
   let(:context) { {locale: :en} }
+  let(:references) { [2] }
   let(:user1) { double(name: "Ann") }
   let(:user2) { double(name: "Bob") }
 
@@ -16,60 +17,9 @@ RSpec.describe Serega::SeregaObjectGroup do
     end
   end
 
-  describe "#add" do
-    subject(:reference) { object_group.add(object, many) }
-
-    let(:object) { [user1, user2] }
-    let(:many) { nil }
-
-    it "adds the objects and returns the range of their serialized objects" do
-      expect(reference).to eq 0...2
+  describe "#objects" do
+    it "returns the serialized objects" do
       expect(object_group.objects).to eq [user1, user2]
-    end
-
-    context "when the group has objects" do
-      before { object_group.add(user1, false) }
-
-      it "returns the range after the earlier objects" do
-        expect(reference).to eq 1...3
-        expect(object_group.objects).to eq [user1, user1, user2]
-      end
-    end
-
-    context "with one object" do
-      let(:object) { user1 }
-
-      it "returns the index of its serialized object" do
-        expect(reference).to eq 0
-        expect(object_group.objects).to eq [user1]
-      end
-    end
-
-    context "with nil" do
-      let(:object) { nil }
-
-      it "adds no objects" do
-        expect(reference).to be_nil
-        expect(object_group.objects).to eq []
-      end
-    end
-
-    context "when many is true and the object is not a collection" do
-      let(:object) { user1 }
-      let(:many) { true }
-
-      it "returns a range of one serialized object" do
-        expect(reference).to eq 0...1
-      end
-    end
-
-    context "when many is false and the object is a collection" do
-      let(:many) { false }
-
-      it "adds the collection as one object" do
-        expect(reference).to eq 0
-        expect(object_group.objects).to eq [[user1, user2]]
-      end
     end
 
     context "when the serializer has a presenter" do
@@ -81,9 +31,7 @@ RSpec.describe Serega::SeregaObjectGroup do
         end
       end
 
-      it "adds the objects wrapped in presenters" do
-        reference
-
+      it "returns the objects wrapped in presenters" do
         expect(object_group.objects.map(&:name)).to eq ["Mr. Ann", "Mr. Bob"]
       end
     end
@@ -106,12 +54,24 @@ RSpec.describe Serega::SeregaObjectGroup do
     let(:user1) { double(name: "Ann", posts: [post]) }
     let(:user2) { double(name: "Bob", posts: nil) }
 
-    before { object_group.add([user1, user2], true) }
+    before { allow(run).to receive(:add_object_group).and_call_original }
 
-    it "adds the related objects to the group of the relation plan" do
+    it "adds a group of the related objects" do
       discover
 
-      expect(run.object_group(plan.relation_points[0].child_plan).objects).to eq [post]
+      expect(run).to have_received(:add_object_group).with(plan.relation_points[0].child_plan, [post], [1, nil])
+    end
+
+    context "when reading a relation raises an error" do
+      let(:user_serializer) do
+        Class.new(Serega) { attribute :posts, serializer: Class.new(Serega), value: proc { raise "boom" } }
+      end
+
+      it "adds the attribute name and the serializer to the error message" do
+        expect { discover }
+          .to raise_error RuntimeError, "boom\n(when serializing 'posts' attribute in #{user_serializer})"
+        expect(run).not_to have_received(:add_object_group)
+      end
     end
 
     context "with preloads" do
@@ -173,17 +133,6 @@ RSpec.describe Serega::SeregaObjectGroup do
           .to raise_error RuntimeError, "boom\n(when serializing 'name' attribute in #{user_serializer})"
       end
     end
-
-    context "when reading a relation raises an error" do
-      let(:user_serializer) do
-        Class.new(Serega) { attribute :posts, serializer: Class.new(Serega), value: proc { raise "boom" } }
-      end
-
-      it "adds the attribute name and the serializer to the error message" do
-        expect { discover }
-          .to raise_error RuntimeError, "boom\n(when serializing 'posts' attribute in #{user_serializer})"
-      end
-    end
   end
 
   describe "#build" do
@@ -191,8 +140,6 @@ RSpec.describe Serega::SeregaObjectGroup do
       object_group.build
       object_group.serialized
     end
-
-    before { object_group.add([user1, user2], true) }
 
     it "builds the serialized object of every object" do
       expect(serialized).to eq [{name: "Ann"}, {name: "Bob"}]
@@ -209,22 +156,35 @@ RSpec.describe Serega::SeregaObjectGroup do
         end
       end
 
-      let(:post) { double(title: "Hello") }
-      let(:user1) { double(name: "Ann", posts: [post]) }
+      let(:post1) { double(title: "Hello") }
+      let(:post2) { double(title: "World") }
+      let(:user1) { double(name: "Ann", posts: [post1, post2]) }
       let(:user2) { double(name: "Bob", posts: nil) }
+      let(:child_groups) { [] }
 
       before do
+        allow(run).to receive(:add_object_group).and_wrap_original do |method, *arguments|
+          child_group = method.call(*arguments)
+          child_groups << child_group
+          child_group
+        end
+
         object_group.discover
-        run.object_group(plan.relation_points[0].child_plan).build
+        child_groups.each(&:build)
       end
 
-      it "takes the relation values from the built group of the relation plan" do
-        expect(serialized).to eq [{name: "Ann", posts: [{title: "Hello"}]}, {name: "Bob", posts: nil}]
+      it "takes the relation values from the built group of related objects" do
+        expect(serialized).to eq [{name: "Ann", posts: [{title: "Hello"}, {title: "World"}]}, {name: "Bob", posts: nil}]
+        expect(run).to have_received(:add_object_group).once
       end
     end
 
     context "with a batch attribute" do
-      let(:user_serializer) { Class.new(Serega) { attribute :name, batch: {use: proc { |users| users.to_h { |user| [user, user.name.upcase] } }, id: :itself} } }
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :name, batch: {use: proc { |users| users.to_h { |user| [user, user.name.upcase] } }, id: :itself}
+        end
+      end
 
       it "reads the values from the loaded batch" do
         expect(serialized).to eq [{name: "ANN"}, {name: "BOB"}]
@@ -264,34 +224,18 @@ RSpec.describe Serega::SeregaObjectGroup do
     end
   end
 
-  describe "#serialized_for" do
-    subject(:serialized) { object_group.serialized_for(reference) }
-
-    let(:reference) { 1 }
-
-    before do
-      object_group.add([user1, user2], true)
+  describe "#relation_values" do
+    subject(:relation_values) do
       object_group.build
+      object_group.relation_values
     end
 
-    it "returns the serialized object of an index" do
-      expect(serialized).to eq(name: "Bob")
-    end
+    let(:user3) { double(name: "Cat") }
+    let(:object_group) { user_serializer::SeregaObjectGroup.new(run, plan, [user1, user2, user3], references) }
+    let(:references) { [2, nil, Serega::SeregaEngine::SINGLE_OBJECT] }
 
-    context "with a range" do
-      let(:reference) { 0...2 }
-
-      it "returns the serialized objects of the range" do
-        expect(serialized).to eq [{name: "Ann"}, {name: "Bob"}]
-      end
-    end
-
-    context "with nil" do
-      let(:reference) { nil }
-
-      it "returns nil" do
-        expect(serialized).to be_nil
-      end
+    it "takes the serialized objects in the order of the references" do
+      expect(relation_values).to eq [[{name: "Ann"}, {name: "Bob"}], nil, {name: "Cat"}]
     end
   end
 end

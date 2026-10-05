@@ -13,7 +13,7 @@ Definition   once per serializer class   Serega, SeregaAttribute, SeregaBatchLoa
      ↓
 Plan         once per set of modifiers   SeregaPlan → SeregaPlanPoint, SeregaResultBuilder per mode
      ↓
-Run          once per serialization      SeregaEngine::Run → SeregaObjectGroup per plan
+Run          once per serialization      SeregaEngine::Run → SeregaObjectGroup per plan (root and each relation)
 ```
 
 ### 1. Definition
@@ -43,36 +43,48 @@ The first plan locks the class. Later definition calls raise.
 3. `prepare_initial_serialization_opts` sets `opts[:mode]` and `opts[:many]`.
 4. `serialize` calls `SeregaEngine::Run.call(plan, object, many:, mode:, context:)`.
 
-`SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and one `SeregaObjectGroup` per plan. It serializes the groups in two passes:
+`SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and the object groups: one root group and one group per relation. It serializes the groups in two passes:
 
 ```
 Run.call(plan, object, many:, mode:, context:)
-├─ reference = run.object_group(plan).add(object, many)
+├─ reference = run.collect(object, many, objects)
+├─ root_group = run.add_object_group(plan, objects, [reference])
 │
 ├─ discover pass, from the root group down (also groups added during this pass)
 │  └─ object_group.discover
 │     ├─ run_preloads                                      once per group
 │     └─ for each relation point
 │        ├─ batches_for(point)                            once per group
-│        ├─ child_group = run.object_group(point.child_plan)
-│        └─ for each object
-│           └─ reference = child_group.add(attribute.value(object, ...), point.many)
+│        ├─ for each object
+│        │  └─ reference = run.collect(attribute.value(object, ...), point.many, child_objects)
+│        └─ child_group = run.add_object_group(point.child_plan, child_objects, references)
 │
 ├─ build pass, from the last group up
 │  └─ object_group.build
 │     ├─ batches = batches_for(point)                     once per group
-│     ├─ relation values = child_group.serialized_for(reference)   already built
+│     ├─ relations = child_group.relation_values per relation point   already built
 │     └─ serialized = plan.result_builder(mode).call(objects, context, batches, relations)
 │
-└─ root_group.serialized_for(reference)
+└─ root_group.relation_values[0]
 ```
 
 `SeregaObjectGroup` (`lib/serega/object_group.rb`) holds all objects of one plan in one run.
 
-- `#add` wraps the objects in the presenter and returns a reference to their serialized objects: an index for one object, a Range for a collection, nil for nil.
-- `#discover` runs the preloads and adds the related objects to the groups of the relation plans.
-- `#build` builds the serialized objects. The groups of the relation plans are built before it.
-- `#serialized_for(reference)` returns the serialized object(s) of a reference from `#add`.
+- `#initialize` wraps the objects in the presenter. The group keeps the references of its parent group.
+- `#discover` runs the preloads and adds one child group of related objects per relation.
+- `#build` builds the serialized objects. The child groups are built before it.
+- `#relation_values` turns the references into relation values of the parent group.
+
+`Run#collect` adds the object(s) of one parent to a list and returns a reference to their serialized objects:
+
+| relation value | reference | serialized relation value |
+|---|---|---|
+| one object | `SeregaEngine::SINGLE_OBJECT` (-1) | the next serialized object |
+| collection of N objects | `N` | Array of the next N serialized objects |
+| `nil` | `nil` | `nil` |
+| skipped by the `:if` plugin | `If::SKIP` | no key, or nil |
+
+The serialized objects of a group follow the order of its objects, thus `#relation_values` takes them one after another. The root group has one reference, thus `Run#call` returns its first relation value.
 
 The keys of a serialized object follow the order of the plan points. The values are read object by object. Relation values and preloads of a group are read in the discover pass, before the other values.
 

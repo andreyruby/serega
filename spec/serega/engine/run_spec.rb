@@ -69,23 +69,69 @@ RSpec.describe Serega::SeregaEngine::Run do
     end
   end
 
-  describe "#object_group" do
-    it "returns an object group of the plan serializer" do
-      object_group = run.object_group(plan)
+  describe "#add_object_group" do
+    subject(:object_group) { run.add_object_group(plan, [user], [Serega::SeregaEngine::SINGLE_OBJECT]) }
 
+    let(:user) { double }
+
+    it "returns a new object group of the plan serializer" do
       expect(object_group).to be_a user_serializer::SeregaObjectGroup
       expect(object_group.plan).to equal plan
       expect(object_group.run).to equal run
+      expect(object_group.objects).to eq [user]
+      expect(object_group.references).to eq [Serega::SeregaEngine::SINGLE_OBJECT]
+    end
+  end
+
+  describe "#collect" do
+    subject(:reference) { run.collect(object, many, objects) }
+
+    let(:objects) { [user1] }
+    let(:user1) { double }
+    let(:user2) { double }
+    let(:object) { [user2, user2] }
+    let(:many) { nil }
+
+    it "adds the collection and returns the count of its objects" do
+      expect(reference).to eq 2
+      expect(objects).to eq [user1, user2, user2]
     end
 
-    it "returns the same group for the same plan" do
-      expect(run.object_group(plan)).to equal run.object_group(plan)
+    context "with one object" do
+      let(:object) { user2 }
+
+      it "adds the object and returns SINGLE_OBJECT" do
+        expect(reference).to eq Serega::SeregaEngine::SINGLE_OBJECT
+        expect(objects).to eq [user1, user2]
+      end
     end
 
-    it "returns separate groups for different plans" do
-      other_plan = user_serializer::SeregaPlan.new(nil, {})
+    context "with nil" do
+      let(:object) { nil }
 
-      expect(run.object_group(plan)).not_to equal run.object_group(other_plan)
+      it "adds no objects" do
+        expect(reference).to be_nil
+        expect(objects).to eq [user1]
+      end
+    end
+
+    context "when many is true and the object is not a collection" do
+      let(:object) { user2 }
+      let(:many) { true }
+
+      it "adds the object and returns the count 1" do
+        expect(reference).to eq 1
+        expect(objects).to eq [user1, user2]
+      end
+    end
+
+    context "when many is false and the object is a collection" do
+      let(:many) { false }
+
+      it "adds the collection as one object" do
+        expect(reference).to eq Serega::SeregaEngine::SINGLE_OBJECT
+        expect(objects).to eq [user1, [user2, user2]]
+      end
     end
   end
 end

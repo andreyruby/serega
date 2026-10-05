@@ -317,18 +317,19 @@ class Serega
       module ObjectGroupInstanceMethods
         private
 
-        def read_relations(point, batches, child_group)
+        def read_relations(point, batches, child_objects)
           return super unless point.conditional?
 
           attribute = point.attribute
           many = point.many
           context = @context
+          run = @run
 
           @objects.map do |object|
             next SKIP unless point.satisfy_if_conditions?(object, context)
 
             value = attribute.value(object, context, batches: batches)
-            child_group.add(value, many)
+            run.collect(value, many, child_objects)
           end
         rescue => error
           SeregaUtils::SerializedAttributeError.call(error, point)

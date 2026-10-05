@@ -6,15 +6,19 @@ class Serega
   #
   # @private
   module SeregaEngine
+    # Reference to the serialized object of one object. A reference to the
+    # serialized objects of a collection is the count of its objects.
+    SINGLE_OBJECT = -1
+
     #
     # One serialization run. Serializes the object(s) with a plan, and all
     # their related objects.
     #
-    # The run keeps one object group per plan. A group holds all objects of its
-    # plan, for example the posts of all users, thus batch loaders and preloads
-    # run once per group. The run serializes the groups in two passes:
+    # The run keeps object groups. A group holds all objects of one plan, for
+    # example the posts of all users, thus batch loaders and preloads run once
+    # per group. The run serializes the groups in two passes:
     # - Discover pass, from the root group down. Each group runs its preloads
-    #   and adds its related objects to the groups of the relation plans.
+    #   and adds one child group of related objects per relation.
     # - Build pass, from the last group up. Each group builds its serialized
     #   objects. The serialized related objects are ready at this time.
     #
@@ -47,7 +51,6 @@ class Serega
         @mode = mode
         @context = context
         @object_groups = []
-        @object_groups_by_plan = {}.compare_by_identity
       end
 
       # Serializes the object(s) with the plan.
@@ -58,30 +61,51 @@ class Serega
       #
       # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
       def call(plan, object, many:)
-        object_group = object_group(plan)
-        reference = object_group.add(object, many)
+        objects = []
+        reference = collect(object, many, objects)
         return if reference.nil?
 
+        root_group = add_object_group(plan, objects, [reference])
         discover_object_groups
         @object_groups.reverse_each(&:build)
-        object_group.serialized_for(reference)
+        root_group.relation_values[0]
       end
 
-      # Returns the object group of the plan, and adds it on first use.
+      # Adds a group of objects of the plan.
       #
       # @param plan [SeregaPlan] Serialization plan
-      # @return [SeregaObjectGroup] Object group of the plan
-      def object_group(plan)
-        @object_groups_by_plan[plan] ||= add_object_group(plan)
-      end
-
-      private
-
-      def add_object_group(plan)
-        object_group = plan.serializer_class::SeregaObjectGroup.new(self, plan)
+      # @param objects [Array] Objects to serialize
+      # @param references [Array<Integer, nil, Object>] References from
+      #   #collect, one per object of the parent group
+      # @return [SeregaObjectGroup] New object group
+      def add_object_group(plan, objects, references)
+        object_group = plan.serializer_class::SeregaObjectGroup.new(self, plan, objects, references)
         @object_groups << object_group
         object_group
       end
+
+      # Adds the object(s) to the objects list.
+      #
+      # @param object [Object] Object(s) to serialize
+      # @param many [Boolean, nil] Whether the object is a collection
+      # @param objects [Array] Objects list
+      #
+      # @return [Integer, nil] Reference to the serialized objects:
+      #   SINGLE_OBJECT, count of objects of a collection, or nil for nil
+      def collect(object, many, objects)
+        return if object.nil?
+
+        if many != false && SeregaUtils::CollectionDetector.call(object)
+          collection = object.to_a
+          objects.concat(collection)
+          collection.size
+        else
+          objects << object
+          many ? 1 : SINGLE_OBJECT # `many` on, but a sole object was given — wrap it, don't raise
+        end
+      end
+
+      private
 
       # Discovers every group, also the groups added during discovery
       def discover_object_groups
