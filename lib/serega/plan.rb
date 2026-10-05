@@ -43,7 +43,7 @@ class Serega
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @relation_points = points.select(&:child_plan).freeze
-        @result_shapes = {}
+        @result_builders = {}
       end
 
       #
@@ -54,14 +54,14 @@ class Serega
       end
 
       #
-      # Result shape of this plan in the serialization mode
+      # Result builder of this plan in the serialization mode
       #
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       #
-      # @return [SeregaResultShape] Result shape
+      # @return [SeregaResultBuilder] Result builder
       #
-      def result_shape(mode)
-        @result_shapes[mode] ||= serializer_class::SeregaResultShape.new(mode, points)
+      def result_builder(mode)
+        @result_builders[mode] ||= serializer_class::SeregaResultBuilder.new(mode, points)
       end
 
       private

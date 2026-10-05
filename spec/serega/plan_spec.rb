@@ -102,23 +102,23 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
-  describe "#result_shape" do
+  describe "#result_builder" do
     let(:current_plan) { plan(only: {a1: {}}) }
 
-    it "returns a result shape of the plan attributes in the mode" do
-      result_shape = current_plan.result_shape(:struct)
+    it "returns a result builder of the plan attributes in the mode" do
+      result_builder = current_plan.result_builder(:struct)
 
-      expect(result_shape).to be_a current_serializer::SeregaResultShape
-      expect(result_shape.mode).to eq :struct
-      expect(result_shape.struct_class.members).to eq [:a1]
+      expect(result_builder).to be_a current_serializer::SeregaResultBuilder
+      expect(result_builder.mode).to eq :struct
+      expect(result_builder.struct_class.members).to eq [:a1]
     end
 
-    it "returns the same result shape for the same mode" do
-      expect(current_plan.result_shape(:struct)).to equal current_plan.result_shape(:struct)
+    it "returns the same result builder for the same mode" do
+      expect(current_plan.result_builder(:struct)).to equal current_plan.result_builder(:struct)
     end
 
-    it "returns separate result shapes for different modes" do
-      expect(current_plan.result_shape(:hash)).not_to equal current_plan.result_shape(:struct)
+    it "returns separate result builders for different modes" do
+      expect(current_plan.result_builder(:hash)).not_to equal current_plan.result_builder(:struct)
     end
   end
 end

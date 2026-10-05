@@ -33,7 +33,7 @@ RSpec.describe Serega::SeregaEngine::Level do
       it "returns an empty plan struct per object" do
         containers = level.add([1, 2])
 
-        expect(containers).to eq [plan.result_shape(:struct).struct_class.new, plan.result_shape(:struct).struct_class.new]
+        expect(containers).to eq [plan.result_builder(:struct).struct_class.new, plan.result_builder(:struct).struct_class.new]
         expect(containers[0]).not_to equal containers[1]
       end
     end

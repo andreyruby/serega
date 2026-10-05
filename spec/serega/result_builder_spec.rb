@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaResultShape do
-  subject(:result_shape) { serializer::SeregaResultShape.new(mode, plan.points) }
+RSpec.describe Serega::SeregaResultBuilder do
+  subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
 
   let(:serializer) do
     Class.new(Serega) do
@@ -14,7 +14,7 @@ RSpec.describe Serega::SeregaResultShape do
   let(:mode) { :hash }
 
   describe ".data_class_for" do
-    let(:described_class) { serializer::SeregaResultShape }
+    let(:described_class) { serializer::SeregaResultBuilder }
 
     it "returns a Data class with the given members" do
       data_class = described_class.data_class_for(%i[x y])
@@ -32,14 +32,14 @@ RSpec.describe Serega::SeregaResultShape do
     end
 
     it "keeps a separate cache for each serializer" do
-      other_class = Class.new(Serega)::SeregaResultShape
+      other_class = Class.new(Serega)::SeregaResultBuilder
 
       expect(described_class.data_class_for(%i[x])).not_to equal other_class.data_class_for(%i[x])
     end
   end
 
   describe ".struct_class_for" do
-    let(:described_class) { serializer::SeregaResultShape }
+    let(:described_class) { serializer::SeregaResultBuilder }
 
     it "returns a Struct class with the given members" do
       struct_class = described_class.struct_class_for(%i[x y])
@@ -57,7 +57,7 @@ RSpec.describe Serega::SeregaResultShape do
     end
 
     it "keeps a separate cache for each serializer" do
-      other_class = Class.new(Serega)::SeregaResultShape
+      other_class = Class.new(Serega)::SeregaResultBuilder
 
       expect(described_class.struct_class_for(%i[x])).not_to equal other_class.struct_class_for(%i[x])
     end
@@ -65,30 +65,30 @@ RSpec.describe Serega::SeregaResultShape do
 
   describe "#data_class" do
     it "returns a Data class with the plan attribute names as members" do
-      expect(result_shape.data_class.members).to eq %i[name email]
+      expect(result_builder.data_class.members).to eq %i[name email]
     end
 
-    it "returns the same Data class for result shapes with the same attributes" do
-      other_shape = serializer::SeregaResultShape.new(mode, plan.points)
+    it "returns the same Data class for result builders with the same attributes" do
+      other_builder = serializer::SeregaResultBuilder.new(mode, plan.points)
 
-      expect(result_shape.data_class).to equal other_shape.data_class
+      expect(result_builder.data_class).to equal other_builder.data_class
     end
   end
 
   describe "#struct_class" do
     it "returns a Struct class with the plan attribute names as members" do
-      expect(result_shape.struct_class.members).to eq %i[name email]
+      expect(result_builder.struct_class.members).to eq %i[name email]
     end
 
-    it "returns the same Struct class for result shapes with the same attributes" do
-      other_shape = serializer::SeregaResultShape.new(mode, plan.points)
+    it "returns the same Struct class for result builders with the same attributes" do
+      other_builder = serializer::SeregaResultBuilder.new(mode, plan.points)
 
-      expect(result_shape.struct_class).to equal other_shape.struct_class
+      expect(result_builder.struct_class).to equal other_builder.struct_class
     end
   end
 
   describe "#build_containers" do
-    subject(:containers) { result_shape.build_containers(2) }
+    subject(:containers) { result_builder.build_containers(2) }
 
     it "returns separate empty hashes" do
       expect(containers).to eq [{}, {}]

@@ -65,7 +65,7 @@ require_relative "serega/presenter"
 require_relative "serega/object_serializer"
 require_relative "serega/plan_point"
 require_relative "serega/plan"
-require_relative "serega/result_shape"
+require_relative "serega/result_builder"
 require_relative "serega/plan_cache"
 require_relative "serega/data_builder"
 require_relative "serega/plugins"
@@ -495,9 +495,9 @@ class Serega
       plan_class.serializer_class = subclass
       subclass.const_set(:SeregaPlan, plan_class)
 
-      result_shape_class = Class.new(self::SeregaResultShape)
-      result_shape_class.serializer_class = subclass
-      subclass.const_set(:SeregaResultShape, result_shape_class)
+      result_builder_class = Class.new(self::SeregaResultBuilder)
+      result_builder_class.serializer_class = subclass
+      subclass.const_set(:SeregaResultBuilder, result_builder_class)
 
       plan_point_class = Class.new(self::SeregaPlanPoint)
       plan_point_class.serializer_class = subclass

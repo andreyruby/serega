@@ -55,7 +55,7 @@ class Serega
 
         serializer_class::SeregaAttribute.include(AttributeInstanceMethods)
         serializer_class::SeregaAttributeNormalizer.include(AttributeNormalizerInstanceMethods)
-        serializer_class::SeregaResultShape.include(ResultShapeInstanceMethods)
+        serializer_class::SeregaResultBuilder.include(ResultBuilderInstanceMethods)
         serializer_class::SeregaPlanPoint.include(PlanPointInstanceMethods)
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
         serializer_class::SeregaObjectSerializer.include(ObjectSerializerInstanceMethods)
@@ -175,17 +175,17 @@ class Serega
       end
 
       #
-      # Serega::SeregaResultShape additional/patched instance methods
+      # Serega::SeregaResultBuilder additional/patched instance methods
       #
-      # @see Serega::SeregaResultShape::InstanceMethods
+      # @see Serega::SeregaResultBuilder::InstanceMethods
       #
       # @private
-      module ResultShapeInstanceMethods
+      module ResultBuilderInstanceMethods
         #
-        # Instantiates new result shape and prepares a template of :data
+        # Instantiates new result builder and prepares a template of :data
         # containers when the plan has conditional attributes
         #
-        # @see Serega::SeregaResultShape::InstanceMethods#initialize
+        # @see Serega::SeregaResultBuilder::InstanceMethods#initialize
         #
         def initialize(mode, points)
           super
