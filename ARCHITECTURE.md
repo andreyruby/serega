@@ -29,7 +29,7 @@ The first plan locks the class. Later definition calls raise.
 
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer. The point runs the preloads (`#run_preloads`) and loads its batches (`#load_batches`).
-- `SeregaResultBuilder` (`lib/serega/result_builder.rb`): makes the empty result containers of a plan in one mode: `{}` for `:hash` and `:data`, and a `Struct` for `:struct`.
+- `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the results of a plan in one mode. It makes empty containers (`{}` for `:hash` and `:data`, a `Struct` for `:struct`), and builds the results from the filled containers: a `Data` object from each Hash in the `:data` mode, or the containers themselves.
 
 ### 3. Run
 
@@ -39,45 +39,66 @@ The first plan locks the class. Later definition calls raise.
 2. `prepare_objects` calls the `prepare_initial_objects` handler.
 3. `prepare_initial_serialization_opts` sets `opts[:run]`, `opts[:many]` and `opts[:plan]`.
 4. `serialize` calls `opts[:run].call(plan, object, many:)`.
-5. `to_data` converts the Hash results to `Data` objects with `SeregaDataBuilder`.
 
-`SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and one `SeregaObjectGroup` per plan:
+`SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and one `SeregaObjectGroup` per plan. It serializes the groups in two passes:
 
 ```
 run.call(plan, object, many:)
-├─ run.object_group(plan).add(object, many)     → empty container(s), the result
-└─ for each object group, also groups added during this loop
-   └─ object_group.serialize
-      └─ for each plan point
-         ├─ point.run_preloads(objects)          once per group
-         ├─ point.load_batches(object_group)     once per group
-         ├─ child_group = run.object_group(point.child_plan)    relation points only
-         └─ serialize_point
-            └─ for each object
-               ├─ value = attribute.value(object, context, batches:)
-               ├─ relation: value = child_group.add(value, point.many)
-               └─ containers[index][name] = value
+├─ reference = run.object_group(plan).add(object, many)
+│
+├─ discover pass, from the root group down (also groups added during this pass)
+│  └─ object_group.discover
+│     ├─ point.run_preloads(objects)                       once per group
+│     └─ for each relation point
+│        ├─ point.load_batches(object_group)              once per group
+│        ├─ child_group = run.object_group(point.child_plan)
+│        └─ for each object
+│           └─ reference = child_group.add(attribute.value(object, ...), point.many)
+│
+├─ build pass, from the last group up
+│  └─ object_group.build
+│     ├─ containers = result_builder.build_containers(size)
+│     ├─ for each point
+│     │  ├─ relation: containers[index][name] = child_group.results[reference]   already built
+│     │  └─ other: point.load_batches(object_group)                             once per group
+│     │            serialize_point: containers[index][name] = attribute.value(object, ...)
+│     └─ results = result_builder.build(containers)
+│
+└─ root group results[reference]
 ```
 
-`SeregaObjectGroup` (`lib/serega/object_group.rb`) holds all objects of one plan in one run, and a result container per object.
+`SeregaObjectGroup` (`lib/serega/object_group.rb`) holds all objects of one plan in one run.
 
-- `#add` wraps the objects in the presenter, makes their containers and returns them.
-- `#serialize` fills the containers later.
+- `#add` wraps the objects in the presenter and returns a reference to their results: an index for one object, a Range for a collection, nil for nil.
+- `#discover` runs the preloads and adds the related objects to the groups of the relation plans.
+- `#build` builds the results. The groups of the relation plans are built before it.
 
-The containers are filled in place, so the result returned by `#add` is complete after the run.
+The result keys follow the order of the plan points. The values are read point by point, for all objects of a group. Relation values and preloads of a group are read in the discover pass, before the other values.
 
 ### Example
 
 `UserSerializer.to_h(users)` for 2 users with posts, where each post has comments:
 
 ```
-object groups        objects                      filled by
-UserSerializer       [user1, user2]               group 1
-PostSerializer       [post1, post2, post3]        group 2 (posts of both users)
-CommentSerializer    [comment1, ..., commentN]    group 3 (comments of all posts)
+object groups        objects                      discovered   built
+UserSerializer       [user1, user2]               1st          3rd
+PostSerializer       [post1, post2, post3]        2nd          2nd   (posts of both users)
+CommentSerializer    [comment1, ..., commentN]    3rd          1st   (comments of all posts)
 ```
 
 A batch loader or preload of `PostSerializer` runs once, for all 3 posts.
+
+### Build order
+
+The build pass builds the groups in reverse order: the results of related objects must be ready before the results that hold them.
+
+- The discover pass adds the group of related objects after the group that finds them. Thus a child group always comes after its parent group: `[users, posts, comments]`.
+- A result holds the built results of its related objects: a user result holds post results, a post result holds comment results.
+- `reverse_each` builds `comments`, then `posts`, then `users`. When a group builds, the groups of its relations are already built.
+
+A group depends only on groups added after it. A recursive serializer, for example user → friends → users, adds new groups further down the list. Thus the reverse order is always valid.
+
+A build from the root down must assign the relation values after it makes the parent results. A `Data` result is frozen when it is made, thus it can not get values later.
 
 ### Errors
 
@@ -96,7 +117,9 @@ Each serializer class gets subclasses of the internal classes in its `inherited`
 
 | plugin | patched method | change |
 |---|---|---|
-| `:if` | `SeregaObjectGroup#serialize_point` | skips values that fail `:if`, `:unless`, `:if_value` or `:unless_value` |
+| `:if` | `SeregaObjectGroup#serialize_point` | skips values failing `:if`, `:unless`, `:if_value` or `:unless_value` |
+| `:if` | `SeregaObjectGroup#read_relations` | returns `If::SKIP` for relations of objects failing `:if` or `:unless` |
+| `:if` | `SeregaObjectGroup#assign_relation_values` | skips `If::SKIP` relation values |
 | `:if` | `SeregaResultBuilder#build_containers` | makes `:data` containers with nil values, thus skipped attributes are nil |
 | `:root` | `Serega#serialize` | wraps the result: `{root => result}` |
 | `:metadata`, `:context_metadata` | `Serega#serialize` | add metadata keys next to the root key |

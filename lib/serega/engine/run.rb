@@ -12,8 +12,11 @@ class Serega
     #
     # The run keeps one object group per plan. A group holds all objects of its
     # plan, for example the posts of all users, thus batch loaders and preloads
-    # run once per group. The run serializes the groups in the order it adds
-    # them. A group adds the groups of its related objects when it serializes.
+    # run once per group. The run serializes the groups in two passes:
+    # - Discover pass, from the root group down. Each group runs its preloads
+    #   and adds its related objects to the groups of the relation plans.
+    # - Build pass, from the last group up. Each group builds its results. The
+    #   results of its related objects are ready at this time.
     #
     # @private
     class Run
@@ -40,11 +43,15 @@ class Serega
       # @param object [Object] Serialized object(s)
       # @param many [Boolean, nil] Whether the object is a collection
       #
-      # @return [Hash, Struct, Array, nil] Serialized object(s)
+      # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
       def call(plan, object, many:)
-        result = object_group(plan).add(object, many)
-        serialize_object_groups
-        result
+        object_group = object_group(plan)
+        reference = object_group.add(object, many)
+        return if reference.nil?
+
+        discover_object_groups
+        @object_groups.reverse_each(&:build)
+        object_group.results[reference]
       end
 
       # Returns the object group of the plan, and adds it on first use.
@@ -63,11 +70,11 @@ class Serega
         object_group
       end
 
-      # Serializes every group, also the groups added during serialization
-      def serialize_object_groups
+      # Discovers every group, also the groups added during discovery
+      def discover_object_groups
         index = 0
         while index < @object_groups.size
-          @object_groups[index].serialize
+          @object_groups[index].discover
           index += 1
         end
       end

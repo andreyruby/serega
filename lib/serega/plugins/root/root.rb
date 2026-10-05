@@ -217,28 +217,6 @@ class Serega
       #
       # @private
       module InstanceMethods
-        #
-        # Serializes provided object to a tree of Ruby Data objects.
-        # When a root key is configured, returns a Hash with Data objects under
-        # the root key, plus any metadata keys.
-        #
-        # @param object [Object] Serialized object
-        # @param opts [Hash, nil] Serializing options (`:root`, `:many`, `:context`, etc.)
-        #
-        # @return [Hash, Data, Array<Data>, nil] Serialization result
-        #
-        def to_data(object, opts = nil)
-          opts = normalize_serialization_opts(opts)
-          object = prepare_objects(object, opts[:context])
-          opts = prepare_initial_serialization_opts(object, opts, :data)
-          result = serialize(object, opts)
-          root = build_root(object, opts)
-          return self.class::SeregaDataBuilder.call(self, result) unless root
-
-          result[root] = self.class::SeregaDataBuilder.call(self, result[root])
-          result
-        end
-
         private
 
         def serialize(object, opts)

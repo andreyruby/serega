@@ -66,7 +66,6 @@ require_relative "serega/plan_point"
 require_relative "serega/plan"
 require_relative "serega/result_builder"
 require_relative "serega/plan_cache"
-require_relative "serega/data_builder"
 require_relative "serega/plugins"
 
 class Serega
@@ -486,10 +485,6 @@ class Serega
       attribute_normalizer_class.serializer_class = subclass
       subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
 
-      data_builder_class = Class.new(self::SeregaDataBuilder)
-      data_builder_class.serializer_class = subclass
-      subclass.const_set(:SeregaDataBuilder, data_builder_class)
-
       plan_class = Class.new(self::SeregaPlan)
       plan_class.serializer_class = subclass
       subclass.const_set(:SeregaPlan, plan_class)
@@ -615,8 +610,6 @@ class Serega
 
     #
     # Serializes provided object to Data objects
-    # Patched in:
-    # - plugin :root (returns a Hash with Data objects under the root key)
     #
     # @param object [Object] Serialized object
     # @param opts [Hash, nil] Serializing options
@@ -629,8 +622,7 @@ class Serega
       opts = normalize_serialization_opts(opts)
       object = prepare_objects(object, opts[:context])
       opts = prepare_initial_serialization_opts(object, opts, :data)
-      serialized_data = serialize(object, opts)
-      self.class::SeregaDataBuilder.call(self, serialized_data)
+      serialize(object, opts)
     end
 
     #
