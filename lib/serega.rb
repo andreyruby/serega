@@ -17,6 +17,10 @@ class Serega
   # Empty modifiers/serialization options (used when serializing with no opts provided)
   FROZEN_EMPTY_OPTS = [FROZEN_EMPTY_HASH, nil].freeze
   private_constant :FROZEN_EMPTY_OPTS
+
+  # Path prefix of the Serega source files
+  # @private
+  LIB_PATH = File.expand_path("serega", __dir__).freeze
 end
 
 require_relative "serega/errors"
@@ -33,6 +37,7 @@ require_relative "serega/attribute_value_resolvers/const"
 require_relative "serega/attribute_value_resolvers/delegate"
 require_relative "serega/attribute_value_resolvers/hash_access"
 require_relative "serega/attribute_value_resolvers/keyword"
+require_relative "serega/attribute_values"
 require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
 require_relative "serega/engine/run"
@@ -215,7 +220,8 @@ class Serega
     #
     def attribute(name, **opts, &block)
       check_unlocked
-      attribute = self::SeregaAttribute.new(name: name, opts: opts, block: block)
+      location = caller_locations.find { |caller_location| !caller_location.path.start_with?(LIB_PATH) }
+      attribute = self::SeregaAttribute.new(name: name, opts: opts, block: block, location: location && "#{location.path}:#{location.lineno}")
       attributes[attribute.name] = attribute
     end
 
@@ -486,6 +492,8 @@ class Serega
       attribute_class.serializer_class = subclass
       subclass.const_set(:SeregaAttribute, attribute_class)
 
+      subclass.const_set(:SeregaAttributeValues, Class.new(self::SeregaAttributeValues))
+
       attribute_normalizer_class = Class.new(self::SeregaAttributeNormalizer)
       attribute_normalizer_class.serializer_class = subclass
       subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
@@ -533,8 +541,8 @@ class Serega
 
       # Assign same attributes
       attributes.each_value do |attr|
-        params = attr.initials
-        subclass.attribute(params[:name], **params[:opts], &params[:block])
+        subclass_attribute = subclass::SeregaAttribute.new(**attr.initials)
+        subclass.attributes[subclass_attribute.name] = subclass_attribute
       end
 
       # Assign same batch loaders

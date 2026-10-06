@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+class Serega
+  #
+  # One generated method per attribute that is read with plain Ruby code,
+  # for example `def full_name(source) = source.full_name`. Each method is
+  # defined with the file and line of its attribute, thus a backtrace of an
+  # error points to the attribute.
+  #
+  # `CONSTANTS` and `DEFAULTS` hold the `:const` and `:default` values of the
+  # attributes, by attribute name.
+  #
+  # The class inherits from BasicObject, thus attribute names do not clash
+  # with methods of Object.
+  #
+  # @private
+  class SeregaAttributeValues < BasicObject
+    # `:const` values by attribute name
+    CONSTANTS = {}
+
+    # `:default` values by attribute name
+    DEFAULTS = {}
+
+    # Gives each subclass its own values
+    def self.inherited(subclass)
+      super
+      subclass.const_set(:CONSTANTS, {})
+      subclass.const_set(:DEFAULTS, {})
+    end
+  end
+end

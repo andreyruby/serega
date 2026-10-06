@@ -39,7 +39,8 @@ The first plan locks the class. Later definition calls raise.
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
 - `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlanCache` keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them.
-- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method calls plain attribute methods directly, for example `object.name` or `object.profile&.city` (`SeregaAttribute#value_code`). Other attributes call `SeregaAttribute#value`.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`.
+- `SeregaAttributeValues` (`lib/serega/attribute_values.rb`): one method per attribute read with plain Ruby code (`SeregaAttribute#value_code`): a method call, a delegation, a `:const` and a `:default`. For example `def full_name(source) = source.full_name`, `def city(source) = source.profile&.city`, `def code(source) = CONSTANTS[:code]` and `def email(source) = (value = source.email).nil? ? DEFAULTS[:email] : value`. `CONSTANTS` and `DEFAULTS` hold the values by attribute name. `SeregaAttribute` defines it when the attribute is defined, with the file and line of the attribute. The class inherits from `BasicObject`, thus attribute names do not clash with methods of `Object`. An attribute named like a `BasicObject` method (`initialize`, `__send__`, ...) gets no method and is read with `SeregaAttribute#value`.
 
 ### 3. Run
 
@@ -187,11 +188,21 @@ A build from the root down must assign the relation values after it makes the se
 
 ### Errors
 
-`SeregaUtils::SerializedAttributeError` adds the attribute name and the serializer class to an error raised while a value is read, preloaded or batch loaded:
+`SeregaUtils::SerializedAttributeError` adds the attribute name, the serializer class and the line where the attribute is defined to an error raised while a value is read, preloaded or batch loaded:
 
 ```
 undefined method 'bar' for an instance of User
-(when serializing 'foo' attribute in UserSerializer)
+(when serializing 'foo' attribute in UserSerializer, app/serializers/user_serializer.rb:3)
+```
+
+`Serega.attribute` records the location: the first caller outside Serega's own files. A subclass keeps the location of the parent attribute.
+
+A plain attribute is read by its `SeregaAttributeValues` method, defined with the file and line of the attribute. Thus the backtrace points to the attribute too. The generated `#call` has a virtual file name:
+
+```
+app/serializers/user_serializer.rb:3:in 'UserSerializer::SeregaAttributeValues#full_name'
+(serega generated code):20:in 'call'
+lib/serega/source_group.rb:134:in 'Serega::SeregaSourceGroup::InstanceMethods#build'
 ```
 
 ## Per-serializer classes

@@ -268,8 +268,9 @@ Things to keep in mind:
   Changes made to the base serializer later do not affect already defined
   nested serializers.
 - Errors raised while serializing nested attributes are reported with a
-  readable serializer label, for example:
-  `(when serializing 'comments_count' attribute in UserSerializer.<statistics>)`.
+  readable serializer label and the line where the attribute is defined, for
+  example:
+  `(when serializing 'comments_count' attribute in UserSerializer.<statistics>, app/serializers/user_serializer.rb:12)`.
 
 ### Serializing
 

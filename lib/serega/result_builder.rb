@@ -72,8 +72,10 @@ class Serega
         @mode = mode
         @points = points
         @result_class = result_class
-        call_code = self.class.serializer_class::SeregaResultCode.new(mode, points).to_s
-        singleton_class.class_eval(call_code, __FILE__, __LINE__)
+        serializer_class = self.class.serializer_class
+        @attribute_values = serializer_class::SeregaAttributeValues.new
+        call_code = serializer_class::SeregaResultCode.new(mode, points).to_s
+        singleton_class.class_eval(call_code, "(serega generated code)", 1)
       end
 
       private
