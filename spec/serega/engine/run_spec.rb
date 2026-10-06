@@ -17,8 +17,8 @@ RSpec.describe Serega::SeregaEngine::Run do
 
   let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
 
-  describe "#call" do
-    subject(:result) { run.call(plan, object, many: many) }
+  describe ".call" do
+    subject(:result) { described_class.call(plan, object, many: many, mode: mode, context: context) }
 
     let(:post) { double(title: "Hello") }
     let(:user) { double(name: "Ann", posts: [post]) }

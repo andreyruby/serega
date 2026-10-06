@@ -15,11 +15,24 @@ class Serega
     # run once per group. The run serializes the groups in two passes:
     # - Discover pass, from the root group down. Each group runs its preloads
     #   and adds its related objects to the groups of the relation plans.
-    # - Build pass, from the last group up. Each group builds its results. The
-    #   results of its related objects are ready at this time.
+    # - Build pass, from the last group up. Each group builds its serialized
+    #   objects. The serialized related objects are ready at this time.
     #
     # @private
     class Run
+      # Serializes the object(s) with the plan in a new run.
+      #
+      # @param plan [SeregaPlan] Serialization plan
+      # @param object [Object] Object(s) to serialize
+      # @param many [Boolean, nil] Whether the object is a collection
+      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
+      # @param context [Hash] Serialization context
+      #
+      # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
+      def self.call(plan, object, many:, mode:, context:)
+        new(mode: mode, context: context).call(plan, object, many: many)
+      end
+
       # Serialization mode
       # @return [Symbol] :hash, :data or :struct
       attr_reader :mode
@@ -40,7 +53,7 @@ class Serega
       # Serializes the object(s) with the plan.
       #
       # @param plan [SeregaPlan] Serialization plan
-      # @param object [Object] Serialized object(s)
+      # @param object [Object] Object(s) to serialize
       # @param many [Boolean, nil] Whether the object is a collection
       #
       # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
@@ -51,7 +64,7 @@ class Serega
 
         discover_object_groups
         @object_groups.reverse_each(&:build)
-        object_group.results[reference]
+        object_group.serialized_for(reference)
       end
 
       # Returns the object group of the plan, and adds it on first use.

@@ -204,7 +204,7 @@ class Serega
         #
         # Returns formatted attribute value
         #
-        # @param object [Object] Serialized object
+        # @param object [Object] Object to serialize
         # @param context [Hash] Serialization context
         #
         # @return [Object] Formatted attribute value

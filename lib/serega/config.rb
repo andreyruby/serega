@@ -122,7 +122,7 @@ class Serega
       end
 
       # Returns :auto_preload_excluded_methods config option — methods that are
-      # never auto-preloaded, as they return the serialized object itself and
+      # never auto-preloaded, as they return the object itself and
       # not an association
       # @return [Array<Symbol>] Current :auto_preload_excluded_methods config option
       def auto_preload_excluded_methods

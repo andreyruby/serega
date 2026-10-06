@@ -35,7 +35,7 @@ class Serega
       end
 
       # Loads values for objects
-      # @param objects [Array] Serialized objects
+      # @param objects [Array] Objects to serialize
       # @param context [Hash] Serialization context
       # @return [Object] Loaded values
       def load(objects, context)

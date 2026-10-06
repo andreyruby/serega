@@ -102,6 +102,21 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "#preload_points" do
+    subject(:preload_points) { plan({}).preload_points }
+
+    let(:current_serializer) do
+      Class.new(base_class) do
+        attribute :name
+        attribute :posts, preload: :posts, value: proc { [] }
+      end
+    end
+
+    it "returns the points with preloads" do
+      expect(preload_points.map(&:name)).to eq [:posts]
+    end
+  end
+
   describe "#result_builder" do
     let(:current_plan) { plan(only: {a1: {}}) }
 

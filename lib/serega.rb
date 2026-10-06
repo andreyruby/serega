@@ -310,7 +310,7 @@ class Serega
     end
 
     #
-    # Registers (or returns) the handler that replaces the serialized objects
+    # Registers (or returns) the handler that replaces the objects to serialize
     # before serialization starts.
     #
     # The handler is called once per serialization with the objects provided to
@@ -322,8 +322,8 @@ class Serega
     # single object into a collection and back. A provided `:many` serialization
     # option is still used as is.
     #
-    # The handler runs only for the serialized objects, and not for objects of
-    # nested serializers.
+    # The handler runs only for the objects given to the serializer, and not
+    # for the objects of nested serializers.
     #
     # @example with a block
     #   prepare_initial_objects { |user_ids| User.where(id: user_ids) }
@@ -371,7 +371,7 @@ class Serega
     #
     # Serializes provided object to Hash
     #
-    # @param object [Object] Serialized object
+    # @param object [Object] Object to serialize
     # @param opts [Hash, nil] Serializer modifiers and other instantiating options
     # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
     # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
@@ -392,7 +392,7 @@ class Serega
     #
     # Serializes provided object to a tree of Ruby Data objects
     #
-    # @param object [Object] Serialized object
+    # @param object [Object] Object to serialize
     # @param opts [Hash, nil] Serializer modifiers and other instantiating options
     # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
     # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
@@ -413,7 +413,7 @@ class Serega
     #
     # Serializes provided object to a tree of Ruby Struct objects
     #
-    # @param object [Object] Serialized object
+    # @param object [Object] Object to serialize
     # @param opts [Hash, nil] Serializer modifiers and other instantiating options
     # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
     # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
@@ -589,7 +589,7 @@ class Serega
     #
     # Serializes provided object to Hash
     #
-    # @param object [Object] Serialized object
+    # @param object [Object] Object to serialize
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
     # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
@@ -611,7 +611,7 @@ class Serega
     #
     # Serializes provided object to Data objects
     #
-    # @param object [Object] Serialized object
+    # @param object [Object] Object to serialize
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
     # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
@@ -628,7 +628,7 @@ class Serega
     #
     # Serializes provided object to Struct objects
     #
-    # @param object [Object] Serialized object
+    # @param object [Object] Object to serialize
     # @param opts [Hash, nil] Serializing options
     # @option opts [Hash] :context Serialization context
     # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
@@ -672,9 +672,8 @@ class Serega
     end
 
     def prepare_initial_serialization_opts(object, opts, mode = :hash)
-      opts[:run] = SeregaEngine::Run.new(mode: mode, context: opts[:context])
+      opts[:mode] = mode
       opts[:many] = SeregaUtils::CollectionDetector.call(object) unless opts.key?(:many)
-      opts[:plan] = plan
       opts
     end
 
@@ -683,7 +682,7 @@ class Serega
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, opts)
-      opts[:run].call(opts[:plan], object, many: opts[:many])
+      SeregaEngine::Run.call(plan, object, many: opts[:many], mode: opts[:mode], context: opts[:context])
     end
   end
 

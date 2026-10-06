@@ -2,9 +2,9 @@
 
 class Serega
   #
-  # Builds serialization results of one plan in one serialization mode:
-  # empty result containers filled in place during serialization, then the
-  # results from the filled containers.
+  # Builds the serialized objects (Hash, Struct or Data) of one plan in one
+  # serialization mode: empty containers filled in place during
+  # serialization, then the serialized objects from the filled containers.
   #
   # @private
   class SeregaResultBuilder
@@ -84,7 +84,7 @@ class Serega
       end
 
       #
-      # empty result containers filled in place during serialization.
+      # Empty containers filled in place during serialization.
       #
       # Patched in:
       # - plugin :if (builds :data containers with nil values of all attributes)
@@ -103,13 +103,13 @@ class Serega
       end
 
       #
-      # Builds the results from the filled containers. The :data mode makes a
-      # Data object from each Hash container. Other modes return the
-      # containers.
+      # Builds the serialized objects from the filled containers. The :data
+      # mode makes a Data object from each Hash container. Other modes return
+      # the containers.
       #
       # @param containers [Array<Hash, Struct>] Filled containers
       #
-      # @return [Array<Hash, Struct, Data>] Results
+      # @return [Array<Hash, Struct, Data>] Serialized objects
       #
       def build(containers)
         return containers unless mode == :data

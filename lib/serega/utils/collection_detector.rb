@@ -15,7 +15,7 @@ class Serega
         #
         # Checks if provided object is a collection of objects
         #
-        # @param object [Object] Serialized object
+        # @param object [Object] Object to serialize
         #
         # @return [Boolean] whether object should be serialized as a collection
         #

@@ -8,7 +8,7 @@ class Serega
     # Adds `:if`, `:unless`, `:if_value`, `:unless_value` attribute options to
     # conditionally remove attributes from the response.
     #
-    # `:if`/`:unless` receive the serialized object and context, and are
+    # `:if`/`:unless` receive the object to serialize and context, and are
     # checked before the attribute value is found. `:if_value`/`:unless_value`
     # receive the already-found value and context, checked after. The latter
     # two cannot be used with the `:serializer` option, since a relationship

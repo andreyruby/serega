@@ -115,19 +115,19 @@ RSpec.describe Serega::SeregaResultBuilder do
   end
 
   describe "#build" do
-    subject(:results) { result_builder.build(containers) }
+    subject(:serialized) { result_builder.build(containers) }
 
     let(:containers) { [{name: "Ann", email: "ann@example.com"}] }
 
     it "returns the containers" do
-      expect(results).to equal containers
+      expect(serialized).to equal containers
     end
 
     context "with the :data mode" do
       let(:mode) { :data }
 
       it "builds a Data object from each container" do
-        expect(results).to eq [result_builder.data_class.new(name: "Ann", email: "ann@example.com")]
+        expect(serialized).to eq [result_builder.data_class.new(name: "Ann", email: "ann@example.com")]
       end
     end
   end

@@ -8,8 +8,9 @@ class Serega
   # The group serializes its objects in two steps:
   # - `#discover` runs the preloads, reads the relation values and adds the
   #   related objects to the groups of the relation plans.
-  # - `#build` builds the results. It runs after the groups of the relation
-  #   plans are built, thus the relation values are ready.
+  # - `#build` builds the serialized objects (Hash, Struct or Data). It runs
+  #   after the groups of the relation plans are built, thus the relation
+  #   values are ready.
   #
   # @private
   class SeregaObjectGroup
@@ -27,11 +28,12 @@ class Serega
       # @return [Hash] Serialization context
       attr_reader :context
 
-      # @return [Array] Serialized objects (or their presenters)
+      # @return [Array] Objects to serialize (or their presenters)
       attr_reader :objects
 
-      # @return [Array<Hash, Struct, Data>, nil] Result per object, after #build
-      attr_reader :results
+      # @return [Array<Hash, Struct, Data>, nil] Serialized object per object,
+      #   after #build
+      attr_reader :serialized
 
       # @param run [SeregaEngine::Run] Serialization run
       # @param plan [SeregaPlan] Serialization plan
@@ -42,29 +44,31 @@ class Serega
         @presenter = self.class.serializer_class.presenter
         @objects = []
         @relation_references = nil
-        @results = nil
+        @serialized = nil
         @loaded_batches = {}.compare_by_identity
       end
 
       # Adds the object(s) to the group.
       #
-      # @param object [Object] Serialized object(s)
+      # @param object [Object] Object(s) to serialize
       # @param many [Boolean, nil] Whether the object is a collection
       #
-      # @return [Integer, Range, nil] Reference to the results: index for one
-      #   object, range for a collection, or nil for nil
+      # @return [Integer, Range, nil] Reference to the serialized objects:
+      #   index for one object, range for a collection, or nil for nil
       def add(object, many)
         return if object.nil?
 
-        case serialize_mode(object, many)
-        when :many
-          objects = object.to_a
-          first_index = add_objects(objects)
-          first_index...(first_index + objects.size)
-        when :many_for_one # `many` on, but a sole object was given — wrap it, don't raise
-          first_index = add_objects([object])
-          first_index...(first_index + 1)
-        else add_objects([object]) # :one
+        first_index = @objects.size
+
+        if many != false && SeregaUtils::CollectionDetector.call(object)
+          add_objects(object.to_a)
+          first_index...@objects.size
+        elsif many # `many` on, but a sole object was given — wrap it, don't raise
+          add_objects([object])
+          first_index...@objects.size
+        else
+          add_objects([object])
+          first_index
         end
       end
 
@@ -73,25 +77,18 @@ class Serega
       #
       # @return [void]
       def discover
-        objects = @objects
+        run_preloads
 
-        plan.points.each do |point|
-          point.run_preloads(objects) if point.preloads
-        end
-
-        relation_points = plan.relation_points
-        return if relation_points.empty?
-
-        @relation_references = relation_points.map do |point|
-          batches = point.load_batches(self) unless point.batch_loaders.empty?
+        plan.relation_points.each do |point|
           child_group = run.object_group(point.child_plan)
-          references = read_relations(point, batches, child_group)
-          [child_group, references]
+          references = read_relations(point, batches_for(point), child_group)
+          relation_references = (@relation_references ||= {}.compare_by_identity)
+          relation_references[point] = [child_group, references]
         end
       end
 
-      # Builds the results of all objects. Fills a result container per
-      # object, one point at a time. Relation values come from the built
+      # Builds the serialized objects. Fills a container per object, one point
+      # at a time. Relation values are the serialized objects of the built
       # child groups.
       #
       # @return [void]
@@ -99,44 +96,83 @@ class Serega
         result_builder = plan.result_builder(run.mode)
         objects = @objects
         containers = result_builder.build_containers(objects.size)
-        relation_references = @relation_references
-        relation_index = -1
 
         plan.points.each do |point|
           if point.child_plan
-            relation_index += 1
-            child_group, references = relation_references[relation_index]
-            values = relation_values(child_group.results, references)
+            child_group, references = @relation_references[point]
+            values = references.map { |reference| child_group.serialized_for(reference) }
             assign_relation_values(point, values, containers)
           else
-            batches = point.load_batches(self) unless point.batch_loaders.empty?
-            serialize_point(point, objects, containers, batches)
+            serialize_point(point, objects, containers, batches_for(point))
           end
         end
 
-        @results = result_builder.build(containers)
+        @serialized = result_builder.build(containers)
       end
 
-      # Loads a named batch loader once for all objects of the group.
+      # Returns the serialized object(s) of a reference from #add: one
+      # serialized object for an index, an Array of them for a range. Other
+      # references (nil, or a plugin value) stay as they are.
       #
-      # @param loader [SeregaBatchLoader] Named batch loader
-      # @return [Object] Loaded values
-      def load_batch(loader)
-        @loaded_batches[loader] ||= loader.load(@objects, @context)
+      # @param reference [Integer, Range, Object] Reference from #add
+      # @return [Hash, Struct, Data, Array, Object] Serialized object(s)
+      def serialized_for(reference)
+        case reference
+        when Integer, Range then @serialized[reference]
+        else reference
+        end
       end
 
       private
 
-      # Adds objects and returns the index of the first one.
+      # Adds objects.
       #
       # Each object is wrapped in the serializer's presenter, so value reading
       # and batch loaders alike see presenters.
       def add_objects(objects)
         presenter = @presenter
         objects = objects.map { |object| presenter.new(object, context) } if presenter
-        first_index = @objects.size
         @objects.concat(objects)
-        first_index
+      end
+
+      # Runs the preloads of all points with the serializer's preload handler.
+      # Preload handlers get the objects without presenters.
+      def run_preloads
+        points = plan.preload_points
+        return if points.empty?
+
+        serializer_class = self.class.serializer_class
+        handler = serializer_class.preload_with
+        objects = serializer_class.presenter ? @objects.map(&:__getobj__) : @objects
+
+        points.each do |point|
+          unless handler
+            raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
+          end
+
+          handler.call(objects, point.preloads)
+        rescue => error
+          SeregaUtils::SerializedAttributeError.call(error, point)
+        end
+      end
+
+      # Loads the batch loaders of the point, each once for all objects of
+      # the group.
+      #
+      # @return [Hash, nil] Loaded values per loader name, or nil when the
+      #   point has no batch loaders
+      def batches_for(point)
+        names = point.batch_loaders
+        return if names.empty?
+
+        loaders = self.class.serializer_class.batch_loaders
+        loaded_batches = @loaded_batches
+        names.to_h do |name|
+          loader = loaders[name]
+          [name, loaded_batches[loader] ||= loader.load(@objects, @context)]
+        end
+      rescue => error
+        SeregaUtils::SerializedAttributeError.call(error, point)
       end
 
       # Reads the value of one point for every object and assigns it to the
@@ -177,7 +213,7 @@ class Serega
       # Patched in:
       # - plugin :if (skips objects failing :if/:unless conditions)
       #
-      # @return [Array] Result reference per object
+      # @return [Array] Reference to the serialized related objects, per object
       def read_relations(point, batches, child_group)
         attribute = point.attribute
         many = point.many
@@ -189,31 +225,6 @@ class Serega
         end
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, point)
-      end
-
-      # Converts result references to relation values. An index takes one
-      # child result, and a range takes an Array of child results. Other
-      # references (nil, or a plugin value) stay as they are.
-      def relation_values(child_results, references)
-        references.map do |reference|
-          case reference
-          when Integer, Range then child_results[reference]
-          else reference
-          end
-        end
-      end
-
-      # How to serialize `object`, deciding whether the result is a collection or a
-      # single object and checking the object type only once:
-      # - :many         — `many` is on and the object is a collection
-      # - :many_for_one — `many` is on but a sole object was given (wrap it, don't raise)
-      # - :one          — serialize the object on its own
-      def serialize_mode(object, many)
-        case many
-        when NilClass then SeregaUtils::CollectionDetector.call(object) ? :many : :one
-        when TrueClass then SeregaUtils::CollectionDetector.call(object) ? :many : :many_for_one
-        else :one # many == false
-        end
       end
     end
 

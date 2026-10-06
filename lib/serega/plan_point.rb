@@ -69,42 +69,6 @@ class Serega
       def preloads
         attribute.preloads
       end
-
-      # Runs this point's declared preloads over the given objects using the
-      # serializer's registered preload handler.
-      #
-      # Presenters are unwrapped first, as preload handlers work with the
-      # serialized objects themselves.
-      #
-      # @param objects [Array] objects serialized at this point's level
-      # @return [void]
-      def run_preloads(objects)
-        serializer_class = self.class.serializer_class
-        objects = objects.map(&:__getobj__) if serializer_class.presenter
-
-        handler = serializer_class.preload_with
-        unless handler
-          raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
-        end
-
-        handler.call(objects, preloads)
-      rescue => error
-        SeregaUtils::SerializedAttributeError.call(error, self)
-      end
-
-      # Loads the batch loaders this point's value needs, each once for the whole
-      # object group, and returns them keyed by loader name for #value to read from.
-      #
-      # @param object_group [SeregaObjectGroup] object group whose objects are loaded for
-      # @return [Hash] loaded data per loader name
-      def load_batches(object_group)
-        loaders = self.class.serializer_class.batch_loaders
-        batch_loaders.each_with_object({}) do |name, batches|
-          batches[name] = object_group.load_batch(loaders[name])
-        end
-      rescue => error
-        SeregaUtils::SerializedAttributeError.call(error, self)
-      end
     end
 
     extend SeregaHelpers::SerializerClassHelper

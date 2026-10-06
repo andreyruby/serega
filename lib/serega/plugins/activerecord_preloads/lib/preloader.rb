@@ -23,7 +23,7 @@ class Serega
             preload_handler.preload(object, preloads)
           end
 
-          # Returns handlers which will try to check if serialized object fits for preloading using this handler
+          # Returns handlers which will try to check if the object to serialize fits for preloading using this handler
           #
           # @return [Array] Registered preload adapters for different types of initial records
           def handlers

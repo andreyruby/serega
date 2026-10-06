@@ -84,7 +84,7 @@ class Serega
       #
       # Finds attribute value
       #
-      # @param object [Object] Serialized object
+      # @param object [Object] Object to serialize
       # @param context [Hash, nil] Serialization context
       #
       # @return [Object] Serialized attribute value
