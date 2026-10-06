@@ -118,6 +118,23 @@ RSpec.describe Serega do
       attribute = serializer_class.attribute "foo"
       expect(serializer_class.attributes).to eq(foo: attribute)
     end
+
+    it "records where the attribute is defined" do
+      attribute = serializer_class.attribute :foo
+      line = __LINE__ - 1
+
+      expect(attribute.location).to eq "#{__FILE__}:#{line}"
+    end
+
+    context "with a subclass" do
+      let(:subclass) { Class.new(serializer_class) }
+
+      it "keeps where the parent attribute is defined" do
+        attribute = serializer_class.attribute :foo
+
+        expect(subclass.attributes[:foo].location).to eq attribute.location
+      end
+    end
   end
 
   describe ".attributes" do

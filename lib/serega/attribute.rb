@@ -19,6 +19,12 @@ class Serega
       # @return [Symbol] Attribute name
       attr_reader :name
 
+      # Where the attribute is defined
+      # @return [String, nil] "path:line" of the `attribute` call
+      def location
+        initials[:location]
+      end
+
       # Attribute :many option
       # @return [Boolean, nil] Attribute :many option
       attr_reader :many
@@ -51,20 +57,27 @@ class Serega
       # @option opts [Proc, #call] :value Custom block or callable to find attribute value
       # @option opts [Serega, Proc] :serializer Relationship serializer class. Use `proc { MySerializer }` if serializers have cross references
       # @param block [Proc] Defines attributes of a nested anonymous serializer
+      # @param location [String, nil] Where the attribute is defined, "path:line"
       #
-      def initialize(name:, opts: {}, block: nil)
+      def initialize(name:, opts: {}, block: nil, location: nil)
         serializer_class = self.class.serializer_class
         serializer_class::CheckAttributeParams.new(name, opts, block).validate
 
         @initials = SeregaUtils::EnumDeepFreeze.call(
           name: name,
           opts: SeregaUtils::EnumDeepDup.call(opts),
-          block: block
+          block: block,
+          location: location
         )
 
         normalizer = serializer_class::SeregaAttributeNormalizer.new(initials)
         set_normalized_vars(normalizer)
+        @value_method = define_value_method(serializer_class)
       end
+
+      # Name of the SeregaAttributeValues method that reads the value
+      # @return [Symbol, nil] Method name, or nil when the value is read with #value
+      attr_reader :value_method
 
       # Shows whether attribute has specified serializer
       # @return [Boolean] Checks if attribute is relationship (if :serializer option exists)
@@ -84,9 +97,9 @@ class Serega
       #
       # Finds attribute value
       #
-      # Generated code reads plain attributes without this method (see
-      # #value_code). A plugin that patches this method must also patch
-      # #value_code to return nil.
+      # Generated code reads plain attributes without this method, with their
+      # SeregaAttributeValues method (see #value_code). A plugin that patches
+      # this method must also patch #value_code to return nil.
       #
       # Patched in:
       # - plugin :formatters (formats the value)
@@ -113,7 +126,9 @@ class Serega
       end
 
       #
-      # Ruby code that reads the attribute value of the object
+      # Ruby code of the SeregaAttributeValues method that reads the attribute
+      # value of the source. `:const` and `:default` values come from the
+      # `CONSTANTS` and `DEFAULTS` of SeregaAttributeValues.
       #
       # Patched in:
       # - plugin :formatters (formatted attributes have no code)
@@ -123,14 +138,18 @@ class Serega
       # @return [String, nil] Code, or nil when the value is read with #value
       #
       def value_code(source_variable)
-        return unless @default.nil?
+        code =
+          case @value_block
+          when AttributeValueResolvers::Keyword,
+               AttributeValueResolvers::Delegate,
+               AttributeValueResolvers::DelegateAllowNil
+            @value_block.code(source_variable)
+          when AttributeValueResolvers::Const
+            "CONSTANTS[#{name.inspect}]"
+          end
+        return code if code.nil? || @default.nil?
 
-        case @value_block
-        when AttributeValueResolvers::Keyword,
-             AttributeValueResolvers::Delegate,
-             AttributeValueResolvers::DelegateAllowNil
-          @value_block.code(source_variable)
-        end
+        "(value = #{code}).nil? ? DEFAULTS[#{name.inspect}] : value"
       end
 
       #
@@ -157,6 +176,31 @@ class Serega
       end
 
       private
+
+      # Defines the SeregaAttributeValues method that reads the value of a
+      # source directly. The method has the file and line of the attribute.
+      # A name of a BasicObject method, for example `initialize`, gets no
+      # method.
+      def define_value_method(serializer_class)
+        code = value_code("source")
+        return unless code
+        return if ::BasicObject.method_defined?(name) || ::BasicObject.private_method_defined?(name)
+
+        values_class = serializer_class::SeregaAttributeValues
+        values_class::CONSTANTS[name] = @value_block.call if @value_block.is_a?(AttributeValueResolvers::Const)
+        values_class::DEFAULTS[name] = @default unless @default.nil?
+
+        file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
+        method_code =
+          if SeregaResultCode::PLAIN_METHOD_NAME.match?(name)
+            "def #{name}(source) = #{code}"
+          else
+            "define_method(#{name.inspect}) { |source| #{code} }"
+          end
+
+        values_class.class_eval(method_code, file, line.to_i)
+        name
+      end
 
       def set_normalized_vars(normalizer)
         @name = normalizer.name

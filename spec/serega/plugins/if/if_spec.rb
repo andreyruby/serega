@@ -221,7 +221,7 @@ RSpec.describe Serega::SeregaPlugins::If do
       serializer.attribute(:foo, const: "x", if: proc { raise "boom in if" })
 
       expect { serializer.new.to_h(1) }.to raise_error RuntimeError,
-        a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
+        a_string_ending_with("(when serializing 'foo' attribute in #{serializer}, #{serializer.attributes[:foo].location})")
     end
 
     it "annotates errors raised while reading a conditional relation" do
@@ -229,7 +229,7 @@ RSpec.describe Serega::SeregaPlugins::If do
       serializer.attribute(:foo, serializer: Class.new(Serega), value: proc { raise "boom in relation" }, if: proc { true })
 
       expect { serializer.new.to_h(1) }.to raise_error RuntimeError,
-        a_string_ending_with("(when serializing 'foo' attribute in #{serializer})")
+        a_string_ending_with("(when serializing 'foo' attribute in #{serializer}, #{serializer.attributes[:foo].location})")
     end
 
     it "serializes relations without conditions" do

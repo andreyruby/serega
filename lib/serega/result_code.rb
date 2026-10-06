@@ -5,8 +5,8 @@ class Serega
   # Generates the Ruby code of the `SeregaResultBuilder#call` method of one
   # plan in one serialization mode. The method reads all values of a source,
   # then makes its serialized object in one step: a Hash literal,
-  # `Struct.new` or `Data.new`. The code calls simple attribute readers
-  # directly, for example `source.name`.
+  # `Struct.new` or `Data.new`. Simple attributes are read with their
+  # SeregaAttributeValues method, for example `attribute_values.name(source)`.
   #
   # Generated code for a plan with `attribute :id` and
   # `attribute :posts, serializer: PostSerializer` in the :hash mode:
@@ -14,6 +14,7 @@ class Serega
   #   def call(sources, context, batches, relations)
   #     points = @points
   #     result_class = @result_class
+  #     attribute_values = @attribute_values
   #     attribute_0 = points[0].attribute
   #     batches_0 = batches && batches[0]
   #     relation_values_1 = relations[points[1]]
@@ -24,7 +25,7 @@ class Serega
   #     while source_index < size
   #       source = sources[source_index]
   #       point_index = 0
-  #       value_0 = source.id
+  #       value_0 = attribute_values.id(source)
   #       point_index = 1
   #       value_1 = relation_values_1[source_index]
   #       serialized_hash = {:id => value_0, :posts => value_1}
@@ -111,7 +112,7 @@ class Serega
           end
         end
 
-        ["points = @points", "result_class = @result_class", *point_variables]
+        ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *point_variables]
       end
 
       # Code that assigns the value of the point to `value_N`
@@ -126,7 +127,11 @@ class Serega
       def read_value_code(point, index)
         return "relation_values_#{index}[source_index]" if point.child_plan
 
-        point.attribute.value_code("source") || "attribute_#{index}.value(source, context, batches: batches_#{index})"
+        value_method = point.attribute.value_method
+        return "attribute_#{index}.value(source, context, batches: batches_#{index})" unless value_method
+        return "attribute_values.#{value_method}(source)" if PLAIN_METHOD_NAME.match?(value_method)
+
+        "attribute_values.__send__(#{value_method.inspect}, source)"
       end
 
       # Whether the point value can be skipped

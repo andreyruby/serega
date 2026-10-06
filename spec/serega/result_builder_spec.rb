@@ -66,6 +66,13 @@ RSpec.describe Serega::SeregaResultBuilder do
 
     let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
 
+    it "is generated code with a file name without a source" do
+      path, line = result_builder.method(:call).source_location
+
+      expect(path).to eq "(serega generated code)"
+      expect(line).to eq 1
+    end
+
     it "builds a Hash per object" do
       expect(result_builder.call([user], {}, nil, nil)).to eq [{name: "Ann", email: "ann@example.com"}]
     end
