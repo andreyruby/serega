@@ -84,7 +84,14 @@ class Serega
       #
       # Finds attribute value
       #
-      # @param object [Object] Serialized object
+      # Generated code reads plain attributes without this method (see
+      # #value_code). A plugin that patches this method must also patch
+      # #value_code to return nil.
+      #
+      # Patched in:
+      # - plugin :formatters (formats the value)
+      #
+      # @param object [Object] Object to serialize
       # @param context [Hash, nil] Serialization context
       #
       # @return [Object] Serialized attribute value
@@ -103,6 +110,27 @@ class Serega
           end
 
         result.nil? ? @default : result
+      end
+
+      #
+      # Ruby code that reads the attribute value of the object
+      #
+      # Patched in:
+      # - plugin :formatters (formatted attributes have no code)
+      #
+      # @param source_variable [String] Name of the source variable in the code
+      #
+      # @return [String, nil] Code, or nil when the value is read with #value
+      #
+      def value_code(source_variable)
+        return unless @default.nil?
+
+        case @value_block
+        when AttributeValueResolvers::Keyword,
+             AttributeValueResolvers::Delegate,
+             AttributeValueResolvers::DelegateAllowNil
+          @value_block.code(source_variable)
+        end
       end
 
       #

@@ -19,7 +19,7 @@ It has some great features:
 - Secure from malicious queries with [depth_limit][depth_limit] plugin
 - Solutions for N+1 problem (via built-in [batch loading](#batch-loading), [preloads][preloads] or
   [activerecord_preloads][activerecord_preloads] plugin)
-- Load serialized objects by ids ([prepare_initial_objects](#prepare-initial-objects))
+- Load objects to serialize by ids ([prepare_initial_objects](#prepare-initial-objects))
 - Built-in object presenter ([presenter][presenter])
 - Adding custom metadata (via [metadata][metadata] or
   [context_metadata][context_metadata] plugins)
@@ -126,7 +126,7 @@ class UserSerializer < Serega
   attribute :first_name
 
   # Option :method specifies the name used to read the attribute's value —
-  # a method called on the serialized object by default, or a Hash key when
+  # a method called on the object to serialize by default, or a Hash key when
   # combined with :hash_access
   attribute :first_name, method: :old_first_name
 
@@ -526,7 +526,7 @@ end
 
 ### Prepare Initial Objects
 
-`prepare_initial_objects` replaces the serialized objects before serialization
+`prepare_initial_objects` replaces the objects to serialize before serialization
 starts, so a serializer can accept ids or other references and load the records
 itself.
 
@@ -591,8 +591,8 @@ anything else — OccamsRecord read-only records, Structs, Hashes, plain objects
 serialization. Load that data with [batch loading](#batch-loading) instead,
 which works with any objects.
 
-The handler runs for the serialized objects only, and not for objects of nested
-serializers. It is inherited by subclasses, so declare it on concrete
+The handler runs only for the objects given to the serializer, and not for
+objects of nested serializers. It is inherited by subclasses, so declare it on concrete
 serializers rather than on a base serializer shared by all of them.
 
 ## Configuration
@@ -622,7 +622,7 @@ class AppSerializer < Serega
   # Useful to avoid extra DB requests for attributes that were not requested.
   config.hide_by_default = false
 
-  # Default method used on serialized object to resolve batch value
+  # Default method called on the object to serialize to resolve batch value
   # For example:
   #   attribute :counter, batch: CounterBatchLoader
   #   # Attribute values will be resolved as:
@@ -653,7 +653,7 @@ class AppSerializer < Serega
   # This defines storage size (count of stored `plans` with different modifiers).
   # Modifiers are compared as provided, so `[:id, :name]` and `"id,name"` are
   # stored separately. The plan without modifiers is always stored.
-  config.max_cached_plans_per_serializer_count = 50 # default is 0, disabled
+  config.max_cached_plans_per_serializer_count = 50 # default is 20, 0 disables it
 end
 ```
 
@@ -913,7 +913,7 @@ blocks followed by its own, so it gets the parent's presenter methods while its
 own stay out of the parent. The parent's blocks are copied when the child class
 is created, so a `presenter` block added to a parent afterwards does not reach it.
 
-Presenter methods run on a `SimpleDelegator` wrapping the serialized object, so
+Presenter methods run on a `SimpleDelegator` wrapping the object to serialize, so
 every method of that object is available directly. Any method not defined in a
 `presenter` block is delegated to the object on the first call, and a real
 delegator method is defined for it — so all subsequent serializations call it
@@ -930,7 +930,7 @@ callables receive the raw objects.
 
 ### Plugin :activerecord_preloads
 
-Automatically preloads associations to serialized objects.
+Automatically preloads associations of the objects to serialize.
 
 Every association you declare with `:preload` is loaded once during
 serialization using `ActiveRecord::Associations::Preloader`, so there are no
@@ -1156,7 +1156,7 @@ PostSerializer.new(with: {user: %i[email, username]}).to_h(post)
 Adds `:if`, `:unless`, `:if_value`, `:unless_value` attribute options to
 conditionally remove attributes from the response.
 
-`:if`/`:unless` receive the serialized object and context, and are checked
+`:if`/`:unless` receive the object to serialize and context, and are checked
 before the attribute value is found. `:if_value`/`:unless_value` receive the
 already-found value and context, checked after. The latter two cannot be
 used with the `:serializer` option, since a relationship has no "serialized

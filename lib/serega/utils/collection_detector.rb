@@ -15,12 +15,12 @@ class Serega
         #
         # Checks if provided object is a collection of objects
         #
-        # @param object [Object] Serialized object
+        # @param object [Object] Object to serialize
         #
         # @return [Boolean] whether object should be serialized as a collection
         #
         def call(object)
-          object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)
+          object.instance_of?(Array) || (object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct))
         end
       end
     end

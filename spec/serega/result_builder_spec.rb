@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaResultBuilder do
-  subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
-
   let(:serializer) do
     Class.new(Serega) do
       attribute :name
@@ -63,71 +61,82 @@ RSpec.describe Serega::SeregaResultBuilder do
     end
   end
 
-  describe "#data_class" do
-    it "returns a Data class with the plan attribute names as members" do
-      expect(result_builder.data_class.members).to eq %i[name email]
-    end
+  describe "#call" do
+    subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
 
-    it "returns the same Data class for result builders with the same attributes" do
-      other_builder = serializer::SeregaResultBuilder.new(mode, plan.points)
+    let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
 
-      expect(result_builder.data_class).to equal other_builder.data_class
-    end
-  end
-
-  describe "#struct_class" do
-    it "returns a Struct class with the plan attribute names as members" do
-      expect(result_builder.struct_class.members).to eq %i[name email]
-    end
-
-    it "returns the same Struct class for result builders with the same attributes" do
-      other_builder = serializer::SeregaResultBuilder.new(mode, plan.points)
-
-      expect(result_builder.struct_class).to equal other_builder.struct_class
-    end
-  end
-
-  describe "#build_containers" do
-    subject(:containers) { result_builder.build_containers(2) }
-
-    it "returns separate empty hashes" do
-      expect(containers).to eq [{}, {}]
-      expect(containers[0]).not_to equal containers[1]
-    end
-
-    context "with the :data mode" do
-      let(:mode) { :data }
-
-      it "returns separate empty hashes" do
-        expect(containers).to eq [{}, {}]
-        expect(containers[0]).not_to equal containers[1]
-      end
+    it "builds a Hash per object" do
+      expect(result_builder.call([user], {}, nil, nil)).to eq [{name: "Ann", email: "ann@example.com"}]
     end
 
     context "with the :struct mode" do
       let(:mode) { :struct }
 
-      it "returns separate structs with nil members" do
-        expect(containers.map(&:to_h)).to eq [{name: nil, email: nil}, {name: nil, email: nil}]
-        expect(containers[0]).not_to equal containers[1]
+      it "builds a Struct per object" do
+        struct_class = serializer::SeregaResultBuilder.struct_class_for(%i[name email])
+
+        expect(result_builder.call([user], {}, nil, nil)).to eq [struct_class.new("Ann", "ann@example.com")]
       end
-    end
-  end
-
-  describe "#build" do
-    subject(:results) { result_builder.build(containers) }
-
-    let(:containers) { [{name: "Ann", email: "ann@example.com"}] }
-
-    it "returns the containers" do
-      expect(results).to equal containers
     end
 
     context "with the :data mode" do
       let(:mode) { :data }
 
-      it "builds a Data object from each container" do
-        expect(results).to eq [result_builder.data_class.new(name: "Ann", email: "ann@example.com")]
+      it "builds a Data object per object" do
+        data_class = serializer::SeregaResultBuilder.data_class_for(%i[name email])
+
+        expect(result_builder.call([user], {}, nil, nil)).to eq [data_class.new("Ann", "ann@example.com")]
+      end
+    end
+
+    context "with a relation" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name
+          attribute :posts, serializer: Class.new(Serega)
+        end
+      end
+
+      it "reads relation values from the serialized child objects" do
+        relations = {plan.points[1] => [["POST"]]}
+
+        expect(result_builder.call([user], {}, nil, relations)).to eq [{name: "Ann", posts: ["POST"]}]
+      end
+    end
+
+    context "with a batch attribute" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name, batch: {use: proc { |ids| ids }, id: :email}
+        end
+      end
+
+      it "reads values from the loaded batches" do
+        expect(result_builder.call([user], {}, [{name: {"ann@example.com" => "Batch Ann"}}], nil)).to eq [{name: "Batch Ann"}]
+      end
+    end
+
+    context "with a not plain method name" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name, method: :"full-name"
+        end
+      end
+
+      let(:user) { double("full-name": "Ann Smith") }
+
+      it "calls the method" do
+        expect(result_builder.call([user], {}, nil, nil)).to eq [{name: "Ann Smith"}]
+      end
+    end
+
+    context "when an attribute raises an error" do
+      let(:user) { Struct.new(:name).new("Ann") }
+
+      it "adds the attribute name to the error message" do
+        expect { result_builder.call([user], {}, nil, nil) }
+          .to raise_error(NoMethodError, /when serializing 'email' attribute/)
       end
     end
   end

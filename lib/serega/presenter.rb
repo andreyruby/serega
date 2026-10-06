@@ -4,11 +4,11 @@ require "delegate"
 
 class Serega
   #
-  # Wraps the serialized object, so computed attribute values can be defined as
+  # Wraps the object to serialize, so computed attribute values can be defined as
   # methods instead of `:value` callables.
   #
   # SeregaPresenter inherits from SimpleDelegator:
-  # - All methods of the serialized object are available directly inside presenter methods.
+  # - All methods of the wrapped object are available directly inside presenter methods.
   # - Methods not defined on SeregaPresenter are resolved via method_missing on the first call
   #   and then defined as real delegators, so subsequent calls skip method_missing entirely.
   # - The original object is accessible via __getobj__ (standard SimpleDelegator API).
@@ -41,7 +41,7 @@ class Serega
 
     #
     # Includes into each presenter class its own `Delegators` module.
-    # Delegators to serialized object methods are defined there after the
+    # Delegators to the methods of the wrapped object are defined there after the
     # first #method_missing hit. Presenter methods override them and can call
     # them via `super`.
     #
@@ -57,7 +57,7 @@ class Serega
     end
 
     #
-    # Defines a method that delegates to the serialized object in the
+    # Defines a method that delegates to the wrapped object in the
     # presenter class `Delegators` module
     #
     # @param name [Symbol] Method name
@@ -79,7 +79,7 @@ class Serega
     end
 
     #
-    # @param object [Object] Serialized object to wrap
+    # @param object [Object] Object to wrap
     # @param ctx [Hash, nil] Serialization context
     #
     def initialize(object, ctx = nil)
@@ -92,9 +92,9 @@ class Serega
     attr_reader :__ctx__
 
     #
-    # Delegates all missing methods to serialized object.
+    # Delegates all missing methods to the wrapped object.
     #
-    # Creates delegator method for public methods of serialized object after
+    # Creates delegator method for public methods of the wrapped object after
     # first #method_missing hit to improve performance of following serializations.
     #
     def method_missing(name, ...) # rubocop:disable Style/MissingRespondToMissing -- base SimpleDelegator class has this method

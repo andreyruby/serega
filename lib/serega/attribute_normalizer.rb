@@ -386,7 +386,7 @@ class Serega
         nil
       end
 
-      # Skips auto-preloading of methods that return the serialized object
+      # Skips auto-preloading of methods that return the object
       # itself (:itself by default) — they are not associations,
       # so preloading them would fail or make no sense.
       def auto_preload_value(preload_method)

@@ -5,7 +5,7 @@ class Serega
     #
     # Plugin :activerecord_preloads
     #
-    # Automatically preloads associations to serialized objects
+    # Automatically preloads associations of the objects to serialize
     #
     # Every association declared with `:preload` is loaded once during serialization using
     # ActiveRecord::Associations::Preloader, so there are no N+1 queries.

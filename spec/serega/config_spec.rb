@@ -265,7 +265,7 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.check_attribute_name).to be true
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
-      expect(config.max_cached_plans_per_serializer_count).to eq 0
+      expect(config.max_cached_plans_per_serializer_count).to eq 20
       expect(config.hide_by_default).to be false
       expect(config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: false)
       expect(config.auto_preload_excluded_methods).to eq %i[itself __getobj__]
