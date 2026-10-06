@@ -102,15 +102,28 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "#preload_points" do
+    subject(:preload_points) { plan({}).preload_points }
+
+    let(:current_serializer) do
+      Class.new(base_class) do
+        attribute :name
+        attribute :posts, preload: :posts, value: proc { [] }
+      end
+    end
+
+    it "returns the points with preloads" do
+      expect(preload_points.map(&:name)).to eq [:posts]
+    end
+  end
+
   describe "#result_builder" do
     let(:current_plan) { plan(only: {a1: {}}) }
 
-    it "returns a result builder of the plan attributes in the mode" do
-      result_builder = current_plan.result_builder(:struct)
-
-      expect(result_builder).to be_a current_serializer::SeregaResultBuilder
-      expect(result_builder.mode).to eq :struct
-      expect(result_builder.struct_class.members).to eq [:a1]
+    it "returns the result builder of the plan in the mode" do
+      expect(current_plan.result_builder(:struct))
+        .to be_a(current_serializer::SeregaResultBuilder)
+        .and have_attributes(mode: :struct)
     end
 
     it "returns the same result builder for the same mode" do

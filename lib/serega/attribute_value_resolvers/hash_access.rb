@@ -45,7 +45,7 @@ class Serega
       #
       # Reads the key from the record
       #
-      # @param object [Object] serialized object or delegation step value
+      # @param object [Object] object to serialize or delegation step value
       # @return [Object] the value found
       #
       def call(object)
@@ -73,7 +73,7 @@ class Serega
       #
       # Delegates the value reading through the intermediate object
       #
-      # @param object [Object] serialized object
+      # @param object [Object] object to serialize
       # @return [Object] the value found
       #
       def call(object)
@@ -95,7 +95,7 @@ class Serega
       # Delegates the value reading through the intermediate object,
       # resolving a nil intermediate to nil
       #
-      # @param object [Object] serialized object
+      # @param object [Object] object to serialize
       # @return [Object, nil] the value found
       #
       def call(object)

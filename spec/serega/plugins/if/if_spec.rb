@@ -25,47 +25,6 @@ RSpec.describe Serega::SeregaPlugins::If do
     end
   end
 
-  describe "SeregaResultBuilder#build_containers" do
-    subject(:containers) { serializer::SeregaPlan.new(nil, {}).result_builder(mode).build_containers(2) }
-
-    let(:serializer) do
-      Class.new(Serega) do
-        plugin :if
-        attribute :name
-        attribute :email, if: :admin
-      end
-    end
-
-    let(:mode) { :data }
-
-    it "returns separate hashes with nil values of all attributes" do
-      expect(containers).to eq [{name: nil, email: nil}, {name: nil, email: nil}]
-      expect(containers[0]).not_to equal containers[1]
-      expect(containers[0]).not_to be_frozen
-    end
-
-    context "with the :hash mode" do
-      let(:mode) { :hash }
-
-      it "returns empty hashes" do
-        expect(containers).to eq [{}, {}]
-      end
-    end
-
-    context "when no attribute has conditions" do
-      let(:serializer) do
-        Class.new(Serega) do
-          plugin :if
-          attribute :name
-        end
-      end
-
-      it "returns empty hashes" do
-        expect(containers).to eq [{}, {}]
-      end
-    end
-  end
-
   describe "SeregaPlanPoint methods" do
     before { serializer.plugin :if }
 

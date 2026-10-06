@@ -6,12 +6,21 @@ How Serega serializes objects.
 
 Serialization has three stages. Each stage lives for a different time.
 
+Terms:
+
+| term | meaning | example |
+|---|---|---|
+| source | an object to serialize | a user |
+| relation source | what a relation attribute returns for one source | `user.posts`: a source, a collection of sources, or nil |
+| serialized object | the output of one source: a Hash, Struct or Data object | `{id: 1, name: "Ann"}` |
+| relation value | the serialized value of a relation attribute | the serialized posts of a user |
+
 ```
 Definition   once per serializer class   Serega, SeregaAttribute, SeregaBatchLoader
      ↓
-Plan         once per set of modifiers   SeregaPlan → SeregaPlanPoint, SeregaResultBuilder per mode
+Plan         once per set of modifiers   SeregaPlan → SeregaPlanPoint, SeregaResultBuilder per mode (made on first use)
      ↓
-Run          once per serialization      SeregaEngine::Run → SeregaObjectGroup per plan
+Run          once per serialization      SeregaEngine::Run → SeregaSourceGroup per plan (root and each relation)
 ```
 
 ### 1. Definition
@@ -19,7 +28,7 @@ Run          once per serialization      SeregaEngine::Run → SeregaObjectGroup
 `attribute`, `batch` and `plugin` calls on a serializer class make the definition:
 
 - `SeregaAttribute` (`lib/serega/attribute.rb`): name, options and a value resolver from `lib/serega/attribute_value_resolvers/`. `#value(object, context, batches:)` reads the value of one object.
-- `SeregaBatchLoader` (`lib/serega/batch_loader.rb`): a named block that loads values of many objects in one call.
+- `SeregaBatchLoader` (`lib/serega/batch_loader.rb`): a named block that loads values of many sources in one call.
 
 The first plan locks the class. Later definition calls raise.
 
@@ -28,77 +37,153 @@ The first plan locks the class. Later definition calls raise.
 `UserSerializer.new(only:, except:, with:)` gets a `SeregaPlan` from `SeregaPlanCache`.
 
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
-- `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer. The point runs the preloads (`#run_preloads`) and loads its batches (`#load_batches`).
-- `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the results of a plan in one mode. It makes empty containers (`{}` for `:hash` and `:data`, a `Struct` for `:struct`), and builds the results from the filled containers: a `Data` object from each Hash in the `:data` mode, or the containers themselves.
+- `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
+- `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlanCache` keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method calls plain attribute methods directly, for example `object.name` or `object.profile&.city` (`SeregaAttribute#value_code`). Other attributes call `SeregaAttribute#value`.
 
 ### 3. Run
 
-`to_h`, `to_data` and `to_struct` (`lib/serega.rb`) do these steps:
+`SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and the source groups: one root group and one group per relation. A group holds the sources of one plan. It serializes the groups in two passes.
 
-1. `normalize_serialization_opts` validates the options and sets `opts[:context]`.
-2. `prepare_objects` calls the `prepare_initial_objects` handler.
-3. `prepare_initial_serialization_opts` sets `opts[:run]`, `opts[:many]` and `opts[:plan]`.
-4. `serialize` calls `opts[:run].call(plan, object, many:)`.
-
-`SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and one `SeregaObjectGroup` per plan. It serializes the groups in two passes:
+The flow of `UserSerializer.to_h(users, only: [:id, :posts], context: {})` (`lib/serega.rb`). `to_data` and `to_struct` do the same with the `:data` and `:struct` modes:
 
 ```
-run.call(plan, object, many:)
-├─ reference = run.object_group(plan).add(object, many)
+UserSerializer.to_h(object, opts)
+├─ split opts into modifiers (only, except, with) and serialization options (context, many)
+├─ serializer = UserSerializer.new(modifiers)
+│  └─ plan = plan_cache.fetch(only, with, except)         stage 2, cached plan or a new one
 │
-├─ discover pass, from the root group down (also groups added during this pass)
-│  └─ object_group.discover
-│     ├─ point.run_preloads(objects)                       once per group
-│     └─ for each relation point
-│        ├─ point.load_batches(object_group)              once per group
-│        ├─ child_group = run.object_group(point.child_plan)
-│        └─ for each object
-│           └─ reference = child_group.add(attribute.value(object, ...), point.many)
-│
-├─ build pass, from the last group up
-│  └─ object_group.build
-│     ├─ containers = result_builder.build_containers(size)
-│     ├─ for each point
-│     │  ├─ relation: containers[index][name] = child_group.results[reference]   already built
-│     │  └─ other: point.load_batches(object_group)                             once per group
-│     │            serialize_point: containers[index][name] = attribute.value(object, ...)
-│     └─ results = result_builder.build(containers)
-│
-└─ root group results[reference]
+└─ serializer.to_h(object, serialization options)
+   ├─ normalize_serialization_opts                        validates the options, sets opts[:context]
+   ├─ prepare_objects                                     calls the prepare_initial_objects handler
+   ├─ prepare_initial_serialization_opts                  sets opts[:mode] (:hash) and opts[:many]
+   └─ serialize                                           patched by :root, :metadata, :context_metadata
+      └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
+         ├─ root_group = root_source_group(plan, object, many)
+         │  ├─ sources = []
+         │  ├─ pull = SeregaSourceGroup.append_sources(sources, object, many)
+         │  │    appends the root source(s) to `sources`, and returns the pull (see below)
+         │  └─ new_source_group(plan, sources, [pull])
+         │
+         ├─ source_groups = discover(root_group)                 all groups, a child group after its parent
+         │  └─ for each group, also the child groups returned on the way
+         │     └─ child_groups = source_group.discover
+         │        ├─ run_preloads                                   once per group
+         │        └─ for each relation point
+         │           ├─ batches_for(point)                         once per group
+         │           ├─ relation_sources = read_relation_sources(point, batches)   e.g. user.posts of each user
+         │           ├─ child_sources, pulls = SeregaSourceGroup.collect(relation_sources, point.many)
+         │           └─ child_group = run.new_source_group(point.child_plan, child_sources, pulls)
+         │
+         ├─ build(source_groups)                                 from the last group up
+         │  └─ source_group.build
+         │     ├─ batches = batches_for(point)                     once per group
+         │     ├─ relations = take_relation_values!(child_group) per relation point
+         │     ├─ result_builder = plan.result_builder(mode)       kept by the plan, one per mode
+         │     │  └─ first build of the plan in this mode only:
+         │     │     └─ SeregaResultBuilder.new(mode, points)
+         │     │        ├─ call_code = SeregaResultCode.new(mode, points).to_s   not kept
+         │     │        └─ class_eval(call_code)                    defines #call on the builder
+         │     └─ serialized = result_builder.call(sources, context, batches, relations)
+         │
+         └─ root_value(root_group)     one serialized object for SINGLE_SOURCE, or all of them
 ```
 
-`SeregaObjectGroup` (`lib/serega/object_group.rb`) holds all objects of one plan in one run.
+`SeregaSourceGroup` (`lib/serega/source_group.rb`) holds all sources of one plan in one run.
 
-- `#add` wraps the objects in the presenter and returns a reference to their results: an index for one object, a Range for a collection, nil for nil.
-- `#discover` runs the preloads and adds the related objects to the groups of the relation plans.
-- `#build` builds the results. The groups of the relation plans are built before it.
+- `#initialize` wraps the sources in the presenter. The group keeps the pulls of its parent group.
+- `#discover` runs the preloads and returns one child group per relation.
+- `#build` builds the serialized objects. The child groups are built before it.
+- `#take_relation_values!(child_group)` uses the pulls of a child group to take the relation values from its serialized objects. It empties them: the parent group takes them once, during its build.
 
-The result keys follow the order of the plan points. The values are read point by point, for all objects of a group. Relation values and preloads of a group are read in the discover pass, before the other values.
+### Pulls
+
+`SeregaSourceGroup.collect(relation_sources, many)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append_sources(sources, relation_source, many)` does this for one relation source. A pull says what `#take_relation_values!` takes for it from the serialized objects:
+
+| relation source | pull | relation value |
+|---|---|---|
+| one source | `SeregaEngine::SINGLE_SOURCE` (-1) | the next serialized object |
+| collection of N sources | `N` | Array of the next N serialized objects |
+| `nil` | `nil` | `nil` |
+| skipped by the `:if` plugin | `If::SKIP` | no key, or nil |
+
+`.collect` and `#take_relation_values!` run on the parent group, thus the `:if` plugin of the parent serializer handles `If::SKIP` in both. `.collect` is a class method, because `Run#call` also uses `.append_sources` for the root, before any group exists. The serialized objects of a group follow the order of its sources, thus `#take_relation_values!` takes them from the front, one pull after another (`#pull_value`). The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
+
+The keys of a serialized object follow the order of the plan points. The values are read source by source. Relation values and preloads of a group are read in the discover pass, before the other values.
 
 ### Example
 
-`UserSerializer.to_h(users)` for 2 users with posts, where each post has comments:
+`UserSerializer.to_h([ann, bob, cat])`, where a user has posts and an avatar, and a post has comments:
+
+| user | posts | avatar |
+|---|---|---|
+| ann | `[p1, p2]` (p1 has comments c1, c2; p2 has none) | `a1` |
+| bob | `nil` | `nil` |
+| cat | `[p3]` (p3 has comment c3) | `a3` |
+
+Discover pass, from the root group down. Each group makes one child group per relation:
 
 ```
-object groups        objects                      discovered   built
-UserSerializer       [user1, user2]               1st          3rd
-PostSerializer       [post1, post2, post3]        2nd          2nd   (posts of both users)
-CommentSerializer    [comment1, ..., commentN]    3rd          1st   (comments of all posts)
+users group: [ann, bob, cat]                    pulls: [3]                   one collection of 3 users
+│
+├─ posts relation → posts group
+│    sources: [p1, p2, p3]                      posts of all users, in user order
+│    pulls:   [2, nil, 1]                       one per user: ann 2 posts, bob nil, cat 1 post
+│    │
+│    └─ comments relation → comments group
+│         sources: [c1, c2, c3]                 comments of all posts, in post order
+│         pulls:   [2, 0, 1]                    one per post: p1 2 comments, p2 none, p3 1 comment
+│
+└─ avatar relation → avatars group
+     sources: [a1, a3]
+     pulls:   [SINGLE_SOURCE, nil, SINGLE_SOURCE]
 ```
 
-A batch loader or preload of `PostSerializer` runs once, for all 3 posts.
+`Run#discover` returns the groups in discover order: `[users, posts, avatars, comments]`. A batch loader or preload of the posts group runs once, for all 3 posts.
+
+Build pass, from the last group up. `S(x)` is the serialized object of `x`:
+
+```
+comments group   serialized:      [S(c1), S(c2), S(c3)]
+                 relation_values: [[S(c1), S(c2)], [], [S(c3)]]          comments of p1, p2, p3
+
+avatars group    serialized:      [S(a1), S(a3)]
+                 relation_values: [S(a1), nil, S(a3)]                    avatar of ann, bob, cat
+
+posts group      serialized:      [S(p1), S(p2), S(p3)]                  with the comments values
+                 relation_values: [[S(p1), S(p2)], nil, [S(p3)]]         posts of ann, bob, cat
+
+users group      serialized:      [S(ann), S(bob), S(cat)]               with the posts and avatar values
+                 pulls: [3], thus Run.call returns [S(ann), S(bob), S(cat)]
+```
+
+### When the `#call` method is generated
+
+The build pass generates the `#call` method of a plan the first time it builds a group of this plan in a serialization mode:
+
+1. `plan.result_builder(mode)` finds no builder of this mode in the plan.
+2. `SeregaResultBuilder.new(mode, points)` gets the code from `SeregaResultCode.new(mode, points).to_s`, and defines `#call` with `class_eval`. This takes about 60 µs for 10 attributes.
+3. Nothing keeps the `SeregaResultCode` object or the code string. The plan keeps the builder with the generated `#call`. Later builds of the plan in this mode call the same method.
+
+A child plan belongs to its parent plan, thus it keeps its builders as long as the parent plan lives. How long a plan lives:
+
+| plan | lives | `#call` is generated |
+|---|---|---|
+| without modifiers | as long as the serializer class | once per mode |
+| with modifiers, cached (`max_cached_plans_per_serializer_count`, 20 by default) | until the cache removes it | once per mode while cached |
+| with modifiers, cache disabled (`0`) | one serialization | in each serialization |
 
 ### Build order
 
-The build pass builds the groups in reverse order: the results of related objects must be ready before the results that hold them.
+The build pass builds the groups in reverse order: the serialized related objects must be ready before the serialized objects that hold them.
 
-- The discover pass adds the group of related objects after the group that finds them. Thus a child group always comes after its parent group: `[users, posts, comments]`.
-- A result holds the built results of its related objects: a user result holds post results, a post result holds comment results.
-- `reverse_each` builds `comments`, then `posts`, then `users`. When a group builds, the groups of its relations are already built.
+- `Run#discover` puts a child group after the group that reads its relation sources. Thus a child group always comes after its parent group: `[users, posts, avatars, comments]`.
+- A serialized object holds the serialized related objects: a serialized user holds serialized posts, a serialized post holds serialized comments.
+- `reverse_each` builds `comments`, then `avatars`, then `posts`, then `users`. When a group builds, the groups of its relations are already built.
 
 A group depends only on groups added after it. A recursive serializer, for example user → friends → users, adds new groups further down the list. Thus the reverse order is always valid.
 
-A build from the root down must assign the relation values after it makes the parent results. A `Data` result is frozen when it is made, thus it can not get values later.
+A build from the root down must assign the relation values after it makes the serialized parent objects. A `Data` object is frozen when it is made, thus it can not get values later.
 
 ### Errors
 
@@ -111,21 +196,23 @@ undefined method 'bar' for an instance of User
 
 ## Per-serializer classes
 
-Each serializer class gets subclasses of the internal classes in its `inherited` hook (`lib/serega.rb`), for example `UserSerializer::SeregaPlan` and `UserSerializer::SeregaObjectGroup`. `serializer_class` on these classes returns the serializer. Plugins include modules into these subclasses. Thus a plugin changes only the serializer that loads it, and the serializer's subclasses.
+Each serializer class gets subclasses of the internal classes in its `inherited` hook (`lib/serega.rb`), for example `UserSerializer::SeregaPlan` and `UserSerializer::SeregaSourceGroup`. `serializer_class` on these classes returns the serializer. Plugins include modules into these subclasses. Thus a plugin changes only the serializer that loads it, and the serializer's subclasses.
 
 ## Where plugins change the flow
 
 | plugin | patched method | change |
 |---|---|---|
-| `:if` | `SeregaObjectGroup#serialize_point` | skips values failing `:if`, `:unless`, `:if_value` or `:unless_value` |
-| `:if` | `SeregaObjectGroup#read_relations` | returns `If::SKIP` for relations of objects failing `:if` or `:unless` |
-| `:if` | `SeregaObjectGroup#assign_relation_values` | skips `If::SKIP` relation values |
-| `:if` | `SeregaResultBuilder#build_containers` | makes `:data` containers with nil values, thus skipped attributes are nil |
-| `:root` | `Serega#serialize` | wraps the result: `{root => result}` |
+| `:if` | `SeregaResultCode#assign_value_code` | generates code that assigns `If::SKIP` to values failing `:if`, `:unless`, `:if_value` or `:unless_value` |
+| `:if` | `SeregaResultCode#variables_code`, `#skippable?` | adds the `skip` and `point_N` variables for conditional points |
+| `:if` | `SeregaResultCode#hash_assign_code`, `#argument_code` | a serialized Hash has no key for a skipped value, a serialized Struct or Data has nil |
+| `:if` | `SeregaSourceGroup#read_relation_sources` | returns `If::SKIP` for sources failing `:if` or `:unless` |
+| `:if` | `SeregaSourceGroup.append_sources` | returns `If::SKIP` as the pull, and appends nothing |
+| `:if` | `SeregaSourceGroup#pull_value` | returns `If::SKIP` as it is |
+| `:root` | `Serega#serialize` | wraps the serialized object(s): `{root => serialized}` |
 | `:metadata`, `:context_metadata` | `Serega#serialize` | add metadata keys next to the root key |
-| `:formatters` | `SeregaAttribute` | formats the value after it is read |
+| `:formatters` | `SeregaAttribute#value`, `#value_code` | formats the value after it is read; a formatted attribute is not read directly in generated code |
 | `:camel_case` | `SeregaAttributeNormalizer` | camelizes attribute names |
-| `:activerecord_preloads` | `preload_with` handler | runs `ActiveRecord::Associations::Preloader` in `point.run_preloads` |
+| `:activerecord_preloads` | `preload_with` handler | runs `ActiveRecord::Associations::Preloader` in `SeregaSourceGroup#run_preloads` |
 | `:depth_limit` | `SeregaPlan#initialize` | raises when the plan is too deep |
 | `:string_modifiers` | `SeregaPlanCache` | parses modifiers from strings like `"name,posts(title)"` |
 

@@ -8,7 +8,7 @@ class Serega
     # Adds `:if`, `:unless`, `:if_value`, `:unless_value` attribute options to
     # conditionally remove attributes from the response.
     #
-    # `:if`/`:unless` receive the serialized object and context, and are
+    # `:if`/`:unless` receive the object to serialize and context, and are
     # checked before the attribute value is found. `:if_value`/`:unless_value`
     # receive the already-found value and context, checked after. The latter
     # two cannot be used with the `:serializer` option, since a relationship
@@ -32,7 +32,7 @@ class Serega
     #   end
     #
     module If
-      # Relation reference of an object failing :if/:unless conditions
+      # Value of an attribute skipped by its conditions
       # @private
       SKIP = Object.new.freeze
 
@@ -59,10 +59,11 @@ class Serega
 
         serializer_class::SeregaAttribute.include(AttributeInstanceMethods)
         serializer_class::SeregaAttributeNormalizer.include(AttributeNormalizerInstanceMethods)
-        serializer_class::SeregaResultBuilder.include(ResultBuilderInstanceMethods)
+        serializer_class::SeregaResultCode.include(ResultCodeInstanceMethods)
         serializer_class::SeregaPlanPoint.include(PlanPointInstanceMethods)
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
-        serializer_class::SeregaObjectGroup.include(ObjectGroupInstanceMethods)
+        serializer_class::SeregaSourceGroup.extend(SourceGroupClassMethods)
+        serializer_class::SeregaSourceGroup.include(SourceGroupInstanceMethods)
       end
 
       #
@@ -179,37 +180,56 @@ class Serega
       end
 
       #
-      # Serega::SeregaResultBuilder additional/patched instance methods
+      # Serega::SeregaResultCode additional/patched instance methods
       #
-      # @see Serega::SeregaResultBuilder::InstanceMethods
+      # @see Serega::SeregaResultCode::InstanceMethods
       #
       # @private
-      module ResultBuilderInstanceMethods
-        #
-        # Instantiates new result builder and prepares a template of :data
-        # containers when the plan has conditional attributes
-        #
-        # @see Serega::SeregaResultBuilder::InstanceMethods#initialize
-        #
-        def initialize(mode, points)
-          super
-          conditional = mode == :data && points.any?(&:conditional?)
-          @nil_hash = conditional ? points.to_h { |point| [point.name, nil] }.freeze : nil
+      module ResultCodeInstanceMethods
+        private
+
+        # Adds `skip` and the `point_N` variables of conditional points
+        def variables_code
+          code = super
+          skippable_indexes = @points.each_index.select { |index| skippable?(@points[index]) }
+          return code if skippable_indexes.empty?
+
+          point_variables = skippable_indexes.map { |index| "point_#{index} = points[#{index}]" }
+          [*code, "skip = Serega::SeregaPlugins::If::SKIP", *point_variables]
         end
 
-        #
-        # Builds :data containers of plans with conditional attributes with all
-        # attribute names and nil values, so skipped attributes stay nil.
-        #
-        # @param count [Integer] Number of containers
-        #
-        # @return [Array<Hash, Struct>] Empty containers
-        #
-        def build_containers(count)
-          template = @nil_hash
-          return super unless template
+        # Code that assigns the value of a conditional attribute, or SKIP when
+        # the attribute fails its conditions
+        def assign_value_code(point, index)
+          return super if !point.conditional? || point.child_plan
 
-          Array.new(count) { template.dup }
+          <<~RUBY.chomp
+            value_#{index} =
+              if point_#{index}.satisfy_if_conditions?(source, context)
+                value_#{index} = #{read_value_code(point, index)}
+                point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : skip
+              else
+                skip
+              end
+          RUBY
+        end
+
+        def skippable?(point)
+          point.conditional?
+        end
+
+        # nil for a skipped value
+        def argument_code(index)
+          return super unless skippable?(@points[index])
+
+          "(skip.equal?(value_#{index}) ? nil : value_#{index})"
+        end
+
+        # No key for a skipped value
+        def hash_assign_code(point, index)
+          return super unless skippable?(point)
+
+          "#{super} unless skip.equal?(value_#{index})"
         end
       end
 
@@ -289,59 +309,46 @@ class Serega
       end
 
       #
-      # SeregaObjectGroup additional/patched instance methods
+      # SeregaSourceGroup additional/patched class methods
       #
-      # @see Serega::SeregaObjectGroup
+      # @see Serega::SeregaSourceGroup::ClassMethods
       #
       # @private
-      module ObjectGroupInstanceMethods
+      module SourceGroupClassMethods
+        # Returns SKIP as the pull, and appends no sources for it
+        def append_sources(sources, relation_source, many)
+          return relation_source if SKIP.equal?(relation_source)
+
+          super
+        end
+      end
+
+      #
+      # SeregaSourceGroup additional/patched instance methods
+      #
+      # @see Serega::SeregaSourceGroup
+      #
+      # @private
+      module SourceGroupInstanceMethods
         private
 
-        def serialize_point(point, objects, containers, batches)
+        # Returns SKIP as it is
+        def pull_value(serialized, pull)
+          return pull if SKIP.equal?(pull)
+
+          super
+        end
+
+        def read_relation_sources(point, batches)
           return super unless point.conditional?
 
           attribute = point.attribute
-          name = point.name
-          context = @context
-          index = 0
-          size = objects.size
-
-          while index < size
-            object = objects[index]
-
-            if point.satisfy_if_conditions?(object, context)
-              value = attribute.value(object, context, batches: batches)
-              containers[index][name] = value if point.satisfy_if_value_conditions?(value, context)
-            end
-
-            index += 1
-          end
-        rescue => error
-          SeregaUtils::SerializedAttributeError.call(error, point)
-        end
-
-        def assign_relation_values(point, values, containers)
-          return super unless point.conditional?
-
-          name = point.name
-
-          values.each_with_index do |value, index|
-            containers[index][name] = value unless SKIP.equal?(value)
-          end
-        end
-
-        def read_relations(point, batches, child_group)
-          return super unless point.conditional?
-
-          attribute = point.attribute
-          many = point.many
           context = @context
 
-          @objects.map do |object|
-            next SKIP unless point.satisfy_if_conditions?(object, context)
+          @sources.map do |source|
+            next SKIP unless point.satisfy_if_conditions?(source, context)
 
-            value = attribute.value(object, context, batches: batches)
-            child_group.add(value, many)
+            attribute.value(source, context, batches: batches)
           end
         rescue => error
           SeregaUtils::SerializedAttributeError.call(error, point)

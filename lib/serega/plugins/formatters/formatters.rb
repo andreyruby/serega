@@ -204,7 +204,7 @@ class Serega
         #
         # Returns formatted attribute value
         #
-        # @param object [Object] Serialized object
+        # @param object [Object] Object to serialize
         # @param context [Hash] Serialization context
         #
         # @return [Object] Formatted attribute value
@@ -219,6 +219,17 @@ class Serega
           else # "2"
             @formatter.call(result, context)
           end
+        end
+
+        #
+        # Ruby code that reads the attribute value of the object
+        #
+        # @param source_variable [String] Name of the source variable in the code
+        #
+        # @return [String, nil] Code, or nil when the value is formatted
+        #
+        def value_code(source_variable)
+          super unless @formatter
         end
 
         private

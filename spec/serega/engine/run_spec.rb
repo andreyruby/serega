@@ -17,8 +17,8 @@ RSpec.describe Serega::SeregaEngine::Run do
 
   let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
 
-  describe "#call" do
-    subject(:result) { run.call(plan, object, many: many) }
+  describe ".call" do
+    subject(:result) { described_class.call(plan, object, many: many, mode: mode, context: context) }
 
     let(:post) { double(title: "Hello") }
     let(:user) { double(name: "Ann", posts: [post]) }
@@ -69,23 +69,17 @@ RSpec.describe Serega::SeregaEngine::Run do
     end
   end
 
-  describe "#object_group" do
-    it "returns an object group of the plan serializer" do
-      object_group = run.object_group(plan)
+  describe "#new_source_group" do
+    subject(:source_group) { run.new_source_group(plan, [user], [Serega::SeregaEngine::SINGLE_SOURCE]) }
 
-      expect(object_group).to be_a user_serializer::SeregaObjectGroup
-      expect(object_group.plan).to equal plan
-      expect(object_group.run).to equal run
-    end
+    let(:user) { double }
 
-    it "returns the same group for the same plan" do
-      expect(run.object_group(plan)).to equal run.object_group(plan)
-    end
-
-    it "returns separate groups for different plans" do
-      other_plan = user_serializer::SeregaPlan.new(nil, {})
-
-      expect(run.object_group(plan)).not_to equal run.object_group(other_plan)
+    it "returns a new source group of the plan serializer" do
+      expect(source_group).to be_a user_serializer::SeregaSourceGroup
+      expect(source_group.plan).to equal plan
+      expect(source_group.run).to equal run
+      expect(source_group.sources).to eq [user]
+      expect(source_group.pulls).to eq [Serega::SeregaEngine::SINGLE_SOURCE]
     end
   end
 end

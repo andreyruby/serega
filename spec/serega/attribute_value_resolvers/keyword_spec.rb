@@ -32,5 +32,21 @@ RSpec.describe Serega::AttributeValueResolvers do
         end
       end
     end
+
+    describe "#code" do
+      subject(:code) { described_class.new(keyword).code("source") }
+
+      it "returns the method call code" do
+        expect(code).to eq "source.name"
+      end
+
+      context "with a not plain method name" do
+        let(:keyword) { :"full-name" }
+
+        it "returns nil" do
+          expect(code).to be_nil
+        end
+      end
+    end
   end
 end

@@ -319,7 +319,7 @@ hands it straight to `ActiveRecord::Associations::Preloader`.
 
 | Value | Effect |
 |---------------|--------------------------|
-| `:assoc` | preloads the `:assoc` association onto the serialized objects |
+| `:assoc` | preloads the `:assoc` association onto the objects to serialize |
 | `[:a, :b]` / `{a: :b}` / custom | passed through as-is to the preload handler |
 | `nil` | preloads nothing (also blocks `auto_preload`) |
 | `false` | preloads nothing (also blocks `auto_preload`) |
@@ -498,7 +498,7 @@ prepare_initial_objects { |ids, ctx:| OccamsRecord.query(User.where(id: ids, acc
 prepare_initial_objects UsersLoader
 ```
 
-⚠️ Runs for the **serialized objects only**, not for objects of nested
+⚠️ Runs only for the **objects given to the serializer**, not for objects of nested
 serializers. Runs before `:many` is detected, so it may turn a single object
 into a collection.
 
@@ -623,8 +623,8 @@ Default `true` — names must match `[a-zA-Z0-9_-~]`.
 ### `config.max_cached_plans_per_serializer_count` — plan cache
 
 Caches prepared serialization plans by `:only` / `:except` / `:with` signature
-so repeated requests with the same modifiers skip rebuilding. Default `0`
-(disabled); the plan without modifiers is always cached. No effect on
+so repeated requests with the same modifiers skip rebuilding. Default `20`
+(`0` disables it); the plan without modifiers is always cached. No effect on
 output — purely a performance tuning knob.
 
 ---
