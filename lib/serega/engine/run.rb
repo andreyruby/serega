@@ -77,7 +77,7 @@ class Serega
       # @param plan [SeregaPlan] Serialization plan
       # @param sources [Array] Sources
       # @param pulls [Array<Integer, nil, Object>] Pulls from
-      #   `SeregaSourceGroup.collect`, one per source of the parent group
+      #   `SeregaUtils::Pulls.collect`, one per source of the parent group
       # @return [SeregaSourceGroup] New source group
       def new_source_group(plan, sources, pulls)
         plan.serializer_class::SeregaSourceGroup.new(self, plan, sources, pulls)
@@ -88,7 +88,7 @@ class Serega
       # Makes the root group: the root source(s) with one pull
       def root_source_group(plan, object, many)
         sources = []
-        pull = plan.serializer_class::SeregaSourceGroup.append_sources(sources, object, many)
+        pull = SeregaUtils::Pulls.append(sources, object, many)
         new_source_group(plan, sources, [pull])
       end
 

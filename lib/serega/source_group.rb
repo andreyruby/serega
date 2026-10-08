@@ -15,74 +15,6 @@ class Serega
   # @private
   class SeregaSourceGroup
     #
-    # SeregaSourceGroup class methods
-    #
-    # @private
-    module ClassMethods
-      #
-      # Collects the sources of the relation sources, and the pull of each
-      # relation source. #take_relation_values! uses the pulls to turn the
-      # serialized objects into relation values.
-      #
-      # @param relation_sources [Array] Relation source of each source of the
-      #   parent group: what the relation attribute returns
-      # @param many [Boolean, nil] Whether a relation source is a collection
-      #
-      # @return [Array(Array, Array)] Sources, and the pull of each relation source
-      #
-      def collect(relation_sources, many)
-        sources = []
-        pulls = relation_sources.map { |relation_source| append_sources(sources, relation_source, many) }
-        [sources, pulls]
-      end
-
-      #
-      # Collects like `.collect`, and keeps SKIP of a skipped relation source
-      # as its pull.
-      #
-      # @param relation_sources [Array] Relation source or SKIP of each source
-      #   of the parent group
-      # @param many [Boolean, nil] Whether a relation source is a collection
-      #
-      # @return [Array(Array, Array)] Sources, and the pull of each relation source
-      #
-      def collect_conditional(relation_sources, many)
-        sources = []
-        pulls = relation_sources.map do |relation_source|
-          SeregaEngine::SKIP.equal?(relation_source) ? relation_source : append_sources(sources, relation_source, many)
-        end
-        [sources, pulls]
-      end
-
-      #
-      # Appends the source(s) of one relation source to sources, and returns
-      # the pull: what #take_relation_values! takes for it from the serialized
-      # objects.
-      # - the count of a collection: an Array of this count of serialized objects
-      # - SINGLE_SOURCE for one source: one serialized object
-      # - nil for nil: nothing, the relation value is nil
-      #
-      # @param sources [Array] Sources list
-      # @param relation_source [Object] Relation source, or the root source(s)
-      # @param many [Boolean, nil] Whether the relation source is a collection
-      #
-      # @return [Integer, nil, Object] Pull
-      #
-      def append_sources(sources, relation_source, many)
-        return if relation_source.nil?
-
-        if many != false && SeregaUtils::CollectionDetector.call(relation_source)
-          collection = relation_source.to_a
-          sources.concat(collection)
-          collection.size
-        else
-          sources << relation_source
-          many ? 1 : SeregaEngine::SINGLE_SOURCE # `many` on, but a sole source was given — wrap it, don't raise
-        end
-      end
-    end
-
-    #
     # SeregaSourceGroup instance methods
     #
     # @private
@@ -103,8 +35,8 @@ class Serega
       #   source, after #build
       attr_reader :serialized
 
-      # @return [Array<Integer, nil, Object>] Pulls from `.collect`, one per
-      #   source of the parent group
+      # @return [Array<Integer, nil, Object>] Pulls from
+      #   `SeregaUtils::Pulls.collect`, one per source of the parent group
       attr_reader :pulls
 
       # Each source is wrapped in the serializer's presenter, so value reading
@@ -113,8 +45,8 @@ class Serega
       # @param run [SeregaEngine::Run] Serialization run
       # @param plan [SeregaPlan] Serialization plan
       # @param sources [Array] Sources
-      # @param pulls [Array<Integer, nil, Object>] Pulls from `.collect`, one
-      #   per source of the parent group
+      # @param pulls [Array<Integer, nil, Object>] Pulls from
+      #   `SeregaUtils::Pulls.collect`, one per source of the parent group
       def initialize(run, plan, sources, pulls)
         @run = run
         @plan = plan
@@ -145,33 +77,13 @@ class Serega
       # @return [void]
       def build
         batches = plan.points.map { |point| batches_for(point) } if plan.batch_points?
-        relations = @child_groups&.transform_values { |child_group| take_relation_values!(child_group) }
+        relations = @child_groups&.transform_values do |child_group|
+          SeregaUtils::Pulls.take!(child_group.serialized, child_group.pulls)
+        end
         @serialized = plan.result_builder(run.mode).call(@sources, @context, batches, relations)
       end
 
       private
-
-      # Takes the relation value of each source from the front of the
-      # serialized objects of the child group. The serialized objects follow
-      # the order of the pulls, thus each pull takes the next ones. Empties
-      # the serialized objects of the child group.
-      def take_relation_values!(child_group)
-        serialized = child_group.serialized
-        child_group.pulls.map { |pull| pull_value(serialized, pull) }
-      end
-
-      # Takes the relation value of one pull from the front of the
-      # serialized objects:
-      # - a count: an Array of the next serialized objects
-      # - SINGLE_SOURCE: the next serialized object
-      # - nil or SKIP: the pull itself
-      def pull_value(serialized, pull)
-        case pull
-        when Integer then serialized.shift(pull)
-        when SeregaEngine::SINGLE_SOURCE then serialized.shift
-        else pull
-        end
-      end
 
       # Reads the relation sources of the point, and makes their child group
       def child_group(point)
@@ -179,10 +91,10 @@ class Serega
         child_sources, pulls =
           if point.conditional?
             relation_sources = read_conditional_relation_sources(point, batches)
-            self.class.collect_conditional(relation_sources, point.many)
+            SeregaUtils::Pulls.collect_conditional(relation_sources, point.many)
           else
             relation_sources = read_relation_sources(point, batches)
-            self.class.collect(relation_sources, point.many)
+            SeregaUtils::Pulls.collect(relation_sources, point.many)
           end
         run.new_source_group(point.child_plan, child_sources, pulls)
       end
@@ -261,7 +173,6 @@ class Serega
     end
 
     extend Serega::SeregaHelpers::SerializerClassHelper
-    extend ClassMethods
     include InstanceMethods
   end
 end
