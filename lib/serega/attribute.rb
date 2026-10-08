@@ -45,6 +45,14 @@ class Serega
       # @return [Array<Symbol>] Batch loader names
       attr_reader :batch_loaders
 
+      # Callable :if, :unless, :if_value and :unless_value conditions
+      # @return [Hash] Condition of each option, nil for a missing option
+      attr_reader :opt_if
+
+      # Parameters signatures of the conditions
+      # @return [Hash] Signature of each condition, nil for a missing option
+      attr_reader :opt_if_signatures
+
       #
       # Initializes new attribute
       #
@@ -78,6 +86,11 @@ class Serega
       # Name of the SeregaAttributeValues method that reads the value
       # @return [Symbol, nil] Method name, or nil when the value is read with #value
       attr_reader :value_method
+
+      # @return [Boolean] Whether the attribute has an :if, :unless, :if_value or :unless_value condition
+      def conditional?
+        @conditional
+      end
 
       # Shows whether attribute has specified serializer
       # @return [Boolean] Checks if attribute is relationship (if :serializer option exists)
@@ -212,6 +225,9 @@ class Serega
         @serializer = normalizer.serializer
         @preloads = normalizer.preloads
         @batch_loaders = normalizer.batch_loaders
+        @opt_if = normalizer.if_options
+        @opt_if_signatures = normalizer.if_options_signatures
+        @conditional = @opt_if.any? { |_option_name, condition| condition }
       end
     end
 

@@ -58,7 +58,6 @@ class Serega
         # Patched in:
         # - plugin :context_metadata (checks context metadata option which is :meta by default)
         # - plugin :formatters (checks :format option)
-        # - plugin :if (checks :if, :if_value, :unless, :unless_value options)
         def check_opts
           Utils::CheckAllowedKeys.call(opts, allowed_opts_keys, :attribute)
 
@@ -67,10 +66,14 @@ class Serega
           Attribute::CheckOptDelegate.call(opts)
           Attribute::CheckOptHashAccess.call(opts)
           Attribute::CheckOptHide.call(opts)
+          Attribute::CheckOptIf.call(opts)
+          Attribute::CheckOptIfValue.call(opts)
           Attribute::CheckOptMethod.call(opts)
           Attribute::CheckOptMany.call(opts, block)
           Attribute::CheckOptPreload.call(opts)
           Attribute::CheckOptSerializer.call(opts, block)
+          Attribute::CheckOptUnless.call(opts)
+          Attribute::CheckOptUnlessValue.call(opts)
           Attribute::CheckOptValue.call(opts)
           Attribute::CheckOptBatch.call(self.class.serializer_class, opts)
         end

@@ -99,28 +99,36 @@ class Serega
 
       private
 
-      # Code that sets the local variables of the `#call` method
-      #
-      # Patched in:
-      # - plugin :if (adds the variables that check the conditions)
+      # Code that sets the local variables of the `#call` method. A
+      # conditional attribute has the `point_N` variable, and a plan with
+      # conditional points has the `skip` variable.
       def variables_code
         point_variables = @points.each_with_index.flat_map do |point, index|
-          if point.child_plan
-            ["relation_values_#{index} = relations[points[#{index}]]"]
-          else
-            ["attribute_#{index} = points[#{index}].attribute", "batches_#{index} = batches && batches[#{index}]"]
-          end
-        end
+          next ["relation_values_#{index} = relations[points[#{index}]]"] if point.child_plan
 
-        ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *point_variables]
+          variables = ["attribute_#{index} = points[#{index}].attribute", "batches_#{index} = batches && batches[#{index}]"]
+          point.conditional? ? [*variables, "point_#{index} = points[#{index}]"] : variables
+        end
+        skip_variable = "skip = Serega::SeregaEngine::SKIP" if @points.any?(&:conditional?)
+
+        ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *skip_variable, *point_variables]
       end
 
-      # Code that assigns the value of the point to `value_N`
-      #
-      # Patched in:
-      # - plugin :if (skips values failing :if/:unless/:if_value/:unless_value conditions)
+      # Code that assigns the value of the point to `value_N`. A conditional
+      # attribute gets SKIP when it fails its conditions. A conditional
+      # relation value is SKIP already.
       def assign_value_code(point, index)
-        "value_#{index} = #{read_value_code(point, index)}"
+        return "value_#{index} = #{read_value_code(point, index)}" if !point.conditional? || point.child_plan
+
+        <<~RUBY.chomp
+          value_#{index} =
+            if point_#{index}.satisfy_if_conditions?(source, context)
+              value_#{index} = #{read_value_code(point, index)}
+              point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : skip
+            else
+              skip
+            end
+        RUBY
       end
 
       # Code that reads the value of the point
@@ -134,14 +142,6 @@ class Serega
         "attribute_values.__send__(#{value_method.inspect}, source)"
       end
 
-      # Whether the point value can be skipped
-      #
-      # Patched in:
-      # - plugin :if (conditional attributes can be skipped)
-      def skippable?(_point)
-        false
-      end
-
       # Code that builds the serialized object of the source
       def build_serialized_code
         return build_serialized_hash_code if mode == :hash
@@ -150,32 +150,31 @@ class Serega
         "serialized[source_index] = result_class.new(#{arguments.join(", ")})"
       end
 
-      # Code of the Struct or Data argument with the value of the point
-      #
-      # Patched in:
-      # - plugin :if (nil for a skipped value)
+      # Code of the Struct or Data argument with the value of the point, nil
+      # for a skipped value
       def argument_code(index)
-        "value_#{index}"
+        return "value_#{index}" unless @points[index].conditional?
+
+        "(skip.equal?(value_#{index}) ? nil : value_#{index})"
       end
 
       # Code that builds the serialized Hash of the source.
-      # A Hash literal holds the values up to the first skippable value. Then
+      # A Hash literal holds the values up to the first conditional value. Then
       # the code adds the other values one by one, thus the Hash keys keep the
       # order of the points.
       def build_serialized_hash_code
-        literal_size = @points.index { |point| skippable?(point) } || @points.size
+        literal_size = @points.index(&:conditional?) || @points.size
         pairs = @points.first(literal_size).each_with_index.map { |point, index| "#{point.name.inspect} => value_#{index}" }
         assigns = @points.each_with_index.drop(literal_size).map { |point, index| hash_assign_code(point, index) }
 
         ["serialized_hash = {#{pairs.join(", ")}}", *assigns, "serialized[source_index] = serialized_hash"].join("\n")
       end
 
-      # Code that adds the value of the point to the serialized Hash
-      #
-      # Patched in:
-      # - plugin :if (adds no key for a skipped value)
+      # Code that adds the value of the point to the serialized Hash. It adds
+      # no key for a skipped value.
       def hash_assign_code(point, index)
-        "serialized_hash[#{point.name.inspect}] = value_#{index}"
+        code = "serialized_hash[#{point.name.inspect}] = value_#{index}"
+        point.conditional? ? "#{code} unless skip.equal?(value_#{index})" : code
       end
     end
 

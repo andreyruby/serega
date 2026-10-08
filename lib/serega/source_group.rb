@@ -37,15 +37,31 @@ class Serega
       end
 
       #
+      # Collects like `.collect`, and keeps SKIP of a skipped relation source
+      # as its pull.
+      #
+      # @param relation_sources [Array] Relation source or SKIP of each source
+      #   of the parent group
+      # @param many [Boolean, nil] Whether a relation source is a collection
+      #
+      # @return [Array(Array, Array)] Sources, and the pull of each relation source
+      #
+      def collect_conditional(relation_sources, many)
+        sources = []
+        skip = SeregaEngine::SKIP
+        pulls = relation_sources.map do |relation_source|
+          skip.equal?(relation_source) ? skip : append_sources(sources, relation_source, many)
+        end
+        [sources, pulls]
+      end
+
+      #
       # Appends the source(s) of one relation source to sources, and returns
       # the pull: what #take_relation_values! takes for it from the serialized
       # objects.
       # - the count of a collection: an Array of this count of serialized objects
       # - SINGLE_SOURCE for one source: one serialized object
       # - nil for nil: nothing, the relation value is nil
-      #
-      # Patched in:
-      # - plugin :if (returns If::SKIP as the pull, and appends nothing)
       #
       # @param sources [Array] Sources list
       # @param relation_source [Object] Relation source, or the root source(s)
@@ -149,21 +165,24 @@ class Serega
       # serialized objects:
       # - SINGLE_SOURCE: the next serialized object
       # - a count: an Array of the next serialized objects
-      # - nil: nil
-      #
-      # Patched in:
-      # - plugin :if (returns If::SKIP as it is)
+      # - nil or SKIP: the pull itself
       def pull_value(serialized, pull)
         case pull
         when SeregaEngine::SINGLE_SOURCE then serialized.shift
         when Integer then serialized.shift(pull)
+        else pull
         end
       end
 
       # Reads the relation sources of the point, and makes their child group
       def child_group(point)
         relation_sources = read_relation_sources(point, batches_for(point))
-        child_sources, pulls = self.class.collect(relation_sources, point.many)
+        child_sources, pulls =
+          if point.conditional?
+            self.class.collect_conditional(relation_sources, point.many)
+          else
+            self.class.collect(relation_sources, point.many)
+          end
         run.new_source_group(point.child_plan, child_sources, pulls)
       end
 
@@ -208,17 +227,19 @@ class Serega
       end
 
       # Reads the relation source of every source: what the relation
-      # attribute returns, for example `user.posts`.
+      # attribute returns, for example `user.posts`. A source failing the
+      # :if or :unless condition gets SKIP.
       #
-      # Patched in:
-      # - plugin :if (If::SKIP for sources failing :if/:unless conditions)
-      #
-      # @return [Array] Relation source of each source
+      # @return [Array] Relation source or SKIP of each source
       def read_relation_sources(point, batches)
         attribute = point.attribute
         context = @context
+        return @sources.map { |source| attribute.value(source, context, batches: batches) } unless point.conditional?
 
-        @sources.map { |source| attribute.value(source, context, batches: batches) }
+        skip = SeregaEngine::SKIP
+        @sources.map do |source|
+          point.satisfy_if_conditions?(source, context) ? attribute.value(source, context, batches: batches) : skip
+        end
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, point)
       end

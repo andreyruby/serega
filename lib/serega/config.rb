@@ -26,6 +26,10 @@ class Serega
         batch
         base_serializer
         hash_access
+        if
+        unless
+        if_value
+        unless_value
       ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
