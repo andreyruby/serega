@@ -103,7 +103,7 @@ UserSerializer.to_h(object, opts)
 
 | relation source | pull | relation value |
 |---|---|---|
-| one source | `SeregaEngine::SINGLE_SOURCE` (-1) | the next serialized object |
+| one source | `SeregaEngine::SINGLE_SOURCE` | the next serialized object |
 | collection of N sources | `N` | Array of the next N serialized objects |
 | `nil` | `nil` | `nil` |
 | skipped by its `:if` or `:unless` condition | `SeregaEngine::SKIP` | no key, or nil |

@@ -163,13 +163,13 @@ class Serega
 
       # Takes the relation value of one pull from the front of the
       # serialized objects:
-      # - SINGLE_SOURCE: the next serialized object
       # - a count: an Array of the next serialized objects
+      # - SINGLE_SOURCE: the next serialized object
       # - nil or SKIP: the pull itself
       def pull_value(serialized, pull)
         case pull
-        when SeregaEngine::SINGLE_SOURCE then serialized.shift
         when Integer then serialized.shift(pull)
+        when SeregaEngine::SINGLE_SOURCE then serialized.shift
         else pull
         end
       end
