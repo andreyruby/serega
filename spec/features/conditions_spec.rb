@@ -224,9 +224,58 @@ RSpec.describe Serega do
           end
         end
 
+        it "adds the condition, the attribute and its location to the error message" do
+          location = user_serializer.attributes[:email].location
+
+          expect { result }
+            .to raise_error RuntimeError, "boom in condition\n(when checking :if condition of 'email' attribute in #{user_serializer}, #{location})"
+        end
+      end
+
+      context "when a value condition raises" do
+        let(:user_serializer) do
+          Class.new(Serega) do
+            attribute :email, if_value: proc { raise "boom in condition" }
+          end
+        end
+
+        it "adds the condition, the attribute and its location to the error message" do
+          location = user_serializer.attributes[:email].location
+
+          expect { result }
+            .to raise_error RuntimeError, "boom in condition\n(when checking :if_value condition of 'email' attribute in #{user_serializer}, #{location})"
+        end
+      end
+
+      context "when a conditional attribute raises" do
+        let(:user_serializer) do
+          Class.new(Serega) do
+            attribute :email, value: proc { raise "boom in value" }, if: proc { true }
+          end
+        end
+
         it "adds the attribute and its location to the error message" do
-          expect { result }.to raise_error RuntimeError,
-            a_string_ending_with("(when serializing 'email' attribute in #{user_serializer}, #{user_serializer.attributes[:email].location})")
+          location = user_serializer.attributes[:email].location
+
+          expect { result }
+            .to raise_error RuntimeError, "boom in value\n(when serializing 'email' attribute in #{user_serializer}, #{location})"
+        end
+      end
+
+      context "when a condition of a relation raises" do
+        let(:user_serializer) do
+          avatar = avatar_serializer
+
+          Class.new(Serega) do
+            attribute :avatar, serializer: avatar, unless: proc { raise "boom in condition" }
+          end
+        end
+
+        it "adds the condition, the attribute and its location to the error message" do
+          location = user_serializer.attributes[:avatar].location
+
+          expect { result }
+            .to raise_error RuntimeError, "boom in condition\n(when checking :unless condition of 'avatar' attribute in #{user_serializer}, #{location})"
         end
       end
 
@@ -240,8 +289,10 @@ RSpec.describe Serega do
         end
 
         it "adds the attribute and its location to the error message" do
-          expect { result }.to raise_error RuntimeError,
-            a_string_ending_with("(when serializing 'avatar' attribute in #{user_serializer}, #{user_serializer.attributes[:avatar].location})")
+          location = user_serializer.attributes[:avatar].location
+
+          expect { result }
+            .to raise_error RuntimeError, "boom in relation\n(when serializing 'avatar' attribute in #{user_serializer}, #{location})"
         end
       end
     end
