@@ -10,6 +10,10 @@ class Serega
     # one serialized object, and not an Array.
     SINGLE_SOURCE = -1
 
+    # Value of an attribute skipped by its :if, :unless, :if_value or
+    # :unless_value condition. It is also the pull of a skipped relation.
+    SKIP = Object.new.freeze
+
     #
     # One serialization run. Serializes the source(s) with a plan, and all
     # their relation sources. A source is an object to serialize.

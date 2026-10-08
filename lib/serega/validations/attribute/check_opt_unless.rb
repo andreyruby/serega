@@ -1,16 +1,18 @@
 # frozen_string_literal: true
 
 class Serega
-  module SeregaPlugins
-    module If
+  # @private
+  module SeregaValidations
+    # @private
+    module Attribute
       #
-      # Validator for attribute :if option
+      # Validator for attribute :unless option
       #
       # @private
-      class CheckOptIf
+      class CheckOptUnless
         class << self
           #
-          # Checks attribute :if option that must be [nil, Symbol, Proc, #call]
+          # Checks attribute :unless option that must be [nil, Symbol, Proc, #call]
           #
           # @param opts [Hash] Attribute options
           #
@@ -19,9 +21,9 @@ class Serega
           # @return [void]
           #
           def call(opts)
-            return unless opts.key?(:if)
+            return unless opts.key?(:unless)
 
-            check_type(opts[:if])
+            check_type(opts[:unless])
           end
 
           private
@@ -35,7 +37,7 @@ class Serega
           end
 
           def must_be_callable
-            "Invalid attribute option :if. It must be a Symbol, a Proc or respond to :call"
+            "Invalid attribute option :unless. It must be a Symbol, a Proc or respond to :call"
           end
 
           def valid_signature?(signature)
@@ -57,11 +59,11 @@ class Serega
 
           def signature_error
             <<~ERROR.strip
-              Invalid attribute option :if parameters, valid parameters signatures:
-              - ()                     # no parameters
-              - (object)               # one positional parameter
-              - (object, context)      # two positional parameters
-              - (object, :ctx)         # one positional parameter and :ctx keyword
+              Invalid attribute option :unless parameters, valid parameters signatures:
+              - ()                      # no parameters
+              - (object)                # one positional parameter
+              - (object, context)       # two positional parameters
+              - (object, :ctx)          # one positional parameter and :ctx keyword
               - (object, context, :ctx) # two positional parameters and :ctx keyword
             ERROR
           end

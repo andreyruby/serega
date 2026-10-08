@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class Serega
-  module SeregaPlugins
-    module If
+  # @private
+  module SeregaValidations
+    # @private
+    module Attribute
       #
       # Validator for attribute :unless_value option
       #

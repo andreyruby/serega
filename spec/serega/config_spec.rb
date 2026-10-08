@@ -260,6 +260,10 @@ RSpec.describe Serega::SeregaConfig do
           batch
           base_serializer
           hash_access
+          if
+          unless
+          if_value
+          unless_value
         ]
       )
       expect(config.check_attribute_name).to be true

@@ -9,6 +9,7 @@
 - [Serialize](#serialize)
 - [Field Selection — `:only` `:except` `:with`](#field-selection--only-except-with)
 - [Context](#context)
+- [Conditional Attributes — `:if` `:unless`](#conditional-attributes--if-unless)
 - [Relations](#relations)
 - [Batch Loading (N+1)](#batch-loading-n1)
 - [Preloads](#preloads)
@@ -20,7 +21,6 @@
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
 - [Plugin `:string_modifiers`](#plugin-string_modifiers)
 - [Plugin `:camel_case`](#plugin-camel_case)
-- [Plugin `:if` / `:unless`](#plugin-if--unless)
 - [Plugin `:formatters`](#plugin-formatters)
 - [Plugin `:depth_limit`](#plugin-depth_limit)
 - [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
@@ -230,6 +230,36 @@ UserSerializer.to_h(user, context: { current_user: nil }) # => {email: nil}
 ```
 
 Inside presenter methods context is accessed via `__ctx__` (see [Presenter][presenter]).
+
+---
+
+## Conditional Attributes — `:if` `:unless`
+
+| Option | Sees | Decides before |
+|------------------|------------------|----------------|
+| `if:` | `(object, ctx)` | computing value |
+| `unless:` | `(object, ctx)` | computing value |
+| `if_value:` | `(value, ctx)` | after value built |
+| `unless_value:` | `(value, ctx)` | after value built |
+
+```ruby
+class UserSerializer < Serega
+  attribute :email, if: proc { |user, ctx| ctx[:current_user] == user }
+  attribute :nickname, unless_value: :empty?
+end
+
+user = OpenStruct.new(email: 'gru@example.com', nickname: '')
+
+UserSerializer.to_h(user, context: { current_user: nil }) # => {}
+UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@example.com"}
+```
+
+Symbol short form: `if: :active?` → calls `object.active?`.
+
+⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` — use `if`/`unless` there.
+
+For unconditional hiding, prefer `hide: true` — see
+[Attribute Options][attributes] and [Field Selection][field-selection].
 
 ---
 
@@ -708,37 +738,6 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', fu
 
 ⚠️ Modifiers must use camelCase. Doesn't touch `:root` / `:metadata` keys.
 Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
-
----
-
-## Plugin `:if` / `:unless`
-
-| Option | Sees | Decides before |
-|------------------|------------------|----------------|
-| `if:` | `(object, ctx)` | computing value |
-| `unless:` | `(object, ctx)` | computing value |
-| `if_value:` | `(value, ctx)` | after value built |
-| `unless_value:` | `(value, ctx)` | after value built |
-
-```ruby
-class UserSerializer < Serega
-  plugin :if
-  attribute :email, if: proc { |user, ctx| ctx[:current_user] == user }
-  attribute :nickname, unless_value: :empty?
-end
-
-user = OpenStruct.new(email: 'gru@example.com', nickname: '')
-
-UserSerializer.to_h(user, context: { current_user: nil }) # => {}
-UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@example.com"}
-```
-
-Symbol short form: `if: :active?` → calls `object.active?`.
-
-⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` — use `if`/`unless` there.
-
-For unconditional hiding, prefer `hide: true` — see
-[Attribute Options][attributes] and [Field Selection][field-selection].
 
 ---
 

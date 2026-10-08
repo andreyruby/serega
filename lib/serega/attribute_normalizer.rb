@@ -129,7 +129,39 @@ class Serega
         @batch_loaders ||= prepare_batch_loaders
       end
 
+      #
+      # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
+      # condition calls the method of this name.
+      #
+      # @return [Hash] Condition of each option, nil for a missing option
+      #
+      def if_options
+        @if_options ||= {
+          if: prepare_if_option(init_opts[:if]),
+          unless: prepare_if_option(init_opts[:unless]),
+          if_value: prepare_if_option(init_opts[:if_value]),
+          unless_value: prepare_if_option(init_opts[:unless_value])
+        }.freeze
+      end
+
+      #
+      # Parameters signatures of the conditions
+      #
+      # @return [Hash] Signature of each condition, nil for a missing option
+      #
+      def if_options_signatures
+        @if_options_signatures ||= if_options.transform_values do |condition|
+          SeregaUtils::MethodSignature.call(condition, pos_limit: 2, keyword_args: [:ctx]) if condition
+        end.freeze
+      end
+
       private
+
+      def prepare_if_option(if_option)
+        return AttributeValueResolvers::Keyword.new(if_option) if if_option.is_a?(Symbol)
+
+        if_option
+      end
 
       def prepare_name
         init_name.to_sym

@@ -4,8 +4,12 @@
 
 - **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
   under the root key. See "Plugin :root" in the README.
-- **BREAKING**: Plugin `:if`: `.to_data` returns `nil` for skipped attributes.
-  See "Plugin :if" in the README.
+- **BREAKING**: Moved the `:if`, `:unless`, `:if_value` and `:unless_value`
+  attribute options from the `:if` plugin to core. Remove `plugin :if` from
+  your serializers — loading it raises `Plugin 'if' does not exist`. See
+  "Conditional Attributes" in the README.
+- **BREAKING**: Conditional attributes: `.to_data` returns `nil` for skipped
+  attributes. See "Conditional Attributes" in the README.
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
   objects. See "Serializing" in the README.
 - **BREAKING**: Serializers are locked once they serialize something. Changing

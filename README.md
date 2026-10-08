@@ -26,7 +26,7 @@ It has some great features:
 - Value formatters ([formatters][formatters] plugin) helps to transform
   time, date, money, percentage, and any other values in the same way
   keeping the code dry
-- Conditional attributes - ([if][if] plugin)
+- Built-in [conditional attributes](#conditional-attributes)
 - Auto camelCase keys - [camel_case][camel_case] plugin
 - Serializing Hash records - [hash_access][hash_access] attribute option
 
@@ -42,6 +42,7 @@ It has some great features:
    - [Serializing](#serializing)
    - [Selecting Fields](#selecting-fields)
    - [Using Context](#using-context)
+   - [Conditional Attributes](#conditional-attributes)
    - [Batch Loading](#batch-loading)
    - [Prepare Initial Objects](#prepare-initial-objects)
 - [Configuration](#configuration)
@@ -57,7 +58,6 @@ It has some great features:
    - [Plugin :context_metadata](#plugin-context_metadata)
    - [Plugin :formatters](#plugin-formatters)
    - [Plugin :string_modifiers](#plugin-string_modifiers)
-   - [Plugin :if](#plugin-if)
    - [Plugin :camel_case](#plugin-camel_case)
    - [Plugin :depth_limit](#plugin-depth_limit)
    - [Plugin :explicit_many_option](#plugin-explicit_many_option)
@@ -190,10 +190,9 @@ class UserSerializer < Serega
   # attribute value
   attribute :email, preload: :emails, value: proc { |user| user.emails.find(&:verified?) }
 
-  # Options `:if, :unless, :if_value and :unless_value` can be specified
-  # when `:if` plugin is enabled. They hide the attribute key and value from the
-  # response.
-  # See more usage examples in the `:if` plugin section.
+  # Options `:if, :unless, :if_value and :unless_value` hide the attribute key
+  # and value from the response.
+  # See more usage examples in the "Conditional Attributes" section.
   attribute :email, if: proc { |user, ctx| user == ctx[:current_user] }
   attribute :email, if_value: :present?
 
@@ -459,6 +458,48 @@ UserSerializer.(user, context: {current_user: user})
 
 UserSerializer.new.to_h(user, context: {current_user: user}) # same
 # => {:email=>"email@example.com"}
+```
+
+### Conditional Attributes
+
+Attribute options `:if`, `:unless`, `:if_value` and `:unless_value`
+conditionally remove attributes from the response.
+
+`:if`/`:unless` receive the object to serialize and context, and are checked
+before the attribute value is found. `:if_value`/`:unless_value` receive the
+already-found value and context, checked after. The latter two cannot be
+used with the `:serializer` option, since a relationship has no "serialized
+value" of its own — use `:if`/`:unless` instead.
+
+`.to_h` omits skipped attributes. `.to_data` and `.to_struct` return `nil`
+for skipped attributes, so all objects serialized with the same fields have
+the same members.
+
+The `:hide` option hides an attribute without conditions. Look at
+[select serialized fields](#selecting-fields) for `:hide` usage examples.
+
+```ruby
+ class UserSerializer < Serega
+   attribute :email, if: :active? # translates to `if user.active?`
+   attribute :email, if: proc {|user| user.active?} # same
+   attribute :email, if: proc {|user, ctx| user == ctx[:current_user]}
+   attribute :email, if: CustomPolicy.method(:view_email?)
+
+   attribute :email, unless: :hidden? # translates to `unless user.hidden?`
+   attribute :email, unless: proc {|user| user.hidden?} # same
+   attribute :email, unless: proc {|user, context| context[:show_emails]}
+   attribute :email, unless: CustomPolicy.method(:hide_email?)
+
+   attribute :email, if_value: :present? # if email.present?
+   attribute :email, if_value: proc {|email| email.present?} # same
+   attribute :email, if_value: proc {|email, ctx| ctx[:show_emails]}
+   attribute :email, if_value: CustomPolicy.method(:view_email?)
+
+   attribute :email, unless_value: :blank? # unless email.blank?
+   attribute :email, unless_value: proc {|email| email.blank?} # same
+   attribute :email, unless_value: proc {|email, context| context[:show_emails]}
+   attribute :email, unless_value: CustomPolicy.method(:hide_email?)
+ end
 ```
 
 ### Batch Loading
@@ -1152,49 +1193,6 @@ PostSerializer.new(with: "user(email)").to_h(post)
 PostSerializer.new(with: {user: %i[email, username]}).to_h(post)
 ```
 
-### Plugin :if
-
-Adds `:if`, `:unless`, `:if_value`, `:unless_value` attribute options to
-conditionally remove attributes from the response.
-
-`:if`/`:unless` receive the object to serialize and context, and are checked
-before the attribute value is found. `:if_value`/`:unless_value` receive the
-already-found value and context, checked after. The latter two cannot be
-used with the `:serializer` option, since a relationship has no "serialized
-value" of its own — use `:if`/`:unless` instead.
-
-`.to_h` omits skipped attributes. `.to_data` and `.to_struct` return `nil`
-for skipped attributes, so all objects serialized with the same fields have
-the same members.
-
-See also a `:hide` option that is available without any plugins to hide
-attribute without conditions.
-Look at [select serialized fields](#selecting-fields) for `:hide` usage examples.
-
-```ruby
- class UserSerializer < Serega
-   attribute :email, if: :active? # translates to `if user.active?`
-   attribute :email, if: proc {|user| user.active?} # same
-   attribute :email, if: proc {|user, ctx| user == ctx[:current_user]}
-   attribute :email, if: CustomPolicy.method(:view_email?)
-
-   attribute :email, unless: :hidden? # translates to `unless user.hidden?`
-   attribute :email, unless: proc {|user| user.hidden?} # same
-   attribute :email, unless: proc {|user, context| context[:show_emails]}
-   attribute :email, unless: CustomPolicy.method(:hide_email?)
-
-   attribute :email, if_value: :present? # if email.present?
-   attribute :email, if_value: proc {|email| email.present?} # same
-   attribute :email, if_value: proc {|email, ctx| ctx[:show_emails]}
-   attribute :email, if_value: CustomPolicy.method(:view_email?)
-
-   attribute :email, unless_value: :blank? # unless email.blank?
-   attribute :email, unless_value: proc {|email| email.blank?} # same
-   attribute :email, unless_value: proc {|email, context| context[:show_emails]}
-   attribute :email, unless_value: CustomPolicy.method(:hide_email?)
- end
-```
-
 ### Plugin :camel_case
 
 Without this plugin, responding with *camelCased* keys means specifying the
@@ -1336,6 +1334,5 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [presenter]: #presenter
 [root]: #plugin-root
 [string_modifiers]: #plugin-string_modifiers
-[if]: #plugin-if
 [build-badge]: https://github.com/aglushkov/serega/actions/workflows/main.yml/badge.svg?event=push
 [build]: https://github.com/aglushkov/serega/actions/workflows/main.yml
