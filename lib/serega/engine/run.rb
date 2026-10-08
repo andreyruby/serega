@@ -8,7 +8,7 @@ class Serega
   module SeregaEngine
     # Pull of one source that is not in a collection. Its relation value is
     # one serialized object, and not an Array.
-    SINGLE_SOURCE = -1
+    SINGLE_SOURCE = Object.new.freeze
 
     # Value of an attribute skipped by its :if, :unless, :if_value or
     # :unless_value condition. It is also the pull of a skipped relation.
@@ -117,7 +117,7 @@ class Serega
       # or all serialized objects of the root group
       def root_value(root_group)
         serialized = root_group.serialized
-        (root_group.pulls[0] == SINGLE_SOURCE) ? serialized[0] : serialized
+        SINGLE_SOURCE.equal?(root_group.pulls[0]) ? serialized[0] : serialized
       end
     end
   end
