@@ -120,7 +120,7 @@ RSpec.describe Serega do
 
       it "raises error with specified attribute name and serializer class" do
         expect { result }.to raise_error NameError,
-          end_with("(when serializing 'first_name' attribute in #{user_serializer}, #{user_serializer.attributes[:first_name].location})")
+          end_with("(when serializing the 'first_name' attribute in #{user_serializer}, #{user_serializer.attributes[:first_name].location})")
       end
     end
   end

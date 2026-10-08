@@ -269,7 +269,10 @@ Things to keep in mind:
 - Errors raised while serializing nested attributes are reported with a
   readable serializer label and the line where the attribute is defined, for
   example:
-  `(when serializing 'comments_count' attribute in UserSerializer.<statistics>, app/serializers/user_serializer.rb:12)`.
+
+  ```text
+  (when serializing the 'likes_count' attribute in UserSerializer.<statistics>, app/serializers/user_serializer.rb:12)
+  ```
 
 ### Serializing
 
@@ -477,7 +480,7 @@ the same members.
 
 An error raised by a condition names the condition and the line where the
 attribute is defined, for example:
-`(when checking :if condition of 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)`.
+`(when checking the :if condition of the 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)`.
 
 The `:hide` option hides an attribute without conditions. Look at
 [select serialized fields](#selecting-fields) for `:hide` usage examples.

@@ -10,7 +10,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
 
     it "reraises the same error class with the attribute, the serializer and the attribute location" do
       expect { reraise }
-        .to raise_error(KeyError, "key not found\n(when serializing 'full_name' attribute in UserSerializer, app/serializers/user_serializer.rb:3)")
+        .to raise_error(KeyError, "key not found\n(when serializing the 'full_name' attribute in UserSerializer, app/serializers/user_serializer.rb:3)")
     end
 
     context "when the attribute location is unknown" do
@@ -18,7 +18,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
 
       it "reraises the error with the attribute and the serializer" do
         expect { reraise }
-          .to raise_error(KeyError, "key not found\n(when serializing 'full_name' attribute in UserSerializer)")
+          .to raise_error(KeyError, "key not found\n(when serializing the 'full_name' attribute in UserSerializer)")
       end
     end
   end
@@ -28,7 +28,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
 
     it "reraises the same error class with the condition, the attribute, the serializer and the attribute location" do
       expect { reraise }
-        .to raise_error(KeyError, "key not found\n(when checking :unless condition of 'full_name' attribute in UserSerializer, app/serializers/user_serializer.rb:3)")
+        .to raise_error(KeyError, "key not found\n(when checking the :unless condition of the 'full_name' attribute in UserSerializer, app/serializers/user_serializer.rb:3)")
     end
 
     context "when the attribute location is unknown" do
@@ -36,7 +36,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
 
       it "reraises the error with the condition, the attribute and the serializer" do
         expect { reraise }
-          .to raise_error(KeyError, "key not found\n(when checking :unless condition of 'full_name' attribute in UserSerializer)")
+          .to raise_error(KeyError, "key not found\n(when checking the :unless condition of the 'full_name' attribute in UserSerializer)")
       end
     end
   end

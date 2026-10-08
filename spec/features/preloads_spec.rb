@@ -145,7 +145,7 @@ RSpec.describe Serega do
           attribute :value, preload: :assoc, value: proc { |obj| obj }
         end
 
-        error = "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you).\n(when serializing 'value' attribute in #{serializer}, #{serializer.attributes[:value].location})"
+        error = "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you).\n(when serializing the 'value' attribute in #{serializer}, #{serializer.attributes[:value].location})"
         expect { serializer.to_h([1]) }.to raise_error Serega::SeregaError, error
       end
 
@@ -157,7 +157,7 @@ RSpec.describe Serega do
           attribute :child, serializer: child, value: proc { |obj| obj }
         end
 
-        error = "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you).\n(when serializing 'name' attribute in #{child}, #{child.attributes[:name].location})"
+        error = "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you).\n(when serializing the 'name' attribute in #{child}, #{child.attributes[:name].location})"
         expect { parent.to_h([1]) }.to raise_error Serega::SeregaError, error
       end
     end

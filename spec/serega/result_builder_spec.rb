@@ -143,7 +143,7 @@ RSpec.describe Serega::SeregaResultBuilder do
 
       it "adds the attribute name to the error message" do
         expect { result_builder.call([user], {}, nil, nil) }
-          .to raise_error(NoMethodError, /when serializing 'email' attribute/)
+          .to raise_error(NoMethodError, /when serializing the 'email' attribute/)
       end
     end
   end
