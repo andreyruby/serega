@@ -48,9 +48,8 @@ class Serega
       #
       def collect_conditional(relation_sources, many)
         sources = []
-        skip = SeregaEngine::SKIP
         pulls = relation_sources.map do |relation_source|
-          skip.equal?(relation_source) ? skip : append_sources(sources, relation_source, many)
+          SeregaEngine::SKIP.equal?(relation_source) ? relation_source : append_sources(sources, relation_source, many)
         end
         [sources, pulls]
       end
@@ -248,10 +247,9 @@ class Serega
       def read_conditional_relation_sources(point, batches)
         attribute = point.attribute
         context = @context
-        skip = SeregaEngine::SKIP
 
         @sources.map do |source|
-          next skip unless point.satisfy_if_conditions?(source, context)
+          next SeregaEngine::SKIP unless point.satisfy_if_conditions?(source, context)
 
           begin
             attribute.value(source, context, batches: batches)

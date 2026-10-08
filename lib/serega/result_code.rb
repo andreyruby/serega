@@ -91,17 +91,14 @@ class Serega
 
       private
 
-      # Code that sets the local variables of the `#call` method. A plan with
-      # conditional points has the `skip` variable.
+      # Code that sets the local variables of the `#call` method
       def variables_code
         point_variables = @points.each_with_index.flat_map do |point, index|
           next ["relation_values_#{index} = relations[points[#{index}]]"] if point.child_plan
 
           ["point_#{index} = points[#{index}]", "attribute_#{index} = point_#{index}.attribute", "batches_#{index} = batches && batches[#{index}]"]
         end
-        skip_variable = "skip = Serega::SeregaEngine::SKIP" if @points.any?(&:conditional?)
-
-        ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *skip_variable, *point_variables]
+        ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *point_variables]
       end
 
       # Code that assigns the value of the point to `value_N`. A conditional
@@ -118,9 +115,9 @@ class Serega
             if point_#{index}.satisfy_if_conditions?(source, context)
               value_#{index} =
           #{read_code.gsub(/^/, "      ")}
-              point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : skip
+              point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : Serega::SeregaEngine::SKIP
             else
-              skip
+              Serega::SeregaEngine::SKIP
             end
         RUBY
       end
@@ -161,7 +158,7 @@ class Serega
       def argument_code(index)
         return "value_#{index}" unless @points[index].conditional?
 
-        "(skip.equal?(value_#{index}) ? nil : value_#{index})"
+        "(Serega::SeregaEngine::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
       end
 
       # Code that builds the serialized Hash of the source.
@@ -180,7 +177,7 @@ class Serega
       # no key for a skipped value.
       def hash_assign_code(point, index)
         code = "serialized_hash[#{point.name.inspect}] = value_#{index}"
-        point.conditional? ? "#{code} unless skip.equal?(value_#{index})" : code
+        point.conditional? ? "#{code} unless Serega::SeregaEngine::SKIP.equal?(value_#{index})" : code
       end
     end
 
