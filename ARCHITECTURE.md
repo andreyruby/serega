@@ -62,7 +62,7 @@ UserSerializer.to_h(object, opts)
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ root_group = root_source_group(plan, object, many)
          │  ├─ sources = []
-         │  ├─ pull = SeregaSourceGroup.append_sources(sources, object, many)
+         │  ├─ pull = SeregaUtils::Pulls.append(sources, object, many)
          │  │    appends the root source(s) to `sources`, and returns the pull (see below)
          │  └─ new_source_group(plan, sources, [pull])
          │
@@ -73,13 +73,13 @@ UserSerializer.to_h(object, opts)
          │        └─ for each relation point
          │           ├─ batches_for(point)                         once per group
          │           ├─ relation_sources = read_relation_sources(point, batches)   e.g. user.posts of each user
-         │           ├─ child_sources, pulls = SeregaSourceGroup.collect(relation_sources, point.many)
+         │           ├─ child_sources, pulls = SeregaUtils::Pulls.collect(relation_sources, point.many)
          │           └─ child_group = run.new_source_group(point.child_plan, child_sources, pulls)
          │
          ├─ build(source_groups)                                 from the last group up
          │  └─ source_group.build
          │     ├─ batches = batches_for(point)                     once per group
-         │     ├─ relations = take_relation_values!(child_group) per relation point
+         │     ├─ relations = SeregaUtils::Pulls.take!(child_group.serialized, child_group.pulls)   per relation point
          │     ├─ result_builder = plan.result_builder(mode)       kept by the plan, one per mode
          │     │  └─ first build of the plan in this mode only:
          │     │     └─ SeregaResultBuilder.new(mode, points)
@@ -94,12 +94,11 @@ UserSerializer.to_h(object, opts)
 
 - `#initialize` wraps the sources in the presenter. The group keeps the pulls of its parent group.
 - `#discover` runs the preloads and returns one child group per relation.
-- `#build` builds the serialized objects. The child groups are built before it.
-- `#take_relation_values!(child_group)` uses the pulls of a child group to take the relation values from its serialized objects. It empties them: the parent group takes them once, during its build.
+- `#build` builds the serialized objects. The child groups are built before it. It takes the relation values from the serialized objects of each child group with the pulls of the child group.
 
 ### Pulls
 
-`SeregaSourceGroup.collect(relation_sources, many)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append_sources(sources, relation_source, many)` does this for one relation source. A pull says what `#take_relation_values!` takes for it from the serialized objects:
+`SeregaUtils::Pulls` (`lib/serega/utils/pulls.rb`) handles the pulls. `.collect(relation_sources, many)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append(sources, relation_source, many)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
 
 | relation source | pull | relation value |
 |---|---|---|
@@ -108,7 +107,7 @@ UserSerializer.to_h(object, opts)
 | `nil` | `nil` | `nil` |
 | skipped by its `:if` or `:unless` condition | `SeregaEngine::SKIP` | no key, or nil |
 
-A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `.collect` is a class method, because `Run#call` also uses `.append_sources` for the root, before any group exists. The serialized objects of a group follow the order of its sources, thus `#take_relation_values!` takes them from the front, one pull after another (`#pull_value`). The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
+A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `Run#call` uses `.append` for the root. The serialized objects of a group follow the order of its sources, thus `.take!(serialized, pulls)` takes them from the front, one pull after another, and empties them: the parent group takes them once, during its build. The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
 
 The keys of a serialized object follow the order of the plan points. The values are read source by source. Relation values and preloads of a group are read in the discover pass, before the other values.
 

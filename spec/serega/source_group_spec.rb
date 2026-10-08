@@ -17,57 +17,6 @@ RSpec.describe Serega::SeregaSourceGroup do
     end
   end
 
-  describe ".collect" do
-    subject(:collected) { user_serializer::SeregaSourceGroup.collect(relation_sources, many) }
-
-    let(:relation_sources) { [[user1, user2], nil, user1] }
-    let(:many) { nil }
-
-    it "returns the sources of all relation sources and the pull of each one" do
-      expect(collected).to eq [[user1, user2, user1], [2, nil, Serega::SeregaEngine::SINGLE_SOURCE]]
-    end
-
-    context "when many is true and a relation source is not a collection" do
-      let(:relation_sources) { [user1] }
-      let(:many) { true }
-
-      it "counts the relation source as a collection of one source" do
-        expect(collected).to eq [[user1], [1]]
-      end
-    end
-
-    context "when many is false and a relation source is a collection" do
-      let(:relation_sources) { [[user1, user2]] }
-      let(:many) { false }
-
-      it "adds the collection as one source" do
-        expect(collected).to eq [[[user1, user2]], [Serega::SeregaEngine::SINGLE_SOURCE]]
-      end
-    end
-  end
-
-  describe ".append_sources" do
-    subject(:pull) { user_serializer::SeregaSourceGroup.append_sources(sources, relation_source, many) }
-
-    let(:sources) { [user1] }
-    let(:relation_source) { [user2, user2] }
-    let(:many) { nil }
-
-    it "appends the sources of the relation source and returns their count" do
-      expect(pull).to eq 2
-      expect(sources).to eq [user1, user2, user2]
-    end
-
-    context "with nil" do
-      let(:relation_source) { nil }
-
-      it "appends no sources" do
-        expect(pull).to be_nil
-        expect(sources).to eq [user1]
-      end
-    end
-  end
-
   describe "#sources" do
     it "returns the sources" do
       expect(source_group.sources).to eq [user1, user2]
