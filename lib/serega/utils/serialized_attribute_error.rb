@@ -27,7 +27,7 @@ class Serega
 
         raise error.exception(<<~MESSAGE.strip)
           #{error.message}
-          (when serializing '#{point.name}' attribute in #{point.class.serializer_class}#{defined_at})
+          (when serializing the '#{point.name}' attribute in #{point.class.serializer_class}#{defined_at})
         MESSAGE
       end
 
@@ -47,7 +47,7 @@ class Serega
 
         raise error.exception(<<~MESSAGE.strip)
           #{error.message}
-          (when checking :#{condition_name} condition of '#{point.name}' attribute in #{point.class.serializer_class}#{defined_at})
+          (when checking the :#{condition_name} condition of the '#{point.name}' attribute in #{point.class.serializer_class}#{defined_at})
         MESSAGE
       end
     end

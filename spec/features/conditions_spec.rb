@@ -228,7 +228,7 @@ RSpec.describe Serega do
           location = user_serializer.attributes[:email].location
 
           expect { result }
-            .to raise_error RuntimeError, "boom in condition\n(when checking :if condition of 'email' attribute in #{user_serializer}, #{location})"
+            .to raise_error RuntimeError, "boom in condition\n(when checking the :if condition of the 'email' attribute in #{user_serializer}, #{location})"
         end
       end
 
@@ -243,7 +243,7 @@ RSpec.describe Serega do
           location = user_serializer.attributes[:email].location
 
           expect { result }
-            .to raise_error RuntimeError, "boom in condition\n(when checking :if_value condition of 'email' attribute in #{user_serializer}, #{location})"
+            .to raise_error RuntimeError, "boom in condition\n(when checking the :if_value condition of the 'email' attribute in #{user_serializer}, #{location})"
         end
       end
 
@@ -258,7 +258,7 @@ RSpec.describe Serega do
           location = user_serializer.attributes[:email].location
 
           expect { result }
-            .to raise_error RuntimeError, "boom in value\n(when serializing 'email' attribute in #{user_serializer}, #{location})"
+            .to raise_error RuntimeError, "boom in value\n(when serializing the 'email' attribute in #{user_serializer}, #{location})"
         end
       end
 
@@ -275,7 +275,7 @@ RSpec.describe Serega do
           location = user_serializer.attributes[:avatar].location
 
           expect { result }
-            .to raise_error RuntimeError, "boom in condition\n(when checking :unless condition of 'avatar' attribute in #{user_serializer}, #{location})"
+            .to raise_error RuntimeError, "boom in condition\n(when checking the :unless condition of the 'avatar' attribute in #{user_serializer}, #{location})"
         end
       end
 
@@ -292,7 +292,7 @@ RSpec.describe Serega do
           location = user_serializer.attributes[:avatar].location
 
           expect { result }
-            .to raise_error RuntimeError, "boom in relation\n(when serializing 'avatar' attribute in #{user_serializer}, #{location})"
+            .to raise_error RuntimeError, "boom in relation\n(when serializing the 'avatar' attribute in #{user_serializer}, #{location})"
         end
       end
     end

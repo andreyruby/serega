@@ -192,14 +192,14 @@ A build from the root down must assign the relation values after it makes the se
 
 ```
 undefined method 'bar' for an instance of User
-(when serializing 'foo' attribute in UserSerializer, app/serializers/user_serializer.rb:3)
+(when serializing the 'foo' attribute in UserSerializer, app/serializers/user_serializer.rb:3)
 ```
 
 An error raised by an `:if`, `:unless`, `:if_value` or `:unless_value` condition names the condition:
 
 ```
 undefined method 'active?' for an instance of User
-(when checking :if condition of 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)
+(when checking the :if condition of the 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)
 ```
 
 Each value read in the generated `#call` has its own `rescue`. Conditions are checked outside it, thus an error gets one of these lines.

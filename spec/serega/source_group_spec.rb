@@ -129,7 +129,7 @@ RSpec.describe Serega::SeregaSourceGroup do
 
       it "adds the attribute name and the serializer to the error message" do
         expect { discover }
-          .to raise_error RuntimeError, "boom\n(when serializing 'posts' attribute in #{user_serializer}, #{user_serializer.attributes[:posts].location})"
+          .to raise_error RuntimeError, "boom\n(when serializing the 'posts' attribute in #{user_serializer}, #{user_serializer.attributes[:posts].location})"
       end
     end
 
@@ -189,7 +189,7 @@ RSpec.describe Serega::SeregaSourceGroup do
 
       it "adds the attribute name and the serializer to the error message" do
         expect { discover }
-          .to raise_error RuntimeError, "boom\n(when serializing 'name' attribute in #{user_serializer}, #{user_serializer.attributes[:name].location})"
+          .to raise_error RuntimeError, "boom\n(when serializing the 'name' attribute in #{user_serializer}, #{user_serializer.attributes[:name].location})"
       end
     end
   end
@@ -295,7 +295,7 @@ RSpec.describe Serega::SeregaSourceGroup do
 
       it "adds the attribute name and the serializer to the error message" do
         expect { serialized }
-          .to raise_error RuntimeError, "boom\n(when serializing 'name' attribute in #{user_serializer}, #{user_serializer.attributes[:name].location})"
+          .to raise_error RuntimeError, "boom\n(when serializing the 'name' attribute in #{user_serializer}, #{user_serializer.attributes[:name].location})"
       end
     end
   end

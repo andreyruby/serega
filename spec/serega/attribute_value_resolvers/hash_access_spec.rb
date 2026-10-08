@@ -84,7 +84,7 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
     it "raises a labeled KeyError on a missing key" do
       expect { serializer.to_h({name: "Kate"}) }.to raise_error KeyError, <<~MESSAGE.strip
         key not found: :first_name
-        (when serializing 'first_name' attribute in #{serializer}, #{serializer.attributes[:first_name].location})
+        (when serializing the 'first_name' attribute in #{serializer}, #{serializer.attributes[:first_name].location})
       MESSAGE
     end
   end
@@ -241,7 +241,7 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
       serializer.attribute :city, delegate: {to: :address, to_hash_access: :symbol}
       expect { serializer.to_h({first_name: "Kate"}) }.to raise_error KeyError, <<~MESSAGE.strip
         key not found: :address
-        (when serializing 'city' attribute in #{serializer}, #{serializer.attributes[:city].location})
+        (when serializing the 'city' attribute in #{serializer}, #{serializer.attributes[:city].location})
       MESSAGE
     end
 
@@ -269,7 +269,7 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
       serializer.attribute :city, delegate: {to: :address, to_hash_access: :symbol, hash_access: :symbol}
       expect { serializer.to_h({address: {street: "Khreshchatyk"}}) }.to raise_error KeyError, <<~MESSAGE.strip
         key not found: :city
-        (when serializing 'city' attribute in #{serializer}, #{serializer.attributes[:city].location})
+        (when serializing the 'city' attribute in #{serializer}, #{serializer.attributes[:city].location})
       MESSAGE
     end
 
