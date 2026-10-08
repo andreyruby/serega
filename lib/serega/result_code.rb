@@ -15,28 +15,27 @@ class Serega
   #     points = @points
   #     result_class = @result_class
   #     attribute_values = @attribute_values
-  #     attribute_0 = points[0].attribute
+  #     point_0 = points[0]
+  #     attribute_0 = point_0.attribute
   #     batches_0 = batches && batches[0]
   #     relation_values_1 = relations[points[1]]
   #     size = sources.size
   #     serialized = Array.new(size)
   #     source_index = 0
-  #     point_index = nil
   #     while source_index < size
   #       source = sources[source_index]
-  #       point_index = 0
-  #       value_0 = attribute_values.id(source)
-  #       point_index = 1
+  #       value_0 =
+  #         begin
+  #           attribute_values.id(source)
+  #         rescue => error
+  #           Serega::SeregaUtils::SerializedAttributeError.call(error, point_0)
+  #         end
   #       value_1 = relation_values_1[source_index]
   #       serialized_hash = {:id => value_0, :posts => value_1}
   #       serialized[source_index] = serialized_hash
   #       source_index += 1
   #     end
   #     serialized
-  #   rescue => error
-  #     raise unless point_index
-  #
-  #     Serega::SeregaUtils::SerializedAttributeError.call(error, points[point_index])
   #   end
   #
   # @private
@@ -63,51 +62,42 @@ class Serega
       # Returns the code of the `#call` method. The method has local
       # variables for every point, and they have the point index in their
       # names:
+      # - `point_N` holds the point. An error raised while its value is read
+      #   gets the attribute name.
       # - `attribute_N` and `batches_N` read values with `SeregaAttribute#value`.
       # - `relation_values_N` holds the relation values of all sources.
       # - `value_N` holds the value of the current source.
-      # `point_index` holds the index of the point that reads a value now.
-      # It adds the attribute name to the message of an error.
       #
       # @return [String] Code of the `#call` method
       def to_s
-        values_code = @points.each_with_index.flat_map do |point, index|
-          ["point_index = #{index}", assign_value_code(point, index)]
-        end
+        values_code = @points.each_with_index.map { |point, index| assign_value_code(point, index) }
+        loop_code = [*values_code, build_serialized_code].join("\n")
 
         <<~RUBY
           def call(sources, context, batches, relations)
-            #{variables_code.join("\n")}
+            #{variables_code.join("\n  ")}
             size = sources.size
             serialized = Array.new(size)
             source_index = 0
-            point_index = nil
             while source_index < size
               source = sources[source_index]
-              #{values_code.join("\n")}
-              #{build_serialized_code}
+              #{loop_code.gsub("\n", "\n    ")}
               source_index += 1
             end
             serialized
-          rescue => error
-            raise unless point_index
-
-            Serega::SeregaUtils::SerializedAttributeError.call(error, points[point_index])
           end
         RUBY
       end
 
       private
 
-      # Code that sets the local variables of the `#call` method. A
-      # conditional attribute has the `point_N` variable, and a plan with
+      # Code that sets the local variables of the `#call` method. A plan with
       # conditional points has the `skip` variable.
       def variables_code
         point_variables = @points.each_with_index.flat_map do |point, index|
           next ["relation_values_#{index} = relations[points[#{index}]]"] if point.child_plan
 
-          variables = ["attribute_#{index} = points[#{index}].attribute", "batches_#{index} = batches && batches[#{index}]"]
-          point.conditional? ? [*variables, "point_#{index} = points[#{index}]"] : variables
+          ["point_#{index} = points[#{index}]", "attribute_#{index} = point_#{index}.attribute", "batches_#{index} = batches && batches[#{index}]"]
         end
         skip_variable = "skip = Serega::SeregaEngine::SKIP" if @points.any?(&:conditional?)
 
@@ -118,16 +108,32 @@ class Serega
       # attribute gets SKIP when it fails its conditions. A conditional
       # relation value is SKIP already.
       def assign_value_code(point, index)
-        return "value_#{index} = #{read_value_code(point, index)}" if !point.conditional? || point.child_plan
+        return "value_#{index} = #{read_value_code(point, index)}" if point.child_plan
+
+        read_code = rescued_read_code(point, index)
+        return "value_#{index} =\n#{read_code.gsub(/^/, "  ")}" unless point.conditional?
 
         <<~RUBY.chomp
           value_#{index} =
             if point_#{index}.satisfy_if_conditions?(source, context)
-              value_#{index} = #{read_value_code(point, index)}
+              value_#{index} =
+          #{read_code.gsub(/^/, "      ")}
               point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : skip
             else
               skip
             end
+        RUBY
+      end
+
+      # Code that reads the value of the point. An error raised there gets
+      # the attribute name.
+      def rescued_read_code(point, index)
+        <<~RUBY.chomp
+          begin
+            #{read_value_code(point, index)}
+          rescue => error
+            Serega::SeregaUtils::SerializedAttributeError.call(error, point_#{index})
+          end
         RUBY
       end
 

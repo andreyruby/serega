@@ -195,6 +195,15 @@ undefined method 'bar' for an instance of User
 (when serializing 'foo' attribute in UserSerializer, app/serializers/user_serializer.rb:3)
 ```
 
+An error raised by an `:if`, `:unless`, `:if_value` or `:unless_value` condition names the condition:
+
+```
+undefined method 'active?' for an instance of User
+(when checking :if condition of 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)
+```
+
+Each value read in the generated `#call` has its own `rescue`. Conditions are checked outside it, thus an error gets one of these lines.
+
 `Serega.attribute` records the location: the first caller outside Serega's own files. A subclass keeps the location of the parent attribute.
 
 A plain attribute is read by its `SeregaAttributeValues` method, defined with the file and line of the attribute. Thus the backtrace points to the attribute too. The generated `#call` has a virtual file name:

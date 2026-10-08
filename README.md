@@ -475,6 +475,10 @@ value" of its own — use `:if`/`:unless` instead.
 for skipped attributes, so all objects serialized with the same fields have
 the same members.
 
+An error raised by a condition names the condition and the line where the
+attribute is defined, for example:
+`(when checking :if condition of 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)`.
+
 The `:hide` option hides an attribute without conditions. Look at
 [select serialized fields](#selecting-fields) for `:hide` usage examples.
 

@@ -113,6 +113,8 @@ class Serega
         else # "0"
           condition.call
         end
+      rescue => error
+        SeregaUtils::SerializedAttributeError.condition(error, self, condition_name)
       end
     end
 

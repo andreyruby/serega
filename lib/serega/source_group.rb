@@ -176,11 +176,13 @@ class Serega
 
       # Reads the relation sources of the point, and makes their child group
       def child_group(point)
-        relation_sources = read_relation_sources(point, batches_for(point))
+        batches = batches_for(point)
         child_sources, pulls =
           if point.conditional?
+            relation_sources = read_conditional_relation_sources(point, batches)
             self.class.collect_conditional(relation_sources, point.many)
           else
+            relation_sources = read_relation_sources(point, batches)
             self.class.collect(relation_sources, point.many)
           end
         run.new_source_group(point.child_plan, child_sources, pulls)
@@ -227,21 +229,36 @@ class Serega
       end
 
       # Reads the relation source of every source: what the relation
-      # attribute returns, for example `user.posts`. A source failing the
-      # :if or :unless condition gets SKIP.
+      # attribute returns, for example `user.posts`.
       #
-      # @return [Array] Relation source or SKIP of each source
+      # @return [Array] Relation source of each source
       def read_relation_sources(point, batches)
         attribute = point.attribute
         context = @context
-        return @sources.map { |source| attribute.value(source, context, batches: batches) } unless point.conditional?
 
-        skip = SeregaEngine::SKIP
-        @sources.map do |source|
-          point.satisfy_if_conditions?(source, context) ? attribute.value(source, context, batches: batches) : skip
-        end
+        @sources.map { |source| attribute.value(source, context, batches: batches) }
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, point)
+      end
+
+      # Reads the relation source of every source of a conditional relation.
+      # A source failing the :if or :unless condition gets SKIP.
+      #
+      # @return [Array] Relation source or SKIP of each source
+      def read_conditional_relation_sources(point, batches)
+        attribute = point.attribute
+        context = @context
+        skip = SeregaEngine::SKIP
+
+        @sources.map do |source|
+          next skip unless point.satisfy_if_conditions?(source, context)
+
+          begin
+            attribute.value(source, context, batches: batches)
+          rescue => error
+            SeregaUtils::SerializedAttributeError.call(error, point)
+          end
+        end
       end
     end
 
