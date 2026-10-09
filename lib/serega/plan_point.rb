@@ -75,47 +75,6 @@ class Serega
       def conditional?
         attribute.conditional?
       end
-
-      #
-      # @return [Boolean] Whether the object passes the :if and :unless conditions
-      #
-      def satisfy_if_conditions?(obj, ctx)
-        check_if_unless(obj, ctx, :if, :unless)
-      end
-
-      #
-      # @return [Boolean] Whether the value passes the :if_value and :unless_value conditions
-      #
-      def satisfy_if_value_conditions?(value, ctx)
-        check_if_unless(value, ctx, :if_value, :unless_value)
-      end
-
-      private
-
-      def check_if_unless(obj, ctx, opt_if_name, opt_unless_name)
-        opt_if = attribute.opt_if[opt_if_name]
-        opt_unless = attribute.opt_if[opt_unless_name]
-        return true if opt_if.nil? && opt_unless.nil?
-
-        res_if = opt_if ? check_condition(opt_if, opt_if_name, obj, ctx) : true
-        res_unless = opt_unless ? !check_condition(opt_unless, opt_unless_name, obj, ctx) : true
-        res_if && res_unless
-      end
-
-      def check_condition(condition, condition_name, object, context)
-        signature = attribute.opt_if_signatures[condition_name]
-
-        case signature
-        when "1" then condition.call(object)
-        when "2" then condition.call(object, context)
-        when "1_ctx" then condition.call(object, ctx: context)
-        when "2_ctx" then condition.call(object, context, ctx: context)
-        else # "0"
-          condition.call
-        end
-      rescue => error
-        SeregaUtils::SerializedAttributeError.condition(error, self, condition_name)
-      end
     end
 
     extend SeregaHelpers::SerializerClassHelper

@@ -36,18 +36,18 @@ class Serega
       # :unless_value condition
       #
       # @param error [Exception] Original error
-      # @param point [SeregaPlanPoint] Plan point being serialized
+      # @param attribute [SeregaAttribute] Attribute with the condition
       # @param condition_name [Symbol] Condition option name
       #
       # @return [void]
       #
-      def condition(error, point, condition_name)
-        location = point.attribute.location
+      def condition(error, attribute, condition_name)
+        location = attribute.location
         defined_at = location ? ", #{location}" : ""
 
         raise error.exception(<<~MESSAGE.strip)
           #{error.message}
-          (when checking the :#{condition_name} condition of the '#{point.name}' attribute in #{point.class.serializer_class}#{defined_at})
+          (when checking the :#{condition_name} condition of the '#{attribute.name}' attribute in #{attribute.class.serializer_class}#{defined_at})
         MESSAGE
       end
     end

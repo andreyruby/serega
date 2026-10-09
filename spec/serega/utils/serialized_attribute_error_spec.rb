@@ -3,7 +3,8 @@
 RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
   let(:error) { KeyError.new("key not found") }
   let(:point) { double(name: :full_name, attribute: attribute, class: double(serializer_class: "UserSerializer")) }
-  let(:attribute) { double(location: "app/serializers/user_serializer.rb:3") }
+  let(:attribute) { double(name: :full_name, location: location, class: double(serializer_class: "UserSerializer")) }
+  let(:location) { "app/serializers/user_serializer.rb:3" }
 
   describe ".call" do
     subject(:reraise) { described_class.call(error, point) }
@@ -14,7 +15,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
     end
 
     context "when the attribute location is unknown" do
-      let(:attribute) { double(location: nil) }
+      let(:location) { nil }
 
       it "reraises the error with the attribute and the serializer" do
         expect { reraise }
@@ -24,7 +25,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
   end
 
   describe ".condition" do
-    subject(:reraise) { described_class.condition(error, point, :unless) }
+    subject(:reraise) { described_class.condition(error, attribute, :unless) }
 
     it "reraises the same error class with the condition, the attribute, the serializer and the attribute location" do
       expect { reraise }
@@ -32,7 +33,7 @@ RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
     end
 
     context "when the attribute location is unknown" do
-      let(:attribute) { double(location: nil) }
+      let(:location) { nil }
 
       it "reraises the error with the condition, the attribute and the serializer" do
         expect { reraise }

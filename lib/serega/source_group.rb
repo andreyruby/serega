@@ -158,10 +158,11 @@ class Serega
       # @return [Array] Relation source or SKIP of each source
       def read_conditional_relation_sources(point, batches)
         attribute = point.attribute
+        conditions = attribute.conditions
         context = @context
 
         @sources.map do |source|
-          next SeregaEngine::SKIP unless point.satisfy_if_conditions?(source, context)
+          next SeregaConditions::SKIP unless conditions.satisfy?(source, context)
 
           begin
             attribute.value(source, context, batches: batches)
