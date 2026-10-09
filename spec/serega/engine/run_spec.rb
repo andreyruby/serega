@@ -70,7 +70,7 @@ RSpec.describe Serega::SeregaEngine::Run do
   end
 
   describe "#new_source_group" do
-    subject(:source_group) { run.new_source_group(plan, [user], [Serega::SeregaEngine::SINGLE_SOURCE]) }
+    subject(:source_group) { run.new_source_group(plan, [user], [Serega::SeregaUtils::Pulls::SINGLE_SOURCE]) }
 
     let(:user) { double }
 
@@ -79,7 +79,7 @@ RSpec.describe Serega::SeregaEngine::Run do
       expect(source_group.plan).to equal plan
       expect(source_group.run).to equal run
       expect(source_group.sources).to eq [user]
-      expect(source_group.pulls).to eq [Serega::SeregaEngine::SINGLE_SOURCE]
+      expect(source_group.pulls).to eq [Serega::SeregaUtils::Pulls::SINGLE_SOURCE]
     end
   end
 end
