@@ -49,7 +49,7 @@ class Serega
       def collect_conditional(relation_sources, many)
         sources = []
         pulls = relation_sources.map do |relation_source|
-          SeregaEngine::SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many)
+          SeregaConditions::SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many)
         end
         [sources, pulls]
       end

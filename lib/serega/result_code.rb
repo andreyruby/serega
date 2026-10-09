@@ -65,6 +65,7 @@ class Serega
       # - `point_N` holds the point. An error raised while its value is read
       #   gets the attribute name.
       # - `attribute_N` and `batches_N` read values with `SeregaAttribute#value`.
+      # - `conditions_N` checks the conditions of a conditional attribute.
       # - `relation_values_N` holds the relation values of all sources.
       # - `value_N` holds the value of the current source.
       #
@@ -96,8 +97,10 @@ class Serega
         point_variables = @points.each_with_index.flat_map do |point, index|
           next ["relation_values_#{index} = relations[points[#{index}]]"] if point.child_plan
 
-          ["point_#{index} = points[#{index}]", "attribute_#{index} = point_#{index}.attribute", "batches_#{index} = batches && batches[#{index}]"]
+          variables = ["point_#{index} = points[#{index}]", "attribute_#{index} = point_#{index}.attribute", "batches_#{index} = batches && batches[#{index}]"]
+          point.conditional? ? [*variables, "conditions_#{index} = attribute_#{index}.conditions"] : variables
         end
+
         ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *point_variables]
       end
 
@@ -112,12 +115,12 @@ class Serega
 
         <<~RUBY.chomp
           value_#{index} =
-            if point_#{index}.satisfy_if_conditions?(source, context)
+            if conditions_#{index}.satisfy?(source, context)
               value_#{index} =
           #{read_code.gsub(/^/, "      ")}
-              point_#{index}.satisfy_if_value_conditions?(value_#{index}, context) ? value_#{index} : Serega::SeregaEngine::SKIP
+              conditions_#{index}.satisfy_value?(value_#{index}, context) ? value_#{index} : Serega::SeregaConditions::SKIP
             else
-              Serega::SeregaEngine::SKIP
+              Serega::SeregaConditions::SKIP
             end
         RUBY
       end
@@ -158,7 +161,7 @@ class Serega
       def argument_code(index)
         return "value_#{index}" unless @points[index].conditional?
 
-        "(Serega::SeregaEngine::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
+        "(Serega::SeregaConditions::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
       end
 
       # Code that builds the serialized Hash of the source.
@@ -177,7 +180,7 @@ class Serega
       # no key for a skipped value.
       def hash_assign_code(point, index)
         code = "serialized_hash[#{point.name.inspect}] = value_#{index}"
-        point.conditional? ? "#{code} unless Serega::SeregaEngine::SKIP.equal?(value_#{index})" : code
+        point.conditional? ? "#{code} unless Serega::SeregaConditions::SKIP.equal?(value_#{index})" : code
       end
     end
 
