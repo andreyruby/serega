@@ -14,6 +14,10 @@ class Serega
     #
     # @private
     module Pulls
+      # Pull of one source that is not in a collection. Its relation value is
+      # one serialized object, and not an Array.
+      SINGLE_SOURCE = Object.new.freeze
+
       module_function
 
       #
@@ -69,7 +73,7 @@ class Serega
           collection.size
         else
           sources << relation_source
-          many ? 1 : SeregaEngine::SINGLE_SOURCE # `many` on, but a sole source was given — wrap it, don't raise
+          many ? 1 : SINGLE_SOURCE # `many` on, but a sole source was given — wrap it, don't raise
         end
       end
 
@@ -87,7 +91,7 @@ class Serega
         pulls.map do |pull|
           case pull
           when Integer then serialized.shift(pull)
-          when SeregaEngine::SINGLE_SOURCE then serialized.shift
+          when SINGLE_SOURCE then serialized.shift
           else pull # nil or SKIP
           end
         end

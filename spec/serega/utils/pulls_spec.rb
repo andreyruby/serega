@@ -11,7 +11,7 @@ RSpec.describe Serega::SeregaUtils::Pulls do
     let(:relation_sources) { [[ann, bob], nil, ann] }
 
     it "returns the sources of all relation sources and the pull of each one" do
-      expect(collected).to eq [[ann, bob, ann], [2, nil, Serega::SeregaEngine::SINGLE_SOURCE]]
+      expect(collected).to eq [[ann, bob, ann], [2, nil, described_class::SINGLE_SOURCE]]
     end
 
     context "when many is true and a relation source is not a collection" do
@@ -28,7 +28,7 @@ RSpec.describe Serega::SeregaUtils::Pulls do
       let(:many) { false }
 
       it "adds the collection as one source" do
-        expect(collected).to eq [[[ann, bob]], [Serega::SeregaEngine::SINGLE_SOURCE]]
+        expect(collected).to eq [[[ann, bob]], [described_class::SINGLE_SOURCE]]
       end
     end
   end
@@ -39,7 +39,7 @@ RSpec.describe Serega::SeregaUtils::Pulls do
     let(:relation_sources) { [[ann, bob], Serega::SeregaEngine::SKIP, ann] }
 
     it "keeps SKIP as the pull of a skipped relation source" do
-      expect(collected).to eq [[ann, bob, ann], [2, Serega::SeregaEngine::SKIP, Serega::SeregaEngine::SINGLE_SOURCE]]
+      expect(collected).to eq [[ann, bob, ann], [2, Serega::SeregaEngine::SKIP, described_class::SINGLE_SOURCE]]
     end
   end
 
@@ -68,7 +68,7 @@ RSpec.describe Serega::SeregaUtils::Pulls do
     subject(:relation_values) { described_class.take!(serialized, pulls) }
 
     let(:serialized) { [{name: "Ann"}, {name: "Bob"}, {name: "Cat"}] }
-    let(:pulls) { [2, nil, Serega::SeregaEngine::SKIP, Serega::SeregaEngine::SINGLE_SOURCE] }
+    let(:pulls) { [2, nil, Serega::SeregaEngine::SKIP, described_class::SINGLE_SOURCE] }
 
     it "takes the relation value of each pull from the front of the serialized objects" do
       expect(relation_values).to eq [[{name: "Ann"}, {name: "Bob"}], nil, Serega::SeregaEngine::SKIP, {name: "Cat"}]
