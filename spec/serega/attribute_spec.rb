@@ -45,8 +45,7 @@ RSpec.describe Serega::SeregaAttribute do
         value_block: nil,
         value_block_signature: nil,
         preloads: nil,
-        if_options: {if: nil},
-        if_options_signatures: {if: nil}
+        conditions: nil
       )
 
       initials = {name: :name, opts: {}, block: nil, location: "app/serializers/user_serializer.rb:3"}
@@ -64,9 +63,7 @@ RSpec.describe Serega::SeregaAttribute do
           :@hide,
           :@serializer,
           :@preloads,
-          :@opt_if,
-          :@opt_if_signatures,
-          :@conditional
+          :@conditions
         )
     end
   end

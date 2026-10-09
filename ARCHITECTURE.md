@@ -28,6 +28,7 @@ Run          once per serialization      SeregaEngine::Run → SeregaSourceGroup
 `attribute`, `batch` and `plugin` calls on a serializer class make the definition:
 
 - `SeregaAttribute` (`lib/serega/attribute.rb`): name, options and a value resolver from `lib/serega/attribute_value_resolvers/`. `#value(object, context, batches:)` reads the value of one object.
+- `SeregaConditions` (`lib/serega/conditions.rb`): the `:if`, `:unless`, `:if_value` and `:unless_value` conditions of one attribute. `SeregaAttribute#conditions` is nil for an attribute without conditions. `#satisfy?(object, context)` checks `:if` and `:unless`, `#satisfy_value?(value, context)` checks `:if_value` and `:unless_value`. `SeregaConditions::SKIP` is the value of a skipped attribute.
 - `SeregaBatchLoader` (`lib/serega/batch_loader.rb`): a named block that loads values of many sources in one call.
 
 The first plan locks the class. Later definition calls raise.
@@ -39,7 +40,7 @@ The first plan locks the class. Later definition calls raise.
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
 - `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlanCache` keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them.
-- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`. A conditional attribute (`:if`, `:unless`, `:if_value`, `:unless_value`) gets `SeregaEngine::SKIP` when it fails a condition: a serialized Hash gets no key for it, a Struct or Data gets nil. Only conditional points get the code that checks conditions.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`. A conditional attribute (`:if`, `:unless`, `:if_value`, `:unless_value`) gets `SeregaConditions::SKIP` when it fails a condition: a serialized Hash gets no key for it, a Struct or Data gets nil. Only conditional points get the code that checks conditions.
 - `SeregaAttributeValues` (`lib/serega/attribute_values.rb`): one method per attribute read with plain Ruby code (`SeregaAttribute#value_code`): a method call, a delegation, a `:const` and a `:default`. For example `def full_name(source) = source.full_name`, `def city(source) = source.profile&.city`, `def code(source) = CONSTANTS[:code]` and `def email(source) = (value = source.email).nil? ? DEFAULTS[:email] : value`. `CONSTANTS` and `DEFAULTS` hold the values by attribute name. `SeregaAttribute` defines it when the attribute is defined, with the file and line of the attribute. The class inherits from `BasicObject`, thus attribute names do not clash with methods of `Object`. An attribute named like a `BasicObject` method (`initialize`, `__send__`, ...) gets no method and is read with `SeregaAttribute#value`.
 
 ### 3. Run
@@ -105,7 +106,7 @@ UserSerializer.to_h(object, opts)
 | one source | `SeregaUtils::Pulls::SINGLE_SOURCE` | the next serialized object |
 | collection of N sources | `N` | Array of the next N serialized objects |
 | `nil` | `nil` | `nil` |
-| skipped by its `:if` or `:unless` condition | `SeregaEngine::SKIP` | no key, or nil |
+| skipped by its `:if` or `:unless` condition | `SeregaConditions::SKIP` | no key, or nil |
 
 A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `Run#call` uses `.append` for the root. The serialized objects of a group follow the order of its sources, thus `.take!(serialized, pulls)` takes them from the front, one pull after another, and empties them: the parent group takes them once, during its build. The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
 
