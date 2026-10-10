@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.7.0")
-  Warning[:deprecated] = true
-  Warning[:experimental] = true
-  Warning[:performance] = true if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.3.0")
-end
+Warning[:deprecated] = true
+Warning[:experimental] = true
+Warning[:performance] = true
 
 # CI checks coverage on the latest Ruby only (COVERAGE=true in the workflow)
 coverage = ENV.fetch("COVERAGE") { ENV["CI"] ? "false" : "true" } == "true"
@@ -23,11 +21,7 @@ end
 
 unless ENV["CI"]
   begin
-    if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.1.0")
-      require "debug"
-    else
-      require "pry-byebug"
-    end
+    require "debug"
   rescue LoadError
   end
 end
