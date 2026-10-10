@@ -35,6 +35,7 @@
 class UserSerializer < Serega
   attribute :name
   attribute :email
+  freeze
 end
 
 user = OpenStruct.new(name: 'Felonious Gru', email: 'gru@example.com')
@@ -42,7 +43,8 @@ UserSerializer.to_h(user)
 # => {name: "Felonious Gru", email: "gru@example.com"}
 ```
 
-Each `attribute :name` calls `object.name` and adds it to the hash.
+Each `attribute :name` calls `object.name` and adds it to the hash. End each
+serializer with `freeze`: a serializer serializes only after it is frozen.
 
 ---
 
@@ -53,6 +55,7 @@ Each `attribute :name` calls `object.name` and adds it to the hash.
 ```ruby
 class UserSerializer < Serega
   attribute :first_name
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'))
@@ -64,6 +67,7 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'))
 ```ruby
 class UserSerializer < Serega
   attribute :name, method: :full_name
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(full_name: 'Felonious Gru'))
@@ -84,6 +88,8 @@ class UserSerializer < Serega
     attribute :likes_count
     attribute :comments_count
   end
+
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(likes_count: 10, comments_count: 3))
@@ -98,6 +104,7 @@ Signatures: `(obj)`, `(obj, ctx:)`, `(obj, batches:)`, `(obj, ctx:, batches:)`,
 ```ruby
 class UserSerializer < Serega
   attribute :quote, value: proc { |user, ctx| "#{user.first_name}: #{ctx[:line]}" }
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'),
@@ -110,6 +117,7 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'),
 ```ruby
 class UserSerializer < Serega
   attribute :city, delegate: { to: :address, allow_nil: true }
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(address: nil))
@@ -127,6 +135,7 @@ UserSerializer.to_h(OpenStruct.new(address: OpenStruct.new(city: 'Suburbia')))
 ```ruby
 class UserSerializer < Serega
   attribute :role, const: 'admin'
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new)
@@ -138,6 +147,7 @@ UserSerializer.to_h(OpenStruct.new)
 ```ruby
 class UserSerializer < Serega
   attribute :nickname, default: 'anonymous'
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(nickname: nil))
@@ -153,6 +163,7 @@ UserSerializer.to_h(OpenStruct.new(nickname: 'Vector'))
 class UserSerializer < Serega
   attribute :email
   attribute :phone, hide: true
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(email: 'gru@example.com', phone: '555-1234'))
@@ -171,6 +182,7 @@ UserSerializer.to_h(OpenStruct.new(email: 'gru@example.com', phone: '555-1234'),
 ```ruby
 class UserSerializer < Serega
   attribute :name
+  freeze
 end
 user = OpenStruct.new(name: 'Felonious Gru')
 
@@ -193,6 +205,7 @@ class UserSerializer < Serega
   attribute :name
   attribute :email
   attribute :phone, hide: true
+  freeze
 end
 user = OpenStruct.new(name: 'Felonious', email: 'gru@example.com', phone: '555-1234')
 
@@ -222,6 +235,7 @@ UserSerializer.to_h(user, only: [:address], check_initiate_params: false)
 ```ruby
 class UserSerializer < Serega
   attribute :email, value: proc { |user, ctx| user.email if ctx[:current_user] == user }
+  freeze
 end
 user = OpenStruct.new(email: 'gru@example.com')
 
@@ -246,6 +260,7 @@ Inside presenter methods context is accessed via `__ctx__` (see [Presenter][pres
 class UserSerializer < Serega
   attribute :email, if: proc { |user, ctx| ctx[:current_user] == user }
   attribute :nickname, unless_value: :empty?
+  freeze
 end
 
 user = OpenStruct.new(email: 'gru@example.com', nickname: '')
@@ -277,6 +292,7 @@ class UserSerializer < AppSerializer
   attribute :active, format: :yes_no
   attribute :role, format: [:to_s]                 # inline: value.to_s
   attribute :score, format: proc { |v| "#{v}%" } # inline
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, role: :admin, score: 87),
@@ -291,11 +307,13 @@ UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, role: :admin,
 ```ruby
 class CommentSerializer < Serega
   attribute :body
+  freeze
 end
 
 class PostSerializer < Serega
   attribute :title
   attribute :comments, serializer: CommentSerializer
+  freeze
 end
 
 post = OpenStruct.new(title: 'How to Steal the Moon',
@@ -332,6 +350,7 @@ class UserSerializer < Serega
   batch :comments_count, ->(users) { users.to_h { |u| [u.id, u.id * 10] } }
 
   attribute :comments_count, batch: true
+  freeze
 end
 
 UserSerializer.to_h([OpenStruct.new(id: 1), OpenStruct.new(id: 2)])
@@ -362,6 +381,7 @@ Pairs well with `:preload` to avoid N+1 inside loaders (see [Preloads][preloads]
 class PostSerializer < Serega
   attribute :verified_comments, preload: :comments,
     value: proc { |post| post.comments.select(&:verified?) }
+  freeze
 end
 ```
 
@@ -381,12 +401,14 @@ hands it straight to `ActiveRecord::Associations::Preloader`.
 ```ruby
 class AddressSerializer < Serega
   attribute :country, preload: :country
+  freeze
 end
 ```
 
 ```ruby
 class UserSerializer < Serega
   attribute :address, serializer: AddressSerializer, preload: :address
+  freeze
 end
 ```
 
@@ -446,6 +468,7 @@ class UserSerializer < Serega
   # `true` is a shorthand for config.hash_access.default_mode (:symbol by default)
   attribute :name, hash_access: true     # record[:name]
   attribute :role, hash_access: :string  # record["role"]
+  freeze
 end
 
 UserSerializer.to_h({name: "Kate", "role" => "admin"})
@@ -457,6 +480,7 @@ UserSerializer.to_h({name: "Kate", "role" => "admin"})
 class UserSerializer < Serega
   attribute :middle_name, hash_access: {allow_missing_key: true}
   attribute :status, hash_access: {allow_missing_key: true}, default: "active"
+  freeze
 end
 
 UserSerializer.to_h({})
@@ -470,6 +494,7 @@ class UserSerializer < Serega
   config.hash_access.default_allow_missing_key = true
 
   attribute :middle_name, hash_access: true
+  freeze
 end
 
 UserSerializer.to_h({})
@@ -481,6 +506,7 @@ UserSerializer.to_h({})
 # to_hash_access: for the intermediate (:to) read, hash_access: for the final read
 class UserSerializer < Serega
   attribute :city, delegate: {to: :address, hash_access: :symbol} # record.address[:city]
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(address: {city: "Paris"}))
@@ -490,6 +516,7 @@ UserSerializer.to_h(OpenStruct.new(address: {city: "Paris"}))
 ```ruby
 class UserSerializer < Serega
   attribute :city, delegate: {to: :address, to_hash_access: :symbol, hash_access: :symbol} # record[:address][:city]
+  freeze
 end
 
 UserSerializer.to_h({address: {city: "Paris"}})
@@ -512,10 +539,12 @@ end
 
 class UserSerializer < AppSerializer
   attribute :name
+  freeze
 end
 
 class PostSerializer < AppSerializer
   attribute :title
+  freeze
 end
 ```
 
@@ -533,6 +562,7 @@ class UserSerializer < Serega
   prepare_initial_objects { |user_ids| OccamsRecord.query(User.where(id: user_ids)).run }
 
   attribute :first_name
+  freeze
 end
 
 UserSerializer.to_h(["17"]) # => [{first_name: "Ann"}]
@@ -565,6 +595,7 @@ into a collection.
 class UserSerializer < Serega
   config.auto_preload = true
   attribute :city, delegate: { to: :address, method: :city }
+  freeze
 end
 # `:address` is preloaded automatically (from the :delegate option)
 ```
@@ -577,6 +608,7 @@ class UserSerializer < Serega
   config.auto_preload = { has_serializer_option: true, has_delegate_option: false }
   attribute :city,  delegate:   { to: :address, method: :city }   # no auto-preload
   attribute :posts, serializer: PostSerializer                     # auto-preloaded
+  freeze
 end
 ```
 
@@ -589,6 +621,7 @@ class UserSerializer < Serega
   config.hide_by_default = [:preload]
   attribute :name
   attribute :stats, preload: :stats, value: proc { |u| u.stats }
+  freeze
 end
 
 UserSerializer.to_h(user)               # => {name: "Felonious"}        (stats skipped)
@@ -612,6 +645,7 @@ See [Field Selection][field-selection].
 class UserSerializer < Serega
   config.delegate_default_allow_nil = true
   attribute :city, delegate: { to: :address }
+  freeze
 end
 UserSerializer.to_h(OpenStruct.new(address: nil))   # => {city: nil}
 ```
@@ -625,6 +659,7 @@ class UserSerializer < Serega
   config.batch_id_option = :uuid
   batch :likes, ->(users) { users.to_h { |u| [u.uuid, 99] } }
   attribute :likes, batch: true   # uses :uuid instead of :id
+  freeze
 end
 UserSerializer.to_h([OpenStruct.new(uuid: 'abc')])   # => [{likes: 99}]
 ```
@@ -642,6 +677,8 @@ class UserSerializer < AppSerializer
   attribute :statistics, method: :itself do  # inherits from AppSerializer
     attribute :likes_count
   end
+
+  freeze
 end
 ```
 
@@ -655,6 +692,7 @@ over config). Attributes of the base, if any, are serialized too.
 class UserSerializer < Serega
   config.check_initiate_params = false
   attribute :name
+  freeze
 end
 UserSerializer.to_h(user, only: [:nope])   # => {}        (silently skipped)
 # default `true` would raise Serega::AttributeNotExist
@@ -668,6 +706,7 @@ Common pattern: `false` in production, `true` in dev/test.
 class UserSerializer < Serega
   config.check_attribute_name = false
   attribute :"weird.name"   # would otherwise raise
+  freeze
 end
 ```
 
@@ -698,6 +737,8 @@ class UserSerializer < Serega
       id == __ctx__[:current_user_id] ? :self : :other # context via __ctx__
     end
   end
+
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', id: 1),
@@ -731,6 +772,7 @@ class UserSerializer < Serega
   plugin :string_modifiers
   attribute :first_name
   attribute :last_name
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru'),
@@ -753,6 +795,7 @@ class UserSerializer < Serega
   attribute :first_name
   attribute :last_name
   attribute :full_name, camel_case: false # opt out
+  freeze
 end
 
 UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', full_name: 'Felonious Gru'))
@@ -770,6 +813,7 @@ Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
 class CommentSerializer < Serega
   plugin :depth_limit, limit: 2
   attribute :replies, serializer: -> { CommentSerializer }
+  freeze
 end
 
 CommentSerializer.new(with: { replies: { replies: { replies: :replies } } })
@@ -790,6 +834,7 @@ end
 
 class PostSerializer < AppSerializer
   attribute :author, serializer: -> { UserSerializer }
+  freeze
 end
 # => raises Serega::SeregaError: Attribute option :many [Boolean] must be provided
 
@@ -810,6 +855,7 @@ end
 ```ruby
 class UserSerializer < Serega
   plugin :root
+  freeze
 end
 
 UserSerializer.to_h(nil) # => {data: nil}
@@ -832,6 +878,7 @@ class UserSerializer < Serega
   plugin :root
   plugin :metadata
   meta_attribute(:version, const: '1.2.3')
+  freeze
 end
 
 UserSerializer.to_h(nil)
@@ -842,6 +889,7 @@ UserSerializer.to_h(nil)
 class UserSerializer < Serega
   plugin :root
   plugin :context_metadata # default key :meta — merges into top level
+  freeze
 end
 
 UserSerializer.to_h(nil, meta: { page: 1 })

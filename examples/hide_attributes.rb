@@ -18,16 +18,19 @@ class UserSerializer < AppSerializer
 
   attribute :avatar, serializer: "AvatarSerializer"
   attribute :profile, serializer: "ProfileSerializer", hide: true
+  freeze
 end
 
 class AvatarSerializer < AppSerializer
   attribute :url
   attribute :url_2x
+  freeze
 end
 
 class ProfileSerializer < AppSerializer
   attribute :desc
   attribute :location, hide: true
+  freeze
 end
 
 require "ostruct"

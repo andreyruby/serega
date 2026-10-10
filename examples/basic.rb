@@ -18,17 +18,20 @@ class UserSerializer < AppSerializer
 
   attribute :profile, serializer: "ProfileSerializer"
   attribute :roles, serializer: "RoleSerializer"
+  freeze
 end
 
 class ProfileSerializer < AppSerializer
   attribute :id
   attribute :location, value: proc { |profile| profile.location || "Gotham City" }
   attribute :followers_count
+  freeze
 end
 
 class RoleSerializer < AppSerializer
   attribute :id
   attribute :name
+  freeze
 end
 
 require "ostruct"

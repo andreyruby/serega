@@ -28,8 +28,9 @@
   objects. See "Serializing" in the README.
 - `.to_struct` and `.to_data` raise `Serega::SeregaError` for attribute names
   that can not be `Struct` or `Data` members. See "Serializing" in the README.
-- **BREAKING**: Serializers are locked once they serialize something. Changing
-  a locked serializer raises an error. See "Define serializers" in the README.
+- **BREAKING**: End each serializer definition with `freeze`. Serializing a
+  serializer that is not frozen raises an error, and changing a frozen
+  serializer raises an error. See "Define serializers" in the README.
 - **BREAKING**: The context is a frozen empty Hash when the `:context` option
   is not given. See "Using Context" in the README.
 - Faster serialization.
