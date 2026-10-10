@@ -296,4 +296,101 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
       expect(serializer.to_h(user)).to eq(comments: [{text: "first"}, {text: "second"}])
     end
   end
+
+  describe Serega::AttributeValueResolvers::HashAccessKeyword do
+    describe "#call" do
+      subject(:value) { described_class.new(:address, :symbol, allow_missing_key).call(record) }
+
+      let(:record) { {address: {"city" => "Oslo"}} }
+      let(:allow_missing_key) { false }
+
+      it "reads the key" do
+        expect(value).to eq("city" => "Oslo")
+      end
+
+      context "when the key is missing" do
+        let(:record) { {} }
+
+        it "raises a KeyError with the key and the record" do
+          expect { value }.to raise_error(KeyError, "key not found: :address") { |error|
+            expect(error.key).to eq :address
+            expect(error.receiver).to equal record
+          }
+        end
+      end
+
+      context "when the key is missing and the record has a default value" do
+        let(:record) { Hash.new("unknown") }
+
+        it "returns the default value" do
+          expect(value).to eq "unknown"
+        end
+      end
+
+      context "when the key is missing and missing keys are allowed" do
+        let(:record) { {} }
+        let(:allow_missing_key) { true }
+
+        it "returns nil" do
+          expect(value).to be_nil
+        end
+      end
+    end
+  end
+
+  describe Serega::AttributeValueResolvers::HashAccessDelegate do
+    subject(:resolver) { described_class.new(to_step, final_step) }
+
+    let(:to_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:address, :symbol, false) }
+    let(:final_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:city, :string, false) }
+    let(:record) { {address: {"city" => "Oslo"}} }
+
+    describe "#call" do
+      it "reads the final key of the intermediate value" do
+        expect(resolver.call(record)).to eq "Oslo"
+      end
+    end
+
+    describe "#code" do
+      context "when a step has no code" do
+        let(:to_step) { Serega::AttributeValueResolvers::Keyword.new(:"home-address") }
+
+        it "returns nil" do
+          expect(resolver.code("source")).to be_nil
+        end
+      end
+    end
+  end
+
+  describe Serega::AttributeValueResolvers::HashAccessDelegateAllowNil do
+    subject(:resolver) { described_class.new(to_step, final_step) }
+
+    let(:to_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:address, :symbol, false) }
+    let(:final_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:city, :string, false) }
+    let(:record) { {address: {"city" => "Oslo"}} }
+
+    describe "#call" do
+      it "reads the final key of the intermediate value" do
+        expect(resolver.call(record)).to eq "Oslo"
+      end
+
+      context "when the intermediate value is nil" do
+        let(:record) { {address: nil} }
+
+        it "returns nil" do
+          expect(resolver.call(record)).to be_nil
+        end
+      end
+    end
+
+    describe "#code" do
+      context "when a step has no code" do
+        let(:final_step) { Serega::AttributeValueResolvers::Keyword.new(:"city-name") }
+
+        it "returns nil" do
+          expect(resolver.code("source")).to be_nil
+        end
+      end
+    end
+  end
 end

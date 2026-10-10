@@ -151,7 +151,10 @@ class Serega
           case @value_block
           when AttributeValueResolvers::Keyword,
                AttributeValueResolvers::Delegate,
-               AttributeValueResolvers::DelegateAllowNil
+               AttributeValueResolvers::DelegateAllowNil,
+               AttributeValueResolvers::HashAccessKeyword,
+               AttributeValueResolvers::HashAccessDelegate,
+               AttributeValueResolvers::HashAccessDelegateAllowNil
             @value_block.code(source_variable)
           when AttributeValueResolvers::Const
             "CONSTANTS[#{name.inspect}]"
