@@ -153,11 +153,11 @@ class Serega
       module InstanceMethods
         private
 
-        def serialize(object, opts)
+        def serialize(object, opts, context:, many:, mode:)
           result = super
           return result unless result.is_a?(Hash) # return earlier if not a hash, so no root was added
 
-          root = build_root(object, opts)
+          root = build_root(opts, many)
           return result unless root # return earlier when no root
 
           add_context_metadata(result, opts)

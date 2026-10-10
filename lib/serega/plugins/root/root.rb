@@ -219,18 +219,18 @@ class Serega
       module InstanceMethods
         private
 
-        def serialize(object, opts)
+        def serialize(object, opts, context:, many:, mode:)
           result = super
-          root = build_root(object, opts)
+          root = build_root(opts, many)
           result = {root => result} if root
           result
         end
 
-        def build_root(object, opts)
+        def build_root(opts, many)
           return opts[:root] if opts.key?(:root)
 
           root = self.class.config.root
-          (opts.fetch(:many) { SeregaUtils::CollectionDetector.call(object) }) ? root.many : root.one
+          many ? root.many : root.one
         end
       end
     end

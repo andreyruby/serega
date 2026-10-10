@@ -14,10 +14,6 @@ class Serega
   # @private
   FROZEN_EMPTY_ARRAY = [].freeze
 
-  # Empty modifiers/serialization options (used when serializing with no opts provided)
-  FROZEN_EMPTY_OPTS = [FROZEN_EMPTY_HASH, nil].freeze
-  private_constant :FROZEN_EMPTY_OPTS
-
   # Path prefix of the Serega source files
   # @private
   LIB_PATH = File.expand_path("serega", __dir__).freeze
@@ -620,10 +616,7 @@ class Serega
     # @return [Hash] Serialization result
     #
     def call(object, opts = nil)
-      opts = normalize_serialization_opts(opts)
-      object = prepare_objects(object, opts[:context])
-      opts = prepare_initial_serialization_opts(object, opts)
-      serialize(object, opts)
+      serialize_to(:hash, object, opts)
     end
 
     # @see #call
@@ -642,10 +635,7 @@ class Serega
     # @return [Data] Serialization result
     #
     def to_data(object, opts = nil)
-      opts = normalize_serialization_opts(opts)
-      object = prepare_objects(object, opts[:context])
-      opts = prepare_initial_serialization_opts(object, opts, :data)
-      serialize(object, opts)
+      serialize_to(:data, object, opts)
     end
 
     #
@@ -659,10 +649,7 @@ class Serega
     # @return [Struct, Array<Struct>, nil] Serialization result
     #
     def to_struct(object, opts = nil)
-      opts = normalize_serialization_opts(opts)
-      object = prepare_objects(object, opts[:context])
-      opts = prepare_initial_serialization_opts(object, opts, :struct)
-      serialize(object, opts)
+      serialize_to(:struct, object, opts)
     end
 
     private
@@ -675,11 +662,19 @@ class Serega
       SeregaValidations::Utils::CheckAllowedKeys.call(opts, config.initiate_keys, :initiate)
     end
 
-    def normalize_serialization_opts(opts)
-      opts = opts ? opts.transform_keys(&:to_sym) : {}
-      self.class::CheckSerializeParams.new(opts).validate unless opts.empty?
+    def serialize_to(mode, object, opts)
+      opts = normalize_serialization_opts(opts)
+      context = opts[:context] || {}
+      object = prepare_objects(object, context)
+      many = opts.fetch(:many) { SeregaUtils::CollectionDetector.call(object) }
+      serialize(object, opts, context: context, many: many, mode: mode)
+    end
 
-      opts[:context] ||= {}
+    def normalize_serialization_opts(opts)
+      return FROZEN_EMPTY_HASH if opts.nil? || opts.empty?
+
+      opts = opts.transform_keys(&:to_sym)
+      self.class::CheckSerializeParams.new(opts).validate
       opts
     end
 
@@ -694,18 +689,12 @@ class Serega
       end
     end
 
-    def prepare_initial_serialization_opts(object, opts, mode = :hash)
-      opts[:mode] = mode
-      opts[:many] = SeregaUtils::CollectionDetector.call(object) unless opts.key?(:many)
-      opts
-    end
-
     # Patched in:
     # - plugin :root (wraps result `{ root => result }`)
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
-    def serialize(object, opts)
-      SeregaEngine::Run.call(plan, object, many: opts[:many], mode: opts[:mode], context: opts[:context])
+    def serialize(object, _opts, context:, many:, mode:)
+      SeregaEngine::Run.call(plan, object, many: many, mode: mode, context: context)
     end
   end
 
