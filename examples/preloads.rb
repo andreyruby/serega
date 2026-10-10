@@ -84,16 +84,19 @@ class UserSerializer < AppSerializer
   attribute :first_name
   attribute :last_name
   attribute :posts, serializer: -> { PostSerializer }
+  freeze
 end
 
 class PostSerializer < AppSerializer
   attribute :text
   attribute :comments, serializer: -> { CommentSerializer }
+  freeze
 end
 
 class CommentSerializer < AppSerializer
   attribute :text
   # attribute :user, serializer: -> { UserSerializer }
+  freeze
 end
 
 def example(message, expected_queries_count:)

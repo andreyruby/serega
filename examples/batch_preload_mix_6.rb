@@ -100,16 +100,19 @@ class UserSerializer < AppSerializer
   attribute :first_name
   attribute :last_name
   attribute :posts, serializer: "PostSerializer", preload: :posts
+  freeze
 end
 
 class PostSerializer < AppSerializer
   attribute :text
   attribute :comments, serializer: "CommentSerializer", batch: PostsCommentsLoader
+  freeze
 end
 
 class CommentSerializer < AppSerializer
   attribute :text
   attribute :views_count, preload: :views, value: proc { |comment| comment.views.size }
+  freeze
 end
 
 puts "=== Mix 6: preload posts -> batch comments -> preload views ==="

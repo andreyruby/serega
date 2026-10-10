@@ -22,6 +22,8 @@ class UserSerializer < AppSerializer
       [first_name, last_name].join(" ")
     end
   end
+
+  freeze
 end
 
 class ProfileSerializer < AppSerializer
@@ -34,6 +36,8 @@ class ProfileSerializer < AppSerializer
       "Gotham City"
     end
   end
+
+  freeze
 end
 
 require "ostruct"

@@ -120,15 +120,18 @@ class UserSerializer < AppSerializer
   attribute :first_name
   attribute :last_name
   attribute :posts, serializer: "PostSerializer", many: true, batch: UsersPostsLoader
+  freeze
 end
 
 class PostSerializer < AppSerializer
   attribute :comments, serializer: "CommentSerializer", many: true, batch: PostsCommentsLoader
+  freeze
 end
 
 class CommentSerializer < AppSerializer
   attribute :text
   attribute :views_count, batch: CommentsViewsLoader
+  freeze
 end
 
 def example(message, expected_queries_count:)
