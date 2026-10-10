@@ -115,6 +115,20 @@ RSpec.describe Serega::SeregaResultBuilder do
       end
     end
 
+    context "with no attributes in the :struct mode when Ruby can not define a Struct without members" do
+      let(:serializer) { Class.new(Serega) }
+      let(:mode) { :struct }
+
+      before do
+        allow(Struct).to receive(:new).with(no_args).and_raise(ArgumentError, "wrong number of arguments (given 0, expected 1+)")
+      end
+
+      it "raises the Ruby error" do
+        expect { result_builder }.to raise_error ArgumentError, "wrong number of arguments (given 0, expected 1+)"
+        expect(Struct).to have_received(:new).with(no_args)
+      end
+    end
+
     context "with an operator attribute name in the :data mode" do
       let(:name) { :+ }
       let(:mode) { :data }

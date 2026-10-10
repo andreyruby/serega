@@ -90,11 +90,14 @@ class Serega
       end
 
       # Returns the Struct or Data class with the members. Raises a
-      # SeregaError for an attribute name that Ruby can not make a member.
+      # SeregaError for an attribute name that Ruby can not make a member,
+      # and the Ruby error when no attribute name is the cause.
       def member_class(names)
         (mode == :struct) ? self.class.struct_class_for(names) : self.class.data_class_for(names)
       rescue ArgumentError, NameError => error
         point = @points.find { |point| !member_name?(point.name) }
+        raise unless point
+
         raise_member_error(error.message, point)
       end
 
