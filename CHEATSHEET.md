@@ -10,6 +10,7 @@
 - [Field Selection — `:only` `:except` `:with`](#field-selection--only-except-with)
 - [Context](#context)
 - [Conditional Attributes — `:if` `:unless`](#conditional-attributes--if-unless)
+- [Formatters — `format:`](#formatters--format)
 - [Relations](#relations)
 - [Batch Loading (N+1)](#batch-loading-n1)
 - [Preloads](#preloads)
@@ -21,7 +22,6 @@
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
 - [Plugin `:string_modifiers`](#plugin-string_modifiers)
 - [Plugin `:camel_case`](#plugin-camel_case)
-- [Plugin `:formatters`](#plugin-formatters)
 - [Plugin `:depth_limit`](#plugin-depth_limit)
 - [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
 - [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
@@ -260,6 +260,28 @@ Symbol short form: `if: :active?` → calls `object.active?`.
 
 For unconditional hiding, prefer `hide: true` — see
 [Attribute Options][attributes] and [Field Selection][field-selection].
+
+---
+
+## Formatters — `format:`
+
+```ruby
+class AppSerializer < Serega
+  formatter :iso8601, ->(time) { time.iso8601(3) }
+  formatter :yes_no, ->(value) { value ? 'yes' : 'no' }
+  formatter(:money) { |value, ctx| "$#{value / (10 ** ctx[:digits])}" }
+end
+
+class UserSerializer < AppSerializer
+  attribute :balance, format: :money
+  attribute :active, format: :yes_no
+  attribute :score, format: proc { |v| "#{v}%" } # inline
+end
+
+UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, score: 87),
+                    context: { digits: 2 })
+# => {balance: "$1000", active: "yes", score: "87%"}
+```
 
 ---
 
@@ -738,30 +760,6 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', fu
 
 ⚠️ Modifiers must use camelCase. Doesn't touch `:root` / `:metadata` keys.
 Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
-
----
-
-## Plugin `:formatters`
-
-```ruby
-class AppSerializer < Serega
-  plugin :formatters, formatters: {
-    iso8601: ->(time) { time.iso8601(3) },
-    money: ->(value, ctx) { "$#{value / (10 ** ctx[:digits])}" },
-    yes_no: ->(value) { value ? 'yes' : 'no' }
-  }
-end
-
-class UserSerializer < AppSerializer
-  attribute :balance, format: :money
-  attribute :active, format: :yes_no
-  attribute :score, format: proc { |v| "#{v}%" } # inline
-end
-
-UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, score: 87),
-                    context: { digits: 2 })
-# => {balance: "$1000", active: "yes", score: "87%"}
-```
 
 ---
 

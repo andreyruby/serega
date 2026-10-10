@@ -22,6 +22,7 @@ class Serega
         const
         delegate
         default
+        format
         preload
         batch
         base_serializer

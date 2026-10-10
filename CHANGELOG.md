@@ -10,6 +10,11 @@
   "Conditional Attributes" in the README.
 - **BREAKING**: Conditional attributes: `.to_data` returns `nil` for skipped
   attributes. See "Conditional Attributes" in the README.
+- **BREAKING**: Moved the `:format` attribute option from the `:formatters`
+  plugin to core. Remove `plugin :formatters` from your serializers — loading
+  it raises `Plugin 'formatters' does not exist`. Define named formatters with
+  `formatter :money, ->(cents) { cents / 100.0 }` or with a block. See
+  "Formatting Values" in the README.
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
   objects. See "Serializing" in the README.
 - `.to_struct` and `.to_data` raise `Serega::SeregaError` for attribute names

@@ -59,6 +59,7 @@ class Serega
       # @option opts [Boolean] :hide Specify `true` to not serialize this attribute by default
       # @option opts [Boolean] :many Specifies has_many relationship. By default is detected via object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)
       # @option opts [Proc, #call] :value Custom block or callable to find attribute value
+      # @option opts [Symbol, #call] :format Formatter name or callable that formats the value
       # @option opts [Serega, Proc] :serializer Relationship serializer class. Use `proc { MySerializer }` if serializers have cross references
       # @param block [Proc] Defines attributes of a nested anonymous serializer
       # @param location [String, nil] Where the attribute is defined, "path:line"
@@ -107,11 +108,7 @@ class Serega
       # Finds attribute value
       #
       # Generated code reads plain attributes without this method, with their
-      # SeregaAttributeValues method (see #value_code). A plugin that patches
-      # this method must also patch #value_code to return nil.
-      #
-      # Patched in:
-      # - plugin :formatters (formats the value)
+      # SeregaAttributeValues method (see #value_code).
       #
       # @param object [Object] Object to serialize
       # @param context [Hash, nil] Serialization context
@@ -131,7 +128,8 @@ class Serega
           else @value_block.call # signature is "0" - no parameters
           end
 
-        result.nil? ? @default : result
+        result = @default if result.nil?
+        @formatter ? @formatter.call(result, context) : result
       end
 
       #
@@ -139,14 +137,13 @@ class Serega
       # value of the source. `:const` and `:default` values come from the
       # `CONSTANTS` and `DEFAULTS` of SeregaAttributeValues.
       #
-      # Patched in:
-      # - plugin :formatters (formatted attributes have no code)
-      #
       # @param source_variable [String] Name of the source variable in the code
       #
       # @return [String, nil] Code, or nil when the value is read with #value
       #
       def value_code(source_variable)
+        return if @formatter
+
         code =
           case @value_block
           when AttributeValueResolvers::Keyword,
@@ -237,6 +234,7 @@ class Serega
         @serializer = normalizer.serializer
         @preloads = normalizer.preloads
         @batch_loaders = normalizer.batch_loaders
+        @formatter = normalizer.formatter
         conditions = normalizer.conditions
         @conditions = conditions && SeregaConditions.new(self, conditions)
       end

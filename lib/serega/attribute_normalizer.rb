@@ -144,6 +144,19 @@ class Serega
         end
       end
 
+      #
+      # Formatter of the :format option. A Symbol option is the name of a
+      # formatter defined with `Serega.formatter`.
+      #
+      # @return [SeregaFormatter, nil] Formatter, or nil without the :format option
+      #
+      def formatter
+        format = init_opts[:format]
+        return unless format
+
+        format.is_a?(Symbol) ? self.class.serializer_class.formatters.fetch(format) : SeregaFormatter.new(format)
+      end
+
       private
 
       def prepare_name
