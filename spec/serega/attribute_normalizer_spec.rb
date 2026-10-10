@@ -392,6 +392,78 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
+  describe "#inline_batch_loader" do
+    subject(:loader) { normalizer.new(name: :likes_count, opts: opts).inline_batch_loader }
+
+    let(:likes) { ->(users) { users.to_h { |user| [user.id, 10] } } }
+
+    context "with a callable :batch option" do
+      let(:opts) { {batch: likes} }
+
+      it "returns a batch loader named after the attribute" do
+        expect(loader).to be_a(serializer_class::SeregaBatchLoader).and have_attributes(name: :likes_count, block: likes)
+      end
+    end
+
+    context "with a callable :use" do
+      let(:opts) { {batch: {use: likes}} }
+
+      it "returns a batch loader named after the attribute" do
+        expect(loader).to have_attributes(name: :likes_count, block: likes)
+      end
+    end
+
+    context "with a named batch loader" do
+      let(:opts) { {batch: :likes} }
+
+      it "returns nil" do
+        expect(loader).to be_nil
+      end
+    end
+
+    context "without the :batch option" do
+      let(:opts) { {} }
+
+      it "returns nil" do
+        expect(loader).to be_nil
+      end
+    end
+  end
+
+  describe "#value_block with the :batch option" do
+    subject(:resolver) { normalizer.new(name: :likes_count, opts: {batch: batch}).value_block }
+
+    before { serializer_class.config.batch_id_option = :uuid }
+
+    context "with true" do
+      let(:batch) { true }
+
+      it "reads the batch of the loader named after the attribute by the default id" do
+        expect(resolver).to have_attributes(class: Serega::AttributeValueResolvers::Batch)
+        expect(resolver.instance_variable_get(:@loader_name)).to eq :likes_count
+        expect(resolver.instance_variable_get(:@id_method)).to eq :uuid
+      end
+    end
+
+    context "with a loader name and an id" do
+      let(:batch) { {use: "likes", id: :user_id} }
+
+      it "reads the batch of the loader by the id" do
+        expect(resolver.instance_variable_get(:@loader_name)).to eq :likes
+        expect(resolver.instance_variable_get(:@id_method)).to eq :user_id
+      end
+    end
+
+    context "with an id only" do
+      let(:batch) { {id: :user_id} }
+
+      it "reads the batch of the loader named after the attribute by the id" do
+        expect(resolver.instance_variable_get(:@loader_name)).to eq :likes_count
+        expect(resolver.instance_variable_get(:@id_method)).to eq :user_id
+      end
+    end
+  end
+
   describe "batch-all-attributes experiment" do
     it "registers no synthetic loaders — only explicit :batch attributes have any" do
       child = Class.new(Serega)

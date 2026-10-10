@@ -45,6 +45,10 @@ class Serega
       # @return [Array<Symbol>] Batch loader names
       attr_reader :batch_loaders
 
+      # Batch loader given directly as the :batch option
+      # @return [SeregaBatchLoader, nil] Batch loader of this attribute only
+      attr_reader :inline_batch_loader
+
       # Attribute :if, :unless, :if_value and :unless_value conditions
       # @return [SeregaConditions, nil] Conditions, or nil without conditions
       attr_reader :conditions
@@ -236,6 +240,7 @@ class Serega
         @serializer = normalizer.serializer
         @preloads = normalizer.preloads
         @batch_loaders = normalizer.batch_loaders
+        @inline_batch_loader = normalizer.inline_batch_loader
         @formatter = normalizer.formatter
         conditions = normalizer.conditions
         @conditions = conditions && SeregaConditions.new(self, conditions)
