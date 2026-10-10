@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
-  subject(:check) { described_class.call(serializer, opts) }
+  subject(:check) { described_class.call(serializer, name, opts) }
 
   let(:serializer) { Class.new(Serega) }
+  let(:name) { :test_loader }
   let(:opts) { {} }
 
   before do
@@ -18,6 +19,15 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
   it "allows :batch option to be true" do
     opts[:batch] = true
     expect { check }.not_to raise_error
+  end
+
+  context "when :batch is true and no loader is named after the attribute" do
+    let(:name) { :likes_count }
+
+    it "raises an error" do
+      opts[:batch] = true
+      expect { check }.to raise_error Serega::SeregaError, "Batch loader with name `:likes_count` is not defined"
+    end
   end
 
   it "allows :batch option to be a proc" do
@@ -59,6 +69,15 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
     it "allows sole :id option" do
       opts[:batch] = {id: :other_id}
       expect { check }.not_to raise_error
+    end
+
+    context "with sole :id option and no loader named after the attribute" do
+      let(:name) { :likes_count }
+
+      it "raises an error" do
+        opts[:batch] = {id: :other_id}
+        expect { check }.to raise_error Serega::SeregaError, "Batch loader with name `:likes_count` is not defined"
+      end
     end
 
     it "raises error when :use loader is not defined" do

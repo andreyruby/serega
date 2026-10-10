@@ -75,7 +75,7 @@ class Serega
           Attribute::CheckOptUnless.call(opts)
           Attribute::CheckOptUnlessValue.call(opts)
           Attribute::CheckOptValue.call(opts)
-          Attribute::CheckOptBatch.call(self.class.serializer_class, opts)
+          Attribute::CheckOptBatch.call(self.class.serializer_class, name, opts)
         end
 
         def check_block

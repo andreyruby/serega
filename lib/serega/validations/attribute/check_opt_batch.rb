@@ -14,40 +14,41 @@ class Serega
           #
           # Checks attribute :batch option
           #
+          # @param serializer_class [Class<Serega>] Serializer of the attribute
+          # @param name [Symbol, String] Attribute name
           # @param opts [Hash] Attribute options
           #
           # @raise [SeregaError] Attribute validation error
           #
           # @return [void]
           #
-          def call(serializer_class, opts)
+          def call(serializer_class, name, opts)
             return unless opts.key?(:batch)
 
-            check_opt_batch(opts, serializer_class)
+            check_opt_batch(opts, serializer_class, name)
             check_usage_with_other_params(opts)
           end
 
           private
 
-          def check_opt_batch(opts, serializer_class)
+          def check_opt_batch(opts, serializer_class, name)
             batch_opts = opts[:batch]
-            return if batch_opts == true
+            return check_loader_exists?(serializer_class, name) if batch_opts == true
             return if batch_opts.respond_to?(:call)
 
             if batch_opts.is_a?(Symbol) || batch_opts.is_a?(String)
               check_loader_exists?(serializer_class, batch_opts)
             else
               Utils::CheckOptIsHash.call(opts, :batch)
-              check_opt_batch_use(serializer_class, batch_opts)
+              check_opt_batch_use(serializer_class, name, batch_opts)
               check_opt_batch_id(batch_opts)
               check_opt_batch_extra_opts(batch_opts)
             end
           end
 
-          def check_opt_batch_use(serializer_class, batch_opts)
-            return unless batch_opts.key?(:use)
-
-            batch_loader_name = batch_opts[:use]
+          # A Hash without :use uses the loader named after the attribute
+          def check_opt_batch_use(serializer_class, name, batch_opts)
+            batch_loader_name = batch_opts.fetch(:use, name)
             return if batch_loader_name.respond_to?(:call)
 
             check_loader_exists?(serializer_class, batch_loader_name)
