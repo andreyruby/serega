@@ -290,7 +290,7 @@ UserSerializer.to_h([user]) # => [{username: "serega"}]
 ```
 
 Use `.to_data` / `#to_data` to get the same result as Ruby `Data` objects
-(immutable value objects, Ruby 3.2+). Nested serialized relations are also
+(immutable value objects). Nested serialized relations are also
 converted to `Data` objects.
 
 ```ruby

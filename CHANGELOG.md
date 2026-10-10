@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Raise the minimum supported Ruby version to 3.3. Ruby 3.2 has
+  reached its end of life.
 - **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
   under the root key. See "Plugin :root" in the README.
 - **BREAKING**: Moved the `:if`, `:unless`, `:if_value` and `:unless_value`
