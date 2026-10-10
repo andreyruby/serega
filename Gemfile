@@ -27,11 +27,7 @@ gem "allocation_stats", require: false
 gem "yard", require: false
 gem "mdl", "~> 0.13", require: false
 
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.1")
-  gem "debug", ">= 1.0"
-else
-  gem "pry-byebug", "~> 3.9"
-end
+gem "debug", ">= 1.0"
 
 gem "activerecord", "~> 8.0"
 gem "sqlite3", platforms: [:ruby]
