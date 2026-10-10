@@ -29,6 +29,14 @@ RSpec.describe Serega do
       expect(serializer.freeze).to be serializer
       expect(serializer).to be_frozen
     end
+
+    context "when the serializer is frozen" do
+      let(:serializer) { Class.new(described_class) { attribute :name }.freeze }
+
+      it "returns the serializer" do
+        expect(serializer.freeze).to be serializer
+      end
+    end
   end
 
   context "when the serializer is not frozen" do

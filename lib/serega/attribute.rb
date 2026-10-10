@@ -99,13 +99,15 @@ class Serega
         !@serializer.nil?
       end
 
-      # Shows specified serializer class
+      # Shows specified serializer class. A frozen attribute resolves its
+      # String or Proc serializer on each call.
       # @return [Serega, nil] Attribute serializer if exists
       def serializer
         serializer = @serializer
         return serializer if (serializer.is_a?(Class) && (serializer < Serega)) || !serializer
 
-        @serializer = serializer.is_a?(String) ? Object.const_get(serializer, false) : serializer.call
+        serializer = serializer.is_a?(String) ? Object.const_get(serializer, false) : serializer.call
+        frozen? ? serializer : (@serializer = serializer)
       end
 
       #

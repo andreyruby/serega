@@ -25,6 +25,7 @@ require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
+require_relative "serega/utils/ractor_local"
 require_relative "serega/utils/serialized_attribute_error"
 require_relative "serega/utils/symbol_keys"
 require_relative "serega/utils/to_hash"
@@ -77,6 +78,7 @@ require_relative "serega/plan"
 require_relative "serega/result_code"
 require_relative "serega/result_builder"
 require_relative "serega/plan_cache"
+require_relative "serega/shareable"
 require_relative "serega/plugins"
 
 class Serega
@@ -201,6 +203,10 @@ class Serega
     # @private
     def plan_cache
       @plan_cache
+    # :nocov:
+    rescue Ractor::IsolationError
+      raise SeregaError, "#{self} is not frozen. Call `freeze` at the end of its definition"
+      # :nocov:
     end
 
     #
@@ -494,16 +500,40 @@ class Serega
 
     alias_method :to_h, :call
 
-    #
-    # Freezes the serializer definitions and config. A serializer serializes
-    # only after it is frozen. Call `freeze` at the end of its definition.
-    #
-    # @return [Class<Serega>] the frozen serializer
-    #
-    def freeze
-      SeregaUtils::EnumDeepFreeze.call(config.opts)
-      super
+    # :nocov:
+    if defined?(Ractor)
+      #
+      # Freezes the serializer definitions and config. A serializer serializes
+      # only after it is frozen. Call `freeze` at the end of its definition.
+      #
+      # Makes the definitions shareable, thus other Ractors serialize with the
+      # frozen serializer. A serializer with a definition that can not be
+      # shared serializes in the main Ractor only.
+      #
+      # @return [Class<Serega>] the frozen serializer
+      #
+      def freeze
+        return self if frozen?
+
+        SeregaUtils::EnumDeepFreeze.call(config.opts)
+        SeregaShareable.call(self)
+        super
+      end
+    else
+      #
+      # Freezes the serializer definitions and config. A serializer serializes
+      # only after it is frozen. Call `freeze` at the end of its definition.
+      #
+      # @return [Class<Serega>] the frozen serializer
+      #
+      def freeze
+        return self if frozen?
+
+        SeregaUtils::EnumDeepFreeze.call(config.opts)
+        super
+      end
     end
+    # :nocov:
 
     private
 
