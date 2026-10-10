@@ -28,7 +28,7 @@ Run          once per serialization      SeregaEngine::Run → SeregaSourceGroup
 `attribute`, `batch` and `plugin` calls on a serializer class make the definition:
 
 - `SeregaAttribute` (`lib/serega/attribute.rb`): name, options and a value resolver from `lib/serega/attribute_value_resolvers/`. `#value(object, context, batches:)` reads the value of one object.
-- `SeregaConditions` (`lib/serega/conditions.rb`): the `:if`, `:unless`, `:if_value` and `:unless_value` conditions of one attribute. `SeregaAttribute#conditions` is nil for an attribute without conditions. `#satisfy?(object, context)` checks `:if` and `:unless`, `#satisfy_value?(value, context)` checks `:if_value` and `:unless_value`. `SeregaConditions::SKIP` is the value of a skipped attribute.
+- `SeregaConditions` (`lib/serega/conditions.rb`): the `:if`, `:unless`, `:if_value` and `:unless_value` conditions of one attribute. `SeregaAttribute#conditions` is nil for an attribute without conditions. `#satisfy?(object, context)` checks `:if` and `:unless`, `#satisfy_value?(value, context)` checks `:if_value` and `:unless_value`.
 - `SeregaBatchLoader` (`lib/serega/batch_loader.rb`): a named block that loads values of many sources in one call.
 
 The first plan locks the class. Later definition calls raise.
@@ -40,7 +40,7 @@ The first plan locks the class. Later definition calls raise.
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
 - `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlanCache` keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them.
-- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`. A conditional attribute (`:if`, `:unless`, `:if_value`, `:unless_value`) gets `SeregaConditions::SKIP` when it fails a condition: a serialized Hash gets no key for it, a Struct or Data gets nil. Only conditional points get the code that checks conditions.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`. A conditional attribute (`:if`, `:unless`, `:if_value`, `:unless_value`) gets `SeregaEngine::SKIP` when it fails a condition: a serialized Hash gets no key for it, a Struct or Data gets nil. Only conditional points get the code that checks conditions.
 - `SeregaAttributeValues` (`lib/serega/attribute_values.rb`): one method per attribute read with plain Ruby code (`SeregaAttribute#value_code`): a method call, a delegation, a `:const` and a `:default`. For example `def full_name(source) = source.full_name`, `def city(source) = source.profile&.city`, `def code(source) = CONSTANTS[:code]` and `def email(source) = (value = source.email).nil? ? DEFAULTS[:email] : value`. `CONSTANTS` and `DEFAULTS` hold the values by attribute name. `SeregaAttribute` defines it when the attribute is defined, with the file and line of the attribute. The class inherits from `BasicObject`, thus attribute names do not clash with methods of `Object`. An attribute named like a `BasicObject` method (`initialize`, `__send__`, ...) gets no method and is read with `SeregaAttribute#value`.
 
 ### 3. Run
@@ -63,7 +63,7 @@ UserSerializer.to_h(object, opts)
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ root_group = root_source_group(plan, object, many)
          │  ├─ sources = []
-         │  ├─ pull = SeregaUtils::Pulls.append(sources, object, many)
+         │  ├─ pull = Pulls.append(sources, object, many)
          │  │    appends the root source(s) to `sources`, and returns the pull (see below)
          │  └─ new_source_group(plan, sources, [pull])
          │
@@ -74,13 +74,13 @@ UserSerializer.to_h(object, opts)
          │        └─ for each relation point
          │           ├─ batches_for(point)                         once per group
          │           ├─ relation_sources = read_relation_sources(point, batches)   e.g. user.posts of each user
-         │           ├─ child_sources, pulls = SeregaUtils::Pulls.collect(relation_sources, point.many)
+         │           ├─ child_sources, pulls = SeregaEngine::Pulls.collect(relation_sources, point.many)
          │           └─ child_group = run.new_source_group(point.child_plan, child_sources, pulls)
          │
          ├─ build(source_groups)                                 from the last group up
          │  └─ source_group.build
          │     ├─ batches = batches_for(point)                     once per group
-         │     ├─ relations = SeregaUtils::Pulls.take!(child_group.serialized, child_group.pulls)   per relation point
+         │     ├─ relations = SeregaEngine::Pulls.take!(child_group.serialized, child_group.pulls)   per relation point
          │     ├─ result_builder = plan.result_builder(mode)       kept by the plan, one per mode
          │     │  └─ first build of the plan in this mode only:
          │     │     └─ SeregaResultBuilder.new(mode, points)
@@ -99,14 +99,14 @@ UserSerializer.to_h(object, opts)
 
 ### Pulls
 
-`SeregaUtils::Pulls` (`lib/serega/utils/pulls.rb`) handles the pulls. `.collect(relation_sources, many)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append(sources, relation_source, many)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
+`SeregaEngine::Pulls` (`lib/serega/engine/pulls.rb`) handles the pulls. `.collect(relation_sources, many)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append(sources, relation_source, many)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
 
 | relation source | pull | relation value |
 |---|---|---|
-| one source | `SeregaUtils::Pulls::SINGLE_SOURCE` | the next serialized object |
+| one source | `SeregaEngine::Pulls::SINGLE_SOURCE` | the next serialized object |
 | collection of N sources | `N` | Array of the next N serialized objects |
 | `nil` | `nil` | `nil` |
-| skipped by its `:if` or `:unless` condition | `SeregaConditions::SKIP` | no key, or nil |
+| skipped by its `:if` or `:unless` condition | `SeregaEngine::SKIP` | no key, or nil |
 
 A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `Run#call` uses `.append` for the root. The serialized objects of a group follow the order of its sources, thus `.take!(serialized, pulls)` takes them from the front, one pull after another, and empties them: the parent group takes them once, during its build. The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
 

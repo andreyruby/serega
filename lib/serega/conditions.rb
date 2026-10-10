@@ -6,10 +6,6 @@ class Serega
   #
   # @private
   class SeregaConditions
-    # Value of an attribute skipped by its conditions. It is also the pull of
-    # a skipped relation.
-    SKIP = Object.new.freeze
-
     #
     # @param attribute [SeregaAttribute] Attribute with the conditions
     # @param conditions [Hash] Callable condition of each given option
