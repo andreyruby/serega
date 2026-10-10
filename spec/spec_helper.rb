@@ -4,8 +4,9 @@ Warning[:deprecated] = true
 Warning[:experimental] = true
 Warning[:performance] = true
 
-# CI checks coverage on the latest Ruby only (COVERAGE=true in the workflow)
-coverage = ENV.fetch("COVERAGE") { ENV["CI"] ? "false" : "true" } == "true"
+# CI checks coverage on the latest Ruby only (COVERAGE=true in the workflow).
+# Ruby 3.4 stops counting coverage after code runs in other Ractors.
+coverage = ENV.fetch("COVERAGE") { ENV["CI"] ? "false" : "true" } == "true" && RUBY_VERSION >= "4.0"
 
 if coverage && RUBY_ENGINE == "ruby" && (ARGV.none? || ARGV == ["spec"] || ARGV == ["spec/"])
   begin
