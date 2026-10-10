@@ -100,6 +100,17 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
+  it "delegates a method with a name that def does not accept" do
+    record_class = Class.new do
+      define_method(:"full-name") { |separator| "Kate#{separator}Nash" }
+    end
+
+    serializer.attribute :full_name, value: proc { |record| record.public_send(:"full-name", " ") }
+    add_presenter(serializer)
+
+    2.times { expect(serializer.to_h(record_class.new)).to eq(full_name: "Kate Nash") }
+  end
+
   it "calls private Kernel methods on the presenter" do
     serializer.attribute :formatted
     serializer.presenter do

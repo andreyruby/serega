@@ -40,6 +40,20 @@ class Serega
     private_constant :PLAIN_METHOD_NAME
 
     #
+    # Delegator to the method of the wrapped object with the name it is
+    # called by. Delegators with other names are its aliases.
+    #
+    # @private
+    module CalleeDelegator
+      #
+      # Calls the method of the wrapped object with the name of the alias
+      #
+      def __serega_delegate__(...)
+        __getobj__.public_send(__callee__, ...)
+      end
+    end
+
+    #
     # Includes into each presenter class its own `Delegators` module.
     # Delegators to the methods of the wrapped object are defined there after the
     # first #method_missing hit. Presenter methods override them and can call
@@ -52,6 +66,7 @@ class Serega
     def self.inherited(subclass)
       super
       delegators = Module.new
+      delegators.include(CalleeDelegator)
       subclass.const_set(:Delegators, delegators)
       subclass.include(delegators)
     end
@@ -74,7 +89,7 @@ class Serega
           end
         RUBY
       else
-        delegators.define_method(name) { |*args, **kwargs, &block| __getobj__.public_send(name, *args, **kwargs, &block) }
+        delegators.alias_method(name, :__serega_delegate__)
       end
     end
 
