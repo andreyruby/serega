@@ -190,28 +190,27 @@ class Serega
       private
 
       # Defines the SeregaAttributeValues method that reads the value of a
-      # source directly. The method has the file and line of the attribute.
-      # A name of a BasicObject method, for example `initialize`, gets no
-      # method.
+      # source directly, for example `read_full_name`. The method has the
+      # file and line of the attribute.
       def define_value_method(serializer_class)
         code = value_code("source")
         return unless code
-        return if ::BasicObject.method_defined?(name) || ::BasicObject.private_method_defined?(name)
 
         values_class = serializer_class::SeregaAttributeValues
         values_class::CONSTANTS[name] = @value_block.call if @value_block.is_a?(AttributeValueResolvers::Const)
         values_class::DEFAULTS[name] = @default unless @default.nil?
 
         file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
+        method_name = :"read_#{name}"
         method_code =
-          if SeregaResultCode::PLAIN_METHOD_NAME.match?(name)
-            "def #{name}(source) = #{code}"
+          if SeregaResultCode::PLAIN_METHOD_NAME.match?(method_name)
+            "def #{method_name}(source) = #{code}"
           else
-            "define_method(#{name.inspect}) { |source| #{code} }"
+            "define_method(#{method_name.inspect}) { |source| #{code} }"
           end
 
         values_class.class_eval(method_code, file, line.to_i)
-        name
+        method_name
       end
 
       def set_normalized_vars(normalizer)

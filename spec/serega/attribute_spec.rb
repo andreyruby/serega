@@ -191,18 +191,18 @@ RSpec.describe Serega::SeregaAttribute do
     it "defines a method that reads the value of a source" do
       attribute
 
-      expect(serializer_class::SeregaAttributeValues.new.full_name(user)).to eq "Ann"
+      expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Ann"
     end
 
     it "defines the method with the file and line of the attribute" do
       attribute
 
-      expect(serializer_class::SeregaAttributeValues.instance_method(:full_name).source_location)
+      expect(serializer_class::SeregaAttributeValues.instance_method(:read_full_name).source_location)
         .to eq ["app/serializers/user_serializer.rb", 3]
     end
 
     it "returns the method name" do
-      expect(attribute.value_method).to eq :full_name
+      expect(attribute.value_method).to eq :read_full_name
     end
 
     context "with a name that is not a method name" do
@@ -212,7 +212,7 @@ RSpec.describe Serega::SeregaAttribute do
       it "defines a method with this name" do
         attribute
 
-        expect(serializer_class::SeregaAttributeValues.new.__send__(:"first-name", user)).to eq "Bob"
+        expect(serializer_class::SeregaAttributeValues.new.__send__(:"read_first-name", user)).to eq "Bob"
       end
     end
 
@@ -222,18 +222,19 @@ RSpec.describe Serega::SeregaAttribute do
       it "defines the method with the attribute name as its file" do
         attribute
 
-        expect(serializer_class::SeregaAttributeValues.instance_method(:full_name).source_location)
+        expect(serializer_class::SeregaAttributeValues.instance_method(:read_full_name).source_location)
           .to eq ["(attribute full_name)", 1]
       end
     end
 
-    context "with a name of a BasicObject method" do
+    context "with a name of an Object method" do
       let(:name) { :initialize }
       let(:opts) { {const: "Ann"} }
 
-      it "defines no method" do
-        expect(attribute.value_method).to be_nil
-        expect { serializer_class::SeregaAttributeValues.new }.not_to raise_error
+      it "defines a method with the read_ prefix" do
+        attribute
+
+        expect(serializer_class::SeregaAttributeValues.new.read_initialize(user)).to eq "Ann"
       end
     end
 
@@ -244,7 +245,7 @@ RSpec.describe Serega::SeregaAttribute do
       it "defines a method that returns the default for nil" do
         attribute
 
-        expect(serializer_class::SeregaAttributeValues.new.full_name(user)).to eq "Nobody"
+        expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Nobody"
       end
     end
 
@@ -254,7 +255,7 @@ RSpec.describe Serega::SeregaAttribute do
       it "defines a method that returns the constant" do
         attribute
 
-        expect(serializer_class::SeregaAttributeValues.new.full_name(user)).to eq "Ann"
+        expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Ann"
       end
     end
 
@@ -266,8 +267,8 @@ RSpec.describe Serega::SeregaAttribute do
         attribute
         subclass.attribute :full_name, const: "Bob"
 
-        expect(serializer_class::SeregaAttributeValues.new.full_name(user)).to eq "Ann"
-        expect(subclass::SeregaAttributeValues.new.full_name(user)).to eq "Bob"
+        expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Ann"
+        expect(subclass::SeregaAttributeValues.new.read_full_name(user)).to eq "Bob"
       end
     end
 
