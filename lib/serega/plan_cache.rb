@@ -102,5 +102,42 @@ class Serega
 
     include InstanceMethods
     extend SeregaHelpers::SerializerClassHelper
+
+    #
+    # Shareable plans cache of a frozen serializer, keeps the plans of each
+    # Ractor apart
+    #
+    # @private
+    class PerRactor
+      #
+      # @param serializer_class [Class<Serega>] Serializer of the plans
+      # @param error [String, nil] Why the serializer can not serialize in
+      #   other Ractors
+      #
+      def initialize(serializer_class, error)
+        @serializer_class = serializer_class
+        @error = error
+        @key = SeregaUtils::RactorLocal.key(serializer_class, :plan_cache)
+        freeze
+      end
+
+      #
+      # Returns serialization plan from the plans cache of the current Ractor
+      #
+      # @raise [SeregaError] when the serializer can not serialize in the
+      #   current Ractor
+      #
+      # @see SeregaPlanCache::InstanceMethods#fetch
+      #
+      def fetch(only, with, except, check_initiate_params: false)
+        error = @error
+        # :nocov:
+        raise SeregaError, error if error && !Ractor.current.equal?(Ractor.main)
+        # :nocov:
+
+        plan_cache = SeregaUtils::RactorLocal.fetch(@key) { @serializer_class::SeregaPlanCache.new }
+        plan_cache.fetch(only, with, except, check_initiate_params: check_initiate_params)
+      end
+    end
   end
 end

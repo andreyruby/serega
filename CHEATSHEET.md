@@ -44,7 +44,8 @@ UserSerializer.to_h(user)
 ```
 
 Each `attribute :name` calls `object.name` and adds it to the hash. End each
-serializer with `freeze`: a serializer serializes only after it is frozen.
+serializer with `freeze`: a serializer serializes only after it is frozen, in
+any Ractor.
 
 ---
 

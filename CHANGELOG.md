@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Frozen serializers serialize in other Ractors. See "Ractors" in the README.
 - **BREAKING**: Raise the minimum supported Ruby version to 3.3. Ruby 3.2 has
   reached its end of life.
 - **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
