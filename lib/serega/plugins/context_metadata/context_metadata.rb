@@ -175,13 +175,13 @@ class Serega
         end
 
         def deep_merge_context_metadata(hash, metadata)
-          hash.merge!(metadata) do |_key, this_val, other_val|
-            if this_val.is_a?(Hash) && other_val.is_a?(Hash)
-              deep_merge_context_metadata(this_val, other_val)
-            else
-              other_val
-            end
-          end
+          hash.merge!(metadata) { |_key, this_val, other_val| merge_context_metadata_values(this_val, other_val) }
+        end
+
+        def merge_context_metadata_values(this_val, other_val)
+          return other_val unless this_val.is_a?(Hash) && other_val.is_a?(Hash)
+
+          this_val.merge(other_val) { |_key, this_nested, other_nested| merge_context_metadata_values(this_nested, other_nested) }
         end
       end
     end

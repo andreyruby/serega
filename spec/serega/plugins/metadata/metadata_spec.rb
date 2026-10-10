@@ -141,6 +141,21 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
       end
     end
 
+    context "when a meta attribute returns a Hash" do
+      let(:paging) { {page: 2} }
+
+      before do
+        paging_value = paging
+        user_serializer.meta_attribute(:meta, :paging) { paging_value }
+        user_serializer.meta_attribute(:meta, :paging, :per_page) { 3 }
+      end
+
+      it "merges other metadata without changing the returned Hash" do
+        expect(response).to eq(data: {first_name: "FIRST_NAME"}, meta: {paging: {page: 2, per_page: 3}})
+        expect(paging).to eq(page: 2)
+      end
+    end
+
     describe "when metadata block raises error" do
       let(:context) { {page: 2, per_page: 3} }
 

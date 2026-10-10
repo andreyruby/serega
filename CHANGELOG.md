@@ -34,6 +34,9 @@
   the first serialization.
 - Fix `NoMethodError` raised by the plan cache when serializing with the
   `:check_initiate_params` option.
+- Fix `Serega.new` changing the given modifiers Hash with String keys.
+- Fix plugins `:metadata` and `:context_metadata` changing Hashes returned by
+  meta attributes when merging other metadata into them.
 - Fix the plan cache returning a plan of other modifiers that list the same
   attribute names in different nesting.
 

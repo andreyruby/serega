@@ -468,7 +468,9 @@ UserSerializer.new.to_h(user, context: {current_user: user}) # same
 # => {:email=>"email@example.com"}
 ```
 
-Without the `:context` option, the context is a frozen empty Hash.
+Serega passes the given context as it is and does not change it. Without the
+`:context` option, the context is a frozen empty Hash; pass a Hash to write to
+it.
 
 ### Conditional Attributes
 

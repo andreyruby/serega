@@ -26,6 +26,7 @@ require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
 require_relative "serega/utils/serialized_attribute_error"
+require_relative "serega/utils/symbol_keys"
 require_relative "serega/utils/symbol_name"
 require_relative "serega/utils/to_hash"
 require_relative "serega/attribute_value_resolvers/batch"
@@ -396,7 +397,7 @@ class Serega
     # @return [Hash] Serialization result
     #
     def call(object, opts = nil)
-      opts = opts&.transform_keys(&:to_sym)
+      opts &&= SeregaUtils::SymbolKeys.call(opts)
       modifiers_opts = init_modifier_opts(opts)
       serialize_opts = init_serialize_opts(opts)
       new(modifiers_opts).to_h(object, serialize_opts)
@@ -417,7 +418,7 @@ class Serega
     # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
     #
     def to_data(object, opts = nil)
-      opts = opts&.transform_keys(&:to_sym)
+      opts &&= SeregaUtils::SymbolKeys.call(opts)
       modifiers_opts = init_modifier_opts(opts)
       serialize_opts = init_serialize_opts(opts)
       new(modifiers_opts).to_data(object, serialize_opts)
@@ -438,7 +439,7 @@ class Serega
     # @return [Struct, Array<Struct>, nil] Serialization result as Struct object(s)
     #
     def to_struct(object, opts = nil)
-      opts = opts&.transform_keys(&:to_sym)
+      opts &&= SeregaUtils::SymbolKeys.call(opts)
       modifiers_opts = init_modifier_opts(opts)
       serialize_opts = init_serialize_opts(opts)
       new(modifiers_opts).to_struct(object, serialize_opts)
@@ -590,7 +591,7 @@ class Serega
     # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
     #
     def initialize(opts = nil)
-      opts = (opts.nil? || opts.empty?) ? FROZEN_EMPTY_HASH : opts.transform_keys!(&:to_sym)
+      opts = (opts.nil? || opts.empty?) ? FROZEN_EMPTY_HASH : SeregaUtils::SymbolKeys.call(opts)
       check_initiate_params = !opts.empty? && opts.fetch(:check_initiate_params) { config.check_initiate_params }
       check_option_names(opts) if check_initiate_params
 
@@ -673,7 +674,7 @@ class Serega
     def normalize_serialization_opts(opts)
       return FROZEN_EMPTY_HASH if opts.nil? || opts.empty?
 
-      opts = opts.transform_keys(&:to_sym)
+      opts = SeregaUtils::SymbolKeys.call(opts)
       self.class::CheckSerializeParams.new(opts).validate
       opts
     end
