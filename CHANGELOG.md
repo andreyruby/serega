@@ -41,6 +41,9 @@
   "Configuration" in the README.
 - Cache the serialization plan built without `:only`/`:except`/`:with`
   modifiers.
+- **BREAKING**: `batch: true` and `batch: {id: ...}` raise when no batch loader
+  named after the attribute is defined before it, like `batch: :loader_name`.
+  See "Batch Loading" in the README.
 - Fix defining a child serializer of a serializer with an attribute that uses a
   named batch loader.
 - Fix keyword arguments of methods called on presenters.
