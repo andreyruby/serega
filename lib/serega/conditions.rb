@@ -2,7 +2,13 @@
 
 class Serega
   #
-  # The :if, :unless, :if_value and :unless_value conditions of one attribute
+  # The :if, :unless, :if_value and :unless_value conditions of one attribute.
+  # Each object defines `#satisfy?(object, context)`, which checks :if and
+  # :unless, and `#satisfy_value?(value, context)`, which checks :if_value
+  # and :unless_value. Each method is one line of code at the file and line
+  # of the attribute, and calls the conditions directly, for example:
+  #
+  #   def satisfy?(object, context) = (begin; object.active; rescue => error; ...; end)
   #
   # @private
   class SeregaConditions
@@ -13,54 +19,46 @@ class Serega
     def initialize(attribute, conditions)
       @attribute = attribute
       @conditions = conditions
-      @signatures = conditions.transform_values do |condition|
-        SeregaUtils::MethodSignature.call(condition, pos_limit: 2, keyword_args: [:ctx])
-      end
-    end
-
-    #
-    # @param object [Object] Object to serialize
-    # @param context [Hash] Serialization context
-    #
-    # @return [Boolean] Whether the object passes the :if and :unless conditions
-    #
-    def satisfy?(object, context)
-      passes?(:if, :unless, object, context)
-    end
-
-    #
-    # @param value [Object] Attribute value
-    # @param context [Hash] Serialization context
-    #
-    # @return [Boolean] Whether the value passes the :if_value and :unless_value conditions
-    #
-    def satisfy_value?(value, context)
-      passes?(:if_value, :unless_value, value, context)
+      location = attribute.location
+      file, _, line = location ? location.rpartition(":") : ["(attribute #{attribute.name})", nil, "1"]
+      satisfy_code = "def satisfy?(object, context) = #{check_code(:if, :unless)}"
+      satisfy_value_code = "def satisfy_value?(object, context) = #{check_code(:if_value, :unless_value)}"
+      singleton_class.class_eval(satisfy_code, file, line.to_i)
+      singleton_class.class_eval(satisfy_value_code, file, line.to_i)
     end
 
     private
 
-    def passes?(if_name, unless_name, object, context)
-      if_condition = @conditions[if_name]
-      unless_condition = @conditions[unless_name]
-      return true if if_condition.nil? && unless_condition.nil?
-
-      if_result = if_condition ? call_condition(if_name, if_condition, object, context) : true
-      unless_result = unless_condition ? !call_condition(unless_name, unless_condition, object, context) : true
-      if_result && unless_result
+    # Code that is true when the object passes the :if and does not match the
+    # :unless condition
+    def check_code(if_name, unless_name)
+      checks = []
+      checks << rescued_call_code(if_name) if @conditions.key?(if_name)
+      checks << "!#{rescued_call_code(unless_name)}" if @conditions.key?(unless_name)
+      checks.empty? ? "true" : checks.join(" && ")
     end
 
-    def call_condition(name, condition, object, context)
-      case @signatures[name]
-      when "1" then condition.call(object)
-      when "2" then condition.call(object, context)
-      when "1_ctx" then condition.call(object, ctx: context)
-      when "2_ctx" then condition.call(object, context, ctx: context)
-      else # "0"
-        condition.call
+    # Code that calls the condition. An error raised there gets the condition
+    # name.
+    def rescued_call_code(name)
+      "(begin; #{call_code(name)}; rescue => error; " \
+        "Serega::SeregaUtils::SerializedAttributeError.condition(error, @attribute, #{name.inspect}); end)"
+    end
+
+    # Code that calls the condition with the parameters of its signature
+    def call_code(name)
+      condition = @conditions[name]
+      keyword_code = condition.code("object") if condition.is_a?(AttributeValueResolvers::Keyword)
+      return keyword_code if keyword_code
+
+      callable = "@conditions[#{name.inspect}]"
+      case SeregaUtils::MethodSignature.call(condition, pos_limit: 2, keyword_args: [:ctx])
+      when "1" then "#{callable}.call(object)"
+      when "2" then "#{callable}.call(object, context)"
+      when "1_ctx" then "#{callable}.call(object, ctx: context)"
+      when "2_ctx" then "#{callable}.call(object, context, ctx: context)"
+      else "#{callable}.call" # "0"
       end
-    rescue => error
-      SeregaUtils::SerializedAttributeError.condition(error, @attribute, name)
     end
   end
 end

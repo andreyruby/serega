@@ -39,6 +39,15 @@ RSpec.describe Serega::SeregaConditions do
       end
     end
 
+    context "with a Symbol condition that is not a plain method name" do
+      let(:attribute_opts) { {if: :"active-user"} }
+      let(:user) { double("active-user": true) }
+
+      it "returns the result of the method" do
+        expect(satisfied).to be true
+      end
+    end
+
     context "with an :unless condition" do
       let(:attribute_opts) { {unless: :admin} }
 
@@ -123,6 +132,24 @@ RSpec.describe Serega::SeregaConditions do
         it "calls the condition with the object, the context and the context keyword" do
           expect(satisfied).to be true
         end
+      end
+    end
+  end
+
+  describe "method location" do
+    let(:attribute_opts) { {if: :active} }
+
+    it "defines the checks at the file and line of the attribute" do
+      file, _, line = serializer.attributes[:email].location.rpartition(":")
+
+      expect(conditions.method(:satisfy?).source_location).to eq [file, line.to_i]
+    end
+
+    context "when the attribute location is unknown" do
+      let(:conditions) { serializer::SeregaAttribute.new(name: :email, opts: attribute_opts).conditions }
+
+      it "defines the checks in a file named after the attribute" do
+        expect(conditions.method(:satisfy?).source_location).to eq ["(attribute email)", 1]
       end
     end
   end

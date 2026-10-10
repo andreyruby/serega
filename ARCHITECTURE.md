@@ -28,7 +28,7 @@ Run          once per serialization      SeregaEngine::Run → SeregaSourceGroup
 `attribute`, `batch` and `plugin` calls on a serializer class make the definition:
 
 - `SeregaAttribute` (`lib/serega/attribute.rb`): name, options and a value resolver from `lib/serega/attribute_value_resolvers/`. `#value(object, context, batches:)` reads the value of one object.
-- `SeregaConditions` (`lib/serega/conditions.rb`): the `:if`, `:unless`, `:if_value` and `:unless_value` conditions of one attribute. `SeregaAttribute#conditions` is nil for an attribute without conditions. `#satisfy?(object, context)` checks `:if` and `:unless`, `#satisfy_value?(value, context)` checks `:if_value` and `:unless_value`.
+- `SeregaConditions` (`lib/serega/conditions.rb`): the `:if`, `:unless`, `:if_value` and `:unless_value` conditions of one attribute. `SeregaAttribute#conditions` is nil for an attribute without conditions. `#satisfy?(object, context)` checks `:if` and `:unless`, `#satisfy_value?(value, context)` checks `:if_value` and `:unless_value`. Both methods are generated when the attribute is defined: one line of code at the file and line of the attribute, which calls the conditions directly, for example `def satisfy?(object, context) = (begin; object.active; rescue => error; ...; end)`. Thus the backtrace of a failing condition points to the attribute.
 - `SeregaBatchLoader` (`lib/serega/batch_loader.rb`): a named block that loads values of many sources in one call.
 
 The first plan locks the class. Later definition calls raise.
