@@ -634,7 +634,8 @@ attribute :followers_count,
 
 #### Using Multiple Loaders in Same Attribute
 
-Custom loaders can be provided directly using the `:use` option with any callable object:
+The `:use` option can list several named loaders. The `:value` option then
+builds the value from their batches:
 
 ```ruby
 class UserSerializer < Serega
