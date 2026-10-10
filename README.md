@@ -468,6 +468,8 @@ UserSerializer.new.to_h(user, context: {current_user: user}) # same
 # => {:email=>"email@example.com"}
 ```
 
+Without the `:context` option, the context is a frozen empty Hash.
+
 ### Conditional Attributes
 
 Attribute options `:if`, `:unless`, `:if_value` and `:unless_value`

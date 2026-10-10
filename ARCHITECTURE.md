@@ -57,7 +57,7 @@ UserSerializer.to_h(object, opts)
 │
 └─ serializer.to_h(object, serialization options)       serialize_to(:hash, object, opts)
    ├─ normalize_serialization_opts                        validates the options, or returns the frozen empty Hash
-   ├─ context = opts[:context], or an empty Hash
+   ├─ context = opts[:context], or the frozen empty Hash
    ├─ prepare_objects                                     calls the prepare_initial_objects handler
    ├─ many = opts[:many], or detected from the object
    └─ serialize(object, opts, context:, many:, mode:)     patched by :root, :metadata, :context_metadata

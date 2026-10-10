@@ -664,7 +664,7 @@ class Serega
 
     def serialize_to(mode, object, opts)
       opts = normalize_serialization_opts(opts)
-      context = opts[:context] || {}
+      context = opts[:context] || FROZEN_EMPTY_HASH
       object = prepare_objects(object, context)
       many = opts.fetch(:many) { SeregaUtils::CollectionDetector.call(object) }
       serialize(object, opts, context: context, many: many, mode: mode)

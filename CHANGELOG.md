@@ -16,6 +16,8 @@
   that can not be `Struct` or `Data` members. See "Serializing" in the README.
 - **BREAKING**: Serializers are locked once they serialize something. Changing
   a locked serializer raises an error. See "Define serializers" in the README.
+- **BREAKING**: The context is a frozen empty Hash when the `:context` option
+  is not given. See "Using Context" in the README.
 - Faster serialization.
 - Serialization errors show where the failing attribute is defined. See
   "Defining a nested serializer with a block" in the README.
