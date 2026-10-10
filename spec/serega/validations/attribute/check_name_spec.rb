@@ -5,6 +5,10 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckName do
     %(Invalid attribute name = #{name.inspect}. Allowed characters: "a-z", "A-Z", "0-9", "_", "-", "~")
   end
 
+  it "shows a Symbol name as a String in the error" do
+    expect { described_class.call(:"foo bar") }.to raise_error Serega::SeregaError, error("foo bar")
+  end
+
   it "prohibits empty name" do
     name = ""
     expect { described_class.call(name) }.to raise_error Serega::SeregaError, error(name)
