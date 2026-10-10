@@ -25,6 +25,7 @@ require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
+require_relative "serega/utils/ractor_local"
 require_relative "serega/utils/serialized_attribute_error"
 require_relative "serega/utils/symbol_keys"
 require_relative "serega/utils/to_hash"
@@ -77,6 +78,7 @@ require_relative "serega/plan"
 require_relative "serega/result_code"
 require_relative "serega/result_builder"
 require_relative "serega/plan_cache"
+require_relative "serega/shareable"
 require_relative "serega/plugins"
 
 class Serega
@@ -201,6 +203,10 @@ class Serega
     # @private
     def plan_cache
       @plan_cache
+    # :nocov:
+    rescue Ractor::IsolationError
+      raise SeregaError, "#{self} can not serialize in a non-main Ractor until `#{self}.freeze` is called in the main Ractor"
+      # :nocov:
     end
 
     #
@@ -494,6 +500,36 @@ class Serega
 
     alias_method :to_h, :call
 
+    # :nocov:
+    if defined?(Ractor)
+      #
+      # Freezes the serializer and the serializers of its relations. Other
+      # Ractors can serialize with a frozen serializer.
+      #
+      # Builds the serialization plan without modifiers and makes the
+      # serializer definitions shareable between Ractors.
+      #
+      # @raise [SeregaError] when a definition can not be shared between Ractors
+      #
+      # @return [Class<Serega>] the frozen serializer
+      #
+      def freeze
+        SeregaShareable.call(self) unless frozen?
+        super
+      end
+    else
+      #
+      # Locks and freezes the serializer
+      #
+      # @return [Class<Serega>] the frozen serializer
+      #
+      def freeze
+        lock
+        super
+      end
+    end
+    # :nocov:
+
     #
     # Locks serializer definitions and config from changes.
     # Called when a serialization plan is built for the serializer.
@@ -511,6 +547,7 @@ class Serega
     private
 
     def check_unlocked
+      raise SeregaError, "#{self} can not be changed after it was frozen" if frozen?
       raise SeregaError, "#{self} can not be changed after it was used for serialization" if @locked
     end
 

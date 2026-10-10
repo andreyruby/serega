@@ -150,4 +150,28 @@ RSpec.describe Serega::SeregaPlanCache do
       expect(flat).to satisfy_attribute_names(address: {city: nil, zip: nil})
     end
   end
+
+  describe Serega::SeregaPlanCache::PerRactor, if: defined?(Ractor) do
+    subject(:plan_cache) { serializer.plan_cache }
+
+    let(:serializer) do
+      Class.new(Serega) do
+        attribute :name
+        attribute :email
+      end.freeze
+    end
+
+    it "returns the shared plan without modifiers" do
+      plan = plan_cache.fetch(nil, nil, nil)
+
+      expect(plan_cache.fetch(nil, nil, nil)).to be plan
+    end
+
+    it "builds the plan with modifiers once in a Ractor" do
+      plan = plan_cache.fetch(:name, nil, nil)
+
+      expect(plan.points.map(&:name)).to eq [:name]
+      expect(plan_cache.fetch(:name, nil, nil)).to be plan
+    end
+  end
 end

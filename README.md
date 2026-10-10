@@ -51,6 +51,7 @@ It has some great features:
    - [Custom preloading](#custom-preloading)
 - [Serializing Hash records](#serializing-hash-records)
 - [Presenter](#presenter)
+- [Ractors](#ractors)
 - [Plugins](#plugins)
    - [Plugin :activerecord_preloads](#plugin-activerecord_preloads)
    - [Plugin :root](#plugin-root)
@@ -1051,6 +1052,58 @@ reference to it. The serialization context is accessible via `__ctx__`.
 Objects are wrapped only when the serializer has presenter methods. A serializer
 without them costs nothing — its attribute values, batch loaders and value
 callables receive the raw objects.
+
+## Ractors
+
+Freeze a serializer to serialize with it in other Ractors. Call `freeze` in
+the main Ractor, after all serializers are defined:
+
+```ruby
+UserSerializer.freeze
+
+Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
+```
+
+`freeze` also freezes the serializers of the relations. It does not freeze
+subclasses. In a Rails application, freeze the serializers after the
+application code is eager loaded:
+
+```ruby
+# config/initializers/serega.rb
+Rails.application.config.after_initialize do
+  ApplicationSerializer.descendants.each(&:freeze)
+end
+```
+
+`freeze` makes the serializer definitions shareable between Ractors. Write a
+block given to `attribute`, `batch`, `formatter` or another definition in the
+serializer class, and refer only to shareable values in it. Other blocks raise
+`Serega::SeregaError` when the serializer is frozen:
+
+```ruby
+class UserSerializer < Serega
+  suffix = +"!"
+  attribute :greeting, value: proc { |user| user.name + suffix }
+end
+
+UserSerializer.freeze
+# => Serega::SeregaError: Attribute :greeting of UserSerializer can not be
+#    shared between Ractors (app/serializers/user_serializer.rb:3): cannot make
+#    a shareable Proc because it can refer unshareable object "!" from
+#    variable 'suffix'
+```
+
+A frozen serializer:
+
+- shares its serialization plan without modifiers between all Ractors;
+- builds the plans with `:only`, `:except` or `:with` once in each Ractor;
+- raises `Serega::SeregaError` on a change of its definitions.
+
+A serializer that is not frozen raises `Serega::SeregaError` when it serializes
+in a non-main Ractor.
+
+On a Ruby without Ractors, for example TruffleRuby, `freeze` only locks and
+freezes the serializer.
 
 ## Plugins
 

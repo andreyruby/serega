@@ -36,6 +36,20 @@ RSpec.describe Serega::SeregaResultBuilder do
     end
   end
 
+  context "when the serializer is frozen", if: defined?(Ractor) do
+    let(:described_class) { serializer.freeze::SeregaResultBuilder }
+
+    it "caches the Data and Struct classes of new names in the current Ractor" do
+      data_class = described_class.data_class_for(%i[x])
+      struct_class = described_class.struct_class_for(%i[x])
+
+      expect(data_class.members).to eq %i[x]
+      expect(described_class.data_class_for(%i[x])).to be data_class
+      expect(struct_class.members).to eq %i[x]
+      expect(described_class.struct_class_for(%i[x])).to be struct_class
+    end
+  end
+
   describe ".struct_class_for" do
     let(:described_class) { serializer::SeregaResultBuilder }
 

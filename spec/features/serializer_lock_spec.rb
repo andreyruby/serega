@@ -139,4 +139,13 @@ RSpec.describe Serega do
       end
     end
   end
+
+  context "when the serializer is frozen" do
+    let(:user_serializer) { Class.new(described_class) { attribute :name }.freeze }
+
+    it "raises a SeregaError on a change" do
+      expect { user_serializer.attribute :email }
+        .to raise_error Serega::SeregaError, "#{user_serializer} can not be changed after it was frozen"
+    end
+  end
 end
