@@ -97,4 +97,17 @@ RSpec.describe Serega::SeregaPlugins::DepthLimit do
       expect { posts_serializer.new(fields) }.not_to raise_error
     end
   end
+
+  context "when the config is deeply frozen", if: defined?(Ractor) do
+    let(:frozen_config) do
+      serializer_class = Class.new(Serega) do
+        plugin :depth_limit, limit: 3
+      end
+      Ractor.make_shareable(serializer_class.config)
+    end
+
+    it "returns the depth_limit config" do
+      expect(frozen_config.depth_limit).to be_a Serega::SeregaPlugins::DepthLimit::DepthLimitConfig
+    end
+  end
 end
