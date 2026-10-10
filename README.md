@@ -474,6 +474,9 @@ already-found value and context, checked after. The latter two cannot be
 used with the `:serializer` option, since a relationship has no "serialized
 value" of its own — use `:if`/`:unless` instead.
 
+`:unless` is checked only when `:if` passes, and `:unless_value` only when
+`:if_value` passes.
+
 `.to_h` omits skipped attributes. `.to_data` and `.to_struct` return `nil`
 for skipped attributes, so all objects serialized with the same fields have
 the same members.

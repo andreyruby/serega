@@ -19,6 +19,8 @@
   "Defining a nested serializer with a block" in the README.
 - Errors raised by conditional attribute options name the condition. See
   "Conditional Attributes" in the README.
+- Conditional attributes check `:unless` only when `:if` passes. See
+  "Conditional Attributes" in the README.
 - `config.max_cached_plans_per_serializer_count` is 20 by default. See
   "Configuration" in the README.
 - Cache the serialization plan built without `:only`/`:except`/`:with`
