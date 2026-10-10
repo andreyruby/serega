@@ -81,10 +81,32 @@ class Serega
       private
 
       def result_class
-        case mode
-        when :struct then self.class.struct_class_for(@points.map(&:name))
-        when :data then self.class.data_class_for(@points.map(&:name))
-        end
+        return if mode == :hash
+
+        initialize_point = @points.find { |point| point.name == :initialize }
+        raise_member_error("Struct and Data can not have a member named initialize", initialize_point) if initialize_point
+
+        member_class(@points.map(&:name))
+      end
+
+      # Returns the Struct or Data class with the members. Raises a
+      # SeregaError for an attribute name that Ruby can not make a member.
+      def member_class(names)
+        (mode == :struct) ? self.class.struct_class_for(names) : self.class.data_class_for(names)
+      rescue ArgumentError, NameError => error
+        point = @points.find { |point| !member_name?(point.name) }
+        raise_member_error(error.message, point)
+      end
+
+      def member_name?(name)
+        (mode == :struct) ? Struct.new(name) : Data.define(name)
+        true
+      rescue ArgumentError, NameError
+        false
+      end
+
+      def raise_member_error(message, point)
+        SeregaUtils::SerializedAttributeError.call(SeregaError.new(message), point)
       end
     end
 
