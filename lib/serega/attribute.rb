@@ -134,16 +134,15 @@ class Serega
 
       #
       # Ruby code of the SeregaAttributeValues method that reads the attribute
-      # value of the source. `:const` and `:default` values come from the
-      # `CONSTANTS` and `DEFAULTS` of SeregaAttributeValues.
+      # value of the source. `:const` and `:default` values and formatters
+      # come from the `CONSTANTS`, `DEFAULTS` and `FORMATTERS` of
+      # SeregaAttributeValues.
       #
       # @param source_variable [String] Name of the source variable in the code
       #
       # @return [String, nil] Code, or nil when the value is read with #value
       #
       def value_code(source_variable)
-        return if @formatter
-
         code =
           case @value_block
           when AttributeValueResolvers::Keyword,
@@ -156,9 +155,10 @@ class Serega
           when AttributeValueResolvers::Const
             "CONSTANTS[#{name.inspect}]"
           end
-        return code if code.nil? || @default.nil?
+        return unless code
 
-        "(value = #{code}).nil? ? DEFAULTS[#{name.inspect}] : value"
+        code = "(value = #{code}).nil? ? DEFAULTS[#{name.inspect}] : value" unless @default.nil?
+        @formatter ? @formatter.code(code, "FORMATTERS[#{name.inspect}]") : code
       end
 
       #
@@ -196,6 +196,7 @@ class Serega
         values_class = serializer_class::SeregaAttributeValues
         values_class::CONSTANTS[name] = @value_block.call if @value_block.is_a?(AttributeValueResolvers::Const)
         values_class::DEFAULTS[name] = @default unless @default.nil?
+        values_class::FORMATTERS[name] = @formatter.callable if @formatter
 
         file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
         method_name = value_method_name(values_class)

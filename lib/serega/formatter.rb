@@ -7,6 +7,9 @@ class Serega
   #
   # @private
   class SeregaFormatter
+    # @return [#call] Callable that formats a value
+    attr_reader :callable
+
     #
     # @param callable [#call] Callable that formats a value
     #
@@ -29,6 +32,19 @@ class Serega
       when "1_ctx" then @callable.call(value, ctx: context)
       else @callable.call(value, context) # "2"
       end
+    end
+
+    #
+    # Ruby code that formats the value of `value_code` with the callable that
+    # `callable_code` reads
+    #
+    # @param value_code [String] Code of the value to format
+    # @param callable_code [String] Code of the callable
+    #
+    # @return [String, nil] Code, or nil when the formatter needs the context
+    #
+    def code(value_code, callable_code)
+      "#{callable_code}.call(#{value_code})" if @signature == "1"
     end
   end
 end

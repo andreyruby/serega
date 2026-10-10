@@ -373,6 +373,22 @@ RSpec.describe Serega::SeregaAttribute do
     context "with the :format option" do
       let(:opts) { {format: proc { |name| name.upcase }} }
 
+      it "returns the code that formats the value" do
+        expect(code).to eq "FORMATTERS[:name].call(source.name)"
+      end
+    end
+
+    context "with the :format and :default options" do
+      let(:opts) { {format: proc { |name| name.upcase }, default: "Ann"} }
+
+      it "returns the code that formats the value or the default" do
+        expect(code).to eq "FORMATTERS[:name].call((value = source.name).nil? ? DEFAULTS[:name] : value)"
+      end
+    end
+
+    context "with a :format option that reads the context" do
+      let(:opts) { {format: proc { |name, ctx| "#{ctx[:title]} #{name}" }} }
+
       it "returns nil" do
         expect(code).to be_nil
       end
