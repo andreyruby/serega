@@ -202,4 +202,18 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
       expect(result[:paging]).to eq(page: 1)
     end
   end
+
+  context "when the config is deeply frozen", if: defined?(Ractor) do
+    let(:frozen_config) do
+      serializer_class = Class.new(Serega) do
+        plugin :root
+        plugin :context_metadata
+      end
+      Ractor.make_shareable(serializer_class.config)
+    end
+
+    it "returns the context_metadata config" do
+      expect(frozen_config.context_metadata).to be_a Serega::SeregaPlugins::ContextMetadata::ContextMetadataConfig
+    end
+  end
 end

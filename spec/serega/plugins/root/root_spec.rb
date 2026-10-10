@@ -297,4 +297,17 @@ RSpec.describe Serega::SeregaPlugins::Root do
       expect(user_serializer.to_h("1")).to eq("users" => [{first_name: "Ann"}])
     end
   end
+
+  context "when the config is deeply frozen", if: defined?(Ractor) do
+    let(:frozen_config) do
+      serializer_class = Class.new(Serega) do
+        plugin :root
+      end
+      Ractor.make_shareable(serializer_class.config)
+    end
+
+    it "returns the root config" do
+      expect(frozen_config.root).to be_a Serega::SeregaPlugins::Root::RootConfig
+    end
+  end
 end

@@ -132,6 +132,12 @@ class Serega
         def depth_limit
           @plugin_configs[:depth_limit] ||= DepthLimitConfig.new(opts.fetch(:depth_limit))
         end
+
+        # Builds the depth_limit config before freezing
+        def freeze
+          depth_limit
+          super
+        end
       end
 
       #

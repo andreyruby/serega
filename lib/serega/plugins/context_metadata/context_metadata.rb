@@ -125,6 +125,12 @@ class Serega
         def context_metadata
           @plugin_configs[:context_metadata] ||= ContextMetadataConfig.new(opts.fetch(:context_metadata))
         end
+
+        # Builds the context_metadata config before freezing
+        def freeze
+          context_metadata
+          super
+        end
       end
 
       #
