@@ -501,6 +501,8 @@ class Serega
     # @return [Class<Serega>] the frozen serializer
     #
     def freeze
+      return self if frozen?
+
       SeregaUtils::EnumDeepFreeze.call(config.opts)
       super
     end
