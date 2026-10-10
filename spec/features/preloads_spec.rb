@@ -110,6 +110,7 @@ RSpec.describe Serega do
         serializer = Class.new(described_class) do
           preload_with { |objects, preloads| received = [objects, preloads] }
           attribute :value, preload: :assoc, value: proc { |obj| obj }
+          freeze
         end
 
         serializer.to_h([1, 2])
@@ -121,6 +122,7 @@ RSpec.describe Serega do
         serializer = Class.new(described_class) do
           preload_with { |objects, preloads| called = true }
           attribute :value, value: proc { |obj| obj }
+          freeze
         end
 
         serializer.to_h([1])
@@ -134,6 +136,7 @@ RSpec.describe Serega do
           batch(:a) { |objects| objects.to_h { |object| [object, object] } }
           batch(:b) { |objects| objects.to_h { |object| [object, object] } }
           attribute(:value, batch: {use: [:a, :b]}, preload: :assoc, value: proc { |obj, batches:| obj })
+          freeze
         end
 
         serializer.to_h([1, 2])
@@ -143,6 +146,7 @@ RSpec.describe Serega do
       it "raises when an attribute declares :preload but no handler is registered" do
         serializer = Class.new(described_class) do
           attribute :value, preload: :assoc, value: proc { |obj| obj }
+          freeze
         end
 
         error = "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you).\n(when serializing the 'value' attribute in #{serializer}, #{serializer.attributes[:value].location})"
@@ -152,9 +156,11 @@ RSpec.describe Serega do
       it "raises when a nested attribute declares :preload but its serializer has no handler" do
         child = Class.new(described_class) do
           attribute :name, preload: :profile, value: proc { |obj| obj }
+          freeze
         end
         parent = Class.new(described_class) do
           attribute :child, serializer: child, value: proc { |obj| obj }
+          freeze
         end
 
         error = "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you).\n(when serializing the 'name' attribute in #{child}, #{child.attributes[:name].location})"

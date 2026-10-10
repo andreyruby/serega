@@ -11,7 +11,7 @@ RSpec.describe Serega::SeregaValidations::Initiate::CheckModifiers do
     serializer_class = Class.new(base_serializer)
     serializer_class.attribute :foo_bar
     serializer_class.attribute :foo_bazz, serializer: serializer_class
-    serializer_class
+    serializer_class.freeze
   end
 
   it "does not raise error when all provided fields present" do

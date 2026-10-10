@@ -275,8 +275,8 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
         expect(nested.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
 
-        nested.config.auto_preload = false
-        expect(base_serializer.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
+        base_serializer.config.auto_preload = false
+        expect(nested.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
       end
 
       it "inherits base serializer attributes, batch loaders and preload handler" do
@@ -471,6 +471,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
         attribute :title
         attribute :author, serializer: child
         attribute :likes, preload: :likes, value: proc { |o| o }
+        freeze
       end
 
       # relations, preloads and plain attributes carry no batch loader;
@@ -488,6 +489,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
         serializer = Class.new(Serega) do
           config.hide_by_default = :auto
           attribute :author, serializer: child
+          freeze
         end
         expect(serializer.attributes[:author].hide).to be_nil
       end
@@ -497,6 +499,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
           config.hide_by_default = :auto
           attribute :a, preload: :a, value: proc { |o| o }
           attribute :b, batch: proc { |objs| objs.to_h { |o| [o, o] } }
+          freeze
         end
         expect(serializer.attributes[:a].hide).to be(true)
         expect(serializer.attributes[:b].hide).to be(true)

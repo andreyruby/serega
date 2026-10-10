@@ -49,16 +49,32 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
   end
 
   describe "validations" do
+    let(:serializer) do
+      Class.new(Serega) do
+        plugin :root
+        plugin :context_metadata
+        freeze
+      end
+    end
+
     it "raises error when default context meta key is not a Hash" do
-      serializer.plugin :context_metadata
       expect { serializer.to_h(nil, meta: []) }
         .to raise_error Serega::SeregaError, "Invalid option :meta => []. Must have a Hash value"
     end
 
-    it "raises error when configured context meta key is not a Hash" do
-      serializer.plugin :context_metadata, context_metadata_key: :foo
-      expect { serializer.to_h(nil, foo: []) }
-        .to raise_error Serega::SeregaError, "Invalid option :foo => []. Must have a Hash value"
+    context "with a configured context meta key" do
+      let(:serializer) do
+        Class.new(Serega) do
+          plugin :root
+          plugin :context_metadata, context_metadata_key: :foo
+          freeze
+        end
+      end
+
+      it "raises error when the context meta key is not a Hash" do
+        expect { serializer.to_h(nil, foo: []) }
+          .to raise_error Serega::SeregaError, "Invalid option :foo => []. Must have a Hash value"
+      end
     end
   end
 
@@ -72,6 +88,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
     let(:user_serializer) do
       Class.new(base_serializer) do
         attribute :first_name
+        freeze
       end
     end
 
@@ -90,8 +107,12 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
     end
 
     context "when setting metadata key to nil" do
-      before do
-        user_serializer.config.context_metadata.key = nil
+      let(:user_serializer) do
+        Class.new(base_serializer) do
+          config.context_metadata.key = nil
+          attribute :first_name
+          freeze
+        end
       end
 
       it "skips adding metadata to response" do
@@ -116,6 +137,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
 
           meta_attribute(:foo, :one) { 1 }
           meta_attribute(:foo, :two) { 2 }
+          freeze
         end
       end
 
@@ -139,6 +161,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
           plugin :root
           plugin :metadata
           meta_attribute(:paging) { paging_value }
+          freeze
         end
       end
 
@@ -149,8 +172,12 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
     end
 
     context "when root is nil" do
-      before do
-        user_serializer.config.root = {one: nil, many: nil}
+      let(:user_serializer) do
+        Class.new(base_serializer) do
+          config.root = {one: nil, many: nil}
+          attribute :first_name
+          freeze
+        end
       end
 
       it "does not add metadata" do
@@ -167,6 +194,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
       Class.new(serializer) do
         plugin :context_metadata
         attribute :first_name
+        freeze
       end
     end
 
@@ -188,6 +216,7 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
       Class.new(serializer) do
         plugin :context_metadata
         attribute :first_name
+        freeze
       end
     end
 

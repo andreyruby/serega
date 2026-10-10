@@ -8,6 +8,7 @@ RSpec.describe Serega do
       Class.new(Serega) do
         attribute :first_name
         attribute :last_name
+        freeze
       end
     end
 
@@ -21,6 +22,7 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :first_name, hide: true
           attribute :last_name
+          freeze
         end
       end
 
@@ -36,6 +38,7 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :first_name, hide: true
           attribute :last_name
+          freeze
         end
       end
 
@@ -53,6 +56,7 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :first_name, hide: true
           attribute :last_name
+          freeze
         end
       end
 
@@ -79,6 +83,7 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :first_name, hide: true
           attribute :last_name, hide: true
+          freeze
         end
       end
 
@@ -97,6 +102,7 @@ RSpec.describe Serega do
           attribute :first_name, hide: true
           attribute :last_name, hide: true
           attribute :middle_name
+          freeze
         end
       end
 
@@ -115,6 +121,7 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :middle_name
+          freeze
         end
       end
 
@@ -131,6 +138,7 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text, hide: true
+          freeze
         end
       end
 
@@ -142,6 +150,7 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name, hide: true
           attribute :comment, serializer: child_serializer, hide: true
+          freeze
         end
       end
 
@@ -158,6 +167,7 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
+          freeze
         end
       end
 
@@ -169,6 +179,7 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :comment, serializer: child_serializer
+          freeze
         end
       end
 
@@ -185,6 +196,7 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
+          freeze
         end
       end
 
@@ -196,6 +208,7 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :comment, serializer: child_serializer
+          freeze
         end
       end
 
@@ -212,6 +225,7 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
+          freeze
         end
       end
 
@@ -223,6 +237,7 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :comment, serializer: child_serializer
+          freeze
         end
       end
 
@@ -239,6 +254,7 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
+          freeze
         end
       end
 
@@ -250,6 +266,7 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :comment, serializer: child_serializer
+          freeze
         end
       end
 
@@ -271,6 +288,7 @@ RSpec.describe Serega do
         config.check_initiate_params = check_initiate_params
 
         attribute :name
+        freeze
       end
     end
 

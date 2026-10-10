@@ -89,6 +89,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
       let(:user_serializer) do
         Class.new(base_serializer) do
           attribute :first_name
+          freeze
         end
       end
 
@@ -110,6 +111,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
         Class.new(Serega) do
           plugin :root, root_one: "user", root_many: "users"
           attribute :first_name
+          freeze
         end
       end
 
@@ -130,18 +132,18 @@ RSpec.describe Serega::SeregaPlugins::Root do
       let(:user_serializer) do
         Class.new(Serega) do
           plugin :root
+          root one: :customer, many: :customers
           attribute :first_name
+          freeze
         end
       end
 
       it "adds root key to single object response" do
-        user_serializer.root one: :customer
         response = user_serializer.new.to_h(user)
         expect(response).to eq(customer: {first_name: "FIRST_NAME"})
       end
 
       it "adds root key to multiple objects response" do
-        user_serializer.root many: :customers
         response = user_serializer.new.to_h([user])
         expect(response).to eq(customers: [{first_name: "FIRST_NAME"}])
       end
@@ -154,6 +156,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
         Class.new(Serega) do
           plugin :root
           attribute :first_name
+          freeze
         end
       end
 
@@ -181,6 +184,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
       Class.new(Serega) do
         plugin :root, root_one: :user, root_many: :users
         attribute :first_name
+        freeze
       end
     end
 
@@ -228,6 +232,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
       Class.new(Serega) do
         plugin :root, root_one: :user, root_many: :users
         attribute :first_name
+        freeze
       end
     end
 
@@ -269,6 +274,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
         plugin :root
         prepare_initial_objects { |ids| ids.map { |id| data[id] } }
         attribute :first_name
+        freeze
       end
 
       expect(user_serializer.to_h(["1"])).to eq(data: [{first_name: "Ann"}])
@@ -280,6 +286,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
         plugin :root
         prepare_initial_objects { |ids| ids.map { |id| data[id] } }
         attribute :first_name
+        freeze
       end
 
       result = user_serializer.to_data(["1"])
@@ -292,6 +299,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
         plugin :root, root_one: "user", root_many: "users"
         prepare_initial_objects { |id| [data[id]] }
         attribute :first_name
+        freeze
       end
 
       expect(user_serializer.to_h("1")).to eq("users" => [{first_name: "Ann"}])

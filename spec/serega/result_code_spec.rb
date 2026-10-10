@@ -4,7 +4,7 @@ RSpec.describe Serega::SeregaResultCode do
   subject(:result_code) { serializer::SeregaResultCode.new(mode, plan.points) }
 
   let(:mode) { :hash }
-  let(:serializer) { Class.new(Serega) { attribute :name } }
+  let(:serializer) { Class.new(Serega) { attribute :name }.freeze }
   let(:plan) { serializer::SeregaPlan.new(nil, {}) }
 
   describe ".serializer_class" do

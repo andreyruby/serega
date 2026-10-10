@@ -44,6 +44,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
           attribute :first_name
           attribute :last_name
           attribute :posts, serializer: -> { post_serializer }, preload: :posts
+          freeze
         end
       end
 
@@ -52,6 +53,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
         Class.new(app_serializer) do
           attribute :text
           attribute :comments, serializer: -> { comment_serializer }, preload: :comments
+          freeze
         end
       end
 
@@ -62,6 +64,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
           attribute :stars, preload: :votes, value: proc { |comment|
             (comment.votes.sum(&:stars) / comment.votes.size.to_f).round(1)
           }
+          freeze
         end
       end
 
@@ -132,6 +135,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
           attribute :last_name
           attribute :posts, serializer: post_serializer,
             batch: ->(users) { AR::Post.where(user: users).group_by(&:user_id) }
+          freeze
         end
       end
 
@@ -140,6 +144,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
         Class.new(app_serializer) do
           attribute :text
           attribute :comments, serializer: -> { comment_serializer }, preload: :comments
+          freeze
         end
       end
 
@@ -150,6 +155,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
           attribute :stars, preload: :votes, value: proc { |comment|
             (comment.votes.sum(&:stars) / comment.votes.size.to_f).round(1)
           }
+          freeze
         end
       end
 
@@ -213,6 +219,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
         attribute :last_name
         attribute :posts, serializer: post_serializer,
           batch: ->(users) { AR::Post.where(user: users).group_by(&:user_id) }
+        freeze
       end
     end
 
@@ -220,6 +227,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       Class.new(app_serializer) do
         attribute :text
         attribute :comments, preload: :comments, hide: true
+        freeze
       end
     end
 
@@ -264,6 +272,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       Class.new(app_serializer) do
         attribute :text
         attribute :votes_count, value: proc { |c| c.votes.size }, preload: :votes
+        freeze
       end
     end
 
@@ -271,6 +280,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       cs = comment_serializer
       Class.new(app_serializer) do
         attribute :comments, value: proc { |pw| pw.post.comments }, serializer: cs
+        freeze
       end
     end
 
@@ -283,6 +293,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
           value: proc { |u| pwc.new(post: u.posts.first) },
           serializer: pws,
           preload: :posts
+        freeze
       end
     end
 
@@ -320,6 +331,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
         attribute :text
         attribute :author_name, preload: :user, value: proc { |p| p.user.first_name }
         attribute :comments_count, preload: :comments, value: proc { |p| p.comments.size }
+        freeze
       end
     end
 
@@ -347,7 +359,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
     end
 
     let(:post_serializer) do
-      Class.new(app_serializer) { attribute :text }
+      Class.new(app_serializer) { attribute :text }.freeze
     end
 
     let(:user_serializer) do
@@ -361,6 +373,8 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
             "#{__getobj__.first_name} #{__getobj__.last_name}"
           end
         end
+
+        freeze
       end
     end
 

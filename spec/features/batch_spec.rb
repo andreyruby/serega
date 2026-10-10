@@ -22,20 +22,20 @@ RSpec.describe Serega do
       expect(block_result).to eq [1, 2]
     end
 
-    it "serializes attribute with `batch: <loader_name>` short form using default value resolution" do
-      serializer_class.batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
-      serializer_class.attribute(:likes_count, batch: :stats)
+    context "with `batch: <loader_name>` short form" do
+      let(:serializer_class) do
+        Class.new(described_class) do
+          batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
+          attribute(:likes_count, batch: :stats)
+          attribute(:views_count, batch: "stats")
+          freeze
+        end
+      end
 
-      user = double(id: 1)
-      expect(serializer_class.to_h(user)).to eq(likes_count: 10)
-    end
-
-    it "serializes attribute with String `batch: <loader_name>` short form" do
-      serializer_class.batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
-      serializer_class.attribute(:likes_count, batch: "stats")
-
-      user = double(id: 2)
-      expect(serializer_class.to_h(user)).to eq(likes_count: 20)
+      it "serializes attributes with Symbol and String loader names using default value resolution" do
+        user = double(id: 1)
+        expect(serializer_class.to_h(user)).to eq(likes_count: 10, views_count: 10)
+      end
     end
 
     it "checks only block or only value provided" do
@@ -65,6 +65,7 @@ RSpec.describe Serega do
 
           attribute(:comments_count, batch: {use: :stats}, value: proc { |obj, batches:| batches[:stats][obj.id][:comments] })
           attribute(:likes_count, batch: {use: :stats}, value: proc { |obj, batches:| batches[:stats][obj.id][:likes] })
+          freeze
         end
       end
 
@@ -82,6 +83,7 @@ RSpec.describe Serega do
         Class.new(Serega) do
           batch(:stats) { |users| users.each_with_object({}) { |user, hash| hash[user.id] = user.id * 10 } }
           attribute(:stat, batch: {use: :stats}, value: proc { |user, batches:| batches[:stats][user.id] })
+          freeze
         end
       end
 
@@ -93,14 +95,15 @@ RSpec.describe Serega do
 
     context "when many: true but a sole object is given" do
       it "wraps the object in an array instead of raising (:many serialization option)" do
-        user_serializer = Class.new(Serega) { attribute :id }
+        user_serializer = Class.new(Serega) { attribute :id }.freeze
         expect(user_serializer.to_h(double(id: 1), many: true)).to eq [{id: 1}]
       end
 
       it "wraps a sole relation object in an array (:many attribute option)" do
-        comment_serializer = Class.new(Serega) { attribute :id }
+        comment_serializer = Class.new(Serega) { attribute :id }.freeze
         user_serializer = Class.new(Serega) do
           attribute :comments, serializer: comment_serializer, many: true
+          freeze
         end
         user = double(comments: double(id: 5)) # a sole object, not a collection
         expect(user_serializer.to_h(user)).to eq(comments: [{id: 5}])
@@ -113,6 +116,7 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :first_name, batch: proc { |_user| foo } # not existing variable call
+          freeze
         end
       end
 
@@ -130,6 +134,7 @@ RSpec.describe Serega do
           batch(:rating) { |users| users.to_h { |user| [user.id, :named] } }
           attribute :rating, batch: ->(users) { users.to_h { |user| [user.id, :inline] } }
           attribute :score, batch: :rating
+          freeze
         end
       end
 
@@ -147,6 +152,7 @@ RSpec.describe Serega do
           attribute :rating,
             batch: ->(users) { users.to_h { |user| [user.id, 5] } },
             value: proc { |user, batches:| batches[:rating][user.id] * 2 }
+          freeze
         end
       end
 
@@ -161,10 +167,11 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :rating, batch: ->(users) { users.to_h { |user| [user.id, 5] } }
+          freeze
         end
       end
 
-      let(:child_serializer) { Class.new(user_serializer) }
+      let(:child_serializer) { Class.new(user_serializer).freeze }
       let(:user) { double(id: 1) }
 
       it "serializes the attribute with the inline loader" do
@@ -180,10 +187,11 @@ RSpec.describe Serega do
         Class.new(Serega) do
           batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
           attribute :likes_count, batch: :stats
+          freeze
         end
       end
 
-      let(:child_serializer) { Class.new(user_serializer) }
+      let(:child_serializer) { Class.new(user_serializer).freeze }
       let(:user) { double(id: 1) }
 
       it "serializes the attribute with the loader of the parent" do
@@ -196,12 +204,14 @@ RSpec.describe Serega do
         Class.new(Serega) do
           batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
           attribute :likes_count, batch: :stats
+          freeze
         end
       end
 
       let(:child_serializer) do
         Class.new(user_serializer) do
           batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 100] } }
+          freeze
         end
       end
 
