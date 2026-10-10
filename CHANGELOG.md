@@ -41,6 +41,8 @@
   "Configuration" in the README.
 - Cache the serialization plan built without `:only`/`:except`/`:with`
   modifiers.
+- Fix defining a child serializer of a serializer with an attribute that uses a
+  named batch loader.
 - Fix keyword arguments of methods called on presenters.
 - Fix presenter methods that call `super` being replaced by delegators after
   the first serialization.

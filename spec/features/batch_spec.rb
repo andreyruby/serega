@@ -123,5 +123,45 @@ RSpec.describe Serega do
           end_with("(when serializing the 'first_name' attribute in #{user_serializer}, #{user_serializer.attributes[:first_name].location})")
       end
     end
+
+    context "with a child serializer of a serializer with a named batch loader" do
+      subject(:result) { child_serializer.to_h(user) }
+
+      let(:user_serializer) do
+        Class.new(Serega) do
+          batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
+          attribute :likes_count, batch: :stats
+        end
+      end
+
+      let(:child_serializer) { Class.new(user_serializer) }
+      let(:user) { double(id: 1) }
+
+      it "serializes the attribute with the loader of the parent" do
+        expect(result).to eq(likes_count: 10)
+      end
+    end
+
+    context "when a child serializer redefines the batch loader" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 10] } }
+          attribute :likes_count, batch: :stats
+        end
+      end
+
+      let(:child_serializer) do
+        Class.new(user_serializer) do
+          batch(:stats) { |users| users.to_h { |user| [user.id, user.id * 100] } }
+        end
+      end
+
+      let(:user) { double(id: 1) }
+
+      it "serializes the attribute of each serializer with its own loader" do
+        expect(child_serializer.to_h(user)).to eq(likes_count: 100)
+        expect(user_serializer.to_h(user)).to eq(likes_count: 10)
+      end
+    end
   end
 end

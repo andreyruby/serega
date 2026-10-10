@@ -591,15 +591,15 @@ class Serega
       check_batch_loader_params_class.serializer_class = subclass
       subclass.const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
 
+      # Assign same batch loaders before the attributes that use them
+      batch_loaders.each_value do |loader|
+        subclass.batch(loader.name, loader.block)
+      end
+
       # Assign same attributes
       attributes.each_value do |attr|
         subclass_attribute = subclass::SeregaAttribute.new(**attr.initials)
         subclass.attributes[subclass_attribute.name] = subclass_attribute
-      end
-
-      # Assign same batch loaders
-      batch_loaders.each_value do |loader|
-        subclass.batch(loader.name, loader.block)
       end
 
       # Assign same preload handler
