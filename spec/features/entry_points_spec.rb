@@ -9,6 +9,7 @@ RSpec.describe Serega do
         attribute(:obj, value: proc { |obj| obj })
         attribute(:ctx, value: proc { |obj, ctx| ctx[:data] })
         attribute(:except, const: "EXCEPT")
+        freeze
       end
     end
 
@@ -167,6 +168,7 @@ RSpec.describe Serega do
     let(:post_serializer) do
       Class.new(described_class) do
         attribute :title
+        freeze
       end
     end
 
@@ -176,6 +178,7 @@ RSpec.describe Serega do
       Class.new(described_class) do
         attribute :name
         attribute :posts, serializer: posts
+        freeze
       end
     end
 

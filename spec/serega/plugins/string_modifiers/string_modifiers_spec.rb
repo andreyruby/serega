@@ -6,11 +6,7 @@ RSpec.describe Serega::SeregaPlugins::StringModifiers do
   describe "serialization" do
     let(:response) { user_serializer.new.to_h(user) }
 
-    let(:base_serializer) do
-      Class.new(Serega) do
-        plugin :string_modifiers
-      end
-    end
+    let(:base_serializer) { Class.new(Serega) { plugin :string_modifiers } }
 
     let(:user) { double(first_name: "FIRST NAME", post: post) }
     let(:post) { double(title: "TITLE", text: "TEXT") }
@@ -20,6 +16,7 @@ RSpec.describe Serega::SeregaPlugins::StringModifiers do
       Class.new(base_serializer) do
         attribute :first_name
         attribute :post, serializer: post_ser, hide: true
+        freeze
       end
     end
 
@@ -27,6 +24,7 @@ RSpec.describe Serega::SeregaPlugins::StringModifiers do
       Class.new(base_serializer) do
         attribute :title
         attribute :text
+        freeze
       end
     end
 
@@ -36,18 +34,37 @@ RSpec.describe Serega::SeregaPlugins::StringModifiers do
       expect(response).to eq(post: {title: "TITLE"})
     end
 
-    it "allows to provide :except modifier as string" do
-      user_serializer.attribute :post, serializer: post_serializer
-      except = "post(title)"
-      response = user_serializer.new(except: except).to_h(user)
-      expect(response).to eq(first_name: "FIRST NAME", post: {text: "TEXT"})
+    context "with a visible relation" do
+      let(:user_serializer) do
+        post_ser = post_serializer
+        Class.new(base_serializer) do
+          attribute :first_name
+          attribute :post, serializer: post_ser
+          freeze
+        end
+      end
+
+      it "allows to provide :except modifier as string" do
+        except = "post(title)"
+        response = user_serializer.new(except: except).to_h(user)
+        expect(response).to eq(first_name: "FIRST NAME", post: {text: "TEXT"})
+      end
     end
 
-    it "allows to provide :with modifier as string" do
-      post_serializer.attribute :text, hide: true
-      with = "post(text)"
-      response = user_serializer.new(with: with).to_h(user)
-      expect(response).to eq(first_name: "FIRST NAME", post: {title: "TITLE", text: "TEXT"})
+    context "with a hidden attribute in the relation serializer" do
+      let(:post_serializer) do
+        Class.new(base_serializer) do
+          attribute :title
+          attribute :text, hide: true
+          freeze
+        end
+      end
+
+      it "allows to provide :with modifier as string" do
+        with = "post(text)"
+        response = user_serializer.new(with: with).to_h(user)
+        expect(response).to eq(first_name: "FIRST NAME", post: {title: "TITLE", text: "TEXT"})
+      end
     end
 
     it "allows to provide modifiers as objects" do

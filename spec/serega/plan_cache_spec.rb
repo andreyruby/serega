@@ -5,6 +5,7 @@ RSpec.describe Serega::SeregaPlanCache do
     Class.new(Serega) do
       attribute :city
       attribute :zip
+      freeze
     end
   end
 
@@ -18,6 +19,7 @@ RSpec.describe Serega::SeregaPlanCache do
       attribute :first_name
       attribute :last_name
       attribute :address, serializer: address
+      freeze
     end
   end
 

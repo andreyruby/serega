@@ -11,6 +11,8 @@ RSpec.describe Serega do
           attribute :likes_count
           attribute :comments_count
         end
+
+        freeze
       end
 
       user = double(first_name: "Kate", likes_count: 10, comments_count: 3)
@@ -27,6 +29,8 @@ RSpec.describe Serega do
         attribute :author do
           attribute :name
         end
+
+        freeze
       end
 
       user = double(author: double(name: "Kate"))
@@ -39,6 +43,8 @@ RSpec.describe Serega do
         attribute :author, value: proc { |user| user.creator } do
           attribute :name
         end
+
+        freeze
       end
 
       user = double(creator: double(name: "Kate"))
@@ -51,6 +57,8 @@ RSpec.describe Serega do
         attribute :posts do
           attribute :title
         end
+
+        freeze
       end
 
       user = double(posts: [double(title: "one"), double(title: "two")])
@@ -64,6 +72,8 @@ RSpec.describe Serega do
           attribute :likes_count
           attribute :comments_count
         end
+
+        freeze
       end
 
       user = double(likes_count: 10, comments_count: 3)
@@ -81,6 +91,8 @@ RSpec.describe Serega do
 
           attribute :likes_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id][:likes_count] }
         end
+
+        freeze
       end
 
       user = double(id: 1)
@@ -95,6 +107,8 @@ RSpec.describe Serega do
           preload_with { |objects, preloads| preloaded = [objects, preloads] }
           attribute :name, preload: :profile
         end
+
+        freeze
       end
 
       author = double(name: "Kate")
@@ -110,6 +124,8 @@ RSpec.describe Serega do
         attribute :author do
           attribute :name
         end
+
+        freeze
       end
 
       expect(user_serializer.attributes[:author].preloads).to eq :author
@@ -152,13 +168,15 @@ RSpec.describe Serega do
     end
 
     it "serializes base serializer attributes together with attributes defined in the block" do
-      base = Class.new(Serega) { attribute :id }
+      base = Class.new(Serega) { attribute :id }.freeze
       user_serializer = Class.new(Serega) do
         config.base_serializer = base
 
         attribute :statistics, method: :itself do
           attribute :likes_count
         end
+
+        freeze
       end
 
       user = double(id: 1, likes_count: 10)

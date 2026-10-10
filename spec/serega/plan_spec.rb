@@ -13,7 +13,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :b, serializer: b, hide: true
     serializer.attribute :c, serializer: c, hide: true
     serializer.attribute :d, serializer: d
-    serializer
+    serializer.freeze
   end
 
   let(:b) do
@@ -21,7 +21,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :b1
     serializer.attribute :b2
     serializer.attribute :b3, hide: true
-    serializer
+    serializer.freeze
   end
 
   let(:c) do
@@ -29,7 +29,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :c1
     serializer.attribute :c2
     serializer.attribute :c3, hide: true
-    serializer
+    serializer.freeze
   end
 
   let(:d) do
@@ -37,7 +37,7 @@ RSpec.describe Serega::SeregaPlan do
     serializer.attribute :d1
     serializer.attribute :d2
     serializer.attribute :d3, hide: true
-    serializer
+    serializer.freeze
   end
 
   let(:current_serializer) { a }
@@ -109,6 +109,7 @@ RSpec.describe Serega::SeregaPlan do
       Class.new(base_class) do
         attribute :name
         attribute :posts, preload: :posts, value: proc { [] }
+        freeze
       end
     end
 

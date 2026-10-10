@@ -51,26 +51,15 @@ RSpec.describe Serega::SeregaPlugins::DepthLimit do
   end
 
   describe "serialization" do
-    let(:parent) do
-      Class.new(Serega) do
-        plugin :depth_limit, limit: 2
-      end
-    end
-
-    let(:posts_serializer) do
-      Class.new(parent) do
-      end
-    end
-
-    let(:comments_serializer) do
-      Class.new(parent) do
-        attribute :text
-      end
-    end
+    let(:parent) { Class.new(Serega) { plugin :depth_limit, limit: 2 } }
+    let(:posts_serializer) { Class.new(parent) }
+    let(:comments_serializer) { Class.new(parent) { attribute :text } }
 
     before do
       posts_serializer.attribute :comments, serializer: comments_serializer
       comments_serializer.attribute :post, serializer: posts_serializer
+      posts_serializer.freeze
+      comments_serializer.freeze
     end
 
     it "raises error if depth limit was exceeded when instantiating serializer" do

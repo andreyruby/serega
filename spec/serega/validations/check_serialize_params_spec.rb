@@ -24,7 +24,7 @@ RSpec.describe Serega::SeregaValidations::CheckSerializeParams do
   end
 
   describe "validating serialize params" do
-    let(:serializer_class) { Class.new(Serega) }
+    let(:serializer_class) { Class.new(Serega).freeze }
 
     let(:validator) { instance_double(serializer_class::CheckSerializeParams, validate: nil) }
     let(:params) { {only: {}, except: {}, with: {}, context: {foo: "bar"}, a: 1} }

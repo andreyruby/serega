@@ -9,8 +9,8 @@ RSpec.describe Serega do
     let(:user_class) { Struct.new(:id, :name, :email, :age, :admin, :posts, :avatar) }
     let(:post_class) { Struct.new(:title) }
     let(:avatar_class) { Struct.new(:url) }
-    let(:post_serializer) { Class.new(Serega) { attribute :title } }
-    let(:avatar_serializer) { Class.new(Serega) { attribute :url } }
+    let(:post_serializer) { Class.new(Serega) { attribute :title }.freeze }
+    let(:avatar_serializer) { Class.new(Serega) { attribute :url }.freeze }
 
     describe ":if and :unless" do
       context "with :if and :unless conditions" do
@@ -18,6 +18,7 @@ RSpec.describe Serega do
           Class.new(Serega) do
             attribute :email, if: :admin
             attribute :name, unless: :admin
+            freeze
           end
         end
 
@@ -37,6 +38,7 @@ RSpec.describe Serega do
         let(:user_serializer) do
           Class.new(Serega) do
             attribute :email, if: proc { |_user, context| context[:show_emails] }
+            freeze
           end
         end
 
@@ -54,6 +56,7 @@ RSpec.describe Serega do
             attribute :name
             attribute :email, if: :admin
             attribute :age
+            freeze
           end
         end
 
@@ -70,6 +73,7 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :age, if_value: proc { |age| age >= 18 }
           attribute :name, unless_value: :empty?
+          freeze
         end
       end
 
@@ -87,6 +91,7 @@ RSpec.describe Serega do
 
           Class.new(Serega) do
             attribute :posts, serializer: posts, unless: :admin
+            freeze
           end
         end
 
@@ -103,6 +108,7 @@ RSpec.describe Serega do
 
           Class.new(Serega) do
             attribute :avatar, serializer: avatar, if: :admin
+            freeze
           end
         end
 
@@ -121,10 +127,11 @@ RSpec.describe Serega do
 
       context "with conditions in the related serializer" do
         let(:user_serializer) do
-          avatar = Class.new(Serega) { attribute :url, unless_value: proc { |url| url == "bob.png" } }
+          avatar = Class.new(Serega) { attribute :url, unless_value: proc { |url| url == "bob.png" } }.freeze
 
           Class.new(Serega) do
             attribute :avatar, serializer: avatar
+            freeze
           end
         end
 
@@ -142,6 +149,7 @@ RSpec.describe Serega do
           Class.new(Serega) do
             attribute :online_time, if: :admin, batch: proc { |_users| {1 => 10, 2 => 20} }
             attribute :score, unless_value: proc { |score| score == 200 }, batch: proc { |_users| {1 => 100, 2 => 200} }
+            freeze
           end
         end
 
@@ -159,6 +167,7 @@ RSpec.describe Serega do
 
           Class.new(Serega) do
             attribute :avatar, serializer: avatar, if: :admin, batch: proc { |_users| {2 => bob_avatar} }
+            freeze
           end
         end
 
@@ -178,6 +187,7 @@ RSpec.describe Serega do
           attribute :email, if: :admin
           attribute :age, if_value: proc { |age| age >= 18 }
           attribute :posts, serializer: posts, unless: :admin
+          freeze
         end
       end
 
@@ -221,6 +231,7 @@ RSpec.describe Serega do
         let(:user_serializer) do
           Class.new(Serega) do
             attribute :email, if: proc { raise "boom in condition" }
+            freeze
           end
         end
 
@@ -236,6 +247,7 @@ RSpec.describe Serega do
         let(:user_serializer) do
           Class.new(Serega) do
             attribute :email, if_value: proc { raise "boom in condition" }
+            freeze
           end
         end
 
@@ -251,6 +263,7 @@ RSpec.describe Serega do
         let(:user_serializer) do
           Class.new(Serega) do
             attribute :email, value: proc { raise "boom in value" }, if: proc { true }
+            freeze
           end
         end
 
@@ -268,6 +281,7 @@ RSpec.describe Serega do
 
           Class.new(Serega) do
             attribute :avatar, serializer: avatar, unless: proc { raise "boom in condition" }
+            freeze
           end
         end
 
@@ -285,6 +299,7 @@ RSpec.describe Serega do
 
           Class.new(Serega) do
             attribute :avatar, serializer: avatar, value: proc { raise "boom in relation" }, if: proc { true }
+            freeze
           end
         end
 

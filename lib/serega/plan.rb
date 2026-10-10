@@ -39,7 +39,8 @@ class Serega
       # @return [SeregaPlan] Serialization plan
       #
       def initialize(parent_plan_point, modifiers)
-        serializer_class.lock
+        raise SeregaError, "#{serializer_class} is not frozen. Call `freeze` at the end of its definition" unless serializer_class.frozen?
+
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @relation_points = points.select(&:child_plan).freeze

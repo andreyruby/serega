@@ -166,7 +166,7 @@ class Serega
         # @return [Serega::SeregaPlugins::Metadata::MetaAttribute] Added metadata attribute
         #
         def meta_attribute(*path, **opts, &block)
-          check_unlocked
+          check_not_frozen
           attribute = self::MetaAttribute.new(path: path, opts: opts, block: block)
           meta_attributes[attribute.name] = attribute
         end
