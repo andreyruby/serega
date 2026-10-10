@@ -1,31 +1,55 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaFormatter do
-  subject(:formatted) { described_class.new(callable).call(1234, context) }
+  let(:formatter) { described_class.new(callable) }
 
-  let(:context) { {currency: "EUR"} }
+  describe "#call" do
+    subject(:formatted) { formatter.call(1234, context) }
 
-  context "with a value parameter" do
-    let(:callable) { ->(cents) { cents / 100.0 } }
+    let(:context) { {currency: "EUR"} }
 
-    it "formats the value" do
-      expect(formatted).to eq 12.34
+    context "with a value parameter" do
+      let(:callable) { ->(cents) { cents / 100.0 } }
+
+      it "formats the value" do
+        expect(formatted).to eq 12.34
+      end
+    end
+
+    context "with value and context parameters" do
+      let(:callable) { ->(cents, context) { "#{cents / 100.0} #{context[:currency]}" } }
+
+      it "formats the value with the context" do
+        expect(formatted).to eq "12.34 EUR"
+      end
+    end
+
+    context "with a value parameter and the :ctx keyword" do
+      let(:callable) { ->(cents, ctx:) { "#{cents / 100.0} #{ctx[:currency]}" } }
+
+      it "formats the value with the context" do
+        expect(formatted).to eq "12.34 EUR"
+      end
     end
   end
 
-  context "with value and context parameters" do
-    let(:callable) { ->(cents, context) { "#{cents / 100.0} #{context[:currency]}" } }
+  describe "#code" do
+    subject(:code) { formatter.code("source.balance", "FORMATTERS[:balance]") }
 
-    it "formats the value with the context" do
-      expect(formatted).to eq "12.34 EUR"
+    context "with a value parameter" do
+      let(:callable) { ->(cents) { cents / 100.0 } }
+
+      it "returns the code that calls the formatter" do
+        expect(code).to eq "FORMATTERS[:balance].call(source.balance)"
+      end
     end
-  end
 
-  context "with a value parameter and the :ctx keyword" do
-    let(:callable) { ->(cents, ctx:) { "#{cents / 100.0} #{ctx[:currency]}" } }
+    context "with value and context parameters" do
+      let(:callable) { ->(cents, context) { cents / context[:divider] } }
 
-    it "formats the value with the context" do
-      expect(formatted).to eq "12.34 EUR"
+      it "returns nil" do
+        expect(code).to be_nil
+      end
     end
   end
 end
