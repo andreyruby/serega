@@ -36,7 +36,7 @@ class Serega
       attr_reader :serialized
 
       # @return [Array<Integer, nil, Object>] Pulls from
-      #   `SeregaUtils::Pulls.collect`, one per source of the parent group
+      #   `SeregaEngine::Pulls.collect`, one per source of the parent group
       attr_reader :pulls
 
       # Each source is wrapped in the serializer's presenter, so value reading
@@ -46,7 +46,7 @@ class Serega
       # @param plan [SeregaPlan] Serialization plan
       # @param sources [Array] Sources
       # @param pulls [Array<Integer, nil, Object>] Pulls from
-      #   `SeregaUtils::Pulls.collect`, one per source of the parent group
+      #   `SeregaEngine::Pulls.collect`, one per source of the parent group
       def initialize(run, plan, sources, pulls)
         @run = run
         @plan = plan
@@ -78,7 +78,7 @@ class Serega
       def build
         batches = plan.points.map { |point| batches_for(point) } if plan.batch_points?
         relations = @child_groups&.transform_values do |child_group|
-          SeregaUtils::Pulls.take!(child_group.serialized, child_group.pulls)
+          SeregaEngine::Pulls.take!(child_group.serialized, child_group.pulls)
         end
         @serialized = plan.result_builder(run.mode).call(@sources, @context, batches, relations)
       end
@@ -91,10 +91,10 @@ class Serega
         child_sources, pulls =
           if point.conditional?
             relation_sources = read_conditional_relation_sources(point, batches)
-            SeregaUtils::Pulls.collect_conditional(relation_sources, point.many)
+            SeregaEngine::Pulls.collect_conditional(relation_sources, point.many)
           else
             relation_sources = read_relation_sources(point, batches)
-            SeregaUtils::Pulls.collect(relation_sources, point.many)
+            SeregaEngine::Pulls.collect(relation_sources, point.many)
           end
         run.new_source_group(point.child_plan, child_sources, pulls)
       end
@@ -162,7 +162,7 @@ class Serega
         context = @context
 
         @sources.map do |source|
-          next SeregaConditions::SKIP unless conditions.satisfy?(source, context)
+          next SeregaEngine::SKIP unless conditions.satisfy?(source, context)
 
           begin
             attribute.value(source, context, batches: batches)

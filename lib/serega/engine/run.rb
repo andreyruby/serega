@@ -6,6 +6,10 @@ class Serega
   #
   # @private
   module SeregaEngine
+    # Value of an attribute skipped by its conditions. It is also the pull of
+    # a skipped relation.
+    SKIP = Object.new.freeze
+
     #
     # One serialization run. Serializes the source(s) with a plan, and all
     # their relation sources. A source is an object to serialize.
@@ -69,7 +73,7 @@ class Serega
       # @param plan [SeregaPlan] Serialization plan
       # @param sources [Array] Sources
       # @param pulls [Array<Integer, nil, Object>] Pulls from
-      #   `SeregaUtils::Pulls.collect`, one per source of the parent group
+      #   `Pulls.collect`, one per source of the parent group
       # @return [SeregaSourceGroup] New source group
       def new_source_group(plan, sources, pulls)
         plan.serializer_class::SeregaSourceGroup.new(self, plan, sources, pulls)
@@ -80,7 +84,7 @@ class Serega
       # Makes the root group: the root source(s) with one pull
       def root_source_group(plan, object, many)
         sources = []
-        pull = SeregaUtils::Pulls.append(sources, object, many)
+        pull = Pulls.append(sources, object, many)
         new_source_group(plan, sources, [pull])
       end
 
@@ -109,7 +113,7 @@ class Serega
       # or all serialized objects of the root group
       def root_value(root_group)
         serialized = root_group.serialized
-        SeregaUtils::Pulls::SINGLE_SOURCE.equal?(root_group.pulls[0]) ? serialized[0] : serialized
+        Pulls::SINGLE_SOURCE.equal?(root_group.pulls[0]) ? serialized[0] : serialized
       end
     end
   end

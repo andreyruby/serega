@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaUtils::Pulls do
+RSpec.describe Serega::SeregaEngine::Pulls do
   let(:ann) { double(name: "Ann") }
   let(:bob) { double(name: "Bob") }
   let(:many) { nil }
@@ -36,10 +36,10 @@ RSpec.describe Serega::SeregaUtils::Pulls do
   describe ".collect_conditional" do
     subject(:collected) { described_class.collect_conditional(relation_sources, many) }
 
-    let(:relation_sources) { [[ann, bob], Serega::SeregaConditions::SKIP, ann] }
+    let(:relation_sources) { [[ann, bob], Serega::SeregaEngine::SKIP, ann] }
 
     it "keeps SKIP as the pull of a skipped relation source" do
-      expect(collected).to eq [[ann, bob, ann], [2, Serega::SeregaConditions::SKIP, described_class::SINGLE_SOURCE]]
+      expect(collected).to eq [[ann, bob, ann], [2, Serega::SeregaEngine::SKIP, described_class::SINGLE_SOURCE]]
     end
   end
 
@@ -68,10 +68,10 @@ RSpec.describe Serega::SeregaUtils::Pulls do
     subject(:relation_values) { described_class.take!(serialized, pulls) }
 
     let(:serialized) { [{name: "Ann"}, {name: "Bob"}, {name: "Cat"}] }
-    let(:pulls) { [2, nil, Serega::SeregaConditions::SKIP, described_class::SINGLE_SOURCE] }
+    let(:pulls) { [2, nil, Serega::SeregaEngine::SKIP, described_class::SINGLE_SOURCE] }
 
     it "takes the relation value of each pull from the front of the serialized objects" do
-      expect(relation_values).to eq [[{name: "Ann"}, {name: "Bob"}], nil, Serega::SeregaConditions::SKIP, {name: "Cat"}]
+      expect(relation_values).to eq [[{name: "Ann"}, {name: "Bob"}], nil, Serega::SeregaEngine::SKIP, {name: "Cat"}]
       expect(serialized).to be_empty
     end
   end

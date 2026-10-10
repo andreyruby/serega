@@ -118,9 +118,9 @@ class Serega
             if conditions_#{index}.satisfy?(source, context)
               value_#{index} =
           #{read_code.gsub(/^/, "      ")}
-              conditions_#{index}.satisfy_value?(value_#{index}, context) ? value_#{index} : Serega::SeregaConditions::SKIP
+              conditions_#{index}.satisfy_value?(value_#{index}, context) ? value_#{index} : Serega::SeregaEngine::SKIP
             else
-              Serega::SeregaConditions::SKIP
+              Serega::SeregaEngine::SKIP
             end
         RUBY
       end
@@ -161,7 +161,7 @@ class Serega
       def argument_code(index)
         return "value_#{index}" unless @points[index].conditional?
 
-        "(Serega::SeregaConditions::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
+        "(Serega::SeregaEngine::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
       end
 
       # Code that builds the serialized Hash of the source.
@@ -180,7 +180,7 @@ class Serega
       # no key for a skipped value.
       def hash_assign_code(point, index)
         code = "serialized_hash[#{point.name.inspect}] = value_#{index}"
-        point.conditional? ? "#{code} unless Serega::SeregaConditions::SKIP.equal?(value_#{index})" : code
+        point.conditional? ? "#{code} unless Serega::SeregaEngine::SKIP.equal?(value_#{index})" : code
       end
     end
 

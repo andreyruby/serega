@@ -2,7 +2,7 @@
 
 class Serega
   # @private
-  module SeregaUtils
+  module SeregaEngine
     #
     # Pulls of relation sources. A pull says what to take for one relation
     # source from the serialized objects of its child group:
@@ -49,7 +49,7 @@ class Serega
       def collect_conditional(relation_sources, many)
         sources = []
         pulls = relation_sources.map do |relation_source|
-          SeregaConditions::SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many)
+          SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many)
         end
         [sources, pulls]
       end
@@ -67,7 +67,7 @@ class Serega
       def append(sources, relation_source, many)
         return if relation_source.nil?
 
-        if many != false && CollectionDetector.call(relation_source)
+        if many != false && SeregaUtils::CollectionDetector.call(relation_source)
           collection = relation_source.to_a
           sources.concat(collection)
           collection.size
