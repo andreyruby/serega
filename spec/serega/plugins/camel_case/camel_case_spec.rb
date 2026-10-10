@@ -118,4 +118,17 @@ RSpec.describe Serega::SeregaPlugins::CamelCase do
       end
     end
   end
+
+  context "when the config is deeply frozen", if: defined?(Ractor) do
+    let(:frozen_config) do
+      serializer_class = Class.new(Serega) do
+        plugin :camel_case
+      end
+      Ractor.make_shareable(serializer_class.config)
+    end
+
+    it "returns the camel_case config" do
+      expect(frozen_config.camel_case).to be_a Serega::SeregaPlugins::CamelCase::CamelCaseConfig
+    end
+  end
 end

@@ -160,6 +160,14 @@ RSpec.describe Serega::SeregaConfig do
   end
 
   describe "#hash_access" do
+    context "when the config is deeply frozen", if: defined?(Ractor) do
+      before { Ractor.make_shareable(config) }
+
+      it "returns the HashAccessConfig object" do
+        expect(config.hash_access).to be_a Serega::SeregaConfig::HashAccessConfig
+      end
+    end
+
     it "returns the same memoized HashAccessConfig object" do
       first = config.hash_access
       second = config.hash_access

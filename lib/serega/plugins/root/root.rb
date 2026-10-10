@@ -197,6 +197,12 @@ class Serega
           @plugin_configs[:root] ||= RootConfig.new(opts.fetch(:root))
         end
 
+        # Builds the root config before freezing
+        def freeze
+          root
+          super
+        end
+
         # Set root for one-object and many-objects serialization types
         #
         # @param value [Hash]

@@ -214,6 +214,17 @@ class Serega
           end
       end
 
+      #
+      # Builds lazy config objects before freezing, thus a frozen config
+      # returns them
+      #
+      # @return [SeregaConfig] frozen config
+      #
+      def freeze
+        hash_access
+        super
+      end
+
       # Returns the hash_access config object
       # @return [Serega::SeregaConfig::HashAccessConfig] hash_access config object
       def hash_access

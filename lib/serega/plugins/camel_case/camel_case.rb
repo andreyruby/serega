@@ -103,6 +103,12 @@ class Serega
         def camel_case
           @plugin_configs[:camel_case] ||= CamelCaseConfig.new(opts.fetch(:camel_case))
         end
+
+        # Builds the camel_case config before freezing
+        def freeze
+          camel_case
+          super
+        end
       end
 
       #

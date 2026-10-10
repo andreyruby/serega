@@ -133,6 +133,12 @@ class Serega
         def metadata
           @plugin_configs[:metadata] ||= MetadataConfig.new(opts.fetch(:metadata))
         end
+
+        # Builds the metadata config before freezing
+        def freeze
+          metadata
+          super
+        end
       end
 
       #
