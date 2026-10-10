@@ -24,8 +24,7 @@ class Serega
           # @return [void]
           #
           def call(name)
-            name = SeregaUtils::SymbolName.call(name)
-            raise SeregaError, message(name) unless FORMAT.match?(name)
+            raise SeregaError, message(name.to_s) unless FORMAT.match?(name)
           end
 
           private
