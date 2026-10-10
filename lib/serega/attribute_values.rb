@@ -10,8 +10,11 @@ class Serega
   # `CONSTANTS` and `DEFAULTS` hold the `:const` and `:default` values of the
   # attributes, by attribute name.
   #
-  # Each method name is `read_` and the attribute name, thus attribute names
-  # do not clash with methods of Object.
+  # Each method name is `read_` and the attribute name with `_` in place of
+  # other characters than letters, digits and `_`, for example
+  # `read_first_name` for `first-name`. A name of another attribute gets a
+  # number: `read_first_name_2`. Thus attribute names do not clash with
+  # methods of Object, and generated code calls the methods directly.
   #
   # @private
   class SeregaAttributeValues
@@ -21,11 +24,15 @@ class Serega
     # `:default` values by attribute name
     DEFAULTS = {}
 
+    # Method names by attribute name
+    METHOD_NAMES = {}
+
     # Gives each subclass its own values
     def self.inherited(subclass)
       super
       subclass.const_set(:CONSTANTS, {})
       subclass.const_set(:DEFAULTS, {})
+      subclass.const_set(:METHOD_NAMES, {})
     end
   end
 end

@@ -201,16 +201,30 @@ class Serega
         values_class::DEFAULTS[name] = @default unless @default.nil?
 
         file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
-        method_name = :"read_#{name}"
-        method_code =
-          if SeregaResultCode::PLAIN_METHOD_NAME.match?(method_name)
-            "def #{method_name}(source) = #{code}"
-          else
-            "define_method(#{method_name.inspect}) { |source| #{code} }"
-          end
-
+        method_name = value_method_name(values_class)
+        method_code = "def #{method_name}(source) = #{code}"
         values_class.class_eval(method_code, file, line.to_i)
         method_name
+      end
+
+      # Plain method name of the attribute, for example `read_first_name` for
+      # `first-name`. The name keeps a final `?` or `!`. A name taken by
+      # another attribute gets a number, for example `read_first_name_2`. The
+      # same attribute keeps its name.
+      def value_method_name(values_class)
+        method_names = values_class::METHOD_NAMES
+        method_name = method_names[name]
+        return method_name if method_name
+
+        base, mark = name.to_s.match(/\A(.*?)([?!]?)\z/).captures
+        base = "read_#{base.gsub(/\W/, "_")}"
+        method_name = :"#{base}#{mark}"
+        number = 1
+        while method_names.value?(method_name)
+          number += 1
+          method_name = :"#{base}_#{number}#{mark}"
+        end
+        method_names[name] = method_name
       end
 
       def set_normalized_vars(normalizer)
