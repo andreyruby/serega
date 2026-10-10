@@ -267,7 +267,7 @@ For unconditional hiding, prefer `hide: true` — see
 
 ```ruby
 class AppSerializer < Serega
-  formatter :iso8601, ->(time) { time.iso8601(3) }
+  formatter :iso8601, [:iso8601, 3], allow_nil: true # value&.iso8601(3)
   formatter :yes_no, ->(value) { value ? 'yes' : 'no' }
   formatter(:money) { |value, ctx| "$#{value / (10 ** ctx[:digits])}" }
 end
@@ -275,12 +275,13 @@ end
 class UserSerializer < AppSerializer
   attribute :balance, format: :money
   attribute :active, format: :yes_no
+  attribute :role, format: [:to_s]                 # inline: value.to_s
   attribute :score, format: proc { |v| "#{v}%" } # inline
 end
 
-UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, score: 87),
+UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, role: :admin, score: 87),
                     context: { digits: 2 })
-# => {balance: "$1000", active: "yes", score: "87%"}
+# => {balance: "$1000", active: "yes", role: "admin", score: "87%"}
 ```
 
 ---

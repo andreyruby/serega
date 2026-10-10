@@ -59,7 +59,7 @@ class Serega
       # @option opts [Boolean] :hide Specify `true` to not serialize this attribute by default
       # @option opts [Boolean] :many Specifies has_many relationship. By default is detected via object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)
       # @option opts [Proc, #call] :value Custom block or callable to find attribute value
-      # @option opts [Symbol, #call] :format Formatter name or callable that formats the value
+      # @option opts [Symbol, #call, Array, Hash] :format Formatter name or formatter that formats the value
       # @option opts [Serega, Proc] :serializer Relationship serializer class. Use `proc { MySerializer }` if serializers have cross references
       # @param block [Proc] Defines attributes of a nested anonymous serializer
       # @param location [String, nil] Where the attribute is defined, "path:line"
@@ -135,7 +135,7 @@ class Serega
       #
       # Ruby code of the SeregaAttributeValues method that reads the attribute
       # value of the source. `:const` and `:default` values and formatters
-      # come from the `CONSTANTS`, `DEFAULTS` and `FORMATTERS` of
+      # come from the `CONSTANTS`, `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` of
       # SeregaAttributeValues.
       #
       # @param source_variable [String] Name of the source variable in the code
@@ -158,7 +158,7 @@ class Serega
         return unless code
 
         code = "(value = #{code}).nil? ? DEFAULTS[#{name.inspect}] : value" unless @default.nil?
-        @formatter ? @formatter.code(code, "FORMATTERS[#{name.inspect}]") : code
+        @formatter ? @formatter.code(code, "FORMATTERS[#{name.inspect}]", "FORMATTER_ARGS[#{name.inspect}]") : code
       end
 
       #
@@ -196,7 +196,8 @@ class Serega
         values_class = serializer_class::SeregaAttributeValues
         values_class::CONSTANTS[name] = @value_block.call if @value_block.is_a?(AttributeValueResolvers::Const)
         values_class::DEFAULTS[name] = @default unless @default.nil?
-        values_class::FORMATTERS[name] = @formatter.callable if @formatter
+        values_class::FORMATTERS[name] = @formatter.callable if @formatter&.callable
+        values_class::FORMATTER_ARGS[name] = @formatter.args if @formatter&.args
 
         file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
         method_name = value_method_name(values_class)

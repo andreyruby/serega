@@ -30,7 +30,7 @@ class Serega
             if formatter.is_a?(Symbol)
               check_formatter_defined(serializer_class, formatter)
             else
-              CheckFormatter.call(:format, formatter)
+              CheckFormatter.call(nil, formatter)
             end
           end
 

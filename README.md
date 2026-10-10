@@ -524,32 +524,56 @@ The `:hide` option hides an attribute without conditions. Look at
 
 The `:format` attribute option changes the attribute value with a formatter.
 Define named formatters with `formatter`, then give the `:format` option a
-formatter name or a callable. Child serializers get the formatters of their
-parent.
+formatter name. Child serializers get the formatters of their parent.
 
-A formatter receives the value, and the context as a second parameter or as
-the `:ctx` keyword. A `:default` value is formatted too.
+A formatter is one of:
+
+- a method name, called on the value: `:to_s` calls `value.to_s`;
+- an Array of a method name and its arguments: `[:iso8601, 3]` calls
+  `value.iso8601(3)`;
+- a callable that receives the value, and the context as a second parameter
+  or as the `:ctx` keyword. `formatter` also accepts it as a block.
+
+By default a formatter formats `nil` values too: a callable receives `nil`,
+and a method is called on `nil`. With the `allow_nil: true` option of
+`formatter` a `nil` value stays `nil`. A `:default` value is formatted.
+
+The `:format` option also accepts a formatter directly, except a method name
+alone: a Symbol is the name of a defined formatter. Give the `:allow_nil`
+option inline with a Hash: `format: {use: [:round, 2], allow_nil: true}`.
 
 ```ruby
 class AppSerializer < Serega
-  formatter :iso8601, ->(value) { value.iso8601 }
+  formatter :string, :to_s
+  formatter :iso8601, [:iso8601, 3], allow_nil: true
   formatter :on_off, ->(value) { value ? 'ON' : 'OFF' }
+  formatter :money, ->(value, ctx) { value.round(ctx[:digits]) } # value and context
+  formatter(:price) { |cents, ctx:| "#{cents / 100.0} #{ctx[:currency]}" } # :ctx keyword
   formatter :date, DateTypeFormatter # callable
-  formatter(:money) { |value, ctx| value.round(ctx[:digits]) }
 end
 
 class UserSerializer < AppSerializer
   # Using a formatter name
+  attribute :role, format: :string
   attribute :commission, format: :money
+  attribute :price, format: :price
   attribute :is_logged_in, format: :on_off
   attribute :created_at, format: :iso8601
   attribute :updated_at, format: :iso8601
 
-  # Using a callable
+  # Using a formatter directly
+  attribute :rating, format: [:round, 1]
+  attribute :nickname, format: {use: :upcase, allow_nil: true}
   attribute :score_percent, format: PercentFormatter # callable class
   attribute :score_percent, format: proc { |percent| "#{percent.round(2)}%" }
+  attribute :discount, format: {use: ->(value, ctx) { value.round(ctx[:digits]) }, allow_nil: true}
 end
+
+UserSerializer.to_h(user, context: {digits: 2, currency: "EUR"})
 ```
+
+A method formatter is called directly in the generated code, which is the
+fastest way to format a value. Its arguments can be any objects.
 
 ### Batch Loading
 

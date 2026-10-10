@@ -8,7 +8,8 @@ class Serega
   # error points to the attribute.
   #
   # `CONSTANTS` and `DEFAULTS` hold the `:const` and `:default` values of the
-  # attributes, and `FORMATTERS` the formatter callables, by attribute name.
+  # attributes, `FORMATTERS` the formatter callables and `FORMATTER_ARGS` the
+  # arguments of method formatters, by attribute name.
   #
   # Each method name is `read_` and the attribute name with `_` in place of
   # other characters than letters, digits and `_`, for example
@@ -27,6 +28,9 @@ class Serega
     # Formatter callables by attribute name
     FORMATTERS = {}
 
+    # Arguments of method formatters by attribute name
+    FORMATTER_ARGS = {}
+
     # Method names by attribute name
     METHOD_NAMES = {}
 
@@ -36,6 +40,7 @@ class Serega
       subclass.const_set(:CONSTANTS, {})
       subclass.const_set(:DEFAULTS, {})
       subclass.const_set(:FORMATTERS, {})
+      subclass.const_set(:FORMATTER_ARGS, {})
       subclass.const_set(:METHOD_NAMES, {})
     end
   end

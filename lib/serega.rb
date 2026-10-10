@@ -279,32 +279,37 @@ class Serega
     end
 
     #
-    # Defines a named formatter for the attribute :format option. The
-    # formatter receives the value, and the context as a second parameter or
-    # as the :ctx keyword.
+    # Defines a named formatter for the attribute :format option. A formatter
+    # is a method name called on the value, an Array of a method name and its
+    # arguments, or a callable that receives the value, and the context as a
+    # second parameter or as the :ctx keyword.
     #
     # @example
+    #   formatter :string, :to_s
+    #   formatter :iso8601, [:iso8601, 3], allow_nil: true
     #   formatter :money, ->(cents) { cents / 100.0 }
     #
-    #   attribute :balance, format: :money
+    #   attribute :created_at, format: :iso8601
     #
     # @example with block
     #   formatter(:money) { |cents, ctx| (cents / 100.0).round(ctx[:digits]) }
     #
     # @param name [Symbol] Formatter name
-    # @param value [#call] Formatter
+    # @param value [#call, Symbol, Array] Formatter
+    # @param allow_nil [Boolean] Keeps nil values without formatting them
     # @param block [Proc] Formatter
     #
     # @return [SeregaFormatter] Formatter
     #
-    def formatter(name, value = nil, &block)
+    def formatter(name, value = nil, allow_nil: false, &block)
       check_unlocked
       raise SeregaError, "Formatter name must be a Symbol" unless name.is_a?(Symbol)
-      raise SeregaError, "Formatter must be defined with a callable value or block" if (value && block) || (!value && !block)
+      raise SeregaError, "Formatter must be defined with a value or a block" if (value && block) || (!value && !block)
+      raise SeregaError, "Invalid option :allow_nil => #{allow_nil.inspect}. Must have a boolean value" unless allow_nil == true || allow_nil == false
 
       value ||= block
       SeregaValidations::CheckFormatter.call(name, value)
-      formatters[name] = SeregaFormatter.new(value)
+      formatters[name] = SeregaFormatter.new({use: value, allow_nil: allow_nil})
     end
 
     #
