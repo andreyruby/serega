@@ -61,6 +61,70 @@ RSpec.describe Serega::SeregaResultBuilder do
     end
   end
 
+  describe ".new" do
+    subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
+
+    let(:serializer) do
+      attribute_name = name
+      Class.new(Serega) do
+        config.check_attribute_name = false
+        attribute :title, const: "Hello"
+        attribute attribute_name, const: "Ann"
+      end
+    end
+
+    let(:location) { serializer.attributes[name].location }
+
+    context "with an attribute named initialize in the :struct mode" do
+      let(:name) { :initialize }
+      let(:mode) { :struct }
+
+      it "raises an error" do
+        expect { result_builder }.to raise_error Serega::SeregaError,
+          "Struct and Data can not have a member named initialize\n(when serializing the 'initialize' attribute in #{serializer}, #{location})"
+      end
+    end
+
+    context "with an attribute named initialize in the :data mode" do
+      let(:name) { :initialize }
+      let(:mode) { :data }
+
+      it "raises an error" do
+        expect { result_builder }.to raise_error Serega::SeregaError,
+          "Struct and Data can not have a member named initialize\n(when serializing the 'initialize' attribute in #{serializer}, #{location})"
+      end
+    end
+
+    context "with an attribute name ending with = in the :data mode" do
+      let(:name) { :name= }
+      let(:mode) { :data }
+
+      it "raises an error with the reason from Ruby" do
+        expect { result_builder }.to raise_error Serega::SeregaError,
+          "invalid data member: name=\n(when serializing the 'name=' attribute in #{serializer}, #{location})"
+      end
+    end
+
+    context "with an attribute name ending with = in the :struct mode", if: RUBY_ENGINE == "ruby" do
+      let(:name) { :name= }
+      let(:mode) { :struct }
+
+      it "raises an error with the reason from Ruby" do
+        expect { result_builder }.to raise_error Serega::SeregaError,
+          "invalid struct member: name=\n(when serializing the 'name=' attribute in #{serializer}, #{location})"
+      end
+    end
+
+    context "with an operator attribute name in the :data mode" do
+      let(:name) { :+ }
+      let(:mode) { :data }
+
+      it "builds Data objects" do
+        expect(result_builder.call([nil], {}, nil, nil).map(&:to_h)).to eq [{title: "Hello", "+": "Ann"}]
+      end
+    end
+  end
+
   describe "#call" do
     subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
 

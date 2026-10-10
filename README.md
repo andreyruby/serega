@@ -314,6 +314,11 @@ result.username # => "serega"
 UserSerializer.to_struct([user]) # => [#<struct username="serega">]
 ```
 
+`.to_struct` and `.to_data` raise `Serega::SeregaError` for an attribute named
+`initialize`, and for an attribute name that Ruby does not accept as a `Struct`
+or `Data` member, for example `name=`. A member named like another method of
+`Struct` or `Data`, for example `hash`, replaces this method in the result.
+
 If serialized fields are constant, then it's a good idea to initiate the
 serializer and reuse it.
 It will be a bit faster (the serialization plan will be prepared only once).

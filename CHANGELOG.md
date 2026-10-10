@@ -12,6 +12,8 @@
   attributes. See "Conditional Attributes" in the README.
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
   objects. See "Serializing" in the README.
+- `.to_struct` and `.to_data` raise `Serega::SeregaError` for attribute names
+  that can not be `Struct` or `Data` members. See "Serializing" in the README.
 - **BREAKING**: Serializers are locked once they serialize something. Changing
   a locked serializer raises an error. See "Define serializers" in the README.
 - Faster serialization.
