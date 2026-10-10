@@ -82,6 +82,16 @@ RSpec.describe Serega::SeregaSourceGroup do
       end
     end
 
+    context "when the method of a relation raises an error" do
+      let(:user1) { Struct.new(:name).new("Ann") }
+
+      it "starts the backtrace at the line of the attribute" do
+        location = user_serializer.attributes[:posts].location
+
+        expect { discover }.to raise_error(NoMethodError) { |error| expect(error.backtrace.first).to start_with("#{location}:") }
+      end
+    end
+
     context "with preloads" do
       let(:preload_handler) { double(call: nil) }
 

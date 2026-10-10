@@ -57,6 +57,7 @@ class Serega
         @child_groups = nil
         @serialized = nil
         @loaded_batches = nil
+        @attribute_values = nil
       end
 
       # Runs the preloads, and makes one child group per relation point.
@@ -139,15 +140,27 @@ class Serega
         SeregaUtils::SerializedAttributeError.call(error, point)
       end
 
+      # SeregaAttributeValues of the serializer: the methods that read
+      # attribute values with plain Ruby code
+      def attribute_values
+        @attribute_values ||= self.class.serializer_class::SeregaAttributeValues.new
+      end
+
       # Reads the relation source of every source: what the relation
       # attribute returns, for example `user.posts`.
       #
       # @return [Array] Relation source of each source
       def read_relation_sources(point, batches)
         attribute = point.attribute
+        value_method = attribute.value_method
         context = @context
 
-        @sources.map { |source| attribute.value(source, context, batches: batches) }
+        if value_method
+          values = attribute_values
+          @sources.map { |source| values.__send__(value_method, source) }
+        else
+          @sources.map { |source| attribute.value(source, context, batches: batches) }
+        end
       rescue => error
         SeregaUtils::SerializedAttributeError.call(error, point)
       end
@@ -158,6 +171,8 @@ class Serega
       # @return [Array] Relation source or SKIP of each source
       def read_conditional_relation_sources(point, batches)
         attribute = point.attribute
+        value_method = attribute.value_method
+        values = attribute_values if value_method
         conditions = attribute.conditions
         context = @context
 
@@ -165,7 +180,7 @@ class Serega
           next SeregaEngine::SKIP unless conditions.satisfy?(source, context)
 
           begin
-            attribute.value(source, context, batches: batches)
+            value_method ? values.__send__(value_method, source) : attribute.value(source, context, batches: batches)
           rescue => error
             SeregaUtils::SerializedAttributeError.call(error, point)
           end
