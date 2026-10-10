@@ -129,6 +129,25 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
       end
     end
 
+    context "with :metadata plugin and a meta attribute that returns a Hash" do
+      let(:opts) { {meta: {paging: {per_page: 3}}} }
+      let(:paging) { {page: 2} }
+
+      let(:serializer) do
+        paging_value = paging
+        Class.new(Serega) do
+          plugin :root
+          plugin :metadata
+          meta_attribute(:paging) { paging_value }
+        end
+      end
+
+      it "merges context metadata without changing the returned Hash" do
+        expect(response).to eq(data: {first_name: "FIRST_NAME"}, paging: {page: 2, per_page: 3})
+        expect(paging).to eq(page: 2)
+      end
+    end
+
     context "when root is nil" do
       before do
         user_serializer.config.root = {one: nil, many: nil}
