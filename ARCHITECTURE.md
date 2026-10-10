@@ -55,11 +55,12 @@ UserSerializer.to_h(object, opts)
 ├─ serializer = UserSerializer.new(modifiers)
 │  └─ plan = plan_cache.fetch(only, with, except)         stage 2, cached plan or a new one
 │
-└─ serializer.to_h(object, serialization options)
-   ├─ normalize_serialization_opts                        validates the options, sets opts[:context]
+└─ serializer.to_h(object, serialization options)       serialize_to(:hash, object, opts)
+   ├─ normalize_serialization_opts                        validates the options, or returns the frozen empty Hash
+   ├─ context = opts[:context], or an empty Hash
    ├─ prepare_objects                                     calls the prepare_initial_objects handler
-   ├─ prepare_initial_serialization_opts                  sets opts[:mode] (:hash) and opts[:many]
-   └─ serialize                                           patched by :root, :metadata, :context_metadata
+   ├─ many = opts[:many], or detected from the object
+   └─ serialize(object, opts, context:, many:, mode:)     patched by :root, :metadata, :context_metadata
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ root_group = root_source_group(plan, object, many)
          │  ├─ sources = []
