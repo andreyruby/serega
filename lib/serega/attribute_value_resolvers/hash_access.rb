@@ -53,10 +53,21 @@ class Serega
 
         object.fetch(@key) do
           default = object[@key]
-          next default unless default.nil?
-
-          raise KeyError.new("key not found: #{@key.inspect}", key: @key, receiver: object)
+          default.nil? ? object.fetch(@key) : default
         end
+      end
+
+      #
+      # Ruby code that reads the key, the same way as #call
+      #
+      # @param source_variable [String] Name of the source variable in the code
+      # @return [String] Code
+      #
+      def code(source_variable)
+        key = @key.is_a?(String) ? "#{@key.inspect}.freeze" : @key.inspect
+        return "#{source_variable}[#{key}]" if @allow_missing_key
+
+        "#{source_variable}.fetch(#{key}) { (found = #{source_variable}[#{key}]).nil? ? #{source_variable}.fetch(#{key}) : found }"
       end
     end
 
@@ -78,6 +89,20 @@ class Serega
       #
       def call(object)
         @final_step.call(@to_step.call(object))
+      end
+
+      #
+      # Ruby code that delegates the value reading, the same way as #call
+      #
+      # @param source_variable [String] Name of the source variable in the code
+      # @return [String, nil] Code, or nil when a step has no code
+      #
+      def code(source_variable)
+        to_code = @to_step.code(source_variable)
+        final_code = @final_step.code("intermediate")
+        return unless to_code && final_code
+
+        "(intermediate = #{to_code}; #{final_code})"
       end
     end
 
@@ -103,6 +128,20 @@ class Serega
         return if intermediate.nil?
 
         @final_step.call(intermediate)
+      end
+
+      #
+      # Ruby code that delegates the value reading, the same way as #call
+      #
+      # @param source_variable [String] Name of the source variable in the code
+      # @return [String, nil] Code, or nil when a step has no code
+      #
+      def code(source_variable)
+        to_code = @to_step.code(source_variable)
+        final_code = @final_step.code("intermediate")
+        return unless to_code && final_code
+
+        "((intermediate = #{to_code}).nil? ? nil : #{final_code})"
       end
     end
   end
