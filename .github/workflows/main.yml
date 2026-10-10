@@ -63,7 +63,7 @@ jobs:
             activerecord: "8.1"
           - ruby: "3.3"
             activerecord: "8.0"
-          - ruby: "3.2"
+          - ruby: "3.3"
             activerecord: "7.2"
           - ruby: "truffleruby-33.0.1"
             activerecord: "8.1"
