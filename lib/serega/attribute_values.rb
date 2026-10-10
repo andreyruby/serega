@@ -3,18 +3,18 @@
 class Serega
   #
   # One generated method per attribute that is read with plain Ruby code,
-  # for example `def full_name(source) = source.full_name`. Each method is
+  # for example `def read_full_name(source) = source.full_name`. Each method is
   # defined with the file and line of its attribute, thus a backtrace of an
   # error points to the attribute.
   #
   # `CONSTANTS` and `DEFAULTS` hold the `:const` and `:default` values of the
   # attributes, by attribute name.
   #
-  # The class inherits from BasicObject, thus attribute names do not clash
-  # with methods of Object.
+  # Each method name is `read_` and the attribute name, thus attribute names
+  # do not clash with methods of Object.
   #
   # @private
-  class SeregaAttributeValues < BasicObject
+  class SeregaAttributeValues
     # `:const` values by attribute name
     CONSTANTS = {}
 

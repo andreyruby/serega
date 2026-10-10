@@ -6,7 +6,7 @@ class Serega
   # plan in one serialization mode. The method reads all values of a source,
   # then makes its serialized object in one step: a Hash literal,
   # `Struct.new` or `Data.new`. Simple attributes are read with their
-  # SeregaAttributeValues method, for example `attribute_values.name(source)`.
+  # SeregaAttributeValues method, for example `attribute_values.read_name(source)`.
   #
   # Generated code for a plan with `attribute :id` and
   # `attribute :posts, serializer: PostSerializer` in the :hash mode:
@@ -26,7 +26,7 @@ class Serega
   #       source = sources[source_index]
   #       value_0 =
   #         begin
-  #           attribute_values.id(source)
+  #           attribute_values.read_id(source)
   #         rescue => error
   #           Serega::SeregaUtils::SerializedAttributeError.call(error, point_0)
   #         end
