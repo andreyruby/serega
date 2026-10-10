@@ -143,9 +143,8 @@ class Serega
 
         value_method = point.attribute.value_method
         return "attribute_#{index}.value(source, context, batches: batches_#{index})" unless value_method
-        return "attribute_values.#{value_method}(source)" if PLAIN_METHOD_NAME.match?(value_method)
 
-        "attribute_values.__send__(#{value_method.inspect}, source)"
+        "attribute_values.#{value_method}(source)"
       end
 
       # Code that builds the serialized object of the source

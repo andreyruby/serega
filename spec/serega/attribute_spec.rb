@@ -209,10 +209,47 @@ RSpec.describe Serega::SeregaAttribute do
       let(:name) { :"first-name" }
       let(:opts) { {method: :first_name} }
 
-      it "defines a method with this name" do
+      it "returns the name with _ in place of other characters" do
+        expect(attribute.value_method).to eq :read_first_name
+      end
+    end
+
+    context "with a name ending with a question mark" do
+      before { serializer_class.config.check_attribute_name = false }
+
+      let(:name) { :admin? }
+      let(:opts) { {const: true} }
+
+      it "keeps the question mark" do
+        expect(attribute.value_method).to eq :read_admin?
+      end
+    end
+
+    context "when another attribute has the same method name" do
+      before { serializer_class.attribute :first_name }
+
+      let(:name) { :"first-name" }
+      let(:opts) { {method: :first_name} }
+
+      it "returns the name with a number" do
+        expect(attribute.value_method).to eq :read_first_name_2
+      end
+
+      it "defines a method for each attribute" do
         attribute
 
-        expect(serializer_class::SeregaAttributeValues.new.__send__(:"read_first-name", user)).to eq "Bob"
+        values = serializer_class::SeregaAttributeValues.new
+        expect([values.read_first_name(user), values.read_first_name_2(user)]).to eq %w[Bob Bob]
+      end
+    end
+
+    context "when the attribute is defined again" do
+      before { serializer_class.attribute :full_name }
+
+      let(:opts) { {const: "Ann"} }
+
+      it "keeps the method name" do
+        expect(attribute.value_method).to eq :read_full_name
       end
     end
 
