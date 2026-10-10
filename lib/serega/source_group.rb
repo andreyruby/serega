@@ -122,7 +122,8 @@ class Serega
       end
 
       # Loads the batch loaders of the point, each once for all sources of
-      # the group.
+      # the group. An attribute with an inline batch loader uses it, other
+      # attributes use the named batch loaders of the serializer.
       #
       # @return [Hash, nil] Loaded values per loader name, or nil when the
       #   point has no batch loaders
@@ -130,10 +131,11 @@ class Serega
         names = point.batch_loaders
         return if names.empty?
 
+        inline_loader = point.attribute.inline_batch_loader
         loaders = self.class.serializer_class.batch_loaders
         loaded_batches = (@loaded_batches ||= {}.compare_by_identity)
         names.to_h do |name|
-          loader = loaders[name]
+          loader = inline_loader || loaders[name]
           [name, loaded_batches[loader] ||= loader.load(@sources, @context)]
         end
       rescue => error

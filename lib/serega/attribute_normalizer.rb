@@ -130,6 +130,19 @@ class Serega
       end
 
       #
+      # Batch loader given directly as the :batch option. It is named after the
+      # attribute and belongs to the attribute only.
+      #
+      # @return [SeregaBatchLoader, nil] Batch loader, or nil without a callable :batch option
+      #
+      def inline_batch_loader
+        use = batch_option&.fetch(:use)
+        return unless use.respond_to?(:call)
+
+        self.class.serializer_class::SeregaBatchLoader.new(name: name, block: use)
+      end
+
+      #
       # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
       # condition calls the method of this name.
       #
@@ -291,34 +304,39 @@ class Serega
         AttributeValueResolvers::HashAccessKeyword.new(method_name, mode, allow_nil)
       end
 
+      # Reads the value from the loaded batch of the only batch loader
       def prepare_batch_loader_block
-        batch_opt = init_opts[:batch]
-        return unless batch_opt
+        batch = batch_option
+        return unless batch
 
-        AttributeValueResolvers::BatchResolver.get(self.class.serializer_class, name, batch_opt)
+        AttributeValueResolvers::Batch.new(batch_loaders.first, batch[:id])
       end
 
-      # Batch loader names whose loaded data this attribute's value needs. Only
-      # explicit `:batch` attributes have any — everything else resolves its value
-      # from the record itself, so the list is empty (no loader to run).
+      # Batch loader names whose loaded data this attribute's value needs. An
+      # attribute without the :batch option has none.
       def prepare_batch_loaders
-        batch_opt = init_opts[:batch]
-        return explicit_batch_loaders(batch_opt) if batch_opt
+        batch = batch_option
+        return FROZEN_EMPTY_ARRAY unless batch
 
-        FROZEN_EMPTY_ARRAY
+        use = batch[:use]
+        use.respond_to?(:call) ? [name] : Array(use).map(&:to_sym)
       end
 
-      def explicit_batch_loaders(batch_opt)
-        if batch_opt == true || batch_opt.respond_to?(:call)
-          [name]
-        elsif batch_opt.is_a?(Symbol)
-          [batch_opt]
-        elsif batch_opt.is_a?(String)
-          [batch_opt.to_sym]
-        else
-          use_opt = batch_opt.fetch(:use)
-          use_opt.respond_to?(:call) ? [name] : Array(use_opt).map(&:to_sym)
-        end
+      # The :batch option as `{use:, id:}`. `true` and a Hash without :use use
+      # the loader named after the attribute.
+      def batch_option
+        return @batch_option if instance_variable_defined?(:@batch_option)
+
+        @batch_option = prepare_batch_option
+      end
+
+      def prepare_batch_option
+        batch = init_opts[:batch]
+        return unless batch
+
+        batch = {use: batch} unless batch.is_a?(Hash)
+        use = batch.fetch(:use, true)
+        {use: (use == true) ? name : use, id: batch[:id] || config.batch_id_option}
       end
 
       def prepare_default

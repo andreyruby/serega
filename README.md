@@ -622,6 +622,16 @@ class UserSerializer < Serega
 end
 ```
 
+A loader given directly belongs to its attribute. It does not replace a named
+loader with the same name, and the `:value` option finds its batch under the
+attribute name:
+
+```ruby
+attribute :followers_count,
+  batch: ->(users) { Follow.where(user: users).group(:user_id).count },
+  value: proc { |user, batches:| batches[:followers_count].fetch(user.id, 0) }
+```
+
 #### Using Multiple Loaders in Same Attribute
 
 Custom loaders can be provided directly using the `:use` option with any callable object:

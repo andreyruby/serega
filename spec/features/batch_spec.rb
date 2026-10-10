@@ -124,6 +124,55 @@ RSpec.describe Serega do
       end
     end
 
+    context "with an inline batch loader and a named batch loader of the same name" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          batch(:rating) { |users| users.to_h { |user| [user.id, :named] } }
+          attribute :rating, batch: ->(users) { users.to_h { |user| [user.id, :inline] } }
+          attribute :score, batch: :rating
+        end
+      end
+
+      let(:user) { double(id: 1) }
+
+      it "keeps the named batch loader for other attributes" do
+        expect(user_serializer.to_h(user)).to eq(rating: :inline, score: :named)
+        expect(user_serializer.batch_loaders[:rating].block).not_to eq user_serializer.attributes[:rating].inline_batch_loader.block
+      end
+    end
+
+    context "with an inline batch loader and a :value option" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :rating,
+            batch: ->(users) { users.to_h { |user| [user.id, 5] } },
+            value: proc { |user, batches:| batches[:rating][user.id] * 2 }
+        end
+      end
+
+      let(:user) { double(id: 1) }
+
+      it "passes the loaded batch to the :value option" do
+        expect(user_serializer.to_h(user)).to eq(rating: 10)
+      end
+    end
+
+    context "with a child serializer of a serializer with an inline batch loader" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :rating, batch: ->(users) { users.to_h { |user| [user.id, 5] } }
+        end
+      end
+
+      let(:child_serializer) { Class.new(user_serializer) }
+      let(:user) { double(id: 1) }
+
+      it "serializes the attribute with the inline loader" do
+        expect(child_serializer.to_h(user)).to eq(rating: 5)
+        expect(child_serializer.batch_loaders).to be_empty
+      end
+    end
+
     context "with a child serializer of a serializer with a named batch loader" do
       subject(:result) { child_serializer.to_h(user) }
 

@@ -46,6 +46,11 @@
   See "Batch Loading" in the README.
 - Fix defining a child serializer of a serializer with an attribute that uses a
   named batch loader.
+- Fix a batch loader given directly to the `:batch` option replacing the named
+  batch loader with the same name. The loader belongs to its attribute. See
+  "Batch Loading" in the README.
+- Fix a batch loader given directly to the `:batch` option together with the
+  `:value` option.
 - Fix keyword arguments of methods called on presenters.
 - Fix presenter methods that call `super` being replaced by delegators after
   the first serialization.
