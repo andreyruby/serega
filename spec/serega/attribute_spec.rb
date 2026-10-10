@@ -45,7 +45,8 @@ RSpec.describe Serega::SeregaAttribute do
         value_block: nil,
         value_block_signature: nil,
         preloads: nil,
-        conditions: nil
+        conditions: nil,
+        formatter: nil
       )
 
       initials = {name: :name, opts: {}, block: nil, location: "app/serializers/user_serializer.rb:3"}
@@ -63,7 +64,8 @@ RSpec.describe Serega::SeregaAttribute do
           :@hide,
           :@serializer,
           :@preloads,
-          :@conditions
+          :@conditions,
+          :@formatter
         )
     end
   end
@@ -171,6 +173,15 @@ RSpec.describe Serega::SeregaAttribute do
         value = lambda { |obj| obj }
         attribute = attribute_class.new(name: :name, opts: {value: value, default: 42})
         expect(attribute.value(obj, ctx)).to eq 42
+      end
+    end
+
+    context "with the :format option" do
+      it "returns the formatted value" do
+        obj = double(balance: 1234)
+        format = lambda { |cents, ctx| "#{cents / 100.0} #{ctx[:currency]}" }
+        attribute = attribute_class.new(name: :balance, opts: {format: format})
+        expect(attribute.value(obj, {currency: "EUR"})).to eq "12.34 EUR"
       end
     end
 
@@ -353,6 +364,14 @@ RSpec.describe Serega::SeregaAttribute do
 
     context "with the :value option" do
       let(:opts) { {value: proc { |user| user.name }} }
+
+      it "returns nil" do
+        expect(code).to be_nil
+      end
+    end
+
+    context "with the :format option" do
+      let(:opts) { {format: proc { |name| name.upcase }} }
 
       it "returns nil" do
         expect(code).to be_nil

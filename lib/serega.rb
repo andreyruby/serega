@@ -36,6 +36,7 @@ require_relative "serega/attribute_value_resolvers/hash_access"
 require_relative "serega/attribute_value_resolvers/keyword"
 require_relative "serega/attribute_values"
 require_relative "serega/conditions"
+require_relative "serega/formatter"
 require_relative "serega/attribute"
 require_relative "serega/attribute_normalizer"
 require_relative "serega/engine/run"
@@ -52,6 +53,7 @@ require_relative "serega/validations/attribute/check_opt_hide"
 require_relative "serega/validations/attribute/check_opt_if"
 require_relative "serega/validations/attribute/check_opt_if_value"
 require_relative "serega/validations/attribute/check_opt_delegate"
+require_relative "serega/validations/attribute/check_opt_format"
 require_relative "serega/validations/attribute/check_opt_batch"
 require_relative "serega/validations/attribute/check_opt_hash_access"
 require_relative "serega/validations/attribute/check_opt_many"
@@ -64,6 +66,7 @@ require_relative "serega/validations/attribute/check_opt_value"
 require_relative "serega/validations/initiate/check_modifiers"
 require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
+require_relative "serega/validations/check_formatter"
 require_relative "serega/validations/check_serialize_params"
 
 require_relative "serega/batch_loader"
@@ -81,6 +84,7 @@ class Serega
   @config = SeregaConfig.new
   @attributes = {}
   @batch_loaders = {}
+  @formatters = {}
   @presenter_class = nil
   @presenter_blocks = []
 
@@ -181,6 +185,16 @@ class Serega
     end
 
     #
+    # Lists defined formatters
+    #
+    # @return [Hash<Symbol, SeregaFormatter>] Formatters by name
+    #
+    # @private
+    def formatters
+      @formatters
+    end
+
+    #
     # Cached serialization plans
     #
     # @return [SeregaPlanCache] Serialization plans cache
@@ -262,6 +276,35 @@ class Serega
 
       batch_loader = self::SeregaBatchLoader.new(name: name, block: value || block)
       batch_loaders[batch_loader.name] = batch_loader
+    end
+
+    #
+    # Defines a named formatter for the attribute :format option. The
+    # formatter receives the value, and the context as a second parameter or
+    # as the :ctx keyword.
+    #
+    # @example
+    #   formatter :money, ->(cents) { cents / 100.0 }
+    #
+    #   attribute :balance, format: :money
+    #
+    # @example with block
+    #   formatter(:money) { |cents, ctx| (cents / 100.0).round(ctx[:digits]) }
+    #
+    # @param name [Symbol] Formatter name
+    # @param value [#call] Formatter
+    # @param block [Proc] Formatter
+    #
+    # @return [SeregaFormatter] Formatter
+    #
+    def formatter(name, value = nil, &block)
+      check_unlocked
+      raise SeregaError, "Formatter name must be a Symbol" unless name.is_a?(Symbol)
+      raise SeregaError, "Formatter must be defined with a callable value or block" if (value && block) || (!value && !block)
+
+      value ||= block
+      SeregaValidations::CheckFormatter.call(name, value)
+      formatters[name] = SeregaFormatter.new(value)
     end
 
     #
@@ -484,6 +527,7 @@ class Serega
       subclass.instance_variable_set(:@config, subclass::SeregaConfig.new(config.opts))
       subclass.instance_variable_set(:@attributes, {})
       subclass.instance_variable_set(:@batch_loaders, {})
+      subclass.instance_variable_set(:@formatters, formatters.dup)
       subclass.instance_variable_set(:@presenter_class, nil)
       subclass.instance_variable_set(:@presenter_blocks, [])
       subclass.instance_variable_set(:@preload_with, nil)

@@ -23,9 +23,8 @@ It has some great features:
 - Built-in object presenter ([presenter][presenter])
 - Adding custom metadata (via [metadata][metadata] or
   [context_metadata][context_metadata] plugins)
-- Value formatters ([formatters][formatters] plugin) helps to transform
-  time, date, money, percentage, and any other values in the same way
-  keeping the code dry
+- Built-in [value formatters][formatters] transform time, date, money,
+  percentage, and any other values in the same way, keeping the code dry
 - Built-in [conditional attributes](#conditional-attributes)
 - Auto camelCase keys - [camel_case][camel_case] plugin
 - Serializing Hash records - [hash_access][hash_access] attribute option
@@ -43,6 +42,7 @@ It has some great features:
    - [Selecting Fields](#selecting-fields)
    - [Using Context](#using-context)
    - [Conditional Attributes](#conditional-attributes)
+   - [Formatting Values](#formatting-values)
    - [Batch Loading](#batch-loading)
    - [Prepare Initial Objects](#prepare-initial-objects)
 - [Configuration](#configuration)
@@ -56,7 +56,6 @@ It has some great features:
    - [Plugin :root](#plugin-root)
    - [Plugin :metadata](#plugin-metadata)
    - [Plugin :context_metadata](#plugin-context_metadata)
-   - [Plugin :formatters](#plugin-formatters)
    - [Plugin :string_modifiers](#plugin-string_modifiers)
    - [Plugin :camel_case](#plugin-camel_case)
    - [Plugin :depth_limit](#plugin-depth_limit)
@@ -196,8 +195,8 @@ class UserSerializer < Serega
   attribute :email, if: proc { |user, ctx| user == ctx[:current_user] }
   attribute :email, if_value: :present?
 
-  # Option `:format` can be specified when enabled `:formatters` plugin
-  # It changes the attribute value
+  # Option `:format` changes the attribute value with a formatter.
+  # See more usage examples in the "Formatting Values" section.
   attribute :created_at, format: :iso_time
   attribute :updated_at, format: :iso_time
 
@@ -519,6 +518,37 @@ The `:hide` option hides an attribute without conditions. Look at
    attribute :email, unless_value: proc {|email, context| context[:show_emails]}
    attribute :email, unless_value: CustomPolicy.method(:hide_email?)
  end
+```
+
+### Formatting Values
+
+The `:format` attribute option changes the attribute value with a formatter.
+Define named formatters with `formatter`, then give the `:format` option a
+formatter name or a callable. Child serializers get the formatters of their
+parent.
+
+A formatter receives the value, and the context as a second parameter or as
+the `:ctx` keyword. A `:default` value is formatted too.
+
+```ruby
+class AppSerializer < Serega
+  formatter :iso8601, ->(value) { value.iso8601 }
+  formatter :on_off, ->(value) { value ? 'ON' : 'OFF' }
+  formatter :date, DateTypeFormatter # callable
+  formatter(:money) { |value, ctx| value.round(ctx[:digits]) }
+end
+
+class UserSerializer < AppSerializer
+  # Using a formatter name
+  attribute :commission, format: :money
+  attribute :is_logged_in, format: :on_off
+  attribute :created_at, format: :iso8601
+  attribute :updated_at, format: :iso8601
+
+  # Using a callable
+  attribute :score_percent, format: PercentFormatter # callable class
+  attribute :score_percent, format: proc { |percent| "#{percent.round(2)}%" }
+end
 ```
 
 ### Batch Loading
@@ -1156,45 +1186,6 @@ UserSerializer.to_h(nil, meta: { version: '1.0.1' })
 # => {:data=>nil, :version=>"1.0.1"}
 ```
 
-### Plugin :formatters
-
-Defines named value formatters once and applies them to any attribute.
-
-Use `config.formatters.add()` to register formatters. The `:format`
-attribute option then accepts a formatter name or a callable directly.
-
-Formatters receive up to 2 parameters: the value and the context.
-
-```ruby
-class AppSerializer < Serega
-  plugin :formatters, formatters: {
-    iso8601: ->(value) { value.iso8601 },
-    on_off: ->(value) { value ? 'ON' : 'OFF' },
-    money: ->(value) { value.round(2) },
-    date: DateTypeFormatter # callable
-  }
-end
-
-class UserSerializer < Serega
-  # Additionally we can add formatters via config in subclasses
-  config.formatters.add(
-    iso8601: ->(value) { value.iso8601 },
-    on_off: ->(value) { value ? 'ON' : 'OFF' },
-    money: ->(value) { value.round(2) }
-  )
-
-  # Using predefined formatter
-  attribute :commission, format: :money
-  attribute :is_logged_in, format: :on_off
-  attribute :created_at, format: :iso8601
-  attribute :updated_at, format: :iso8601
-
-  # Using `callable` formatter
-  attribute :score_percent, format: PercentFormatter # callable class
-  attribute :score_percent, format: proc { |percent| "#{percent.round(2)}%" }
-end
-```
-
 ### Plugin :string_modifiers
 
 Allows `:only`, `:except` and `:with` to be given as a single comma-separated
@@ -1346,7 +1337,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [camel_case]: #plugin-camel_case
 [context_metadata]: #plugin-context_metadata
 [depth_limit]: #plugin-depth_limit
-[formatters]: #plugin-formatters
+[formatters]: #formatting-values
 [hash_access]: #serializing-hash-records
 [metadata]: #plugin-metadata
 [preloads]: #preloads

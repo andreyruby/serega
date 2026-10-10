@@ -23,6 +23,38 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
+  describe "#formatter" do
+    subject(:formatter) { normalizer.new(name: :balance, opts: opts).formatter }
+
+    let(:money) { ->(cents) { cents / 100.0 } }
+
+    before { serializer_class.formatter(:money, money) }
+
+    context "without the :format option" do
+      let(:opts) { {} }
+
+      it "returns nil" do
+        expect(formatter).to be_nil
+      end
+    end
+
+    context "with a formatter name" do
+      let(:opts) { {format: :money} }
+
+      it "returns the added formatter" do
+        expect(formatter.call(1234, nil)).to eq 12.34
+      end
+    end
+
+    context "with a callable" do
+      let(:opts) { {format: ->(score) { "#{score}%" }} }
+
+      it "returns the callable formatter" do
+        expect(formatter.call(50, nil)).to eq "50%"
+      end
+    end
+  end
+
   describe "#many" do
     it "returns provided :many option" do
       expect(normalizer.new(opts: {many: true}).many).to be true

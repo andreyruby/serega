@@ -57,13 +57,13 @@ class Serega
 
         # Patched in:
         # - plugin :context_metadata (checks context metadata option which is :meta by default)
-        # - plugin :formatters (checks :format option)
         def check_opts
           Utils::CheckAllowedKeys.call(opts, allowed_opts_keys, :attribute)
 
           Attribute::CheckOptBaseSerializer.call(opts, block)
           Attribute::CheckOptConst.call(opts)
           Attribute::CheckOptDelegate.call(opts)
+          Attribute::CheckOptFormat.call(opts, self.class.serializer_class)
           Attribute::CheckOptHashAccess.call(opts)
           Attribute::CheckOptHide.call(opts)
           Attribute::CheckOptIf.call(opts)

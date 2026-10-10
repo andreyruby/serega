@@ -256,6 +256,7 @@ RSpec.describe Serega::SeregaConfig do
           const
           delegate
           default
+          format
           preload
           batch
           base_serializer

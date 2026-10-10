@@ -10,12 +10,8 @@ gemfile(true, quiet: true) do
 end
 
 class AppSerializer < Serega
-  plugin :formatters
-
-  config.formatters.add(
-    day: ->(value) { value.strftime("%Y-%m") },
-    bool: ->(value) { ![0, "", nil, "false"].include?(value) }
-  )
+  formatter :day, ->(value) { value.strftime("%Y-%m") }
+  formatter :bool, ->(value) { ![0, "", nil, "false"].include?(value) }
 end
 
 class Serializer < AppSerializer

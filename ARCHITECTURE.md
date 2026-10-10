@@ -25,10 +25,11 @@ Run          once per serialization      SeregaEngine::Run → SeregaSourceGroup
 
 ### 1. Definition
 
-`attribute`, `batch` and `plugin` calls on a serializer class make the definition:
+`attribute`, `batch`, `formatter` and `plugin` calls on a serializer class make the definition:
 
 - `SeregaAttribute` (`lib/serega/attribute.rb`): name, options and a value resolver from `lib/serega/attribute_value_resolvers/`. `#value(object, context, batches:)` reads the value of one object.
 - `SeregaConditions` (`lib/serega/conditions.rb`): the `:if`, `:unless`, `:if_value` and `:unless_value` conditions of one attribute. `SeregaAttribute#conditions` is nil for an attribute without conditions. `#satisfy?(object, context)` checks `:if` and `:unless`, `#satisfy_value?(value, context)` checks `:if_value` and `:unless_value`. Both methods are generated when the attribute is defined: one line of code at the file and line of the attribute, which calls the conditions directly, for example `def satisfy?(object, context) = (begin; object.active; rescue => error; ...; end)`. Thus the backtrace of a failing condition points to the attribute.
+- `SeregaFormatter` (`lib/serega/formatter.rb`): the formatter of the `:format` option. `formatter` builds one per named formatter, and the attributes that name it share it. `SeregaAttribute#value` formats the value with `#call(value, context)`. A formatted attribute has no `#value_code` and is read with `#value`.
 - `SeregaBatchLoader` (`lib/serega/batch_loader.rb`): a named block that loads values of many sources in one call.
 
 The first plan locks the class. Later definition calls raise.
@@ -225,7 +226,6 @@ Each serializer class gets subclasses of the internal classes in its `inherited`
 |---|---|---|
 | `:root` | `Serega#serialize` | wraps the serialized object(s): `{root => serialized}` |
 | `:metadata`, `:context_metadata` | `Serega#serialize` | add metadata keys next to the root key |
-| `:formatters` | `SeregaAttribute#value`, `#value_code` | formats the value after it is read; a formatted attribute is not read directly in generated code |
 | `:camel_case` | `SeregaAttributeNormalizer` | camelizes attribute names |
 | `:activerecord_preloads` | `preload_with` handler | runs `ActiveRecord::Associations::Preloader` in `SeregaSourceGroup#run_preloads` |
 | `:depth_limit` | `SeregaPlan#initialize` | raises when the plan is too deep |
