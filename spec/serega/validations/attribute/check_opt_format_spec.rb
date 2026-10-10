@@ -38,13 +38,13 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptFormat do
     end
   end
 
-  context "with a callable" do
-    let(:format) { ->(value) { "#{value}%" } }
+  context "with a formatter" do
+    let(:format) { [:round, 2] }
 
     it "checks the formatter" do
       check
 
-      expect(Serega::SeregaValidations::CheckFormatter).to have_received(:call).with(:format, format)
+      expect(Serega::SeregaValidations::CheckFormatter).to have_received(:call).with(nil, format)
     end
   end
 end

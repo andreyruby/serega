@@ -15,6 +15,13 @@
   it raises `Plugin 'formatters' does not exist`. Define named formatters with
   `formatter :money, ->(cents) { cents / 100.0 }` or with a block. See
   "Formatting Values" in the README.
+- Formatters can be a method name (`formatter :string, :to_s`), an Array of a
+  method name and its arguments (`formatter :iso8601, [:iso8601, 3]`), or a
+  callable that receives the value and the context (`->(cents, ctx) { ... }`
+  or `->(cents, ctx:) { ... }`). The `allow_nil: true` option keeps `nil`
+  values: `formatter :iso8601, [:iso8601, 3], allow_nil: true`, or inline
+  `format: {use: [:round, 2], allow_nil: true}`. See "Formatting Values" in
+  the README.
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
   objects. See "Serializing" in the README.
 - `.to_struct` and `.to_data` raise `Serega::SeregaError` for attribute names
