@@ -3,7 +3,7 @@
 RSpec.describe Serega::SeregaSourceGroup do
   subject(:source_group) { user_serializer::SeregaSourceGroup.new(run, plan, [user1, user2], pulls) }
 
-  let(:user_serializer) { Class.new(Serega) { attribute :name }.freeze }
+  let(:user_serializer) { Class.new(Serega) { attribute :name } }
   let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
   let(:run) { Serega::SeregaEngine::Run.new(mode: :hash, context: context) }
   let(:context) { {locale: :en} }
@@ -28,7 +28,6 @@ RSpec.describe Serega::SeregaSourceGroup do
           attribute :name
 
           presenter { def name = "Mr. #{super}" }
-          freeze
         end
       end
 
@@ -41,14 +40,13 @@ RSpec.describe Serega::SeregaSourceGroup do
   describe "#discover" do
     subject(:discover) { source_group.discover }
 
-    let(:post_serializer) { Class.new(Serega) { attribute :title }.freeze }
+    let(:post_serializer) { Class.new(Serega) { attribute :title } }
 
     let(:user_serializer) do
       child = post_serializer
       Class.new(Serega) do
         attribute :name
         attribute :posts, serializer: child
-        freeze
       end
     end
 
@@ -66,7 +64,7 @@ RSpec.describe Serega::SeregaSourceGroup do
     end
 
     context "without relations" do
-      let(:user_serializer) { Class.new(Serega) { attribute :name }.freeze }
+      let(:user_serializer) { Class.new(Serega) { attribute :name } }
 
       it "returns no child groups" do
         expect(discover).to eq []
@@ -75,7 +73,7 @@ RSpec.describe Serega::SeregaSourceGroup do
 
     context "when reading a relation raises an error" do
       let(:user_serializer) do
-        Class.new(Serega) { attribute :posts, serializer: Class.new(Serega).freeze, value: proc { raise "boom" } }.freeze
+        Class.new(Serega) { attribute :posts, serializer: Class.new(Serega), value: proc { raise "boom" } }
       end
 
       it "adds the attribute name and the serializer to the error message" do
@@ -102,7 +100,6 @@ RSpec.describe Serega::SeregaSourceGroup do
         Class.new(Serega) do
           attribute :name, preload: :profile
           preload_with handler
-          freeze
         end
       end
 
@@ -122,7 +119,6 @@ RSpec.describe Serega::SeregaSourceGroup do
           attribute :name, preload: :profile
           preload_with handler
           presenter {}
-          freeze
         end
       end
 
@@ -134,7 +130,7 @@ RSpec.describe Serega::SeregaSourceGroup do
     end
 
     context "with preloads and no preload handler" do
-      let(:user_serializer) { Class.new(Serega) { attribute :name, preload: :profile }.freeze }
+      let(:user_serializer) { Class.new(Serega) { attribute :name, preload: :profile } }
 
       it "raises an error" do
         expect { discover }
@@ -147,7 +143,6 @@ RSpec.describe Serega::SeregaSourceGroup do
         Class.new(Serega) do
           attribute :name, preload: :profile
           preload_with proc { raise "boom" }
-          freeze
         end
       end
 
@@ -169,14 +164,13 @@ RSpec.describe Serega::SeregaSourceGroup do
     end
 
     context "with a relation" do
-      let(:post_serializer) { Class.new(Serega) { attribute :title }.freeze }
+      let(:post_serializer) { Class.new(Serega) { attribute :title } }
 
       let(:user_serializer) do
         child = post_serializer
         Class.new(Serega) do
           attribute :name
           attribute :posts, serializer: child
-          freeze
         end
       end
 
@@ -196,14 +190,13 @@ RSpec.describe Serega::SeregaSourceGroup do
     end
 
     context "with a relation of one source" do
-      let(:avatar_serializer) { Class.new(Serega) { attribute :url }.freeze }
+      let(:avatar_serializer) { Class.new(Serega) { attribute :url } }
 
       let(:user_serializer) do
         child = avatar_serializer
         Class.new(Serega) do
           attribute :name
           attribute :avatar, serializer: child
-          freeze
         end
       end
 
@@ -225,7 +218,6 @@ RSpec.describe Serega::SeregaSourceGroup do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :name, batch: {use: proc { |users| users.to_h { |user| [user, user.name.upcase] } }, id: :itself}
-          freeze
         end
       end
 
@@ -248,7 +240,6 @@ RSpec.describe Serega::SeregaSourceGroup do
 
           attribute :name, batch: {use: :names, id: :itself}
           attribute :nickname, batch: {use: :names, id: :itself}
-          freeze
         end
       end
 
@@ -259,7 +250,7 @@ RSpec.describe Serega::SeregaSourceGroup do
     end
 
     context "when a batch loader raises an error" do
-      let(:user_serializer) { Class.new(Serega) { attribute :name, batch: {use: proc { |_users| raise "boom" }, id: :itself} }.freeze }
+      let(:user_serializer) { Class.new(Serega) { attribute :name, batch: {use: proc { |_users| raise "boom" }, id: :itself} } }
 
       it "adds the attribute name and the serializer to the error message" do
         expect { serialized }

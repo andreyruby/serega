@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaPresenter do
+  let(:serializer) { Class.new(Serega) }
+
+  # Any presenter method makes the serializer wrap objects in the presenter
+  def add_presenter(serializer_class)
+    serializer_class.presenter { define_method(:unused) {} }
+  end
+
   describe ".inherited" do
     let(:parent) do
       Class.new(Serega) do
@@ -32,379 +39,242 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
-  context "with a presenter method and a value block that calls another method" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute(:length, value: proc { |obj| obj.size })
+  it "defines a real delegator method after the first method_missing hit" do
+    serializer.presenter do
+      def rev
+      end
+    end
+    serializer.attribute(:length, value: proc { |obj| obj.size })
 
-        presenter do
-          def rev
-          end
+    expect(serializer.presenter.instance_methods).not_to include(:size)
+    serializer.new.to_h("")
+    expect(serializer.presenter.instance_methods).to include(:size)
+  end
+
+  it "keeps delegators of each serializer presenter separate" do
+    report_serializer = Class.new(Serega) { attribute :format }
+    add_presenter(report_serializer)
+    price_serializer = Class.new(Serega) do
+      attribute :label
+      presenter do
+        def label
+          format("%.2f", __getobj__)
         end
-
-        freeze
       end
     end
 
-    it "defines a real delegator method after the first method_missing hit" do
-      expect(serializer.presenter.instance_methods).not_to include(:size)
-      serializer.new.to_h("")
-      expect(serializer.presenter.instance_methods).to include(:size)
+    report_serializer.to_h(Struct.new(:format).new("pdf"))
+
+    expect(price_serializer.presenter.method_defined?(:format)).to be false
+    expect(price_serializer.to_h(1.5)).to eq(label: "1.50")
+  end
+
+  it "delegates keyword arguments" do
+    record_class = Class.new do
+      def greet(greeting, punctuation: ".") = "#{greeting}#{punctuation}"
+    end
+
+    serializer.attribute :greeting, value: proc { |record| record.greet("Hi", punctuation: "!") }
+    add_presenter(serializer)
+
+    expect(serializer.to_h(record_class.new)).to eq(greeting: "Hi!")
+  end
+
+  it "delegates methods with any names and arguments" do
+    record_class = Class.new do
+      attr_accessor :name
+
+      def [](key) = "#{key}!"
+
+      def greet(greeting, punctuation: ".") = "#{greeting}, #{name}#{punctuation}#{yield}"
+    end
+
+    serializer.attribute :result, value: proc { |record|
+      record.name = "Kate"
+      [record[:key], record.greet("Hi", punctuation: "!") { "?" }, record.name]
+    }
+    add_presenter(serializer)
+
+    2.times do
+      expect(serializer.to_h(record_class.new)).to eq(result: ["key!", "Hi, Kate!?", "Kate"])
     end
   end
 
-  context "with two serializers with presenters" do
-    let(:report_serializer) do
-      Class.new(Serega) do
-        attribute :format
-        presenter { define_method(:unused) {} }
-        freeze
-      end
+  it "delegates a method with a name that def does not accept" do
+    record_class = Class.new do
+      define_method(:"full-name") { |separator| "Kate#{separator}Nash" }
     end
 
-    let(:price_serializer) do
-      Class.new(Serega) do
-        attribute :label
+    serializer.attribute :full_name, value: proc { |record| record.public_send(:"full-name", " ") }
+    add_presenter(serializer)
 
-        presenter do
-          def label
-            format("%.2f", __getobj__)
-          end
-        end
-
-        freeze
-      end
-    end
-
-    it "keeps delegators of each serializer presenter separate" do
-      report_serializer.to_h(Struct.new(:format).new("pdf"))
-
-      expect(price_serializer.presenter.method_defined?(:format)).to be false
-      expect(price_serializer.to_h(1.5)).to eq(label: "1.50")
-    end
+    2.times { expect(serializer.to_h(record_class.new)).to eq(full_name: "Kate Nash") }
   end
 
-  context "with a value block that calls a method with keyword arguments" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute :greeting, value: proc { |record| record.greet("Hi", punctuation: "!") }
-        presenter { define_method(:unused) {} }
-        freeze
+  it "calls private Kernel methods on the presenter" do
+    serializer.attribute :formatted
+    serializer.presenter do
+      def formatted
+        format("%05d", __getobj__)
       end
     end
 
-    let(:record_class) do
-      Class.new do
-        def greet(greeting, punctuation: ".") = "#{greeting}#{punctuation}"
-      end
-    end
-
-    it "delegates keyword arguments" do
-      expect(serializer.to_h(record_class.new)).to eq(greeting: "Hi!")
-    end
+    2.times { expect(serializer.to_h(42)).to eq(formatted: "00042") }
   end
 
-  context "with a value block that calls methods with any names and arguments" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute :result, value: proc { |record|
-          record.name = "Kate"
-          [record[:key], record.greet("Hi", punctuation: "!") { "?" }, record.name, record.public_send(:"full-name", " ")]
-        }
-        presenter { define_method(:unused) {} }
-        freeze
+  it "keeps presenter methods that call super" do
+    serializer.attribute :upcase_name
+    serializer.presenter do
+      def upcase_name
+        super.upcase
       end
     end
 
-    let(:record_class) do
-      Class.new do
-        attr_accessor :name
+    user = Struct.new(:upcase_name).new("Kate")
 
-        def [](key) = "#{key}!"
-
-        def greet(greeting, punctuation: ".") = "#{greeting}, #{name}#{punctuation}#{yield}"
-
-        define_method(:"full-name") { |separator| "Kate#{separator}Nash" }
-      end
-    end
-
-    it "delegates methods with any names and arguments" do
-      2.times do
-        expect(serializer.to_h(record_class.new)).to eq(result: ["key!", "Hi, Kate!?", "Kate", "Kate Nash"])
-      end
-    end
+    2.times { expect(serializer.to_h(user)).to eq(upcase_name: "KATE") }
   end
 
-  context "with a presenter method that calls a private Kernel method" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute :formatted
-
-        presenter do
-          def formatted
-            format("%05d", __getobj__)
-          end
-        end
-
-        freeze
+  it "allows to use custom presenter methods" do
+    serializer.presenter do
+      def rev
+        reverse
       end
     end
 
-    it "calls private Kernel methods on the presenter" do
-      2.times { expect(serializer.to_h(42)).to eq(formatted: "00042") }
-    end
+    serializer.attribute(:rev, value: proc { |obj| obj.rev })
+    result = serializer.new.to_h("123")
+    expect(result).to eq({rev: "321"})
   end
 
-  context "with a presenter method that calls super" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute :upcase_name
-
-        presenter do
-          def upcase_name
-            super.upcase
-          end
-        end
-
-        freeze
+  it "works for arrays" do
+    serializer.attribute :value
+    serializer.presenter do
+      def value
+        __getobj__
       end
     end
 
-    it "keeps presenter methods that call super" do
-      user = Struct.new(:upcase_name).new("Kate")
-
-      2.times { expect(serializer.to_h(user)).to eq(upcase_name: "KATE") }
-    end
-  end
-
-  context "with a custom presenter method" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute(:rev, value: proc { |obj| obj.rev })
-
-        presenter do
-          def rev
-            reverse
-          end
-        end
-
-        freeze
-      end
-    end
-
-    it "allows to use custom presenter methods" do
-      expect(serializer.new.to_h("123")).to eq({rev: "321"})
-    end
-  end
-
-  context "with a presenter method that returns the wrapped object" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute :value
-
-        presenter do
-          def value
-            __getobj__
-          end
-        end
-
-        freeze
-      end
-    end
-
-    it "works for arrays" do
-      expect(serializer.new.to_h([123, 234])).to eq([{value: 123}, {value: 234}])
-    end
+    result = serializer.new.to_h([123, 234])
+    expect(result).to eq([{value: 123}, {value: 234}])
   end
 
   it "makes __ctx__ private" do
     expect(described_class.private_method_defined?(:__ctx__)).to be true
   end
 
-  context "with a base serializer and a block-defined nested serializer" do
-    let(:base) { Class.new(Serega) }
-
-    let(:serializer) do
-      base_serializer = base
-
-      Class.new(base) do
-        config.base_serializer = base_serializer
-
-        presenter do
-          def full_name
-            "current serializer presenter method"
-          end
-        end
-
-        attribute(:profile, method: :itself) { attribute :bio }
+  it "gives a block-defined nested serializer the base serializer Presenter without current presenter methods" do
+    base = Class.new(Serega)
+    current_serializer = Class.new(base)
+    current_serializer.config.base_serializer = base
+    current_serializer.presenter do
+      def full_name
+        "current serializer presenter method"
       end
     end
 
-    it "gives a block-defined nested serializer the base serializer Presenter without current presenter methods" do
-      nested = serializer.attributes[:profile].serializer
+    current_serializer.attribute(:profile, method: :itself) { attribute :bio }
+    nested = current_serializer.attributes[:profile].serializer
 
-      expect(serializer.presenter.new("Kate", nil).full_name).to eq "current serializer presenter method"
-      expect(nested.presenter).to be_nil
-    end
+    expect(current_serializer.presenter.new("Kate", nil).full_name).to eq "current serializer presenter method"
+    expect(nested.presenter).to be_nil
   end
 
-  context "with presenter methods in a block-defined nested serializer" do
-    let(:serializer) do
-      Class.new(Serega) do
-        config.base_serializer = Serega
-
-        attribute(:profile, method: :itself) do
-          attribute :bio
-
-          presenter do
-            def bio
-              "bio of #{__getobj__}"
-            end
-          end
-        end
-
-        freeze
+  it "wraps nested objects with the nested serializer SeregaPresenter" do
+    serializer.config.base_serializer = serializer
+    serializer.attribute(:profile, method: :itself) { attribute :bio }
+    nested = serializer.attributes[:profile].serializer
+    nested.presenter do
+      def bio
+        "bio of #{__getobj__}"
       end
     end
 
-    it "wraps nested objects with the nested serializer SeregaPresenter" do
-      expect(serializer.new.to_h("Kate")).to eq(profile: {bio: "bio of Kate"})
-    end
+    expect(serializer.new.to_h("Kate")).to eq(profile: {bio: "bio of Kate"})
   end
 
-  context "with a presenter method that reads the context" do
-    let(:serializer) do
-      Class.new(Serega) do
-        attribute(:greeting, value: proc { |obj| obj.greeting })
-
-        presenter do
-          def greeting
-            "Hello, #{__ctx__[:name]}!"
-          end
-        end
-
-        freeze
+  it "exposes context inside SeregaPresenter via __ctx__" do
+    serializer.attribute(:greeting, value: proc { |obj| obj.greeting })
+    serializer.presenter do
+      def greeting
+        "Hello, #{__ctx__[:name]}!"
       end
     end
 
-    it "exposes context inside SeregaPresenter via __ctx__" do
-      expect(serializer.new.to_h("ignored", context: {name: "Alice"})).to eq({greeting: "Hello, Alice!"})
-    end
+    result = serializer.new.to_h("ignored", context: {name: "Alice"})
+    expect(result).to eq({greeting: "Hello, Alice!"})
   end
 
-  context "with a batch loader and a presenter method that overrides the batch key" do
-    let(:received) { [] }
-
-    let(:serializer) do
-      received_objects = received
-
-      Class.new(Serega) do
-        attribute(:id)
-        attribute(:score, batch: proc { |objects|
-          received_objects.concat(objects)
-          objects.to_h { |object| [object.id, object.id * 10] }
-        })
-
-        # The presenter overrides #id, so the batch key must come from the presenter too,
-        # or the loaded value would not be found.
-        presenter do
-          def id
-            __getobj__.id + 100
-          end
-        end
-
-        freeze
+  it "passes presenters to batch loaders, keyed consistently with attribute values" do
+    received = nil
+    serializer.attribute(:id)
+    serializer.attribute(:score, batch: proc { |objects|
+      received = objects
+      objects.to_h { |object| [object.id, object.id * 10] }
+    })
+    # The presenter overrides #id, so the batch key must come from the presenter too,
+    # or the loaded value would not be found.
+    serializer.presenter do
+      def id
+        __getobj__.id + 100
       end
     end
 
-    it "passes presenters to batch loaders, keyed consistently with attribute values" do
-      object = Struct.new(:id)
-      result = serializer.to_h([object.new(1), object.new(2)])
+    object = Struct.new(:id)
+    result = serializer.to_h([object.new(1), object.new(2)])
 
-      expect(received).to all be_a(SimpleDelegator)
-      expect(result).to eq [{id: 101, score: 1010}, {id: 102, score: 1020}]
-    end
+    expect(received).to all be_a(SimpleDelegator)
+    expect(result).to eq [{id: 101, score: 1010}, {id: 102, score: 1020}]
   end
 
-  context "with a presenter in a relation serializer" do
-    let(:nested_serializer) do
-      Class.new(Serega) do
-        attribute(:rev)
+  it "works in nested relation" do
+    struct = Struct.new(:nested).new("123")
 
-        presenter do
-          def rev
-            reverse
-          end
-        end
-
-        freeze
+    current_serializer = serializer
+    current_serializer.attribute(:rev)
+    current_serializer.presenter do
+      def rev
+        reverse
       end
     end
 
-    let(:serializer) do
-      nested = nested_serializer
-
-      Class.new(Serega) do
-        attribute :nested, serializer: nested
-        freeze
-      end
+    base_serializer = Class.new(Serega) do
+      attribute :nested, serializer: current_serializer
     end
 
-    it "works in nested relation" do
-      struct = Struct.new(:nested).new("123")
-
-      expect(serializer.new.to_h(struct)).to eq({nested: {rev: "321"}})
-    end
+    result = base_serializer.new.to_h(struct)
+    expect(result).to eq({nested: {rev: "321"}})
   end
 
-  context "with auto_preload and a relation read with :__getobj__" do
+  it "does not auto-preload the :__getobj__ unwrap method" do
     # objects are wrapped (and __getobj__ is meaningful) only when the
     # presenter is customized
-    let(:nested_serializer) { Class.new(Serega) { attribute :id }.freeze }
-
-    let(:serializer) do
-      nested = nested_serializer
-
-      Class.new(Serega) do
-        config.auto_preload = true
-        attribute :statistics, serializer: nested, method: :__getobj__
-
-        presenter do
-          def rating
-          end
-        end
-
-        freeze
+    serializer.presenter do
+      def rating
       end
     end
 
-    it "does not auto-preload the :__getobj__ unwrap method" do
-      expect(serializer.attributes[:statistics].preloads).to be_nil
-      expect(serializer.to_h(double(id: 1))).to eq(statistics: {id: 1})
-    end
+    nested_serializer = Class.new(Serega) { attribute :id }
+    serializer.config.auto_preload = true
+    attribute = serializer.attribute :statistics, serializer: nested_serializer, method: :__getobj__
+
+    expect(attribute.preloads).to be_nil
+    expect(serializer.to_h(double(id: 1))).to eq(statistics: {id: 1})
   end
 
   describe "skipping wrapping when SeregaPresenter has no custom methods" do
-    let(:received) { [] }
-
-    let(:serializer) do
-      received_objects = received
-
-      Class.new(Serega) do
-        attribute(:name, value: proc { |obj|
-          received_objects << obj
-          obj.to_s
-        })
-
-        freeze
-      end
-    end
-
     it "does not wrap objects in SeregaPresenter" do
+      received = nil
+      value = proc { |obj|
+        received = obj
+        obj.to_s
+      }
+      serializer.attribute(:name, value: value)
+
       serializer.new.to_h("raw object")
 
-      expect(received).to eq ["raw object"]
-      expect(received.first).not_to be_a(SimpleDelegator)
+      expect(received).to eq "raw object"
+      expect(received).not_to be_a(SimpleDelegator)
     end
   end
 
@@ -424,7 +294,6 @@ RSpec.describe Serega::SeregaPresenter do
       let(:serializer) do
         Class.new(app_serializer) do
           attribute :name, preload: :assoc, value: proc { |obj| obj.to_s }
-          freeze
         end
       end
 
@@ -448,8 +317,6 @@ RSpec.describe Serega::SeregaPresenter do
               "presented"
             end
           end
-
-          freeze
         end
       end
 
@@ -471,8 +338,6 @@ RSpec.describe Serega::SeregaPresenter do
               "presented"
             end
           end
-
-          freeze
         end
       end
 
@@ -486,54 +351,33 @@ RSpec.describe Serega::SeregaPresenter do
   end
 
   describe ".presenter" do
-    let(:serializer) { Class.new(Serega) }
-
-    context "with a presenter method that calls other methods of the object" do
-      let(:serializer) do
-        Class.new(Serega) do
-          attribute :full_name
-
-          presenter do
-            def full_name
-              "#{first_name} #{last_name}"
-            end
-          end
-
-          freeze
+    it "defines presenter methods evaluated inside the SeregaPresenter class" do
+      serializer.attribute :full_name
+      serializer.presenter do
+        def full_name
+          "#{first_name} #{last_name}"
         end
       end
 
-      it "defines presenter methods evaluated inside the SeregaPresenter class" do
-        user = double(first_name: "Kate", last_name: "Nash")
-        expect(serializer.to_h(user)).to eq(full_name: "Kate Nash")
-      end
+      user = double(first_name: "Kate", last_name: "Nash")
+      expect(serializer.to_h(user)).to eq(full_name: "Kate Nash")
     end
 
-    context "with multiple presenter blocks" do
-      let(:serializer) do
-        Class.new(Serega) do
-          attribute :first_name
-          attribute :last_name
-
-          presenter do
-            def first_name
-              "Kate"
-            end
-          end
-
-          presenter do
-            def last_name
-              "Nash"
-            end
-          end
-
-          freeze
+    it "accumulates methods from multiple blocks" do
+      serializer.attribute :first_name
+      serializer.attribute :last_name
+      serializer.presenter do
+        def first_name
+          "Kate"
+        end
+      end
+      serializer.presenter do
+        def last_name
+          "Nash"
         end
       end
 
-      it "accumulates methods from multiple blocks" do
-        expect(serializer.to_h("user")).to eq(first_name: "Kate", last_name: "Nash")
-      end
+      expect(serializer.to_h("user")).to eq(first_name: "Kate", last_name: "Nash")
     end
 
     it "does not leak methods defined in a child serializer to the parent" do
@@ -547,28 +391,19 @@ RSpec.describe Serega::SeregaPresenter do
       expect(serializer.presenter).to be_nil
     end
 
-    context "with a presenter inside an attribute block" do
-      let(:serializer) do
-        Class.new(Serega) do
-          config.base_serializer = Serega
+    it "can be used inside an attribute block" do
+      serializer.config.base_serializer = serializer
+      serializer.attribute(:account, method: :itself) do
+        attribute :login
 
-          attribute(:account, method: :itself) do
-            attribute :login
-
-            presenter do
-              def login
-                "@#{__getobj__}"
-              end
-            end
+        presenter do
+          def login
+            "@#{__getobj__}"
           end
-
-          freeze
         end
       end
 
-      it "can be used inside an attribute block" do
-        expect(serializer.to_h("kate")).to eq(account: {login: "@kate"})
-      end
+      expect(serializer.to_h("kate")).to eq(account: {login: "@kate"})
     end
 
     it "returns nil when no block was given" do
@@ -585,44 +420,28 @@ RSpec.describe Serega::SeregaPresenter do
       expect(serializer.presenter).to be presenter_class
     end
 
-    context "with a presenter block that includes a module" do
-      let(:serializer) do
-        presenter_methods = Module.new do
-          def name
-            "included"
-          end
-        end
-
-        Class.new(Serega) do
-          attribute :name
-          presenter { include presenter_methods }
-          freeze
+    it "evaluates the block so a module can be included" do
+      presenter_methods = Module.new do
+        def name
+          "included"
         end
       end
+      serializer.attribute :name
+      serializer.presenter { include presenter_methods }
 
-      it "evaluates the block so a module can be included" do
-        expect(serializer.to_h("user")).to eq(name: "included")
-      end
+      expect(serializer.to_h("user")).to eq(name: "included")
     end
 
-    context "with a presenter block that prepends a module" do
-      let(:serializer) do
-        presenter_methods = Module.new do
-          def name
-            "prepended"
-          end
-        end
-
-        Class.new(Serega) do
-          attribute :name
-          presenter { prepend presenter_methods }
-          freeze
+    it "evaluates the block so a module can be prepended" do
+      presenter_methods = Module.new do
+        def name
+          "prepended"
         end
       end
+      serializer.attribute :name
+      serializer.presenter { prepend presenter_methods }
 
-      it "evaluates the block so a module can be prepended" do
-        expect(serializer.to_h("user")).to eq(name: "prepended")
-      end
+      expect(serializer.to_h("user")).to eq(name: "prepended")
     end
 
     it "returns a presenter with the parent methods for a child that defines none" do
@@ -658,25 +477,19 @@ RSpec.describe Serega::SeregaPresenter do
   end
 
   describe "prepare_initial_objects" do
-    let(:serializer) do
+    it "wraps prepared objects in the SeregaPresenter" do
       records = {"1" => double(first_name: "Ann")}
-
-      Class.new(Serega) do
+      user_serializer = Class.new(Serega) do
         prepare_initial_objects { |ids| ids.map { |id| records[id] } }
         attribute :first_name
-
         presenter do
           def first_name
             super.upcase
           end
         end
-
-        freeze
       end
-    end
 
-    it "wraps prepared objects in the SeregaPresenter" do
-      expect(serializer.to_h(["1"])).to eq [{first_name: "ANN"}]
+      expect(user_serializer.to_h(["1"])).to eq [{first_name: "ANN"}]
     end
   end
 end

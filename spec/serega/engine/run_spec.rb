@@ -5,14 +5,13 @@ RSpec.describe Serega::SeregaEngine::Run do
 
   let(:mode) { :hash }
   let(:context) { {locale: :en} }
-  let(:post_serializer) { Class.new(Serega) { attribute :title }.freeze }
+  let(:post_serializer) { Class.new(Serega) { attribute :title } }
 
   let(:user_serializer) do
     child = post_serializer
     Class.new(Serega) do
       attribute :name
       attribute :posts, serializer: child
-      freeze
     end
   end
 

@@ -14,7 +14,6 @@ RSpec.describe Serega do
             attribute name, method: :title
             attribute :title
             attribute :"page-title", method: :title
-            freeze
           end
         end
 

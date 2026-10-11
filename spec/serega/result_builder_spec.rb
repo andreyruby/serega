@@ -5,7 +5,6 @@ RSpec.describe Serega::SeregaResultBuilder do
     Class.new(Serega) do
       attribute :name
       attribute :email
-      freeze
     end
   end
 
@@ -71,7 +70,6 @@ RSpec.describe Serega::SeregaResultBuilder do
         config.check_attribute_name = false
         attribute :title, const: "Hello"
         attribute attribute_name, const: "Ann"
-        freeze
       end
     end
 
@@ -167,8 +165,7 @@ RSpec.describe Serega::SeregaResultBuilder do
       let(:serializer) do
         Class.new(Serega) do
           attribute :name
-          attribute :posts, serializer: Class.new(Serega).freeze
-          freeze
+          attribute :posts, serializer: Class.new(Serega)
         end
       end
 
@@ -183,7 +180,6 @@ RSpec.describe Serega::SeregaResultBuilder do
       let(:serializer) do
         Class.new(Serega) do
           attribute :name, batch: {use: proc { |ids| ids }, id: :email}
-          freeze
         end
       end
 
@@ -196,7 +192,6 @@ RSpec.describe Serega::SeregaResultBuilder do
       let(:serializer) do
         Class.new(Serega) do
           attribute :name, method: :"full-name"
-          freeze
         end
       end
 

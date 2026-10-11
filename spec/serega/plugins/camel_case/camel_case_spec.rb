@@ -88,7 +88,6 @@ RSpec.describe Serega::SeregaPlugins::CamelCase do
         attribute :first_name
         attribute :last_name
         attribute :full_name, camel_case: false
-        freeze
       end
     end
 

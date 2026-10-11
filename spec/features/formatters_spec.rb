@@ -13,7 +13,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           formatter :money, ->(cents) { cents / 100.0 }
           attribute :balance, format: :money
-          freeze
         end
       end
 
@@ -32,7 +31,6 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(base_serializer) do
           attribute :balance, format: :money
-          freeze
         end
       end
 
@@ -45,7 +43,6 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :score, format: proc { |score| "#{(score * 100).round}%" }
-          freeze
         end
       end
 
@@ -59,7 +56,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           formatter :money, ->(cents, ctx:) { "#{cents / 100.0} #{ctx[:currency]}" }
           attribute :balance, format: :money
-          freeze
         end
       end
 
@@ -73,7 +69,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           formatter :string, :to_s
           attribute :balance, format: :string
-          freeze
         end
       end
 
@@ -87,7 +82,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           formatter :money, [:fdiv, 100]
           attribute :balance, format: :money
-          freeze
         end
       end
 
@@ -101,7 +95,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :balance, format: [:fdiv, Rational(100)]
           attribute :score, format: {use: [:*, Rational(100)], allow_nil: true}
-          freeze
         end
       end
 
@@ -114,7 +107,6 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :score, format: [:*, 100]
-          freeze
         end
       end
 
@@ -129,7 +121,6 @@ RSpec.describe Serega do
           formatter :money, [:fdiv, 100], allow_nil: true
           attribute :balance, format: :money
           attribute :score, format: {use: ->(score) { "#{(score * 100).round}%" }, allow_nil: true}
-          freeze
         end
       end
 
@@ -144,7 +135,6 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :balance, format: {use: ->(cents, ctx) { "#{cents / 100.0} #{ctx[:currency]}" }, allow_nil: true}
-          freeze
         end
       end
 
@@ -159,7 +149,6 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :balance, format: [:fdiv, 100]
-          freeze
         end
       end
 
@@ -174,7 +163,6 @@ RSpec.describe Serega do
       let(:user_serializer) do
         Class.new(Serega) do
           attribute :balance, default: 0, format: proc { |cents| cents / 100.0 }
-          freeze
         end
       end
 
@@ -255,12 +243,12 @@ RSpec.describe Serega do
       end
     end
 
-    context "when the serializer is frozen" do
-      before { user_serializer.freeze }
+    context "when the serializer is locked" do
+      before { user_serializer.to_h(nil) }
 
       it "raises an error" do
         expect { user_serializer.formatter(:money, money) }
-          .to raise_error Serega::SeregaError, "#{user_serializer} can not be changed after it was frozen"
+          .to raise_error Serega::SeregaError, "#{user_serializer} can not be changed after it was used for serialization"
       end
     end
   end

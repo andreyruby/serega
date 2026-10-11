@@ -125,7 +125,7 @@ class Serega
     # @return [class<Module>] Loaded plugin module
     #
     def plugin(name, **opts)
-      check_not_frozen
+      check_unlocked
       raise SeregaError, "This plugin is already loaded" if plugin_used?(name)
 
       plugin = SeregaPlugins.find_plugin(name)
@@ -235,7 +235,7 @@ class Serega
     # @return [Serega::SeregaAttribute] Added attribute
     #
     def attribute(name, **opts, &block)
-      check_not_frozen
+      check_unlocked
       location = caller_locations.find { |caller_location| !caller_location.path.start_with?(LIB_PATH) }
       attribute = self::SeregaAttribute.new(name: name, opts: opts, block: block, location: location && "#{location.path}:#{location.lineno}")
       attributes[attribute.name] = attribute
@@ -270,7 +270,7 @@ class Serega
     # @return [#call] Batch loader
     #
     def batch(name, value = nil, &block)
-      check_not_frozen
+      check_unlocked
       raise SeregaError, "Batch loader must be defined with a callable value or block" if (value && block) || (!value && !block)
 
       batch_loader = self::SeregaBatchLoader.new(name: name, block: value || block)
@@ -301,7 +301,7 @@ class Serega
     # @return [SeregaFormatter] Formatter
     #
     def formatter(name, value = nil, allow_nil: false, &block)
-      check_not_frozen
+      check_unlocked
       raise SeregaError, "Formatter name must be a Symbol" unless name.is_a?(Symbol)
       raise SeregaError, "Formatter must be defined with a value or a block" if (value && block) || (!value && !block)
       raise SeregaError, "Invalid option :allow_nil => #{allow_nil.inspect}. Must have a boolean value" unless allow_nil == true || allow_nil == false
@@ -329,7 +329,7 @@ class Serega
     def presenter(&block)
       return @presenter_class unless block
 
-      check_not_frozen
+      check_unlocked
       @presenter_class ||= Class.new(SeregaPresenter)
       @presenter_class.class_exec(&block)
       presenter_blocks << block
@@ -358,7 +358,7 @@ class Serega
     def preload_with(value = nil, &block)
       return @preload_with if value.nil? && block.nil?
 
-      check_not_frozen
+      check_unlocked
       raise SeregaError, "preload_with accepts a single callable or a block, not both" if value && block
 
       handler = value || block
@@ -406,7 +406,7 @@ class Serega
     def prepare_initial_objects(value = nil, &block)
       return @prepare_initial_objects if value.nil? && block.nil?
 
-      check_not_frozen
+      check_unlocked
       raise SeregaError, "prepare_initial_objects accepts a single callable or a block, not both" if value && block
 
       handler = value || block
@@ -495,20 +495,23 @@ class Serega
     alias_method :to_h, :call
 
     #
-    # Freezes the serializer definitions and config. A serializer serializes
-    # only after it is frozen. Call `freeze` at the end of its definition.
+    # Locks serializer definitions and config from changes.
+    # Called when a serialization plan is built for the serializer.
     #
-    # @return [Class<Serega>] the frozen serializer
+    # @return [void]
     #
-    def freeze
+    # @private
+    def lock
+      return if @locked
+
       SeregaUtils::EnumDeepFreeze.call(config.opts)
-      super
+      @locked = true
     end
 
     private
 
-    def check_not_frozen
-      raise SeregaError, "#{self} can not be changed after it was frozen" if frozen?
+    def check_unlocked
+      raise SeregaError, "#{self} can not be changed after it was used for serialization" if @locked
     end
 
     def init_modifier_opts(opts)
@@ -534,6 +537,7 @@ class Serega
       subclass.instance_variable_set(:@preload_with, nil)
       subclass.instance_variable_set(:@prepare_initial_objects, nil)
       subclass.instance_variable_set(:@prepare_initial_objects_signature, nil)
+      subclass.instance_variable_set(:@locked, false)
 
       attribute_class = Class.new(self::SeregaAttribute)
       attribute_class.serializer_class = subclass
