@@ -14,6 +14,10 @@ class Serega
   # @private
   FROZEN_EMPTY_ARRAY = [].freeze
 
+  # Locks serializers one at a time
+  # @private
+  LOCK_MUTEX = Mutex.new
+
   # Path prefix of the Serega source files
   # @private
   LIB_PATH = File.expand_path("serega", __dir__).freeze
@@ -504,8 +508,12 @@ class Serega
     def lock
       return if @locked
 
-      SeregaUtils::EnumDeepFreeze.call(config.opts)
-      @locked = true
+      LOCK_MUTEX.synchronize do
+        next if @locked
+
+        SeregaUtils::EnumDeepFreeze.call(config.opts)
+        @locked = true
+      end
     end
 
     private
