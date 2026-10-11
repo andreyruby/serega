@@ -46,6 +46,12 @@ class Serega
         @preload_points = points.select(&:preloads).freeze
         @batch_points = points.any? { |point| !point.batch_loaders.empty? }
         @result_builders = {}
+      # :nocov:
+      rescue *RACTOR_ISOLATION_ERRORS
+        raise if serializer_class.shareable?
+
+        raise SeregaError, "#{serializer_class} can not serialize in other Ractors. Call `make_shareable!` at the end of its definition"
+        # :nocov:
       end
 
       # Serialization points with preloads

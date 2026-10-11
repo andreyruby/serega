@@ -18,6 +18,13 @@ class Serega
   # @private
   LOCK_MUTEX = Mutex.new
 
+  # Errors raised when another Ractor reads a value that is not shareable,
+  # empty on a Ruby without Ractors
+  # @private
+  # :nocov:
+  RACTOR_ISOLATION_ERRORS = (defined?(Ractor) ? [Ractor::IsolationError] : []).freeze
+  # :nocov:
+
   # Path prefix of the Serega source files
   # @private
   LIB_PATH = File.expand_path("serega", __dir__).freeze
@@ -29,6 +36,7 @@ require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
+require_relative "serega/utils/ractor_local"
 require_relative "serega/utils/serialized_attribute_error"
 require_relative "serega/utils/symbol_keys"
 require_relative "serega/utils/to_hash"
@@ -81,6 +89,7 @@ require_relative "serega/plan"
 require_relative "serega/result_code"
 require_relative "serega/result_builder"
 require_relative "serega/plan_cache"
+require_relative "serega/shareable"
 require_relative "serega/plugins"
 
 class Serega
@@ -205,6 +214,10 @@ class Serega
     # @private
     def plan_cache
       @plan_cache
+    # :nocov:
+    rescue *RACTOR_ISOLATION_ERRORS
+      raise SeregaError, "#{self} can not serialize in other Ractors. Call `make_shareable!` at the end of its definition"
+      # :nocov:
     end
 
     #
@@ -516,9 +529,41 @@ class Serega
       end
     end
 
+    #
+    # Makes the serializer shareable between Ractors. Call `make_shareable!`
+    # at the end of a definition to serialize in other Ractors.
+    #
+    # Locks the serializer and makes its definitions and its nested
+    # serializers defined with blocks shareable. A serializer with a
+    # definition that can not be shared serializes in the main Ractor only.
+    #
+    # @return [Class<Serega>] the serializer
+    #
+    def make_shareable!
+      return self if @shareable
+
+      lock
+      attributes.each_value { |attribute| attribute.serializer.make_shareable! if attribute.initials[:block] }
+      @shareable = true
+      # :nocov:
+      SeregaShareable.call(self) if defined?(Ractor)
+      # :nocov:
+      self
+    end
+
+    #
+    # Shows whether `make_shareable!` was called
+    #
+    # @return [Boolean] whether the serializer is shareable
+    #
+    def shareable?
+      @shareable
+    end
+
     private
 
     def check_unlocked
+      raise SeregaError, "#{self} can not be changed after it was made shareable" if @shareable
       raise SeregaError, "#{self} can not be changed after it was used for serialization" if @locked
     end
 
@@ -546,6 +591,7 @@ class Serega
       subclass.instance_variable_set(:@prepare_initial_objects, nil)
       subclass.instance_variable_set(:@prepare_initial_objects_signature, nil)
       subclass.instance_variable_set(:@locked, false)
+      subclass.instance_variable_set(:@shareable, false)
 
       attribute_class = Class.new(self::SeregaAttribute)
       attribute_class.serializer_class = subclass
