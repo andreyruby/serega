@@ -70,7 +70,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| ids.map { |id| data[id] } }
         attribute :name, value: proc { |record| record[:name] }
-        freeze
       end
 
       expect(serializer.to_h(["1", "2"])).to eq [{name: "Ann"}, {name: "Bob"}]
@@ -81,7 +80,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids, ctx| received = [ids, ctx] }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(["1"], context: {foo: :bar})
@@ -93,7 +91,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids, ctx:| received = [ids, ctx] }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(["1"], context: {foo: :bar})
@@ -108,7 +105,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects handler
         attribute :name, value: proc { |record| record[:name] }
-        freeze
       end
 
       expect(serializer.to_h(["1"])).to eq [{name: "Ann"}]
@@ -122,7 +118,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects handler
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(["1"], context: {foo: :bar})
@@ -137,7 +132,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects handler
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(["1"], context: {foo: :bar})
@@ -148,7 +142,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |id| [id] }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       expect(serializer.to_h("1")).to eq [{itself: "1"}]
@@ -158,7 +151,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| ids.first }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       expect(serializer.to_h(["1", "2"])).to eq({itself: "1"})
@@ -168,7 +160,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| ids.first }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       expect(serializer.to_h(["1"], many: true)).to eq [{itself: "1"}]
@@ -179,7 +170,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| nil }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       expect(serializer.to_h(["1"])).to be_nil
@@ -190,7 +180,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |objects| received = objects }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(nil)
@@ -206,7 +195,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects handler
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.call("1")
@@ -230,7 +218,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects handler
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(["1", "2", "3"])
@@ -242,7 +229,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| ids.map { |id| data[id] } }
         attribute :name, value: proc { |record| record[:name] }
-        freeze
       end
 
       expect(serializer.to_data(["1"]).first.name).to eq "Ann"
@@ -253,7 +239,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| ids.map { |id| data[id] } }
         attribute :name, value: proc { |record| record[:name] }
-        freeze
       end
 
       expect(serializer.to_struct(["1"]).first.name).to eq "Ann"
@@ -263,7 +248,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| nil }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       expect(serializer.to_data(["1"])).to be_nil
@@ -273,7 +257,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |ids| foo } # not existing variable call
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       expect { serializer.to_h(["1"]) }.to raise_error NameError do |error|
@@ -286,7 +269,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |objects, ctx| received << ctx }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h("1")
@@ -299,7 +281,6 @@ RSpec.describe Serega do
       serializer = Class.new(described_class) do
         prepare_initial_objects { |objects| objects }
         attribute :itself, value: proc { |obj| obj }
-        freeze
       end
 
       opts = {many: false}
@@ -313,7 +294,6 @@ RSpec.describe Serega do
         prepare_initial_objects { |ids| ids.map(&:to_i) }
         preload_with { |objects, preloads| received = objects }
         attribute :itself, preload: :assoc, value: proc { |obj| obj }
-        freeze
       end
 
       serializer.to_h(["1", "2"])

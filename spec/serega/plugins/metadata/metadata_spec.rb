@@ -14,7 +14,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
 
   describe "block-defined nested serializer" do
     it "does not receive meta attributes when the base serializer has none" do
-      base = Class.new(serializer) { plugin :metadata }.freeze
+      base = Class.new(serializer) { plugin :metadata }
       parent = Class.new(base)
       parent.config.base_serializer = base
       parent.meta_attribute(:version, const: "1.2.3")
@@ -75,10 +75,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
     end
 
     context "with regular metadata with single object" do
-      before do
-        user_serializer.meta_attribute(:version, const: "1.2.3")
-        user_serializer.freeze
-      end
+      before { user_serializer.meta_attribute(:version, const: "1.2.3") }
 
       it "appends metadata attributes to response" do
         expect(response).to eq(data: {first_name: "FIRST_NAME"}, version: "1.2.3")
@@ -88,10 +85,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
     context "with regular metadata with multiple objects" do
       let(:obj) { [double(first_name: "FIRST_NAME")] }
 
-      before do
-        user_serializer.meta_attribute(:version, const: "1.2.3")
-        user_serializer.freeze
-      end
+      before { user_serializer.meta_attribute(:version, const: "1.2.3") }
 
       it "appends metadata attributes to response" do
         expect(response).to eq(data: [{first_name: "FIRST_NAME"}], version: "1.2.3")
@@ -113,7 +107,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
 
       before do
         user_serializer.meta_attribute(:meta, :paging, value: block)
-        user_serializer.freeze
       end
 
       it "appends metadata attributes to response" do
@@ -133,7 +126,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
         user_serializer.meta_attribute(:meta, :paging, :total_count) { |obj| Array(obj).count }
         user_serializer.meta_attribute(:meta, :paging, :page) { |_obj, ctx| ctx[:page] }
         user_serializer.meta_attribute(:meta, :paging, :per_page) { |_obj, ctx| ctx[:per_page] }
-        user_serializer.freeze
       end
 
       it "appends merged metadata attributes to response" do
@@ -156,7 +148,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
         paging_value = paging
         user_serializer.meta_attribute(:meta, :paging) { paging_value }
         user_serializer.meta_attribute(:meta, :paging, :per_page) { 3 }
-        user_serializer.freeze
       end
 
       it "merges other metadata without changing the returned Hash" do
@@ -170,7 +161,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
 
       before do
         user_serializer.meta_attribute(:version, :number) { foo }
-        user_serializer.freeze
       end
 
       it "raises error and additionally shows meta_attribute path" do
@@ -191,7 +181,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
         user_serializer.meta_attribute(:meta, :test6) { {} }
         user_serializer.meta_attribute(:meta, :test7) { [] }
         user_serializer.meta_attribute(:meta, :test8, hide_nil: true, hide_empty: true) { "foo" }
-        user_serializer.freeze
       end
 
       it "hides empty or nil attributes when :hide_nil / :hide_empty options provided" do
@@ -211,7 +200,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
       before do
         user_serializer.config.root = {one: nil, many: nil}
         user_serializer.meta_attribute(:version, const: "1.2.3")
-        user_serializer.freeze
       end
 
       it "does not add metadata" do
@@ -230,7 +218,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
         attribute :first_name
         meta_attribute(:version, const: "1.2.3")
         meta_attribute(:meta, :paging, :page, const: 1)
-        freeze
       end
     end
 
@@ -253,7 +240,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
         attribute :first_name
         meta_attribute(:version, const: "1.2.3")
         meta_attribute(:meta, :paging, :page, const: 1)
-        freeze
       end
     end
 
@@ -277,7 +263,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
         prepare_initial_objects { |ids| ids.map { |id| records[id] } }
         attribute :first_name
         meta_attribute(:total) { |objects| objects.size }
-        freeze
       end
 
       expect(user_serializer.to_h(["1", "2"])).to eq(

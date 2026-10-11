@@ -21,7 +21,6 @@ class Serializer < AppSerializer
   attribute :bool1, format: :bool
   attribute :bool2, format: :bool
   attribute :bool3, format: :bool
-  freeze
 end
 
 require "time"

@@ -8,7 +8,6 @@ RSpec.describe Serega do
       Class.new(Serega) do
         attribute :first_name
         attribute :last_name
-        freeze
       end
     end
 
@@ -50,7 +49,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :first_name, value: proc { |user| user[:first_name] }
           attribute :last_name, value: proc { |user| user[:last_name] }
-          freeze
         end
       end
 

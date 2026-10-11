@@ -271,7 +271,7 @@ class Serega
         # old-style value block — raise the explaining error.
         raise SeregaError, SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE if serializer.attributes.empty?
 
-        serializer.freeze
+        serializer
       end
 
       # Base class for the nested serializer. Must be chosen explicitly —

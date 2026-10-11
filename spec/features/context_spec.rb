@@ -7,7 +7,6 @@ RSpec.describe Serega do
     let(:user_serializer) do
       Class.new(described_class) do
         attribute :context, value: proc { |_user, ctx| ctx }
-        freeze
       end
     end
 
@@ -56,7 +55,6 @@ RSpec.describe Serega do
       Class.new(described_class) do
         attribute :first_name
         attribute :email
-        freeze
       end
     end
 

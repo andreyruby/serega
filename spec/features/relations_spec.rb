@@ -14,7 +14,6 @@ RSpec.describe Serega do
         Class.new(Serega) do
           attribute :likes_count
           attribute :comments_count
-          freeze
         end
       end
 
@@ -24,7 +23,6 @@ RSpec.describe Serega do
         child_serializer = statistics_serializer
         Class.new(Serega) do
           attribute :statistics, serializer: child_serializer
-          freeze
         end
       end
 
@@ -39,7 +37,6 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
-          freeze
         end
       end
 
@@ -51,7 +48,6 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :comment, serializer: child_serializer
-          freeze
         end
       end
 
@@ -59,20 +55,9 @@ RSpec.describe Serega do
         expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: {text: "TEXT"}})
       end
 
-      context "with `many: false`" do
-        let(:user_serializer) do
-          child_serializer = comment_serializer
-          Class.new(Serega) do
-            attribute :first_name
-            attribute :last_name
-            attribute :comment, serializer: child_serializer, many: false
-            freeze
-          end
-        end
-
-        it "returns hash with relations" do
-          expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: {text: "TEXT"}})
-        end
+      it "returns hash with relations when manually specifying :many option" do
+        user_serializer.attribute :comment, serializer: comment_serializer, many: false
+        expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: {text: "TEXT"}})
       end
     end
 
@@ -82,7 +67,6 @@ RSpec.describe Serega do
       let(:comment_serializer) do
         Class.new(Serega) do
           attribute :text
-          freeze
         end
       end
 
@@ -94,7 +78,6 @@ RSpec.describe Serega do
           attribute :first_name
           attribute :last_name
           attribute :comments, serializer: child_serializer
-          freeze
         end
       end
 
@@ -102,20 +85,9 @@ RSpec.describe Serega do
         expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comments: [{text: "TEXT"}]})
       end
 
-      context "with `many: true`" do
-        let(:user_serializer) do
-          child_serializer = comment_serializer
-          Class.new(Serega) do
-            attribute :first_name
-            attribute :last_name
-            attribute :comments, serializer: child_serializer, many: true
-            freeze
-          end
-        end
-
-        it "returns hash with relations" do
-          expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comments: [{text: "TEXT"}]})
-        end
+      it "returns hash with relations when manually specifying :many option" do
+        user_serializer.attribute :comments, serializer: comment_serializer, many: true
+        expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comments: [{text: "TEXT"}]})
       end
     end
   end
