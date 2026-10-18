@@ -166,6 +166,22 @@ RSpec.describe Serega::SeregaUtils::MethodSignature do
     expect(described_class.call(callable, pos_limit: 5, keyword_args: [:one, :two, :a, :b])).to eq "0_a_b_one_two"
   end
 
+  it "generates signatures for Method objects" do
+    policy = Module.new do
+      def self.visible?(user, context)
+      end
+
+      def self.hidden?(user, ctx:)
+      end
+    end
+
+    callable = policy.method(:visible?)
+    expect(described_class.call(callable, pos_limit: 2, keyword_args: [:ctx])).to eq "2"
+
+    callable = policy.method(:hidden?)
+    expect(described_class.call(callable, pos_limit: 2, keyword_args: [:ctx])).to eq "1_ctx"
+  end
+
   it "returns 1 if provided callable with not named *rest parameters" do
     callable = :one?.to_proc
     expect(described_class.call(callable, pos_limit: 2)).to eq "1"
