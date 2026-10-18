@@ -80,7 +80,7 @@ require_relative "serega/plan_point"
 require_relative "serega/plan"
 require_relative "serega/result_code"
 require_relative "serega/result_builder"
-require_relative "serega/plan_cache"
+require_relative "serega/plan/cache"
 require_relative "serega/plugins"
 
 class Serega
@@ -200,7 +200,7 @@ class Serega
     #
     # Cached serialization plans
     #
-    # @return [SeregaPlanCache] Serialization plans cache
+    # @return [SeregaPlan::Cache] Serialization plans cache
     #
     # @private
     def plan_cache
@@ -573,9 +573,9 @@ class Serega
       plan_point_class.serializer_class = subclass
       subclass.const_set(:SeregaPlanPoint, plan_point_class)
 
-      plan_cache_class = Class.new(self::SeregaPlanCache)
+      plan_cache_class = Class.new(self::SeregaPlan::Cache)
       plan_cache_class.serializer_class = subclass
-      subclass.const_set(:SeregaPlanCache, plan_cache_class)
+      plan_class.const_set(:Cache, plan_cache_class)
       subclass.instance_variable_set(:@plan_cache, plan_cache_class.new)
 
       batch_loader_class = Class.new(self::SeregaBatchLoader)
