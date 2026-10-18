@@ -42,7 +42,7 @@ Steps to release a new version:
 7. Validate documentation
 
    ```bash
-   mdl README.md RELEASE.md CHANGELOG.md
+   mdl README.md CHEATSHEET.md CHANGELOG.md RELEASE.md docs
    ```
 
 8. Commit changes

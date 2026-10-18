@@ -31,7 +31,7 @@ jobs:
         run: bundle exec rubocop
 
       - name: Markdown linter
-        run: bundle exec mdl README.md CHEATSHEET.md CHANGELOG.md RELEASE.md
+        run: bundle exec mdl README.md CHEATSHEET.md CHANGELOG.md RELEASE.md docs
 
       - name: Check documentation table of contents and links
         run: bundle exec rake docs:check

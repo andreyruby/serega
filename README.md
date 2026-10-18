@@ -1,1063 +1,184 @@
-# Serega Ruby Serializer
+# Serega
+
+<!-- TODO: logo (SVG, light and dark variants)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img src="assets/logo.svg" alt="Serega" width="240">
+  </picture>
+</p>
+-->
+
+**Serialize exactly what was asked. Load exactly what is needed.**
 
 [![Gem Version](https://badge.fury.io/rb/serega.svg)](https://badge.fury.io/rb/serega)
 [![GitHub Actions][build-badge]][build]
+![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![Ruby >= 3.3](https://img.shields.io/badge/ruby-%3E%3D%203.3-red)
 
-The Serega Ruby Serializer provides easy and powerful DSL to describe your
-objects and serialize them to Hash, ready for further conversion to JSON or
-other formats.
+Serega is a Ruby serializer that turns your objects into Hashes ready for JSON.
+Clients choose the fields they need, and Serega loads only the data those
+fields use — in a few queries, with no N+1.
 
----
+- ⚡ **Fast** — serialization code is generated per field selection and cached.
+  [See benchmarks](#benchmarks).
+- 🎯 **Clients choose fields** — `?fields=name,posts(title)` works out of the
+  box, nested at any depth.
+- 🧺 **No N+1** — associations are preloaded and batch loaders run once per
+  relation, only for the requested fields.
+- 🪶 **No dependencies** — plain Ruby, works with Rails, Hanami, Roda, Sinatra
+  or no framework at all.
 
-  📌 Serega does not depend on any gem and works with any framework
+## Show me
 
----
+```ruby
+class AppSerializer < Serega
+  plugin :activerecord_preloads   # preloads associations used by requested fields
+  plugin :string_modifiers        # accepts fields as "name,posts(title)"
+  config.auto_preload = true
+  config.hide_by_default = :auto  # fields that need extra queries are sent on request
+end
 
-It has some great features:
+class UserSerializer < AppSerializer
+  attribute :name
+  attribute :posts, serializer: "PostSerializer"
+end
 
-- Manually [select serialized fields](#selecting-fields)
-- Secure from malicious queries with [depth_limit][depth_limit] plugin
-- Solutions for N+1 problem (via built-in [batch loading](#batch-loading), [preloads][preloads] or
-  [activerecord_preloads][activerecord_preloads] plugin)
-- Load objects to serialize by ids ([prepare_initial_objects](#prepare-initial-objects))
-- Built-in object presenter ([presenter][presenter])
-- Adding custom metadata (via [metadata][metadata] or
-  [context_metadata][context_metadata] plugins)
-- Built-in [value formatters][formatters] transform time, date, money,
-  percentage, and any other values in the same way, keeping the code dry
-- Built-in [conditional attributes](#conditional-attributes)
-- Auto camelCase keys - [camel_case][camel_case] plugin
-- Serializing Hash records - [hash_access][hash_access] attribute option
+class PostSerializer < AppSerializer
+  batch :comments_count, ->(posts) { Comment.where(post: posts).group(:post_id).count }
 
-## Table of Contents
+  attribute :title
+  attribute :comments_count, batch: true
+end
 
-<!-- toc -->
+UserSerializer.to_h(User.all)
+# => [{name: "Bruce Wayne"}, ...]                                    1 query
 
-- [Installation](#installation)
-- [Usage](#usage)
-   - [Define serializers](#define-serializers)
-   - [Adding attributes](#adding-attributes)
-   - [Defining a nested serializer with a block](#defining-a-nested-serializer-with-a-block)
-   - [Serializing](#serializing)
-   - [Selecting Fields](#selecting-fields)
-   - [Using Context](#using-context)
-   - [Conditional Attributes](#conditional-attributes)
-   - [Formatting Values](#formatting-values)
-   - [Batch Loading](#batch-loading)
-   - [Prepare Initial Objects](#prepare-initial-objects)
-- [Configuration](#configuration)
-- [Preloads](#preloads)
-   - [Serializing the same object in association](#serializing-the-same-object-in-association)
-   - [Custom preloading](#custom-preloading)
-- [Serializing Hash records](#serializing-hash-records)
-- [Presenter](#presenter)
-- [Ractors](#ractors)
-- [Plugins](#plugins)
-   - [Plugin :activerecord_preloads](#plugin-activerecord_preloads)
-   - [Plugin :root](#plugin-root)
-   - [Plugin :metadata](#plugin-metadata)
-   - [Plugin :context_metadata](#plugin-context_metadata)
-   - [Plugin :string_modifiers](#plugin-string_modifiers)
-   - [Plugin :camel_case](#plugin-camel_case)
-   - [Plugin :depth_limit](#plugin-depth_limit)
-   - [Plugin :explicit_many_option](#plugin-explicit_many_option)
-- [Errors](#errors)
-- [Release](#release)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
-
-<!-- tocstop -->
+UserSerializer.to_h(User.all, only: "name,posts(title,comments_count)")
+# => [{name: "Bruce Wayne", posts: [{title: "Gotham at night", comments_count: 12}, ...]}, ...]
+#                                                                    3 queries, for any number of users
+```
 
 ## Installation
 
-`bundle add serega`
-
-## Usage
-
-### Define serializers
-
-Most apps should define **base serializer** with common plugins and settings to
-not repeat them in each serializer.
-
-Serializers will inherit everything (plugins, config, attributes) from their
-superclasses.
-
-```ruby
-class AppSerializer < Serega
-  # plugin :one
-  # plugin :two
-
-  # config.one = :one
-  # config.two = :two
-end
-
-class UserSerializer < AppSerializer
-  # attribute :one
-  # attribute :two
-end
-
-class CommentSerializer < AppSerializer
-  # attribute :one
-  # attribute :two
-end
+```sh
+bundle add serega
 ```
 
-Configure serializers fully before the first serialization. Serializers are
-locked once they serialize something, directly or as nested serializers.
-Adding attributes, plugins, batch loaders, presenter methods, meta attributes,
-`preload_with` or `prepare_initial_objects` handlers to a locked serializer
-raises `Serega::SeregaError`, changing its config raises `FrozenError`.
-Subclasses of a locked serializer can be changed.
+## Quick start
 
-### Adding attributes
-
-⚠️ Attribute names are checked to include only "a-z", "A-Z", "0-9", "\_", "-",
-"~" characters.
-
-We allow ONLY these characters as we want to be able to use attribute names in
-URLs without escaping.
-
-This rule can be turned off with simple config option: `config.check_attribute_name = false`
+Define a base serializer with the plugins and config your app uses. Every
+serializer inherits them.
 
 ```ruby
-class UserSerializer < Serega
-  # Regular attribute
-  attribute :first_name
+# app/serializers/app_serializer.rb
+class AppSerializer < Serega
+  plugin :activerecord_preloads
+  plugin :string_modifiers
+  config.auto_preload = true
+end
 
-  # Option :method specifies the name used to read the attribute's value —
-  # a method called on the object to serialize by default, or a Hash key when
-  # combined with :hash_access
-  attribute :first_name, method: :old_first_name
-
-  # Attribute blocks below require a base serializer for nested serializers.
-  # See the "Defining a nested serializer with a block" section below.
-  config.base_serializer = Serega
-
-  # Method :itself is handy to serialize the same object with a nested set of
-  # attributes. Note: with a custom presenter the serialized value will be
-  # the presenter instance itself; use `method: :__getobj__` to serialize the
-  # original unwrapped object instead.
-  attribute :statistics, method: :itself do
-    attribute :likes_count
-    attribute :comments_count
-  end
-
-  # Block defines a nested serializer for the attribute value.
-  # See the "Defining a nested serializer with a block" section below.
-  attribute :author do
-    attribute :name
-  end
-
-  # Option :value can be used with a Proc or callable object to define
-  # attribute value
-  attribute :first_name, value: UserProfile.new # must have #call method
-  attribute :first_name, value: proc { |user| user.profile&.first_name }
-
-  # Option :delegate can be used to define attribute value.
-  # Sub-option :allow_nil by default is false
-  attribute :first_name, delegate: { to: :profile, allow_nil: true }
-
-  # Option :delegate can be used with :method sub-option, so method chain here
-  # is user.profile.fname
-  attribute :first_name, delegate: { to: :profile, method: :fname }
-
-  # Option :default can be used to replace possible nil values.
-  attribute :first_name, default: ''
-  attribute :is_active, default: false
-  attribute :comments_count, default: 0
-
-  # Option :const specifies attribute with a specific constant value
-  attribute(:type, const: 'user')
-
-  # Option :hide specifies attributes that should not be serialized by default
-  attribute :tags, hide: true
-
-  # Option :serializer specifies nested serializer for attribute
-  # We can define the `:serializer` value as a Class, String, or Proc.
-  # Use String or Proc if you have cross-references in serializers.
-  attribute :posts, serializer: PostSerializer
-  attribute :posts, serializer: "PostSerializer"
-  attribute :posts, serializer: -> { PostSerializer }
-
-  # Option `:many` specifies a has_many relationship. It is optional.
-  # If not specified, it is defined during serialization by checking
-  # `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`
-  # Also the `:many` changes the default value from `nil` to `[]`.
-  attribute :posts, serializer: PostSerializer, many: true
-
-  # Option `:preload` allows to specify associations to preload to
-  # attribute value
-  attribute :email, preload: :emails, value: proc { |user| user.emails.find(&:verified?) }
-
-  # Options `:if, :unless, :if_value and :unless_value` hide the attribute key
-  # and value from the response.
-  # See more usage examples in the "Conditional Attributes" section.
+# app/serializers/user_serializer.rb
+class UserSerializer < AppSerializer
+  attribute :id
+  attribute :name
   attribute :email, if: proc { |user, ctx| user == ctx[:current_user] }
-  attribute :email, if_value: :present?
+  attribute :avatar_url, hide: true
+end
 
-  # Option `:format` changes the attribute value with a formatter.
-  # See more usage examples in the "Formatting Values" section.
-  attribute :created_at, format: :iso_time
-  attribute :updated_at, format: :iso_time
+# app/controllers/users_controller.rb
+class UsersController < ApplicationController
+  def index
+    users = UserSerializer.to_h(
+      User.all,
+      only: params[:fields],              # GET /users?fields=id,name
+      context: {current_user: current_user}
+    )
 
-  # Option `:format` also can be used as Proc
-  attribute :created_at, format: proc { |time| time.strftime("%Y-%m-%d")}
+    render json: {users: users}
+  end
 end
 ```
 
-### Defining a nested serializer with a block
+## Benchmarks
 
-An attribute block defines an anonymous nested serializer. The attribute value
-is found as usual — by the attribute name or the `:method`, `:value`,
-`:delegate`, `:batch` option — and is serialized by this nested serializer.
+<!-- TODO: reproducible benchmark script (Ruby 4.0.5 --yjit) and a chart -->
 
-The nested serializer is a regular subclass of an explicitly chosen **base
-serializer** — usually a settings-only serializer holding your plugins and
-configuration. Choose it with the `base_serializer:` attribute option or the
-`config.base_serializer` setting (attribute option wins; an error is raised
-when none is set):
+| Serializer          | 1 object, i/s | 100 objects, i/s | 100 objects with relations, i/s |
+|---------------------|--------------:|-----------------:|--------------------------------:|
+| **serega**          |             … |                … |                               … |
+| alba                |             … |                … |                               … |
+| blueprinter         |             … |                … |                               … |
+| panko_serializer    |             … |                … |                               … |
+| active_model_serializers |        … |                … |                               … |
+
+## Features
+
+### Select fields
+
+`only`, `except` and `with` accept Symbols, Arrays, Hashes or a string like
+`"name,posts(title)"`. Unknown fields raise `Serega::AttributeNotExist`.
 
 ```ruby
-class AppSerializer < Serega
-  plugin :activerecord_preloads
+UserSerializer.to_h(user, only: [:name, {posts: [:title]}])
+UserSerializer.to_h(user, except: :email)
+UserSerializer.to_h(user, with: :avatar_url)  # adds hidden fields
+```
 
-  # Nested serializers defined with attribute blocks will inherit from
-  # AppSerializer
-  config.base_serializer = self
-end
+→ [Selecting fields guide](docs/selecting-fields.md)
 
+### Batch loading
+
+Load data for all serialized objects with one call.
+
+```ruby
 class UserSerializer < AppSerializer
-  attribute :first_name
+  batch :followers_count, ->(users) { Follow.where(user: users).group(:user_id).count }
 
-  # Serializes user.author with a nested serializer inherited from AppSerializer
-  attribute :author do
-    attribute :name
-  end
-
-  # Serializes the user itself, exposing only counters
-  attribute :statistics, method: :itself, base_serializer: StatsBaseSerializer do
-    attribute :likes_count
-    attribute :comments_count
-  end
-end
-
-UserSerializer.to_h(user)
-# => {first_name: "Bruce", author: {name: "Bob"}, statistics: {likes_count: 10, comments_count: 3}}
-```
-
-The nested serializer inherits everything the base serializer has — plugins,
-config, attributes, batch loaders, the preload handler — through the regular
-inheritance mechanism. Any serializer can be used as a base: if it has
-attributes, they are serialized by the nested serializer too, together with
-the attributes defined in the block. Anything the base does not provide can
-be declared inside the block:
-
-```ruby
-attribute :statistics, method: :itself do
-  batch(:stats) { |users| Stats.for_users(users) } # => { user_id => stat }
-
-  attribute :likes_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id].likes }
+  attribute :followers_count, batch: true
 end
 ```
 
-Things to keep in mind:
+→ [Batch loading guide](docs/batch-loading.md) ·
+[Preloads guide](docs/preloads.md)
 
-- The nested serializer is created at the moment the attribute is defined.
-  Changes made to the base serializer later do not affect already defined
-  nested serializers.
-- Errors raised while serializing nested attributes are reported with a
-  readable serializer label and the line where the attribute is defined, for
-  example:
+### Formatters
 
-  ```text
-  (when serializing the 'likes_count' attribute in UserSerializer.<statistics>, app/serializers/user_serializer.rb:12)
-  ```
-
-### Serializing
-
-We can serialize objects using class method `.call` aliased as `.to_h` and
-same instance methods `#call` and its alias `#to_h`.
-
-```ruby
-user = OpenStruct.new(username: 'serega')
-
-class UserSerializer < Serega
-  attribute :username
-end
-
-UserSerializer.to_h(user) # => {username: "serega"}
-UserSerializer.to_h([user]) # => [{username: "serega"}]
-```
-
-Use `.to_data` / `#to_data` to get the same result as Ruby `Data` objects
-(immutable value objects). Nested serialized relations are also
-converted to `Data` objects.
-
-```ruby
-result = UserSerializer.to_data(user)
-result         # => #<data username="serega">
-result.username # => "serega"
-
-UserSerializer.to_data([user]) # => [#<data username="serega">]
-```
-
-Use `.to_struct` / `#to_struct` to get the result as Ruby `Struct` objects.
-Serialization fills the `Struct` objects directly, so it is as fast as `.to_h`.
-Nested serialized relations are also `Struct` objects.
-
-```ruby
-result = UserSerializer.to_struct(user)
-result          # => #<struct username="serega">
-result.username # => "serega"
-
-UserSerializer.to_struct([user]) # => [#<struct username="serega">]
-```
-
-`.to_struct` and `.to_data` raise `Serega::SeregaError` for an attribute named
-`initialize`, and for an attribute name that Ruby does not accept as a `Struct`
-or `Data` member, for example `name=`. A member named like another method of
-`Struct` or `Data`, for example `hash`, replaces this method in the result.
-
-If serialized fields are constant, then it's a good idea to initiate the
-serializer and reuse it.
-It will be a bit faster (the serialization plan will be prepared only once).
-
-```ruby
-# Example with all fields
-serializer = UserSerializer.new
-serializer.to_h(user1)
-serializer.to_h(user2)
-
-# Example with custom fields
-serializer = UserSerializer.new(only: [:username, :avatar])
-serializer.to_h(user1)
-serializer.to_h(user2)
-```
-
-### Selecting Fields
-
-By default, all attributes are serialized (except marked as `hide: true`).
-
-We can provide **modifiers** to select serialized attributes:
-
-- *only* - lists specific attributes to serialize;
-- *except* - lists attributes to not serialize;
-- *with* - lists attributes to serialize additionally (By default all attributes
-  are exposed and will be serialized, but some attributes can be hidden when
-  they are defined with the `hide: true` option, more on this below. `with`
-  modifier can be used to expose such attributes).
-
-Modifiers can be provided as Hash, Array, String, Symbol, or their combinations.
-
-With plugin [string_modifiers][string_modifiers] we can provide modifiers as
-single `String` with attributes split by comma `,` and nested values inside
-brackets `()`, like: `first_name,last_name,addresses(line1,line2)`. This can be very useful
-to accept the list of fields in **GET** requests.
-
-When a non-existing attribute is provided, the `Serega::AttributeNotExist` error
-will be raised. This error can be muted with the `check_initiate_params: false`
-option.
-
-```ruby
-class UserSerializer < Serega
-  plugin :string_modifiers # to send all modifiers in one string
-
-  attribute :username
-  attribute :first_name
-  attribute :last_name
-  attribute :email, hide: true
-  attribute :enemies, serializer: UserSerializer, hide: true
-end
-
-joker = OpenStruct.new(
-  username: 'The Joker',
-  first_name: 'jack',
-  last_name: 'Oswald White',
-  email: 'joker@mail.com',
-  enemies: []
-)
-
-bruce = OpenStruct.new(
-  username: 'Batman',
-  first_name: 'Bruce',
-  last_name: 'Wayne',
-  email: 'bruce@wayneenterprises.com',
-  enemies: []
-)
-
-joker.enemies << bruce
-bruce.enemies << joker
-
-# Default
-UserSerializer.to_h(bruce)
-# => {:username=>"Batman", :first_name=>"Bruce", :last_name=>"Wayne"}
-
-# With `:only` modifier
-fields = [:username, { enemies: [:username, :email] }]
-fields_as_string = 'username,enemies(username,email)'
-
-UserSerializer.to_h(bruce, only: fields)
-UserSerializer.new(only: fields).to_h(bruce)
-UserSerializer.new(only: fields_as_string).to_h(bruce)
-# =>
-# {
-#   :username=>"Batman",
-#   :enemies=>[{:username=>"The Joker", :email=>"joker@mail.com"}]
-# }
-
-# With `:except` modifier
-fields = %i[first_name last_name]
-fields_as_string = 'first_name,last_name'
-UserSerializer.new(except: fields).to_h(bruce)
-UserSerializer.to_h(bruce, except: fields)
-UserSerializer.to_h(bruce, except: fields_as_string)
-# => {:username=>"Batman"}
-
-# With `:with` modifier
-fields = %i[email enemies]
-fields_as_string = 'email,enemies'
-UserSerializer.new(with: fields).to_h(bruce)
-UserSerializer.to_h(bruce, with: fields)
-UserSerializer.to_h(bruce, with: fields_as_string)
-# =>
-# {
-#   :username=>"Batman",
-#   :first_name=>"Bruce",
-#   :last_name=>"Wayne",
-#   :email=>"bruce@wayneenterprises.com",
-#   :enemies=>[
-#     {:username=>"The Joker", :first_name=>"jack", :last_name=>"Oswald White"}
-#   ]
-# }
-
-# With no existing attribute
-fields = %i[first_name enemy]
-fields_as_string = 'first_name,enemy'
-UserSerializer.new(only: fields).to_h(bruce)
-UserSerializer.to_h(bruce, only: fields)
-UserSerializer.to_h(bruce, only: fields_as_string)
-# => raises Serega::AttributeNotExist
-
-# With no existing attribute and disabled validation
-fields = %i[first_name enemy]
-fields_as_string = 'first_name,enemy'
-UserSerializer.new(only: fields, check_initiate_params: false).to_h(bruce)
-UserSerializer.to_h(bruce, only: fields, check_initiate_params: false)
-UserSerializer.to_h(bruce, only: fields_as_string, check_initiate_params: false)
-# => {:first_name=>"Bruce"}
-```
-
-### Using Context
-
-Sometimes it can be required to use the context during serialization, like
-current_user or any.
-
-```ruby
-class UserSerializer < Serega
-  attribute :email, value: proc { |user, ctx|
-    user.email if ctx[:current_user] == user
-  }
-end
-
-user = OpenStruct.new(email: 'email@example.com')
-UserSerializer.(user, context: {current_user: user})
-# => {:email=>"email@example.com"}
-
-UserSerializer.new.to_h(user, context: {current_user: user}) # same
-# => {:email=>"email@example.com"}
-```
-
-Serega passes the given context as it is and does not change it. Without the
-`:context` option, the context is a frozen empty Hash; pass a Hash to write to
-it.
-
-### Conditional Attributes
-
-Attribute options `:if`, `:unless`, `:if_value` and `:unless_value`
-conditionally remove attributes from the response.
-
-`:if`/`:unless` receive the object to serialize and context, and are checked
-before the attribute value is found. `:if_value`/`:unless_value` receive the
-already-found value and context, checked after. The latter two cannot be
-used with the `:serializer` option, since a relationship has no "serialized
-value" of its own — use `:if`/`:unless` instead.
-
-`:unless` is checked only when `:if` passes, and `:unless_value` only when
-`:if_value` passes.
-
-`.to_h` omits skipped attributes. `.to_data` and `.to_struct` return `nil`
-for skipped attributes, so all objects serialized with the same fields have
-the same members.
-
-An error raised by a condition names the condition and the line where the
-attribute is defined, for example:
-`(when checking the :if condition of the 'email' attribute in UserSerializer, app/serializers/user_serializer.rb:4)`.
-
-The `:hide` option hides an attribute without conditions. Look at
-[select serialized fields](#selecting-fields) for `:hide` usage examples.
-
-```ruby
- class UserSerializer < Serega
-   attribute :email, if: :active? # translates to `if user.active?`
-   attribute :email, if: proc {|user| user.active?} # same
-   attribute :email, if: proc {|user, ctx| user == ctx[:current_user]}
-   attribute :email, if: CustomPolicy.method(:view_email?)
-
-   attribute :email, unless: :hidden? # translates to `unless user.hidden?`
-   attribute :email, unless: proc {|user| user.hidden?} # same
-   attribute :email, unless: proc {|user, context| context[:show_emails]}
-   attribute :email, unless: CustomPolicy.method(:hide_email?)
-
-   attribute :email, if_value: :present? # if email.present?
-   attribute :email, if_value: proc {|email| email.present?} # same
-   attribute :email, if_value: proc {|email, ctx| ctx[:show_emails]}
-   attribute :email, if_value: CustomPolicy.method(:view_email?)
-
-   attribute :email, unless_value: :blank? # unless email.blank?
-   attribute :email, unless_value: proc {|email| email.blank?} # same
-   attribute :email, unless_value: proc {|email, context| context[:show_emails]}
-   attribute :email, unless_value: CustomPolicy.method(:hide_email?)
- end
-```
-
-### Formatting Values
-
-The `:format` attribute option changes the attribute value with a formatter.
-Define named formatters with `formatter`, then give the `:format` option a
-formatter name. Child serializers get the formatters of their parent.
-
-A formatter is one of:
-
-- a method name, called on the value: `:to_s` calls `value.to_s`;
-- an Array of a method name and its arguments: `[:iso8601, 3]` calls
-  `value.iso8601(3)`;
-- a callable that receives the value, and the context as a second parameter
-  or as the `:ctx` keyword. `formatter` also accepts it as a block.
-
-By default a formatter formats `nil` values too: a callable receives `nil`,
-and a method is called on `nil`. With the `allow_nil: true` option of
-`formatter` a `nil` value stays `nil`. A `:default` value is formatted.
-
-The `:format` option also accepts a formatter directly, except a method name
-alone: a Symbol is the name of a defined formatter. Give the `:allow_nil`
-option inline with a Hash: `format: {use: [:round, 2], allow_nil: true}`.
+Format dates, money and other values the same way everywhere.
 
 ```ruby
 class AppSerializer < Serega
-  formatter :string, :to_s
   formatter :iso8601, [:iso8601, 3], allow_nil: true
-  formatter :on_off, ->(value) { value ? 'ON' : 'OFF' }
-  formatter :money, ->(value, ctx) { value.round(ctx[:digits]) } # value and context
-  formatter(:price) { |cents, ctx:| "#{cents / 100.0} #{ctx[:currency]}" } # :ctx keyword
-  formatter :date, DateTypeFormatter # callable
 end
 
 class UserSerializer < AppSerializer
-  # Using a formatter name
-  attribute :role, format: :string
-  attribute :commission, format: :money
-  attribute :price, format: :price
-  attribute :is_logged_in, format: :on_off
   attribute :created_at, format: :iso8601
-  attribute :updated_at, format: :iso8601
-
-  # Using a formatter directly
-  attribute :rating, format: [:round, 1]
-  attribute :nickname, format: {use: :upcase, allow_nil: true}
-  attribute :score_percent, format: PercentFormatter # callable class
-  attribute :score_percent, format: proc { |percent| "#{percent.round(2)}%" }
-  attribute :discount, format: {use: ->(value, ctx) { value.round(ctx[:digits]) }, allow_nil: true}
 end
-
-UserSerializer.to_h(user, context: {digits: 2, currency: "EUR"})
 ```
 
-A method formatter is called directly in the generated code, which is the
-fastest way to format a value. Its arguments can be any objects.
+→ [Formatters guide](docs/formatters.md)
 
-### Batch Loading
+### Hashes, Structs and Data
 
-Serega includes built-in batch loading functionality to efficiently load data on demand and solve N+1 problems.
-
-#### Defining Named Batch Loaders
-
-Named loaders can be defined using the `batch` class method and reused across attributes:
+Serialize Hash records, and get results as `Struct` or `Data` objects.
 
 ```ruby
-class UserSerializer < Serega
-  # Define named loaders
-  batch :comments_count, ->(users) { Comment.where(user: users).group(:user_id).count }
-  batch :comments_count, CommentsCountLoader # Example with callable class
-
-  # Use a loader by its name
-  attribute :comments_count, batch: :comments_count
-
-  # Equivalent — when the attribute name matches the loader name
-  attribute :comments_count, batch: true
-
-  # Equivalent — the default value resolution spelled out
-  attribute :comments_count, batch: :comments_count,
-    value: proc { |user, batches:| batches[:comments_count][user.id] }
-
-  # Hash form — needed only for sub-options, for example a custom `:id` method
-  attribute :comments_count, batch: { use: :comments_count, id: :uuid }
+class EventSerializer < Serega
+  attribute :title, hash_access: true  # reads event[:title]
 end
+
+UserSerializer.to_h(user)      # => {name: "Bruce Wayne"}
+UserSerializer.to_struct(user) # => #<struct name="Bruce Wayne">
+UserSerializer.to_data(user)   # => #<data name="Bruce Wayne">
 ```
 
-#### Using Custom Loaders
+→ [Hash records guide](docs/hash-records.md) ·
+[Serializing guide](docs/serializing.md)
 
-Custom loaders can be provided directly using the `:use` option with any callable object:
+### Ractors
 
-```ruby
-class UserSerializer < Serega
-  # Inline proc loader
-  attribute :followers_count,
-    batch: { use: ->(users) { Follow.where(user: users).group(:user_id).count } }
-
-  # Callable class loader
-  attribute :likes_count, batch: { use: LikesCountLoader }
-
-  # Method reference
-  attribute :views_count, batch: { use: ViewsCounter.method(:batch_load) }
-end
-```
-
-A loader given directly belongs to its attribute. It does not replace a named
-loader with the same name, and the `:value` option finds its batch under the
-attribute name:
-
-```ruby
-attribute :followers_count,
-  batch: ->(users) { Follow.where(user: users).group(:user_id).count },
-  value: proc { |user, batches:| batches[:followers_count].fetch(user.id, 0) }
-```
-
-#### Using Multiple Loaders in Same Attribute
-
-The `:use` option can list several named loaders. The `:value` option then
-builds the value from their batches:
-
-```ruby
-class UserSerializer < Serega
-  # Define named loaders
-  batch :facebook_likes, FacebookLikesLoader
-  batch :twitter_likes, TwitterLikesLoader
-
-  # Summarize likes
-  attribute :likes_count,
-    batch: { use: [:facebook_likes, :twitter_likes] },
-    value: proc { |user, batches:| batches[:facebook_likes][user.id] + batches[:twitter_likes][user.id] }
-end
-```
-
-### Prepare Initial Objects
-
-`prepare_initial_objects` replaces the objects to serialize before serialization
-starts, so a serializer can accept ids or other references and load the records
-itself.
-
-```ruby
-class UserSerializer < Serega
-  # OccamsRecord returns read-only records — faster and with a much lower
-  # memory footprint than ActiveRecord models
-  prepare_initial_objects { |user_ids| OccamsRecord.query(User.where(id: user_ids)).run }
-
-  attribute :first_name
-end
-
-UserSerializer.to_h(["17", "42"]) # => [{first_name: "Ann"}, {first_name: "Bob"}]
-```
-
-The handler accepts the serialization context as a second positional or a
-`:ctx` keyword argument, and can be provided as a callable value:
-
-```ruby
-class UserSerializer < Serega
-  prepare_initial_objects { |ids, ctx| OccamsRecord.query(User.where(id: ids, account: ctx[:account])).run }
-  # or
-  prepare_initial_objects { |ids, ctx:| OccamsRecord.query(User.where(id: ids, account: ctx[:account])).run }
-  # or
-  prepare_initial_objects UsersLoader
-end
-```
-
-The handler runs once per serialization, before the `:many` option is detected,
-so it can turn a single object into a collection and back:
-
-```ruby
-class UserSerializer < Serega
-  prepare_initial_objects { |user_id| OccamsRecord.query(User.where(id: user_id)).run }
-
-  attribute :first_name
-end
-
-UserSerializer.to_h("17") # => [{first_name: "Ann"}] - an array, as the handler returned a collection
-```
-
-A provided `:many` option is used as is. A handler returning `nil` serializes
-`nil`, and errors raised inside the handler are not wrapped.
-
-Declared preloads are applied to the prepared objects, so the handler pairs
-with [preloads][preloads] and the
-[activerecord_preloads][activerecord_preloads] plugin:
-
-```ruby
-class UserSerializer < Serega
-  plugin :activerecord_preloads
-
-  prepare_initial_objects { |user_ids| User.where(id: user_ids) }
-
-  attribute :albums_count, preload: :albums, value: proc { |user| user.albums.size }
-end
-```
-
-⚠️ The `:preload` option needs ActiveRecord objects. When the handler returns
-anything else — OccamsRecord read-only records, Structs, Hashes, plain objects
-— preloading raises `Serega::SeregaError` (`Can't preload ... to ...`) during
-serialization. Load that data with [batch loading](#batch-loading) instead,
-which works with any objects.
-
-The handler runs only for the objects given to the serializer, and not for
-objects of nested serializers. It is inherited by subclasses, so declare it on concrete
-serializers rather than on a base serializer shared by all of them.
-
-## Configuration
-
-Here are the default options. Other options can be added with plugins.
-
-⚠️ Attributes are prepared at the moment they are defined. If a config option
-influences attributes (`auto_preload`, `hide_by_default`, `batch_id_option`,
-formatters, etc.), changing it affects only attributes defined **after** the
-change — including nested serializers defined with attribute blocks, which
-are created at their definition point. Configure the serializer before
-defining attributes.
-
-```ruby
-class AppSerializer < Serega
-  # With `activerecord_preloads` plugin it automatically adds `preload` option
-  # to attributes with `:delegate` or `:serializer` option.
-  # It helps to preload associations automatically, omitting N+1 requests.
-  config.auto_preload = false
-
-  # Hides attributes by default. Accepts:
-  #   false         - nothing hidden (default)
-  #   true          - all attributes hidden
-  #   [:preload]    - attributes with :preload option hidden
-  #   [:batch]      - attributes with :batch option hidden
-  #   [:preload, :batch] - either option triggers hiding
-  # Useful to avoid extra DB requests for attributes that were not requested.
-  config.hide_by_default = false
-
-  # Default method called on the object to serialize to resolve batch value
-  # For example:
-  #   attribute :counter, batch: CounterBatchLoader
-  #   # Attribute values will be resolved as:
-  #   proc { |object, batches:| batches[:counter][object.id] }
-  config.batch_id_option = :id
-
-  # Defaults for the `hash_access:` attribute option — `default_mode` is
-  # what `hash_access: true` (and a Hash form omitting :mode) resolves to.
-  # See "Serializing Hash records".
-  config.hash_access.default_mode = :symbol # the default
-  config.hash_access.default_allow_missing_key = false # the default
-
-  # Parent class for nested serializers defined with attribute blocks.
-  # Usually a settings-only serializer, e.g. `config.base_serializer = self`
-  # in an application base serializer class. There is no default — an
-  # attribute block raises an error when no base serializer is chosen (it can
-  # also be provided per-attribute with the `base_serializer:` option).
-  config.base_serializer = self
-
-  # Disable/enable validation of modifiers (`:with, :except, :only`)
-  # By default, this validation is enabled.
-  # After disabling, all requested incorrect attributes will be skipped.
-  config.check_initiate_params = false # default is true, enabled
-
-  # Stores in memory prepared `plans` - list of serialized attributes.
-  # Next time serialization happens with the same modifiers (`only, except, with`),
-  # we will reuse already prepared `plans`.
-  # This defines storage size (count of stored `plans` with different modifiers).
-  # Modifiers are compared as provided, so `[:id, :name]` and `"id,name"` are
-  # stored separately. The plan without modifiers is always stored.
-  config.max_cached_plans_per_serializer_count = 50 # default is 20, 0 disables it
-end
-```
-
-## Preloads
-
-Serega includes built-in preloads functionality that lets you declare
-`:preload` on attributes. It is used by the `:activerecord_preloads` plugin:
-enable it and every association you declare is loaded once during
-serialization, automatically, with no N+1.
-
-Configuration options:
-
-- `config.auto_preload` - default `false` (use `true` or `{ has_delegate_option: true, has_serializer_option: true }`)
-- `config.hide_by_default` - default `false` (use `:auto` to hide attributes with preloads or batch loaders)
-
-These options are extremely useful if you want to forget about finding
-preloads manually.
-
-The `:preload` value is passed to the preload handler exactly as written — a
-Symbol, Array, Hash, or any custom value your ORM understands. Preloads can be
-disabled with `preload: false` (or `preload: nil`); `preload: true` is not a
-valid value. Automatically added preloads can be overwritten with the manually
-specified `preload: :xxx` option.
-
-The actual loading is performed by a handler registered with `preload_with`. The
-`:activerecord_preloads` plugin registers one for you; to preload with another
-ORM — or to attach data to plain non-ORM objects by your own rules — register
-your own (see [Custom preloading](#custom-preloading)). Declaring `:preload`
-without a registered handler raises an error, so a preload never silently does
-nothing.
-
-For some examples, **please read the comments in the code below**
-
-```ruby
-class AppSerializer < Serega
-  config.auto_preload = true
-  config.hide_by_default = :auto
-end
-
-class UserSerializer < AppSerializer
-  # No preloads
-  attribute :username
-
-  # `preload: :user_stats` added manually
-  attribute :followers_count, preload: :user_stats,
-    value: proc { |user| user.user_stats.followers_count }
-
-  # `preload: :user_stats` added automatically, as
-  # `auto_preload` includes `has_delegate_option: true`
-  attribute :comments_count, delegate: { to: :user_stats }
-
-  # `preload: :albums` added automatically as
-  # `auto_preload` includes `has_serializer_option: true`
-  attribute :albums, serializer: 'AlbumSerializer'
-end
-
-class AlbumSerializer < AppSerializer
-  attribute :images_count, delegate: { to: :album_stats }
-end
-
-# With `hide_by_default = :auto`, attributes that declare a preload are hidden
-# unless explicitly requested with `:with`. When requested, their associations
-# are preloaded automatically. For example:
-#
-#   UserSerializer.to_h(users, with: [:followers_count, { albums: :images_count }])
-#
-# preloads `:user_stats` and `:albums` on the users, and `:album_stats` on the
-# albums.
-```
-
----
-
-### Serializing the same object in association
-
-For example, you show your current user as "user" and use the same user object
-to serialize "user_stats". `UserStatSerializer` relies on user fields and any
-other user associations. Specify `preload: nil` so that nothing is preloaded for
-this attribute on the "user" object — the associations declared in
-`UserStatSerializer` are still preloaded onto the same user object.
-
-```ruby
-class AppSerializer < Serega
-  config.auto_preload = true
-  config.hide_by_default = :auto
-end
-
-class UserSerializer < AppSerializer
-  attribute :username
-  attribute :user_stats,
-    serializer: 'UserStatSerializer',
-    value: proc { |user| user },
-    preload: nil
-end
-```
-
----
-
-### Custom preloading
-
-The `:activerecord_preloads` plugin works out of the box, but the preload
-mechanism itself is not tied to ActiveRecord — or to ORMs at all. Register a
-handler with `preload_with` and it is called once per preloaded attribute with
-the gathered objects and that attribute's `:preload` value, before the
-attribute is serialized:
-
-```ruby
-class UserSerializer < Serega
-  attribute :name
-  attribute :posts, serializer: PostSerializer, preload: :posts
-
-  # `objects` is the gathered users; `preloads` is this attribute's
-  # `:preload` value (`:posts`). `MyORM.preload` does the eager loading.
-  preload_with { |objects, preloads| MyORM.preload(objects, preloads) }
-end
-```
-
-The handler can be a block or any callable taking `(objects, preloads)`. It is
-inherited by child serializers and can be overridden per subclass. The
-`:preload` value reaches the handler untouched, so you can pass whatever your
-handler expects — not necessarily something an ORM understands. The gathered
-objects can be plain Ruby objects too: the handler decides where the data comes
-from (another ORM, an HTTP API, a cache) and how to attach it to the objects,
-by whatever rules you define.
-
-The handler runs **once per preloaded attribute**, not once per distinct
-`:preload` value. If the same `:preload` is declared on several attributes, the
-handler is invoked once for each of them over the same objects, so it should
-check whether the data is already loaded before loading it again. (The
-`:activerecord_preloads` handler relies on `ActiveRecord::Associations::Preloader`,
-which already skips associations that are loaded.)
-
-Because you choose the `:preload` value, it doubles as a **discriminator**: give
-two attributes different `:preload` values and branch on `preloads` inside the
-handler — no need for the value to be a real association name.
-
-```ruby
-class PostSerializer < Serega
-  attribute :owner,  serializer: UserSerializer, preload: :owner
-  attribute :author, serializer: UserSerializer, preload: :author
-
-  # Both attributes load the same person, but from different sources.
-  preload_with do |objects, preloads|
-    case preloads
-    when :owner  then load_owners(objects)   # e.g. from the DB
-    when :author then load_authors(objects)  # e.g. from an external API
-    else MyORM.preload(objects, preloads)
-    end
-  end
-end
-```
-
----
-
-## Serializing Hash records
-
-(objects should implement `#[]`, `#fetch`, and `#key?` - Hash already has them)
-
-The `hash_access: <mode>` attribute option makes an attribute read its value from
-Hash keys instead of calling a method.
-
-Allowed `<mode>`:
-
-- `:symbol` reads record[:name]
-- `:string` reads record["name"]
-- `true` shorthand for `config.hash_access.default_mode` (`:symbol` by default)
-
-By default missing keys will raise `KeyError`.
-
-`config.hash_access.default_allow_missing_key = true` will change `KeyError`
-to return `nil` value instead. `config.hash_access.default_mode = <mode>`
-changes what `true` (and a Hash form omitting `:mode`) resolves to.
-
-```ruby
-class UserSerializer < Serega
-  config.hash_access.default_mode = :symbol             # the default
-  config.hash_access.default_allow_missing_key = true    # false by default
-
-  attribute :name, hash_access: true     # reads record[:name] (config.hash_access.default_mode)
-  attribute :name, hash_access: :symbol  # reads record[:name]
-  attribute :name, hash_access: :string  # reads record["name"]
-
-  # Use long form if you need to override `allow_missing_key`
-  attribute :name, hash_access: { allow_missing_key: false }
-  attribute :name, hash_access: { mode: :symbol, allow_missing_key: false }
-  attribute :name, hash_access: { mode: :string, allow_missing_key: false }
-end
-```
-
-Delegated attributes configure hash access **per step**:
-
-- `to_hash_access` configures reading `<mode>` for intermediate object
-- `hash_access` configures reading `<mode>` for final key
-
-```ruby
-# reads `record.address.city` (no hash access)
-attribute :city, delegate: { to: :address } # record.address.city
-
-# reads record.address[:city]
-attribute :city, delegate: { to: :address, hash_access: :symbol }
-
-# reads record[:address].city
-attribute :city, delegate: { to: :address, to_hash_access: :symbol }
-
-# reads record[:address][:city]
-attribute :city, delegate: { to: :address, to_hash_access: :symbol, hash_access: :symbol }
-
-# reads record["address"] and if exists returns record["address"][:city]
-attribute :city,
-  delegate: {
-    to: :address,
-    allow_nil: true,
-    to_hash_access: { mode: :string, allow_missing_key: true },
-    hash_access: { mode: :symbol, allow_missing_key: false }
-  }
-```
-
-## Presenter
-
-Moves computed attribute logic out of `:value` blocks and into a
-`presenter do ... end` block, keeping serializers readable as schemas rather
-than bags of lambdas.
-
-Computed attributes can be written as inline blocks:
-
-```ruby
-class UserSerializer < Serega
-  attribute :name, value: proc { |user| [user.first_name, user.last_name].compact.join(' ') }
-  attribute :role, value: proc { |user, ctx| user.id == ctx[:current_user_id] ? :self : :other }
-end
-```
-
-They can also be written as methods in a `presenter do ... end` block:
-
-```ruby
-class UserSerializer < Serega
-  attribute :name
-  attribute :role
-
-  presenter do
-    def name
-      [first_name, last_name].compact.join(' ')
-    end
-
-    def role
-      id == __ctx__[:current_user_id] ? :self : :other
-    end
-  end
-end
-
-user = OpenStruct.new(id: 1, first_name: 'Bruce', last_name: 'Wayne')
-UserSerializer.to_h(user, context: {current_user_id: 1})
-# => {name: "Bruce Wayne", role: :self}
-```
-
-Multiple `presenter` blocks accumulate. A child serializer runs its parent's
-blocks followed by its own, so it gets the parent's presenter methods while its
-own stay out of the parent. The parent's blocks are copied when the child class
-is created, so a `presenter` block added to a parent afterwards does not reach it.
-
-Presenter methods run on a `SimpleDelegator` wrapping the object to serialize, so
-every method of that object is available directly. Any method not defined in a
-`presenter` block is delegated to the object on the first call, and a real
-delegator method is defined for it — so all subsequent serializations call it
-directly.
-
-The wrapped object is accessible via `__getobj__` when you need an unambiguous
-reference to it. The serialization context is accessible via `__ctx__`.
-
-Objects are wrapped only when the serializer has presenter methods. A serializer
-without them costs nothing — its attribute values, batch loaders and value
-callables receive the raw objects.
-
-## Ractors
-
-To serialize in other Ractors, end the serializer definition with
-`make_shareable!`. Define serializers in the main Ractor, then serialize
-anywhere:
+Serialize in parallel Ractors.
 
 ```ruby
 class UserSerializer < Serega
@@ -1068,367 +189,43 @@ end
 Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 ```
 
-Call `make_shareable!` in relation serializers too. Nested serializers defined
-with blocks become shareable with their parent. Changing a shareable serializer
-raises an error.
-
-`make_shareable!` makes the serializer definitions shareable with
-`Ractor.make_shareable`, which deep-freezes them: the attribute options,
-formatters, batch loaders, `preload_with` and `prepare_initial_objects`
-handlers. A callable object that changes its own state, for example a formatter
-that caches values in an instance variable, raises `FrozenError` when it
-serializes. A block given to `attribute`, `batch`, `formatter` or another
-definition is shareable when it is written in the serializer class and refers
-only to shareable values. A serializer with a definition that can not be shared
-serializes in the main Ractor only. In other Ractors it raises
-`Serega::SeregaError` with the reason:
-
-```ruby
-class UserSerializer < Serega
-  suffix = +"!"
-  attribute :greeting, value: proc { |user| user.name + suffix }
-  make_shareable!
-end
-
-UserSerializer.to_h(user) # => {greeting: "Ann!"}
-Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
-# => Serega::SeregaError: Attribute :greeting of UserSerializer can not be
-#    shared between Ractors (app/serializers/user_serializer.rb:3): cannot make
-#    a shareable Proc because it can refer unshareable object "!" from variable
-#    'suffix'
-```
-
-Each Ractor builds and caches its own serialization plans.
-
-On a Ruby without Ractors, for example TruffleRuby, `make_shareable!` only
-locks the serializer.
-
-## Plugins
-
-### Plugin :activerecord_preloads
-
-Automatically preloads associations of the objects to serialize.
-
-Every association you declare with `:preload` is loaded once during
-serialization using `ActiveRecord::Associations::Preloader`, so there are no
-N+1 queries. The plugin does this by registering a [`preload_with`](#custom-preloading)
-handler; to use a different ORM, register your own instead.
-
-```ruby
-class AppSerializer < Serega
-  config.auto_preload = true
-  plugin :activerecord_preloads
-end
-
-class AlbumSerializer < AppSerializer
-  # no preloads
-  attribute :title
-
-  # preloads :downloads, as manually specified
-  attribute :downloads_count, preload: :downloads, value: proc { |album| album.downloads.count }
-end
-
-class UserSerializer < AppSerializer
-  # no preloads
-  attribute :username
-
-  # preloads :user_stats, as auto_preload is enabled for :delegate attributes
-  attribute :comments_count, delegate: { to: :user_stats }
-
-  # preloads :albums, as auto_preload is enabled for :serializer attributes
-  attribute :albums, serializer: AlbumSerializer
-end
-
-UserSerializer.to_h(users)
-# 1 query to load :user_stats for all users
-# + 1 query to load :albums for all users
-# + 1 query to load :downloads for all albums
-# = 3 queries total, regardless of how many users/albums are serialized
-```
-
-### Plugin :root
-
-Adds a root key to serialized data.
-
-Accepts options:
-
-- :root - specifies root for all responses
-- :root_one - specifies the root key for single object serialization only
-- :root_many - specifies the root key for multiple objects serialization only
-
-Adds additional config options:
-
-- config.root.one
-- config.root.many
-- config.root.one=
-- config.root.many=
-
-The default root is `:data`.
-
-```ruby
-class UserSerializer < Serega
-  plugin :root # default root is :data
-end
-
-class UserSerializer < Serega
-  plugin :root, root: :users
-end
-
-class UserSerializer < Serega
-  plugin :root, root_one: :user, root_many: :people
-end
-
-class UserSerializer < Serega
-  plugin :root, root: nil # no root key by default
-end
-```
-
-The root key can also be changed per serialization, or removed entirely by
-providing `root: nil` (it can still be added back per serialization).
-
-```ruby
-class UserSerializer < Serega
-  plugin :root
-end
-
-UserSerializer.to_h(nil)              # => {:data=>nil}
-UserSerializer.to_h(nil, root: :user) # => {:user=>nil}
-UserSerializer.to_h(nil, root: nil)   # => nil
-```
-
-`.to_data` and `.to_struct` also return a Hash. The `Data` or `Struct` objects
-are under the root key, and metadata values are kept as they are.
-
-```ruby
-UserSerializer.to_data(user)   # => {:data=>#<data username="serega">}
-UserSerializer.to_struct(user) # => {:data=>#<struct username="serega">}
-```
-
-### Plugin :metadata
-
-Depends on: [`:root`][root] plugin, that must be loaded first
-
-Adds metadata to the serialized response via the class-level `meta_attribute`
-method, which accepts:
-
-- `*path` [Array of Symbols] - nested hash keys.
-- `**options` [Hash]
-
-   - `:const` - describes metadata value (if it is constant)
-   - `:value` - describes metadata value as any `#callable` instance
-   - `:hide_nil` - does not show the metadata key if the value is nil.
-     It is `false` by default
-   - `:hide_empty` - does not show the metadata key if the value is nil or empty.
-     It is `false` by default.
-
-- `&block` [Proc] - describes value for the current meta attribute
-
-```ruby
-class AppSerializer < Serega
-  plugin :root
-  plugin :metadata
-
-  meta_attribute(:version, const: '1.2.3')
-  meta_attribute(:ab_tests, :names, value: ABTests.new.method(:names))
-  meta_attribute(:meta, :paging, hide_nil: true) do |records, ctx|
-    next unless records.respond_to?(:total_count)
-
-    {
-      page: records.page,
-      per_page: records.per_page,
-      total_count: records.total_count
-    }
-  end
-end
-
-AppSerializer.to_h(nil)
-# => {:data=>nil, :version=>"1.2.3", :ab_tests=>{:names=> ... }}
-```
-
-### Plugin :context_metadata
-
-Depends on: [`:root`][root] plugin, that must be loaded first
-
-Adds metadata supplied per serialization call (as opposed to `:metadata`,
-which is defined statically on the serializer).
-
-Accepts option `:context_metadata_key` with the name of the root metadata keyword.
-By default, it has the `:meta` value.
-
-The key can be changed in children serializers using this method:
-`config.context_metadata.key=(value)`.
-
-```ruby
-class UserSerializer < Serega
-  plugin :root, root: :data
-  plugin :context_metadata, context_metadata_key: :meta
-
-  # Same:
-  # plugin :context_metadata
-  # config.context_metadata.key = :meta
-end
-
-UserSerializer.to_h(nil, meta: { version: '1.0.1' })
-# => {:data=>nil, :version=>"1.0.1"}
-```
-
-### Plugin :string_modifiers
-
-Allows `:only`, `:except` and `:with` to be given as a single comma-separated
-string, with nested attributes in parentheses. Useful for accepting a field
-list straight from a query parameter.
-
-Modifiers can still be provided the old way, as nested hashes or arrays.
-
-```ruby
-PostSerializer.plugin :string_modifiers
-PostSerializer.new(only: "id,user(id,username)").to_h(post)
-PostSerializer.new(except: "user(username,email)").to_h(post)
-PostSerializer.new(with: "user(email)").to_h(post)
-
-PostSerializer.new(with: {user: %i[email, username]}).to_h(post)
-```
-
-### Plugin :camel_case
-
-Without this plugin, responding with *camelCased* keys means specifying the
-attribute name and method directly for each attribute:
-`attribute :firstName, method: first_name`
-
-This plugin camelCases every attribute name automatically, replacing `_x`
-with `X` throughout the string. The transformation runs once, when the
-attribute is defined, not on every serialization.
-
-Provide a custom transformation when adding the plugin, for example
-`plugin :camel_case, transform: ->(name) { name.camelize }`
-
-Skip camelCase for a single attribute with `camel_case: false`.
-
-This plugin transforms only attribute keys, without affecting the `root`,
-`metadata` and `context_metadata` plugins keys.
-
-If you wish to [select serialized fields](#selecting-fields), you should
-provide them camelCased.
-
-```ruby
-class AppSerializer < Serega
-  plugin :camel_case
-end
-
-class UserSerializer < AppSerializer
-  attribute :first_name
-  attribute :last_name
-  attribute :full_name, camel_case: false,
-    value: proc { |user| [user.first_name, user.last_name].compact.join(" ") }
-end
-
-require "ostruct"
-user = OpenStruct.new(first_name: "Bruce", last_name: "Wayne")
-UserSerializer.to_h(user)
-# => {firstName: "Bruce", lastName: "Wayne", full_name: "Bruce Wayne"}
-
-UserSerializer.new(only: %i[firstName lastName]).to_h(user)
-# => {firstName: "Bruce", lastName: "Wayne"}
-```
-
-### Plugin :depth_limit
-
-Helps to secure from malicious queries that serialize too much
-or from accidental serializing of objects with cyclic relations.
-
-Depth limit is checked when constructing a serialization plan, that is when
-`#new` method is called, ex: `SomeSerializer.new(with: params[:with])`.
-It can be useful to instantiate serializer before any other business logic
-to get possible errors earlier.
-
-Any class-level serialization methods also check the depth limit as they also
-instantiate serializer.
-
-When the depth limit is exceeded `Serega::DepthLimitError` is raised.
-Depth limit error details can be found in the additional
-`Serega::DepthLimitError#details` method
-
-The limit can be checked or changed with the next config options:
-
-- `config.depth_limit.limit`
-- `config.depth_limit.limit=`
-
-There is no default limit, but it should be set when enabling the plugin.
-
-```ruby
-class AppSerializer < Serega
-  plugin :depth_limit, limit: 10 # set limit for all child classes
-end
-
-class UserSerializer < AppSerializer
-  config.depth_limit.limit = 5 # overrides limit for UserSerializer
-end
-```
-
-### Plugin :explicit_many_option
-
-Requires the `:many` option on every relationship attribute (an attribute
-with the `:serializer` option or a block defining a nested serializer), so
-it's always explicit whether it returns one object or many.
-
-```ruby
-class BaseSerializer < Serega
-  plugin :explicit_many_option
-  config.base_serializer = self
-end
-
-class PostSerializer < BaseSerializer
-  attribute :text
-
-  attribute :user, many: false do
-    attribute :name
-  end
-
-  attribute :comments, serializer: PostSerializer, many: true
-end
-```
-
-## Errors
-
-- The `Serega::SeregaError` is a base error raised by this gem.
-- The `Serega::AttributeNotExist` error is raised when validating attributes in
-  `:only, :except, :with` modifiers. This error contains additional methods:
-
-   - `#serializer` - shows current serializer
-   - `#attributes` - lists not existing attributes
-
-## Release
-
-To release a new version, read [RELEASE.md](https://github.com/aglushkov/serega/blob/master/RELEASE.md).
+→ [Ractors guide](docs/ractors.md)
+
+### And more
+
+- [Attributes](docs/attributes.md) — all attribute options, relations and nested serializers
+- [Conditional attributes](docs/conditional-attributes.md) — `if:`, `unless:`, `if_value:`, `unless_value:`
+- [Context](docs/context.md) — pass `current_user` and other request data
+- [Presenter](docs/presenter.md) — write computed attributes as methods
+- [Prepare initial objects](docs/prepare-initial-objects.md) — serialize records by ids
+- [Configuration](docs/configuration.md) — all config options
+- [Plugins](docs/plugins.md) — `root`, `metadata`, `camel_case`, `depth_limit` and others
+
+## Documentation
+
+- 📋 [Cheatsheet](CHEATSHEET.md) — every option on one page
+- 📚 [Guides](docs/README.md) — each feature in depth
+- 🔎 [API docs](https://rubydoc.info/gems/serega) — YARD reference
+- 📝 [Changelog](CHANGELOG.md)
 
 ## Development
 
-- `bundle install` - install dependencies
-- `bin/console` - open irb console with loaded gems
-- `bundle exec rspec` - run tests
-- `bundle exec rubocop` - check code standards
-- `yard stats --list-undoc --no-cache` - view undocumented code
-- `yard server --reload` - view code documentation
+```sh
+bundle install
+bundle exec rake  # tests and linter
+bin/console       # irb with serega loaded
+```
+
+Releasing: [RELEASE.md](RELEASE.md).
 
 ## Contributing
 
-Bug reports, pull requests and improvements ideas are very welcome!
+Bug reports, pull requests and ideas are welcome!
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the
+[MIT License](https://opensource.org/licenses/MIT).
 
-[activerecord_preloads]: #plugin-activerecord_preloads
-[batch-loading]: #batch-loading
-[camel_case]: #plugin-camel_case
-[context_metadata]: #plugin-context_metadata
-[depth_limit]: #plugin-depth_limit
-[formatters]: #formatting-values
-[hash_access]: #serializing-hash-records
-[metadata]: #plugin-metadata
-[preloads]: #preloads
-[presenter]: #presenter
-[root]: #plugin-root
-[string_modifiers]: #plugin-string_modifiers
 [build-badge]: https://github.com/aglushkov/serega/actions/workflows/main.yml/badge.svg?event=push
 [build]: https://github.com/aglushkov/serega/actions/workflows/main.yml

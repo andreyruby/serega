@@ -3,10 +3,10 @@
 # Table of contents generation and link checking for the documentation files.
 module DocsTasks
   # Files with a generated table of contents, and the deepest heading level included
-  TOC_FILES = {"README.md" => 3, "CHEATSHEET.md" => 2}.freeze
+  TOC_FILES = {"CHEATSHEET.md" => 2}.freeze
 
-  # Files checked for broken anchor links
-  LINK_FILES = %w[README.md CHEATSHEET.md CHANGELOG.md RELEASE.md].freeze
+  # Files checked for broken links
+  LINK_FILES = (%w[README.md CHEATSHEET.md CHANGELOG.md RELEASE.md] + Dir["docs/*.md"].sort).freeze
 
   TOC_HEADING = "## Table of Contents"
   TOC_START = "<!-- toc -->"
@@ -85,15 +85,32 @@ module DocsTasks
     end
 
     # @param text [String] File contents
-    # @return [Array<String>] Anchors that no heading defines
-    def broken_anchors(text)
+    # @return [Array<String>] Anchors of all headings
+    def defined_anchors(text)
       seen = {}
-      defined_anchors = headings(text).map { |_level, title| anchor(title, seen) }
+      headings(text).map { |_level, title| anchor(title, seen) }
+    end
 
-      inline = text.scan(/\]\((#[\w-]+)\)/).flatten
-      reference = text.scan(/^\[[^\]]+\]:\s*(#[\w-]+)/).flatten
+    # @param file [String] Markdown file path
+    # @return [Array<String>] Links to missing files and anchors that no heading defines
+    def broken_links(file)
+      text = File.read(file)
+      inline = text.scan(/\]\(([^)\s]+)\)/).flatten
+      reference = text.scan(/^\[[^\]]+\]:\s*(\S+)/).flatten
 
-      (inline + reference).uniq.reject { |link| defined_anchors.include?(link.delete_prefix("#")) }
+      (inline + reference).uniq.reject { |link| link.match?(/\A\w+:/) || link_valid?(file, link) }
+    end
+
+    # @param file [String] Markdown file path
+    # @param link [String] Relative link, with an optional anchor
+    # @return [Boolean] Whether the linked file and anchor exist
+    def link_valid?(file, link)
+      path, anchor = link.split("#", 2)
+      target = path.empty? ? file : File.join(File.dirname(file), path)
+      return false unless File.exist?(target)
+      return true if anchor.nil? || !target.end_with?(".md")
+
+      defined_anchors(File.read(target)).include?(anchor)
     end
   end
 end
@@ -109,7 +126,7 @@ namespace :docs do
     end
   end
 
-  desc "Check the table of contents is current and all anchor links resolve"
+  desc "Check the table of contents is current and all links resolve"
   task :check do
     errors = []
 
@@ -132,13 +149,13 @@ namespace :docs do
     end
 
     DocsTasks::LINK_FILES.each do |file|
-      DocsTasks.broken_anchors(File.read(file)).each do |link|
-        errors << "#{file}: link #{link} matches no heading"
+      DocsTasks.broken_links(file).each do |link|
+        errors << "#{file}: link #{link} matches no file or heading"
       end
     end
 
     raise "\n#{errors.join("\n")}" unless errors.empty?
 
-    puts "Documentation tables of contents and anchor links are valid"
+    puts "Documentation tables of contents and links are valid"
   end
 end
