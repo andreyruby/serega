@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaPlanCache do
+RSpec.describe Serega::SeregaPlan::Cache do
   let(:address_serializer) do
     Class.new(Serega) do
       attribute :city
