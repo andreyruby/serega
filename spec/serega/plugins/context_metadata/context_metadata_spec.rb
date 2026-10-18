@@ -89,13 +89,41 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
       end
     end
 
-    context "when setting metadata key to nil" do
-      before do
-        user_serializer.config.context_metadata.key = nil
+    context "when the config changes the metadata key" do
+      let(:base_serializer) do
+        Class.new(serializer) do
+          plugin :context_metadata
+          config.context_metadata.key = :extra
+        end
       end
 
-      it "skips adding metadata to response" do
-        expect(response).to eq(data: {first_name: "FIRST_NAME"})
+      let(:opts) { {extra: {version: "1.2.3"}} }
+
+      it "appends metadata of the new key to response" do
+        expect(response).to eq(data: {first_name: "FIRST_NAME"}, version: "1.2.3")
+      end
+
+      context "with metadata of the previous key" do
+        let(:opts) { {meta: {version: "1.2.3"}} }
+
+        it "raises an error" do
+          expect { response }
+            .to raise_error(Serega::SeregaError, "Invalid serialize option :meta. Allowed options are: :context, :extra, :many, :root")
+        end
+      end
+    end
+
+    context "when the config sets the metadata key to nil" do
+      let(:base_serializer) do
+        Class.new(serializer) do
+          plugin :context_metadata
+          config.context_metadata.key = nil
+        end
+      end
+
+      it "raises an error for metadata of the previous key" do
+        expect { response }
+          .to raise_error(Serega::SeregaError, "Invalid serialize option :meta. Allowed options are: :context, :many, :root")
       end
     end
 

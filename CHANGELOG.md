@@ -67,6 +67,9 @@
   attribute names in different nesting.
 - Fix `Method` objects with a context parameter, for example
   `if: EmailPolicy.method(:visible?)`, being called without the context.
+- **BREAKING**: Fix `config.context_metadata.key=` rejecting the new key as a
+  serialization option. The previous key raises. See
+  "Plugin :context_metadata" in the README.
 
 ## [0.42.0] - 2026-09-08
 
