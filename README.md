@@ -51,6 +51,7 @@ It has some great features:
    - [Custom preloading](#custom-preloading)
 - [Serializing Hash records](#serializing-hash-records)
 - [Presenter](#presenter)
+- [Ractors](#ractors)
 - [Plugins](#plugins)
    - [Plugin :activerecord_preloads](#plugin-activerecord_preloads)
    - [Plugin :root](#plugin-root)
@@ -1051,6 +1052,56 @@ reference to it. The serialization context is accessible via `__ctx__`.
 Objects are wrapped only when the serializer has presenter methods. A serializer
 without them costs nothing — its attribute values, batch loaders and value
 callables receive the raw objects.
+
+## Ractors
+
+To serialize in other Ractors, end the serializer definition with
+`make_shareable!`. Define serializers in the main Ractor, then serialize
+anywhere:
+
+```ruby
+class UserSerializer < Serega
+  attribute :name
+  make_shareable!
+end
+
+Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
+```
+
+Call `make_shareable!` in relation serializers too. Nested serializers defined
+with blocks become shareable with their parent. Changing a shareable serializer
+raises an error.
+
+`make_shareable!` makes the serializer definitions shareable with
+`Ractor.make_shareable`, which deep-freezes them: the attribute options,
+formatters, batch loaders, `preload_with` and `prepare_initial_objects`
+handlers. A callable object that changes its own state, for example a formatter
+that caches values in an instance variable, raises `FrozenError` when it
+serializes. A block given to `attribute`, `batch`, `formatter` or another
+definition is shareable when it is written in the serializer class and refers
+only to shareable values. A serializer with a definition that can not be shared
+serializes in the main Ractor only. In other Ractors it raises
+`Serega::SeregaError` with the reason:
+
+```ruby
+class UserSerializer < Serega
+  suffix = +"!"
+  attribute :greeting, value: proc { |user| user.name + suffix }
+  make_shareable!
+end
+
+UserSerializer.to_h(user) # => {greeting: "Ann!"}
+Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
+# => Serega::SeregaError: Attribute :greeting of UserSerializer can not be
+#    shared between Ractors (app/serializers/user_serializer.rb:3): cannot make
+#    a shareable Proc because it can refer unshareable object "!" from variable
+#    'suffix'
+```
+
+Each Ractor builds and caches its own serialization plans.
+
+On a Ruby without Ractors, for example TruffleRuby, `make_shareable!` only
+locks the serializer.
 
 ## Plugins
 
