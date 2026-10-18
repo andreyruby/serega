@@ -586,23 +586,16 @@ See [Preloads][preloads].
 
 ```ruby
 class UserSerializer < Serega
-  config.hide_by_default = [:preload]
+  config.hide_by_default = :auto # hides attributes with preloads or batch loaders
   attribute :name
   attribute :stats, preload: :stats, value: proc { |u| u.stats }
 end
 
 UserSerializer.to_h(user)               # => {name: "Felonious"}        (stats skipped)
-UserSerializer.to_h(user, with: :stats) # => {name: "Felonious", stats: ...}
+UserSerializer.to_h(user, with: :stats) # => {name: "Felonious", stats: 3}
 ```
 
-Accepts `false` (default), `true` (hide everything),
-`[:preload]`, `[:batch]`, or `%i[preload batch]`.
-
-`[:preload]` covers **both** kinds of preload: attributes you declared
-`preload:` on explicitly, and attributes that got a virtual `preload:` via
-`config.auto_preload` (`:delegate` / `:serializer` targets). The typical setup
-is `auto_preload = true` + `hide_by_default = [:preload]` — every association
-is hidden until the client asks for it, so unrequested fields cost nothing.
+Accepts `false` (default), `true` (hide everything) or `:auto`.
 
 See [Field Selection][field-selection].
 

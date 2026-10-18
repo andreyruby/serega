@@ -2,57 +2,59 @@
 
 ## [Unreleased]
 
-- Serializers that end with `make_shareable!` serialize in other Ractors. See
-  "Ractors" in the README.
+- Serializers that end with `make_shareable!` serialize in other Ractors.
+  See [Ractors](docs/ractors.md).
 - **BREAKING**: Raise the minimum supported Ruby version to 3.3. Ruby 3.2 has
   reached its end of life.
 - **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
-  under the root key. See "Plugin :root" in the README.
+  under the root key. See [Plugin :root](docs/plugins.md#plugin-root).
 - **BREAKING**: Moved the `:if`, `:unless`, `:if_value` and `:unless_value`
   attribute options from the `:if` plugin to core. Remove `plugin :if` from
-  your serializers — loading it raises `Plugin 'if' does not exist`. See
-  "Conditional Attributes" in the README.
+  your serializers — loading it raises `Plugin 'if' does not exist`.
+  See [Conditional Attributes](docs/conditional-attributes.md).
 - **BREAKING**: Conditional attributes: `.to_data` returns `nil` for skipped
-  attributes. See "Conditional Attributes" in the README.
+  attributes. See [Conditional Attributes](docs/conditional-attributes.md).
 - **BREAKING**: Moved the `:format` attribute option from the `:formatters`
   plugin to core. Remove `plugin :formatters` from your serializers — loading
   it raises `Plugin 'formatters' does not exist`. Define named formatters with
-  `formatter :money, ->(cents) { cents / 100.0 }` or with a block. See
-  "Formatting Values" in the README.
+  `formatter :money, ->(cents) { cents / 100.0 }` or with a block.
+  See [Formatting Values](docs/formatters.md).
 - Formatters can be a method name (`formatter :string, :to_s`), an Array of a
   method name and its arguments (`formatter :iso8601, [:iso8601, 3]`), or a
   callable that receives the value and the context (`->(cents, ctx) { ... }`
   or `->(cents, ctx:) { ... }`). The `allow_nil: true` option keeps `nil`
   values: `formatter :iso8601, [:iso8601, 3], allow_nil: true`, or inline
-  `format: {use: [:round, 2], allow_nil: true}`. See "Formatting Values" in
-  the README.
+  `format: {use: [:round, 2], allow_nil: true}`.
+  See [Formatting Values](docs/formatters.md).
 - Add `.to_struct` / `#to_struct` to serialize objects to Ruby `Struct`
-  objects. See "Serializing" in the README.
+  objects. See [Serializing](docs/serializing.md).
 - `.to_struct` and `.to_data` raise `Serega::SeregaError` for attribute names
-  that can not be `Struct` or `Data` members. See "Serializing" in the README.
+  that can not be `Struct` or `Data` members.
+  See [Serializing](docs/serializing.md).
 - **BREAKING**: Serializers are locked once they serialize something. Changing
-  a locked serializer raises an error. See "Define serializers" in the README.
+  a locked serializer raises an error.
+  See [Locked serializers](docs/attributes.md#locked-serializers).
 - **BREAKING**: The context is a frozen empty Hash when the `:context` option
-  is not given. See "Using Context" in the README.
+  is not given. See [Using Context](docs/context.md).
 - Faster serialization.
-- Serialization errors show where the failing attribute is defined. See
-  "Defining a nested serializer with a block" in the README.
-- Errors raised by conditional attribute options name the condition. See
-  "Conditional Attributes" in the README.
-- Conditional attributes check `:unless` only when `:if` passes. See
-  "Conditional Attributes" in the README.
-- `config.max_cached_plans_per_serializer_count` is 20 by default. See
-  "Configuration" in the README.
+- Serialization errors show where the failing attribute is defined.
+  See [Nested serializers](docs/attributes.md#nested-serializers-defined-with-a-block).
+- Errors raised by conditional attribute options name the condition.
+  See [Conditional Attributes](docs/conditional-attributes.md).
+- Conditional attributes check `:unless` only when `:if` passes.
+  See [Conditional Attributes](docs/conditional-attributes.md).
+- `config.max_cached_plans_per_serializer_count` is 20 by default.
+  See [Configuration](docs/configuration.md).
 - Cache the serialization plan built without `:only`/`:except`/`:with`
   modifiers.
 - **BREAKING**: `batch: true` and `batch: {id: ...}` raise when no batch loader
   named after the attribute is defined before it, like `batch: :loader_name`.
-  See "Batch Loading" in the README.
+  See [Batch Loading](docs/batch-loading.md).
 - Fix defining a child serializer of a serializer with an attribute that uses a
   named batch loader.
 - Fix a batch loader given directly to the `:batch` option replacing the named
-  batch loader with the same name. The loader belongs to its attribute. See
-  "Batch Loading" in the README.
+  batch loader with the same name. The loader belongs to its attribute.
+  See [Batch Loading](docs/batch-loading.md).
 - Fix a batch loader given directly to the `:batch` option together with the
   `:value` option.
 - Fix keyword arguments of methods called on presenters.
@@ -68,8 +70,8 @@
 - Fix `Method` objects with a context parameter, for example
   `if: EmailPolicy.method(:visible?)`, being called without the context.
 - **BREAKING**: Fix `config.context_metadata.key=` rejecting the new key as a
-  serialization option. The previous key raises. See
-  "Plugin :context_metadata" in the README.
+  serialization option. The previous key raises.
+  See [Plugin :context_metadata](docs/plugins.md#plugin-context_metadata).
 
 ## [0.42.0] - 2026-09-08
 
