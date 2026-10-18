@@ -28,7 +28,7 @@ class Serega
         #    keyword parameter names joined with undescrore.
         #
         def call(callable, pos_limit:, keyword_args: [])
-          params = callable.is_a?(Proc) ? callable.parameters : callable.method(:call).parameters
+          params = (callable.is_a?(Proc) || callable.is_a?(Method)) ? callable.parameters : callable.method(:call).parameters
 
           # Procs (but not lambdas) can accept all provided parameters
           return full_signature(pos_limit, keyword_args) if params.empty? && callable.is_a?(Proc) && !callable.lambda?

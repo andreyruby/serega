@@ -65,6 +65,8 @@
   meta attributes when merging other metadata into them.
 - Fix the plan cache returning a plan of other modifiers that list the same
   attribute names in different nesting.
+- Fix `Method` objects with a context parameter, for example
+  `if: EmailPolicy.method(:visible?)`, being called without the context.
 
 ## [0.42.0] - 2026-09-08
 
