@@ -25,7 +25,9 @@ class Serega
       # @return [Class] Subclass of Data
       #
       def data_class_for(point_names)
-        @data_classes[point_names] ||= Data.define(*point_names)
+        classes = @data_classes
+        classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :data_classes)) { {} } if classes.frozen?
+        classes[point_names] ||= Data.define(*point_names)
       end
 
       #
@@ -35,7 +37,9 @@ class Serega
       # @return [Class] Subclass of Struct
       #
       def struct_class_for(point_names)
-        @struct_classes[point_names] ||= Struct.new(*point_names)
+        classes = @struct_classes
+        classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :struct_classes)) { {} } if classes.frozen?
+        classes[point_names] ||= Struct.new(*point_names)
       end
 
       private
