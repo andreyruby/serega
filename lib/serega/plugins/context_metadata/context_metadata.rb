@@ -94,10 +94,12 @@ class Serega
         # Initializes context_metadata config object
         #
         # @param opts [Hash] options
+        # @param serialize_keys [Array<Symbol>] Allowed serialization options of the serializer
         #
         # @return [Serega::SeregaPlugins::ContextMetadata::ContextMetadataConfig]
-        def initialize(opts)
+        def initialize(opts, serialize_keys)
           @opts = opts
+          @serialize_keys = serialize_keys
         end
 
         # Key that should be used to define metadata
@@ -105,13 +107,17 @@ class Serega
           opts.fetch(:key)
         end
 
-        # Sets key that should be used to define metadata
+        # Sets key that should be used to define metadata, and allows it as a
+        # serialization option in place of the previous key
         #
-        # @param new_key [Symbol] New key
+        # @param new_key [Symbol, nil] New key
         #
-        # @return [Symbol] New key
+        # @return [Symbol, nil] New key
         def key=(new_key)
+          previous_key = key
           opts[:key] = new_key
+          @serialize_keys.delete(previous_key)
+          @serialize_keys << new_key if new_key
         end
       end
 
@@ -123,7 +129,7 @@ class Serega
       module ConfigInstanceMethods
         # @return [Serega::SeregaPlugins::ContextMetadata::ContextMetadataConfig] context_metadata config
         def context_metadata
-          @plugin_configs[:context_metadata] ||= ContextMetadataConfig.new(opts.fetch(:context_metadata))
+          @plugin_configs[:context_metadata] ||= ContextMetadataConfig.new(opts.fetch(:context_metadata), serialize_keys)
         end
 
         # Builds the context_metadata config before freezing
@@ -172,8 +178,6 @@ class Serega
 
         def add_context_metadata(hash, opts)
           context_metadata_key = self.class.config.context_metadata.key
-          return unless context_metadata_key
-
           metadata = opts[context_metadata_key]
           return unless metadata
 
