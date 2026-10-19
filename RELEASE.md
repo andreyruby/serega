@@ -19,7 +19,6 @@ Steps to release a new version:
    BUNDLE_GEMFILE=gemfiles/8.1.gemfile bundle update && \
    bundle exec rspec && \
    bundle exec rubocop -A && \
-   bundle exec rake examples && \
    codespell --skip="./sig,./doc,./coverage"
    ```
 
