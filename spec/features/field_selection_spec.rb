@@ -206,6 +206,88 @@ RSpec.describe Serega do
       end
     end
 
+    context "with :except option provided as an Array with a Hash" do
+      let(:comment) { double(text: "TEXT", likes_count: 10) }
+
+      let(:comment_serializer) do
+        Class.new(Serega) do
+          attribute :text
+          attribute :likes_count
+        end
+      end
+
+      let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
+      let(:user_serializer) do
+        child_serializer = comment_serializer
+        Class.new(Serega) do
+          attribute :first_name
+          attribute :last_name
+          attribute :comment, serializer: child_serializer
+        end
+      end
+
+      let(:modifiers) { {except: [:first_name, comment: :text]} }
+
+      it "returns hash without excepted attributes" do
+        expect(result).to eq({last_name: "LAST_NAME", comment: {likes_count: 10}})
+      end
+    end
+
+    context "with `:with` context option provided as an Array with a Hash" do
+      let(:comment) { double(text: "TEXT", likes_count: 10) }
+
+      let(:comment_serializer) do
+        Class.new(Serega) do
+          attribute :text, hide: true
+          attribute :likes_count
+        end
+      end
+
+      let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
+      let(:user_serializer) do
+        child_serializer = comment_serializer
+        Class.new(Serega) do
+          attribute :first_name
+          attribute :last_name, hide: true
+          attribute :comment, serializer: child_serializer, hide: true
+        end
+      end
+
+      let(:modifiers) { {with: [:last_name, comment: :text]} }
+
+      it "returns hash with additional attributes specified in `:with` option" do
+        expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: {text: "TEXT", likes_count: 10}})
+      end
+    end
+
+    context "with `:only` context option naming a hidden attribute of a hidden relation" do
+      let(:comment) { double(text: "TEXT") }
+
+      let(:comment_serializer) do
+        Class.new(Serega) do
+          attribute :text, hide: true
+        end
+      end
+
+      let(:user) { double(first_name: "FIRST_NAME", comment: comment) }
+
+      let(:user_serializer) do
+        child_serializer = comment_serializer
+        Class.new(Serega) do
+          attribute :first_name
+          attribute :comment, serializer: child_serializer, hide: true
+        end
+      end
+
+      let(:modifiers) { {only: {comment: :text}} }
+
+      it "returns hash with the hidden attribute only" do
+        expect(result).to eq({comment: {text: "TEXT"}})
+      end
+    end
+
     context "with :except of relation" do
       let(:comment) { double(text: "TEXT") }
 

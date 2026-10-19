@@ -61,6 +61,30 @@ RSpec.describe Serega do
       end
     end
 
+    context "with a relation serializer given as a constant name" do
+      let(:comment) { double(text: "TEXT") }
+
+      let(:comment_serializer) do
+        Class.new(Serega) do
+          attribute :text
+        end
+      end
+
+      let(:user) { double(comment: comment) }
+
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :comment, serializer: "CommentSerializer"
+        end
+      end
+
+      before { stub_const("CommentSerializer", comment_serializer) }
+
+      it "serializes the relation with the named serializer" do
+        expect(result).to eq({comment: {text: "TEXT"}})
+      end
+    end
+
     context "with object with array relation" do
       let(:comments) { [double(text: "TEXT")] }
 

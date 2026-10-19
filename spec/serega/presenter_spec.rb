@@ -147,6 +147,18 @@ RSpec.describe Serega::SeregaPresenter do
     expect(result).to eq({rev: "321"})
   end
 
+  it "serializes the presenter method over the object method of the same name" do
+    serializer.attribute :location
+    serializer.presenter do
+      def location
+        "Gotham City"
+      end
+    end
+
+    result = serializer.new.to_h(Struct.new(:location).new("Earth"))
+    expect(result).to eq({location: "Gotham City"})
+  end
+
   it "works for arrays" do
     serializer.attribute :value
     serializer.presenter do
