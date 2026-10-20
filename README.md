@@ -108,13 +108,13 @@ more is better:
 
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **serega**               |   893,663 |    24,550 |                    2,394 |   4,812 |     3,648 |
-| oj_serializers           |   760,696 |    21,209 |                    2,145 |       — |         — |
-| panko_serializer         |   544,390 |    16,953 |                    1,629 |   3,915 |     2,563 |
-| alba                     |   775,201 |    14,133 |                    1,281 |       — |         — |
-| blueprinter              |   610,544 |     8,875 |                      893 |       — |         — |
-| active_model_serializers |    68,363 |     1,022 |                       79 |     118 |         — |
-| *hand-written Hash*      | 2,271,217 |    25,775 |                    2,342 |   4,856 |     3,506 |
+| **serega**               | 2,028,685 |    25,885 |                    2,546 |   5,074 |     3,744 |
+| oj_serializers           |   788,772 |    21,072 |                    2,189 |       — |         — |
+| panko_serializer         |   553,027 |    17,035 |                    1,683 |   3,932 |     2,611 |
+| alba                     |   788,318 |    14,119 |                    1,300 |       — |         — |
+| blueprinter              |   610,456 |     9,014 |                      896 |       — |         — |
+| active_model_serializers |    67,752 |     1,029 |                       79 |     120 |         — |
+| *hand-written Hash*      | 2,329,852 |    26,341 |                    2,412 |   4,810 |     3,498 |
 
 Hashes, the details of each case and how to run them:
 [benchmarks/README.md](benchmarks/README.md).
