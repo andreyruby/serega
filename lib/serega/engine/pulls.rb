@@ -27,12 +27,14 @@ class Serega
       # @param relation_sources [Array] Relation source of each source of the
       #   parent group: what the relation attribute returns
       # @param many [Boolean, nil] Whether a relation source is a collection
+      # @param known_classes [Hash{Class => Boolean}] Whether objects of a
+      #   class are collections, see SeregaUtils::CollectionDetector
       #
       # @return [Array(Array, Array)] Sources, and the pull of each relation source
       #
-      def collect(relation_sources, many)
+      def collect(relation_sources, many, known_classes)
         sources = []
-        pulls = relation_sources.map { |relation_source| append(sources, relation_source, many) }
+        pulls = relation_sources.map { |relation_source| append(sources, relation_source, many, known_classes) }
         [sources, pulls]
       end
 
@@ -43,13 +45,15 @@ class Serega
       # @param relation_sources [Array] Relation source or SKIP of each source
       #   of the parent group
       # @param many [Boolean, nil] Whether a relation source is a collection
+      # @param known_classes [Hash{Class => Boolean}] Whether objects of a
+      #   class are collections, see SeregaUtils::CollectionDetector
       #
       # @return [Array(Array, Array)] Sources, and the pull of each relation source
       #
-      def collect_conditional(relation_sources, many)
+      def collect_conditional(relation_sources, many, known_classes)
         sources = []
         pulls = relation_sources.map do |relation_source|
-          SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many)
+          SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many, known_classes)
         end
         [sources, pulls]
       end
@@ -61,13 +65,15 @@ class Serega
       # @param sources [Array] Sources list
       # @param relation_source [Object] Relation source, or the root source(s)
       # @param many [Boolean, nil] Whether the relation source is a collection
+      # @param known_classes [Hash{Class => Boolean}] Whether objects of a
+      #   class are collections, see SeregaUtils::CollectionDetector
       #
       # @return [Integer, nil, Object] Pull
       #
-      def append(sources, relation_source, many)
+      def append(sources, relation_source, many, known_classes)
         return if relation_source.nil?
 
-        if many != false && SeregaUtils::CollectionDetector.call(relation_source)
+        if many != false && SeregaUtils::CollectionDetector.call(relation_source, known_classes)
           collection = relation_source.to_a
           sources.concat(collection)
           collection.size

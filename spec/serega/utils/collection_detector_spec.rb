@@ -1,24 +1,88 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaUtils::CollectionDetector do
-  it "returns true for Enumerable objects" do
-    expect(described_class.call([])).to be true
-    expect(described_class.call(Set.new)).to be true
-    expect(described_class.call([].each)).to be true
+  subject(:collection) { described_class.call(object, known_classes) }
+
+  let(:known_classes) { {}.compare_by_identity }
+  let(:object) { Set.new }
+
+  it "returns true for an Enumerable object" do
+    expect(collection).to be true
   end
 
-  it "returns false for non-Enumerable objects" do
-    expect(described_class.call(nil)).to be false
-    expect(described_class.call("string")).to be false
-    expect(described_class.call(Object.new)).to be false
+  it "remembers the answer for the class of the object" do
+    collection
+
+    expect(known_classes.to_a).to eq [[Set, true]]
   end
 
-  it "returns false for Hash objects" do
-    expect(described_class.call({})).to be false
+  context "with an Array" do
+    let(:object) { [] }
+
+    it "returns true without remembering the class" do
+      expect(collection).to be true
+      expect(known_classes).to be_empty
+    end
   end
 
-  it "returns false for Struct objects" do
-    point_struct = Struct.new(:x, :y)
-    expect(described_class.call(point_struct.new(1, 2))).to be false
+  context "with an Enumerator" do
+    let(:object) { [].each }
+
+    it "returns true" do
+      expect(collection).to be true
+    end
+  end
+
+  context "with an object that is not Enumerable" do
+    let(:object) { Object.new }
+
+    it "returns false and remembers it for the class" do
+      expect(collection).to be false
+      expect(known_classes.to_a).to eq [[Object, false]]
+    end
+  end
+
+  context "with nil" do
+    let(:object) { nil }
+
+    it "returns false" do
+      expect(collection).to be false
+    end
+  end
+
+  context "with a Hash" do
+    let(:object) { {} }
+
+    it "returns false" do
+      expect(collection).to be false
+    end
+  end
+
+  context "with a Struct" do
+    let(:object) { Struct.new(:x, :y).new(1, 2) }
+
+    it "returns false" do
+      expect(collection).to be false
+    end
+  end
+
+  context "with a class that has a remembered answer" do
+    let(:object) { "Heisenberg" }
+    let(:known_classes) { {String => true}.compare_by_identity }
+
+    it "returns the remembered answer" do
+      expect(collection).to be true
+    end
+  end
+
+  context "when the known classes are full" do
+    let(:object) { Object.new }
+    let(:full_classes) { [String, Integer, Float, Symbol, Range, Regexp, Time, Proc] }
+    let(:known_classes) { full_classes.to_h { |known_class| [known_class, false] }.compare_by_identity }
+
+    it "returns the answer without remembering the class" do
+      expect(collection).to be false
+      expect(known_classes.keys).to eq full_classes
+    end
   end
 end

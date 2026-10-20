@@ -750,7 +750,7 @@ class Serega
       SeregaValidations::CheckSerializeKeywords.call(context, many)
       context ||= FROZEN_EMPTY_HASH
       object = prepare_objects(object, context)
-      many = SeregaUtils::CollectionDetector.call(object) if many.nil?
+      many = SeregaUtils::CollectionDetector.call(object, plan.collection_classes) if many.nil?
       serialize(object, opts, context, many, mode)
     end
 

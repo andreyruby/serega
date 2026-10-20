@@ -53,7 +53,7 @@ class Serega
           return builder.call_one(object, context) if many == false
 
           sources = []
-          pull = Pulls.append(sources, object, many)
+          pull = Pulls.append(sources, object, many, plan.collection_classes)
           Pulls::SINGLE_SOURCE.equal?(pull) ? builder.call_one(object, context) : builder.call(sources, context, nil, nil)
         end
       end
@@ -105,7 +105,7 @@ class Serega
       # Makes the root group: the root source(s) with one pull
       def root_source_group(plan, object, many)
         sources = []
-        pull = Pulls.append(sources, object, many)
+        pull = Pulls.append(sources, object, many, plan.collection_classes)
         new_source_group(plan, sources, [pull])
       end
 

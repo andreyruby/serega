@@ -4,9 +4,10 @@ RSpec.describe Serega::SeregaEngine::Pulls do
   let(:ann) { double(name: "Ann") }
   let(:bob) { double(name: "Bob") }
   let(:many) { nil }
+  let(:known_classes) { {}.compare_by_identity }
 
   describe ".collect" do
-    subject(:collected) { described_class.collect(relation_sources, many) }
+    subject(:collected) { described_class.collect(relation_sources, many, known_classes) }
 
     let(:relation_sources) { [[ann, bob], nil, ann] }
 
@@ -34,7 +35,7 @@ RSpec.describe Serega::SeregaEngine::Pulls do
   end
 
   describe ".collect_conditional" do
-    subject(:collected) { described_class.collect_conditional(relation_sources, many) }
+    subject(:collected) { described_class.collect_conditional(relation_sources, many, known_classes) }
 
     let(:relation_sources) { [[ann, bob], Serega::SeregaEngine::SKIP, ann] }
 
@@ -44,7 +45,7 @@ RSpec.describe Serega::SeregaEngine::Pulls do
   end
 
   describe ".append" do
-    subject(:pull) { described_class.append(sources, relation_source, many) }
+    subject(:pull) { described_class.append(sources, relation_source, many, known_classes) }
 
     let(:sources) { [ann] }
     let(:relation_source) { [bob, bob] }

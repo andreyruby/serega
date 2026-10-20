@@ -61,7 +61,7 @@ UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, conte
    ├─ CheckSerializeKeywords.call(context, many)
    ├─ context, or the frozen empty Hash
    ├─ prepare_objects                                     calls the prepare_initial_objects handler
-   ├─ many, or detected from the object
+   ├─ many, or detected from the object                  CollectionDetector.call(object, plan.collection_classes)
    └─ serialize(object, opts, context, many, mode)        patched by :root, :metadata, :context_metadata
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ flat plan only, and nothing below:
@@ -111,7 +111,7 @@ A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and p
 
 ### Pulls
 
-`SeregaEngine::Pulls` (`lib/serega/engine/pulls.rb`) handles the pulls. `.collect(relation_sources, many)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append(sources, relation_source, many)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
+`SeregaEngine::Pulls` (`lib/serega/engine/pulls.rb`) handles the pulls. `.collect(relation_sources, many, known_classes)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append(sources, relation_source, many, known_classes)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
 
 | relation source | pull | relation value |
 |---|---|---|
@@ -119,6 +119,8 @@ A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and p
 | collection of N sources | `N` | Array of the next N serialized objects |
 | `nil` | `nil` | `nil` |
 | skipped by its `:if` or `:unless` condition | `SeregaEngine::SKIP` | no key, or nil |
+
+`SeregaUtils::CollectionDetector` checks whether a relation source or a root object is a collection: an Array, or an `Enumerable` that is not a `Hash` or `Struct`. `is_a?(Enumerable)` checks all ancestors of a class that does not include `Enumerable`, about 120 ns for an ActiveRecord model. Thus the detector remembers the answer by class in a Hash compared by identity, up to 8 classes: `SeregaPlan#collection_classes` for the root objects, and `SeregaPlanPoint#collection_classes` for the relation sources of a relation point. Plans belong to one Ractor, through the plan cache, thus these Hashes need no Ractor-local storage. An Array is a collection without a lookup.
 
 A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `Run#call` and the flat build use `.append` for the root. The serialized objects of a group follow the order of its sources, thus `.take!(serialized, pulls)` takes them from the front, one pull after another, and empties them: the parent group takes them once, during its build. The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
 

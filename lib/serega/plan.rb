@@ -24,6 +24,10 @@ class Serega
       # @return [Array<SeregaPlanPoint>] points to serialize with nested serializers
       attr_reader :relation_points
 
+      # Whether the root objects of a class are collections
+      # @return [Hash{Class => Boolean}] Answers by class, see SeregaUtils::CollectionDetector
+      attr_reader :collection_classes
+
       #
       # Instantiate new serialization plan
       #
@@ -47,6 +51,7 @@ class Serega
         @batch_points = points.any? { |point| !point.batch_loaders.empty? }
         @flat = relation_points.empty? && preload_points.empty? && !@batch_points && !serializer_class.presenter
         @result_builders = {}
+        @collection_classes = {}.compare_by_identity
       # :nocov:
       rescue *RACTOR_ISOLATION_ERRORS
         raise if serializer_class.shareable?

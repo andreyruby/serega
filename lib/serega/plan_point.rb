@@ -27,6 +27,11 @@ class Serega
       # @return [SeregaPlan, nil] Attribute serialization plan
       attr_reader :child_plan
 
+      # Whether the relation values of a class are collections, for a point
+      # with a child plan
+      # @return [Hash{Class => Boolean}, nil] Answers by class, see SeregaUtils::CollectionDetector
+      attr_reader :collection_classes
+
       #
       # Initializes plan point
       #
@@ -44,6 +49,7 @@ class Serega
         @attribute = attribute
         @name = attribute.name
         @child_plan = serializer ? serializer::SeregaPlan.new(self, modifiers || FROZEN_EMPTY_HASH) : nil
+        @collection_classes = @child_plan ? {}.compare_by_identity : nil
       end
 
       # Attribute `many` option
