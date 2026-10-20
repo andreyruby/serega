@@ -41,6 +41,14 @@ RSpec.describe Serega::SeregaEngine::Run do
         expect(described_class).not_to have_received(:new)
       end
 
+      context "without the many option" do
+        let(:many) { nil }
+
+        it "serializes the object" do
+          expect(result).to eq(title: "Hello")
+        end
+      end
+
       context "with a collection" do
         let(:object) { [post, post] }
         let(:many) { true }

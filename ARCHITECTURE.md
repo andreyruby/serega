@@ -43,7 +43,7 @@ The first plan locks the class. Later definition calls raise.
 - `SeregaPlan` (`lib/serega/plan.rb`): the attributes to serialize, as `SeregaPlanPoint`s, in definition order. `SeregaAttribute#visible?` selects them.
 - `SeregaPlanPoint` (`lib/serega/plan_point.rb`): one attribute in a plan. A relation point has a `child_plan` for the relation serializer.
 - `SeregaResultBuilder` (`lib/serega/result_builder.rb`): builds the serialized objects of a plan in one mode with its generated `#call` method. A plan keeps one builder per mode. `SeregaPlan::Cache` (`lib/serega/plan/cache.rb`) keeps up to `max_cached_plans_per_serializer_count` plans with modifiers (20 by default), and their builders with them. A shareable serializer has a `SeregaPlan::PerRactorCache` (`lib/serega/plan/per_ractor_cache.rb`, loaded by `make_shareable!`): each Ractor keeps its own `SeregaPlan::Cache` in `SeregaUtils::RactorLocal`, a Ractor-local storage by key. `SeregaResultBuilder` keeps the `Data` and `Struct` classes of new member names there too.
-- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`. A conditional attribute (`:if`, `:unless`, `:if_value`, `:unless_value`) gets `SeregaEngine::SKIP` when it fails a condition: a serialized Hash gets no key for it, a Struct or Data gets nil. Only conditional points get the code that checks conditions.
+- `SeregaResultCode` (`lib/serega/result_code.rb`): generates the code of `SeregaResultBuilder#call` from the plan points. The method reads all values of a source, then makes its serialized object in one step: a Hash literal, `Struct.new` or `Data.new`. The method reads plain attributes with their `SeregaAttributeValues` method (see below). Other attributes call `SeregaAttribute#value`. A conditional attribute (`:if`, `:unless`, `:if_value`, `:unless_value`) gets `SeregaEngine::SKIP` when it fails a condition: a serialized Hash gets no key for it, a Struct or Data gets nil. Only conditional points get the code that checks conditions. Points without relations and batch loaders get a `#call_one(source, context)` method too: it returns the serialized object of one source, without the Array and the loop of `#call`. Each method sets only the local variables its code reads.
 - `SeregaAttributeValues` (`lib/serega/attribute_values.rb`): one method per attribute read with plain Ruby code (`SeregaAttribute#value_code`): a method call, a delegation, a `:hash_access` read, a `:const`, a `:default` and a formatter that takes only the value. For example `def read_full_name(source) = source.full_name`, `def read_city(source) = source.profile&.city`, `def read_nick(source) = source[:nick]`, `def read_code(source) = CONSTANTS[:code]` and `def read_email(source) = (value = source.email).nil? ? DEFAULTS[:email] : value` and `def read_balance(source) = FORMATTERS[:balance].call(source.balance)`. `CONSTANTS`, `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` hold the values, formatter callables and method formatter arguments by attribute name. `SeregaAttribute` defines it when the attribute is defined, with the file and line of the attribute. Each method name is `read_` and the attribute name with `_` in place of other characters than letters, digits and `_`, for example `read_first_name` for `first-name`. A final `?` or `!` stays. When another attribute of the serializer already has the name, the name gets a number: `read_first_name_2`. `METHOD_NAMES` keeps the method name of each attribute, thus a redefined attribute replaces its method. Attribute names do not clash with methods of `Object`, and the generated code calls each method directly. `SeregaSourceGroup` reads relation sources with these methods too.
 
 ### 3. Run
@@ -66,8 +66,10 @@ UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, conte
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ flat plan only, and nothing below:
          │  └─ build_flat(plan, object, many, mode, context)
+         │     ├─ result_builder = plan.result_builder(mode)
+         │     ├─ many: false: result_builder.call_one(object, context)        one serialized object, and nothing below
          │     ├─ pull = Pulls.append(sources, object, many)
-         │     └─ plan.result_builder(mode).call(sources, context, nil, nil)   one serialized object for SINGLE_SOURCE, or all of them
+         │     └─ result_builder.call_one(object, context) for SINGLE_SOURCE, or result_builder.call(sources, context, nil, nil)
          │
          ├─ root_group = root_source_group(plan, object, many)
          │  ├─ sources = []
@@ -99,7 +101,7 @@ UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, conte
          └─ root_value(root_group)     one serialized object for SINGLE_SOURCE, or all of them
 ```
 
-A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and presenter. Its sources need no source groups, thus `Run.call` builds them with the result builder of the plan, without a run. It returns the serialized root like `Run#call`.
+A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and presenter. Its sources need no source groups, thus `Run.call` builds them with the result builder of the plan, without a run. One source is built with `#call_one`, without the sources Array. It returns the serialized root like `Run#call`.
 
 `SeregaSourceGroup` (`lib/serega/source_group.rb`) holds all sources of one plan in one run.
 
@@ -173,7 +175,7 @@ users group      serialized:      [S(ann), S(bob), S(cat)]               with th
 The build pass generates the `#call` method of a plan the first time it builds a group of this plan in a serialization mode:
 
 1. `plan.result_builder(mode)` finds no builder of this mode in the plan.
-2. `SeregaResultBuilder.new(mode, points)` gets the code from `SeregaResultCode.new(mode, points).to_s`, and defines `#call` with `class_eval`. This takes about 60 µs for 10 attributes.
+2. `SeregaResultBuilder.new(mode, points)` gets the code from `SeregaResultCode.new(mode, points).to_s`, and defines `#call` (and `#call_one`) with `class_eval`. This takes about 150 µs for 10 attributes (Ruby 4.0 with YJIT).
 3. Nothing keeps the `SeregaResultCode` object or the code string. The plan keeps the builder with the generated `#call`. Later builds of the plan in this mode call the same method.
 
 A child plan belongs to its parent plan, thus it keeps its builders as long as the parent plan lives. How long a plan lives:

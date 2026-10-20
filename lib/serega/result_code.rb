@@ -8,16 +8,17 @@ class Serega
   # `Struct.new` or `Data.new`. Simple attributes are read with their
   # SeregaAttributeValues method, for example `attribute_values.read_name(source)`.
   #
+  # Points without relations and batch loaders get a `#call_one(source,
+  # context)` method too. It returns the serialized object of one source,
+  # without the Array and the loop of `#call`.
+  #
   # Generated code for a plan with `attribute :id` and
   # `attribute :posts, serializer: PostSerializer` in the :hash mode:
   #
   #   def call(sources, context, batches, relations)
   #     points = @points
-  #     result_class = @result_class
   #     attribute_values = @attribute_values
   #     point_0 = points[0]
-  #     attribute_0 = point_0.attribute
-  #     batches_0 = batches && batches[0]
   #     relation_values_1 = relations[points[1]]
   #     size = sources.size
   #     serialized = Array.new(size)
@@ -31,8 +32,7 @@ class Serega
   #           Serega::SeregaUtils::SerializedAttributeError.call(error, point_0)
   #         end
   #       value_1 = relation_values_1[source_index]
-  #       serialized_hash = {:id => value_0, :posts => value_1}
-  #       serialized[source_index] = serialized_hash
+  #       serialized[source_index] = {:id => value_0, :posts => value_1}
   #       source_index += 1
   #     end
   #     serialized
@@ -59,9 +59,10 @@ class Serega
         @points = points
       end
 
-      # Returns the code of the `#call` method. The method has local
-      # variables for every point, and they have the point index in their
-      # names:
+      # Returns the code of the `#call` method, and of the `#call_one`
+      # method for points without relations and batch loaders. The methods
+      # have local variables for every point, and they have the point index
+      # in their names:
       # - `point_N` holds the point. An error raised while its value is read
       #   gets the attribute name.
       # - `attribute_N` and `batches_N` read values with `SeregaAttribute#value`.
@@ -69,20 +70,28 @@ class Serega
       # - `relation_values_N` holds the relation values of all sources.
       # - `value_N` holds the value of the current source.
       #
-      # @return [String] Code of the `#call` method
+      # @return [String] Code of the methods
       def to_s
-        values_code = @points.each_with_index.map { |point, index| assign_value_code(point, index) }
-        loop_code = [*values_code, build_serialized_code].join("\n")
+        variables = variables_code.join("\n  ")
+        values = values_code
+        code = call_code(variables, values)
+        return code unless @points.none? { |point| point.child_plan || !point.batch_loaders.empty? }
 
+        "#{code}\n#{call_one_code(variables, values)}"
+      end
+
+      private
+
+      def call_code(variables, values)
         <<~RUBY
           def call(sources, context, batches, relations)
-            #{variables_code.join("\n  ")}
+            #{variables}
             size = sources.size
             serialized = Array.new(size)
             source_index = 0
             while source_index < size
               source = sources[source_index]
-              #{loop_code.gsub("\n", "\n    ")}
+              #{[*values, *build_serialized_code("serialized[source_index] = ")].join("\n").gsub("\n", "\n    ")}
               source_index += 1
             end
             serialized
@@ -90,18 +99,39 @@ class Serega
         RUBY
       end
 
-      private
+      def call_one_code(variables, values)
+        <<~RUBY
+          def call_one(source, context)
+            #{variables}
+            #{[*values, *build_serialized_code("")].join("\n").gsub("\n", "\n  ")}
+          end
+        RUBY
+      end
 
-      # Code that sets the local variables of the `#call` method
+      # Code that sets the local variables of a method: only the variables
+      # that the code of the points reads
       def variables_code
-        point_variables = @points.each_with_index.flat_map do |point, index|
-          next ["relation_values_#{index} = relations[points[#{index}]]"] if point.child_plan
+        point_variables = @points.each_with_index.flat_map { |point, index| point_variables_code(point, index) }
+        plain_reads = @points.any? { |point| !point.child_plan && point.attribute.value_method }
+        shared = ["points = @points"]
+        shared << "result_class = @result_class" unless mode == :hash
+        shared << "attribute_values = @attribute_values" if plain_reads
+        [*shared, *point_variables]
+      end
 
-          variables = ["point_#{index} = points[#{index}]", "attribute_#{index} = point_#{index}.attribute", "batches_#{index} = batches && batches[#{index}]"]
-          point.conditional? ? [*variables, "conditions_#{index} = attribute_#{index}.conditions"] : variables
-        end
+      def point_variables_code(point, index)
+        return ["relation_values_#{index} = relations[points[#{index}]]"] if point.child_plan
 
-        ["points = @points", "result_class = @result_class", "attribute_values = @attribute_values", *point_variables]
+        variables = ["point_#{index} = points[#{index}]"]
+        variables << "attribute_#{index} = point_#{index}.attribute" unless point.attribute.value_method
+        variables << "batches_#{index} = batches[#{index}]" unless point.batch_loaders.empty?
+        variables << "conditions_#{index} = point_#{index}.attribute.conditions" if point.conditional?
+        variables
+      end
+
+      # Code that reads all values of the source, one entry per point
+      def values_code
+        @points.each_with_index.map { |point, index| assign_value_code(point, index) }
       end
 
       # Code that assigns the value of the point to `value_N`. A conditional
@@ -142,17 +172,19 @@ class Serega
         return "relation_values_#{index}[source_index]" if point.child_plan
 
         value_method = point.attribute.value_method
-        return "attribute_#{index}.value(source, context, batches: batches_#{index})" unless value_method
+        return "attribute_values.#{value_method}(source)" if value_method
+        return "attribute_#{index}.value(source, context)" if point.batch_loaders.empty?
 
-        "attribute_values.#{value_method}(source)"
+        "attribute_#{index}.value(source, context, batches: batches_#{index})"
       end
 
-      # Code that builds the serialized object of the source
-      def build_serialized_code
-        return build_serialized_hash_code if mode == :hash
+      # Code that builds the serialized object of the source. `assign` is the
+      # code that takes the serialized object, empty for the return value.
+      def build_serialized_code(assign)
+        return build_serialized_hash_code(assign) if mode == :hash
 
         arguments = @points.each_index.map { |index| argument_code(index) }
-        "serialized[source_index] = result_class.new(#{arguments.join(", ")})"
+        ["#{assign}result_class.new(#{arguments.join(", ")})"]
       end
 
       # Code of the Struct or Data argument with the value of the point, nil
@@ -163,16 +195,18 @@ class Serega
         "(Serega::SeregaEngine::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
       end
 
-      # Code that builds the serialized Hash of the source.
+      # Code that builds the serialized Hash of the source, after `assign`.
       # A Hash literal holds the values up to the first conditional value. Then
       # the code adds the other values one by one, thus the Hash keys keep the
       # order of the points.
-      def build_serialized_hash_code
+      def build_serialized_hash_code(assign)
         literal_size = @points.index(&:conditional?) || @points.size
         pairs = @points.first(literal_size).each_with_index.map { |point, index| "#{point.name.inspect} => value_#{index}" }
-        assigns = @points.each_with_index.drop(literal_size).map { |point, index| hash_assign_code(point, index) }
+        literal = "{#{pairs.join(", ")}}"
+        return ["#{assign}#{literal}"] if literal_size == @points.size
 
-        ["serialized_hash = {#{pairs.join(", ")}}", *assigns, "serialized[source_index] = serialized_hash"].join("\n")
+        assigns = @points.each_with_index.drop(literal_size).map { |point, index| hash_assign_code(point, index) }
+        ["serialized_hash = #{literal}", *assigns, "#{assign}serialized_hash"]
       end
 
       # Code that adds the value of the point to the serialized Hash. It adds

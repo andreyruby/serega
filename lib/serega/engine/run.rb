@@ -44,14 +44,17 @@ class Serega
         private
 
         # Builds the root source(s) with the result builder of the plan, and
-        # returns the serialized root like `Run#call`
+        # returns the serialized root like `Run#call`. One source is built
+        # without the sources Array.
         def build_flat(plan, object, many, mode, context)
           return if object.nil?
 
+          builder = plan.result_builder(mode)
+          return builder.call_one(object, context) if many == false
+
           sources = []
           pull = Pulls.append(sources, object, many)
-          serialized = plan.result_builder(mode).call(sources, context, nil, nil)
-          Pulls::SINGLE_SOURCE.equal?(pull) ? serialized[0] : serialized
+          Pulls::SINGLE_SOURCE.equal?(pull) ? builder.call_one(object, context) : builder.call(sources, context, nil, nil)
         end
       end
 

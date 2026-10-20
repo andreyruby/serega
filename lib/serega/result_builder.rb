@@ -5,8 +5,9 @@ class Serega
   # Builds the serialized objects (Hash, Struct or Data) of one plan in one
   # serialization mode.
   #
-  # The builder gets the code of its `#call` method from SeregaResultCode.
-  # The method builds the serialized objects of a source group in one loop.
+  # The builder gets the code of its `#call` and `#call_one` methods from
+  # SeregaResultCode. `#call` builds the serialized objects of a source group
+  # in one loop.
   #
   # @private
   class SeregaResultBuilder
@@ -68,6 +69,11 @@ class Serega
       # - `batches` holds the loaded batches per point, or nil.
       # - `relations` holds the relation values of all sources per relation
       #   point, or nil.
+      #
+      # Points without relations and batch loaders get a `#call_one` method
+      # too, which builds the serialized object of one source:
+      #
+      #   call_one(source, context) -> Hash, Struct, Data
       #
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       # @param points [Array<SeregaPlanPoint>] Serialized plan points
