@@ -18,7 +18,7 @@ oj_serializer = OjPostSerializer
 benchmark(
   "single", :json,
   "plain ruby" => -> { JSON.generate(PlainRuby.post(POST)) },
-  "serega" => -> { JSON.generate(serega_serializer.to_h(POST)) },
+  "serega" => -> { JSON.generate(serega_serializer.to_h(POST, many: false)) },
   "alba" => -> { alba_serializer.new(POST).serialize },
   "blueprinter" => -> { blueprinter_serializer.render(POST) },
   "panko_serializer" => -> { panko_serializer.new.serialize_to_json(POST) },
@@ -29,7 +29,7 @@ benchmark(
 benchmark(
   "single", :hash,
   "plain ruby" => -> { PlainRuby.post(POST) },
-  "serega" => -> { serega_serializer.to_h(POST) },
+  "serega" => -> { serega_serializer.to_h(POST, many: false) },
   "alba" => -> { alba_serializer.new(POST).serializable_hash },
   "blueprinter" => -> { blueprinter_serializer.render_as_hash(POST) },
   "panko_serializer" => -> { panko_serializer.new.serialize(POST) },

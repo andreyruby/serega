@@ -26,19 +26,19 @@ ams_fields = [:id, :title, :author, :comments, {user: [:name], comment: [:body]}
 benchmark(
   "only", :json,
   "plain ruby" => -> { JSON.generate(POSTS.map(&plain_ruby)) },
-  "serega" => -> { JSON.generate(serega_serializer.to_h(POSTS)) },
+  "serega" => -> { JSON.generate(serega_serializer.to_h(POSTS, many: true)) },
   "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
   "active_model_serializers" => lambda {
-    ActiveModelSerializers::SerializableResource.new(POSTS, each_serializer: ams_serializer, fields: ams_fields).to_json
+    ActiveModelSerializers::SerializableResource.new(POSTS, serializer: ActiveModel::Serializer::CollectionSerializer, each_serializer: ams_serializer, fields: ams_fields).to_json
   }
 )
 
 benchmark(
   "only", :hash,
   "plain ruby" => -> { POSTS.map(&plain_ruby) },
-  "serega" => -> { serega_serializer.to_h(POSTS) },
+  "serega" => -> { serega_serializer.to_h(POSTS, many: true) },
   "panko_serializer" => -> { panko_serializer.serialize(POSTS) },
   "active_model_serializers" => lambda {
-    ActiveModelSerializers::SerializableResource.new(POSTS, each_serializer: ams_serializer, fields: ams_fields).serializable_hash
+    ActiveModelSerializers::SerializableResource.new(POSTS, serializer: ActiveModel::Serializer::CollectionSerializer, each_serializer: ams_serializer, fields: ams_fields).serializable_hash
   }
 )
