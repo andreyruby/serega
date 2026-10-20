@@ -165,7 +165,7 @@ class Serega
       module InstanceMethods
         private
 
-        def serialize(object, opts, context:, many:, mode:)
+        def serialize(object, opts, context, many, mode)
           result = super
           return result unless result.is_a?(Hash) # return earlier if not a hash, so no root was added
 

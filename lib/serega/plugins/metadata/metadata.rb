@@ -197,7 +197,7 @@ class Serega
       module InstanceMethods
         private
 
-        def serialize(object, opts, context:, many:, mode:)
+        def serialize(object, opts, context, many, mode)
           result = super
           return result unless result.is_a?(Hash) # return earlier if not a hash, so no root was added
 
@@ -226,9 +226,9 @@ class Serega
           value = meta_attribute.value(object, context)
           return if meta_attribute.hide?(value)
 
-          # Example:
-          #  [:foo, :bar].reverse_each.inject(:bazz) { |val, key| { key => val } } # => { foo: { bar: :bazz } }
-          meta_attribute.path.reverse_each.inject(value) { |val, key| {key => val} }
+          # Example: path [:foo, :bar] and value :bazz give { foo: { bar: :bazz } }
+          meta_attribute.path.reverse_each { |key| value = {key => value} }
+          value
         end
 
         def deep_merge_metadata(hash, metadata)

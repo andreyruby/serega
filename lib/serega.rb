@@ -751,7 +751,7 @@ class Serega
       context ||= FROZEN_EMPTY_HASH
       object = prepare_objects(object, context)
       many = SeregaUtils::CollectionDetector.call(object) if many.nil?
-      serialize(object, opts, context: context, many: many, mode: mode)
+      serialize(object, opts, context, many, mode)
     end
 
     def prepare_objects(objects, context)
@@ -769,7 +769,7 @@ class Serega
     # - plugin :root (wraps result `{ root => result }`)
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
-    def serialize(object, _opts, context:, many:, mode:)
+    def serialize(object, _opts, context, many, mode)
       SeregaEngine::Run.call(plan, object, many: many, mode: mode, context: context)
     end
   end

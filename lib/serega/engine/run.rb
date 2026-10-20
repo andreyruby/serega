@@ -38,7 +38,7 @@ class Serega
         def call(plan, object, many:, mode:, context:)
           return build_flat(plan, object, many, mode, context) if plan.flat?
 
-          new(mode: mode, context: context).call(plan, object, many: many)
+          new(mode, context).call(plan, object, many: many)
         end
 
         private
@@ -65,7 +65,7 @@ class Serega
 
       # @param mode [Symbol] Serialization mode - :hash, :data or :struct
       # @param context [Hash] Serialization context
-      def initialize(mode:, context:)
+      def initialize(mode, context)
         @mode = mode
         @context = context
       end
