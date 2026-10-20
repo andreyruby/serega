@@ -117,6 +117,63 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "#flat?" do
+    subject(:flat) { plan({}).flat? }
+
+    let(:current_serializer) { Class.new(base_class) { attribute :name } }
+
+    it "returns true" do
+      expect(flat).to be true
+    end
+
+    context "with a relation" do
+      let(:current_serializer) do
+        child = b
+        Class.new(base_class) { attribute :posts, serializer: child }
+      end
+
+      it "returns false" do
+        expect(flat).to be false
+      end
+    end
+
+    context "with a preload" do
+      let(:current_serializer) do
+        Class.new(base_class) { attribute :posts, preload: :posts, value: proc { [] } }
+      end
+
+      it "returns false" do
+        expect(flat).to be false
+      end
+    end
+
+    context "with a batch loader" do
+      let(:current_serializer) do
+        Class.new(base_class) do
+          batch :count, ->(sources) { sources.to_h { |source| [source, 1] } }
+          attribute :count, batch: true
+        end
+      end
+
+      it "returns false" do
+        expect(flat).to be false
+      end
+    end
+
+    context "with a presenter" do
+      let(:current_serializer) do
+        Class.new(base_class) do
+          presenter { def name = "Ann" }
+          attribute :name
+        end
+      end
+
+      it "returns false" do
+        expect(flat).to be false
+      end
+    end
+  end
+
   describe "#result_builder" do
     let(:current_plan) { plan(only: {a1: {}}) }
 

@@ -24,17 +24,35 @@ class Serega
     #
     # @private
     class Run
-      # Serializes the object(s) with the plan in a new run.
-      #
-      # @param plan [SeregaPlan] Serialization plan
-      # @param object [Object] Object(s) to serialize
-      # @param many [Boolean, nil] Whether the object is a collection
-      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-      # @param context [Hash] Serialization context
-      #
-      # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
-      def self.call(plan, object, many:, mode:, context:)
-        new(mode: mode, context: context).call(plan, object, many: many)
+      class << self
+        # Serializes the object(s) with the plan in a new run. A flat plan
+        # builds its serialized object(s) without a run.
+        #
+        # @param plan [SeregaPlan] Serialization plan
+        # @param object [Object] Object(s) to serialize
+        # @param many [Boolean, nil] Whether the object is a collection
+        # @param mode [Symbol] Serialization mode - :hash, :data or :struct
+        # @param context [Hash] Serialization context
+        #
+        # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
+        def call(plan, object, many:, mode:, context:)
+          return build_flat(plan, object, many, mode, context) if plan.flat?
+
+          new(mode: mode, context: context).call(plan, object, many: many)
+        end
+
+        private
+
+        # Builds the root source(s) with the result builder of the plan, and
+        # returns the serialized root like `Run#call`
+        def build_flat(plan, object, many, mode, context)
+          return if object.nil?
+
+          sources = []
+          pull = Pulls.append(sources, object, many)
+          serialized = plan.result_builder(mode).call(sources, context, nil, nil)
+          Pulls::SINGLE_SOURCE.equal?(pull) ? serialized[0] : serialized
+        end
       end
 
       # Serialization mode
