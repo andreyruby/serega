@@ -65,6 +65,11 @@ UserSerializer.to_h(object, opts)
    ├─ many = opts[:many], or detected from the object
    └─ serialize(object, opts, context:, many:, mode:)     patched by :root, :metadata, :context_metadata
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
+         ├─ flat plan only, and nothing below:
+         │  └─ build_flat(plan, object, many, mode, context)
+         │     ├─ pull = Pulls.append(sources, object, many)
+         │     └─ plan.result_builder(mode).call(sources, context, nil, nil)   one serialized object for SINGLE_SOURCE, or all of them
+         │
          ├─ root_group = root_source_group(plan, object, many)
          │  ├─ sources = []
          │  ├─ pull = Pulls.append(sources, object, many)
@@ -95,6 +100,8 @@ UserSerializer.to_h(object, opts)
          └─ root_value(root_group)     one serialized object for SINGLE_SOURCE, or all of them
 ```
 
+A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and presenter. Its sources need no source groups, thus `Run.call` builds them with the result builder of the plan, without a run. It returns the serialized root like `Run#call`.
+
 `SeregaSourceGroup` (`lib/serega/source_group.rb`) holds all sources of one plan in one run.
 
 - `#initialize` wraps the sources in the presenter. The group keeps the pulls of its parent group.
@@ -112,7 +119,7 @@ UserSerializer.to_h(object, opts)
 | `nil` | `nil` | `nil` |
 | skipped by its `:if` or `:unless` condition | `SeregaEngine::SKIP` | no key, or nil |
 
-A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `Run#call` uses `.append` for the root. The serialized objects of a group follow the order of its sources, thus `.take!(serialized, pulls)` takes them from the front, one pull after another, and empties them: the parent group takes them once, during its build. The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
+A conditional relation uses `.collect_conditional`, which keeps `SKIP` as the pull. `Run#call` and the flat build use `.append` for the root. The serialized objects of a group follow the order of its sources, thus `.take!(serialized, pulls)` takes them from the front, one pull after another, and empties them: the parent group takes them once, during its build. The root group has one pull: `Run#call` returns its one serialized object for `SINGLE_SOURCE`, or all its serialized objects.
 
 The keys of a serialized object follow the order of the plan points. The values are read source by source. Relation values and preloads of a group are read in the discover pass, before the other values.
 

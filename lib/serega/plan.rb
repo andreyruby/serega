@@ -45,6 +45,7 @@ class Serega
         @relation_points = points.select(&:child_plan).freeze
         @preload_points = points.select(&:preloads).freeze
         @batch_points = points.any? { |point| !point.batch_loaders.empty? }
+        @flat = relation_points.empty? && preload_points.empty? && !@batch_points && !serializer_class.presenter
         @result_builders = {}
       # :nocov:
       rescue *RACTOR_ISOLATION_ERRORS
@@ -61,6 +62,14 @@ class Serega
       # @return [Boolean] Whether any point uses batch loaders
       def batch_points?
         @batch_points
+      end
+
+      # A flat plan has no relations, preloads, batch loaders and presenter.
+      # Its sources need no source groups.
+      #
+      # @return [Boolean] Whether the plan is flat
+      def flat?
+        @flat
       end
 
       #

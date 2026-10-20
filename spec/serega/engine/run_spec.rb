@@ -25,8 +25,38 @@ RSpec.describe Serega::SeregaEngine::Run do
     let(:object) { user }
     let(:many) { false }
 
-    it "serializes the object and its related objects" do
+    before { allow(described_class).to receive(:new).and_call_original }
+
+    it "serializes the object and its related objects in a new run" do
       expect(result).to eq(name: "Ann", posts: [{title: "Hello"}])
+      expect(described_class).to have_received(:new).with(mode: :hash, context: context)
+    end
+
+    context "with a flat plan" do
+      let(:plan) { post_serializer::SeregaPlan.new(nil, {}) }
+      let(:object) { post }
+
+      it "serializes the object without a run" do
+        expect(result).to eq(title: "Hello")
+        expect(described_class).not_to have_received(:new)
+      end
+
+      context "with a collection" do
+        let(:object) { [post, post] }
+        let(:many) { true }
+
+        it "serializes every object" do
+          expect(result).to eq [{title: "Hello"}, {title: "Hello"}]
+        end
+      end
+
+      context "with nil" do
+        let(:object) { nil }
+
+        it "returns nil" do
+          expect(result).to be_nil
+        end
+      end
     end
 
     context "with a collection" do
