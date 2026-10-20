@@ -30,6 +30,16 @@ RSpec.describe Serega do
       end
     end
 
+    context "with a Set after one object of the same serializer" do
+      let(:user) { Set[double(first_name: "Jesse", last_name: "Pinkman")] }
+
+      before { user_serializer.to_h(double(first_name: "Walter", last_name: "White")) }
+
+      it "returns an Array" do
+        expect(result).to eq([{first_name: "Jesse", last_name: "Pinkman"}])
+      end
+    end
+
     context "with Struct object" do
       let(:user_struct) { Struct.new(:first_name, :last_name) }
       let(:user) { user_struct.new("FIRST_NAME", "LAST_NAME") }

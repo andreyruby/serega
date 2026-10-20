@@ -23,7 +23,8 @@ serialization options:
   [Context](context.md);
 - `:many` — serializes the object as a list (`true`) or as one object
   (`false`). By default, an `Enumerable` that is not a `Hash` or `Struct` is a
-  list. Pass it when you know, to skip the check.
+  list. Serega remembers the answer for the class of the object. Pass it when
+  you know, to skip the check.
 
 The options are keyword arguments. Pass a Hash of options with `**`:
 

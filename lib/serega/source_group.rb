@@ -92,10 +92,10 @@ class Serega
         child_sources, pulls =
           if point.conditional?
             relation_sources = read_conditional_relation_sources(point, batches)
-            SeregaEngine::Pulls.collect_conditional(relation_sources, point.many)
+            SeregaEngine::Pulls.collect_conditional(relation_sources, point.many, point.collection_classes)
           else
             relation_sources = read_relation_sources(point, batches)
-            SeregaEngine::Pulls.collect(relation_sources, point.many)
+            SeregaEngine::Pulls.collect(relation_sources, point.many, point.collection_classes)
           end
         run.new_source_group(point.child_plan, child_sources, pulls)
       end
