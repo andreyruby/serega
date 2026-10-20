@@ -278,7 +278,7 @@ class Serega
           opts
         end
 
-        def serialize(object, opts, context:, many:, mode:)
+        def serialize(object, opts, context, many, mode)
           result = super
           root = build_root(opts, many)
           result = {root => result} if root

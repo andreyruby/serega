@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaEngine::Run do
-  subject(:run) { described_class.new(mode: mode, context: context) }
+  subject(:run) { described_class.new(mode, context) }
 
   let(:mode) { :hash }
   let(:context) { {locale: :en} }
@@ -29,7 +29,7 @@ RSpec.describe Serega::SeregaEngine::Run do
 
     it "serializes the object and its related objects in a new run" do
       expect(result).to eq(name: "Ann", posts: [{title: "Hello"}])
-      expect(described_class).to have_received(:new).with(mode: :hash, context: context)
+      expect(described_class).to have_received(:new).with(:hash, context)
     end
 
     context "with a flat plan" do

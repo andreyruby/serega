@@ -62,7 +62,7 @@ UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, conte
    ├─ context, or the frozen empty Hash
    ├─ prepare_objects                                     calls the prepare_initial_objects handler
    ├─ many, or detected from the object
-   └─ serialize(object, opts, context:, many:, mode:)     patched by :root, :metadata, :context_metadata
+   └─ serialize(object, opts, context, many, mode)        patched by :root, :metadata, :context_metadata
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ flat plan only, and nothing below:
          │  └─ build_flat(plan, object, many, mode, context)

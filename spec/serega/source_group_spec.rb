@@ -5,7 +5,7 @@ RSpec.describe Serega::SeregaSourceGroup do
 
   let(:user_serializer) { Class.new(Serega) { attribute :name } }
   let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
-  let(:run) { Serega::SeregaEngine::Run.new(mode: :hash, context: context) }
+  let(:run) { Serega::SeregaEngine::Run.new(:hash, context) }
   let(:context) { {locale: :en} }
   let(:pulls) { [2] }
   let(:user1) { double(name: "Ann") }

@@ -322,7 +322,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
         private
 
         # Returns what the plugin passes to the patched `Serega#serialize`
-        def serialize(_object, opts, mode:, **)
+        def serialize(_object, opts, _context, _many, mode)
           [opts, mode]
         end
       end
