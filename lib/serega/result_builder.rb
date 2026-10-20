@@ -83,9 +83,10 @@ class Serega
         @points = points
         @result_class = result_class
         serializer_class = self.class.serializer_class
-        @attribute_values = serializer_class::SeregaAttributeValues.new
         call_code = serializer_class::SeregaResultCode.new(mode, points).to_s
-        singleton_class.class_eval(call_code, "(serega generated code)", 1)
+        # The generated code reads the `:const`, `:default` and formatter values from its constants
+        singleton_class.const_set(:SeregaAttributeValues, serializer_class::SeregaAttributeValues)
+        singleton_class.class_eval(call_code, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
       end
 
       private

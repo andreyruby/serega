@@ -113,8 +113,8 @@ class Serega
       #
       # Finds attribute value
       #
-      # Generated code reads plain attributes without this method, with their
-      # SeregaAttributeValues method (see #value_code).
+      # Generated code reads plain attributes without this method, with
+      # their #value_code.
       #
       # @param object [Object] Object to serialize
       # @param context [Hash, nil] Serialization context
@@ -139,16 +139,17 @@ class Serega
       end
 
       #
-      # Ruby code of the SeregaAttributeValues method that reads the attribute
-      # value of the source. `:const` and `:default` values and formatters
-      # come from the `CONSTANTS`, `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` of
-      # SeregaAttributeValues.
+      # Ruby code that reads the attribute value of the source. `:const` and
+      # `:default` values and formatters come from the `CONSTANTS`,
+      # `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` of SeregaAttributeValues.
       #
       # @param source_variable [String] Name of the source variable in the code
+      # @param constants_prefix [String] Code before the constant names, for
+      #   example `SeregaAttributeValues::`
       #
       # @return [String, nil] Code, or nil when the value is read with #value
       #
-      def value_code(source_variable)
+      def value_code(source_variable, constants_prefix = "")
         code =
           case @value_block
           when AttributeValueResolvers::Keyword,
@@ -159,12 +160,14 @@ class Serega
                AttributeValueResolvers::HashAccessDelegateAllowNil
             @value_block.code(source_variable)
           when AttributeValueResolvers::Const
-            "CONSTANTS[#{name.inspect}]"
+            "#{constants_prefix}CONSTANTS[#{name.inspect}]"
           end
         return unless code
 
-        code = "(value = #{code}).nil? ? DEFAULTS[#{name.inspect}] : value" unless @default.nil?
-        @formatter ? @formatter.code(code, "FORMATTERS[#{name.inspect}]", "FORMATTER_ARGS[#{name.inspect}]") : code
+        code = "(value = #{code}).nil? ? #{constants_prefix}DEFAULTS[#{name.inspect}] : value" unless @default.nil?
+        return code unless @formatter
+
+        @formatter.code(code, "#{constants_prefix}FORMATTERS[#{name.inspect}]", "#{constants_prefix}FORMATTER_ARGS[#{name.inspect}]")
       end
 
       #

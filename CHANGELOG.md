@@ -42,6 +42,8 @@
 - Faster serialization.
 - Serialization errors show where the failing attribute is defined.
   See [Nested serializers](docs/attributes.md#nested-serializers-defined-with-a-block).
+- Backtraces of errors in attributes have a line at the attribute.
+  See [Errors in attributes](docs/errors.md#errors-in-attributes).
 - Errors raised by conditional attribute options name the condition.
   See [Conditional Attributes](docs/conditional-attributes.md).
 - Conditional attributes check `:unless` only when `:if` passes.

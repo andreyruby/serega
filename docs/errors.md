@@ -20,6 +20,14 @@ NoMethodError: undefined method 'city' for nil
 (when serializing the 'city' attribute in UserSerializer, app/serializers/user_serializer.rb:5)
 ```
 
+The backtrace has a line at the attribute too, below the line that raised:
+
+```text
+app/models/user.rb:12:in 'User#address'
+app/serializers/user_serializer.rb:5:in 'attribute :city of UserSerializer'
+(serega generated code):20:in 'call'
+```
+
 Errors raised by [conditions](conditional-attributes.md#errors) name the
 condition too.
 
