@@ -344,7 +344,7 @@ RSpec.describe Serega do
   end
 
   describe "validating initiate options" do
-    subject(:serializer) { user_serializer.new(initiate_options) }
+    subject(:serializer) { user_serializer.new(**initiate_options) }
 
     let!(:user_serializer) do
       check_initiate_params = check_initiate_params_config
@@ -370,26 +370,14 @@ RSpec.describe Serega do
     context "with an unknown option" do
       let(:initiate_options) { {only: :name, foo: 1} }
 
-      it "raises a SeregaError that names the option" do
-        expect { serializer }.to raise_error Serega::SeregaError, /foo/
-      end
-    end
-
-    context "without initiate options" do
-      let(:initiate_options) { {} }
-
-      before { allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call).and_call_original }
-
-      it "skips the validation" do
-        serializer
-
-        expect(Serega::SeregaValidations::Utils::CheckAllowedKeys).not_to have_received(:call)
+      it "raises an ArgumentError that names the option" do
+        expect { serializer }.to raise_error ArgumentError, /foo/
       end
     end
 
     context "when the config disables the validation" do
       let(:check_initiate_params_config) { false }
-      let(:initiate_options) { {only: :email, foo: 1} }
+      let(:initiate_options) { {only: :email} }
 
       it "builds an empty plan" do
         expect(serializer.plan.points).to be_empty

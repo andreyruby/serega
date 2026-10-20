@@ -264,7 +264,7 @@ RSpec.describe Serega do
       end
     end
 
-    it "accepts string keys and nil serialization options" do
+    it "passes the context, or an empty Hash without one" do
       received = []
       serializer = Class.new(described_class) do
         prepare_initial_objects { |objects, ctx| received << ctx }
@@ -272,20 +272,9 @@ RSpec.describe Serega do
       end
 
       serializer.to_h("1")
-      serializer.to_h("1", "context" => {foo: :bar})
+      serializer.to_h("1", context: {foo: :bar})
 
       expect(received).to eq [{}, {foo: :bar}]
-    end
-
-    it "does not modify provided serialization options" do
-      serializer = Class.new(described_class) do
-        prepare_initial_objects { |objects| objects }
-        attribute :itself, value: proc { |obj| obj }
-      end
-
-      opts = {many: false}
-      serializer.to_h("1", opts)
-      expect(opts).to eq({many: false})
     end
 
     it "prepares objects gathered by the preload handler" do

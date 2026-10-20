@@ -53,16 +53,15 @@ The first plan locks the class. Later definition calls raise.
 The flow of `UserSerializer.to_h(users, only: [:id, :posts], context: {})` (`lib/serega.rb`). `to_data` and `to_struct` do the same with the `:data` and `:struct` modes:
 
 ```
-UserSerializer.to_h(object, opts)
-├─ split opts into modifiers (only, except, with) and serialization options (context, many)
-├─ serializer = UserSerializer.new(modifiers)
+UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, context:, many:)
+├─ serializer = UserSerializer.new(only:, with:, except:, check_initiate_params:)
 │  └─ plan = plan_cache.fetch(only, with, except)         stage 2, cached plan or a new one
 │
-└─ serializer.to_h(object, serialization options)       serialize_to(:hash, object, opts)
-   ├─ normalize_serialization_opts                        validates the options, or returns the frozen empty Hash
-   ├─ context = opts[:context], or the frozen empty Hash
+└─ serializer.to_h(object, context:, many:)              serialize_to(:hash, object, context, many, FROZEN_EMPTY_HASH)
+   ├─ CheckSerializeKeywords.call(context, many)
+   ├─ context, or the frozen empty Hash
    ├─ prepare_objects                                     calls the prepare_initial_objects handler
-   ├─ many = opts[:many], or detected from the object
+   ├─ many, or detected from the object
    └─ serialize(object, opts, context:, many:, mode:)     patched by :root, :metadata, :context_metadata
       └─ SeregaEngine::Run.call(plan, object, many:, mode:, context:)
          ├─ flat plan only, and nothing below:

@@ -12,7 +12,6 @@ class Serega
     #
     DEFAULTS = {
       plugins: [],
-      initiate_keys: %i[only with except check_initiate_params].freeze,
       attribute_keys: %i[
         method
         value
@@ -74,12 +73,6 @@ class Serega
       #
       def plugins
         opts.fetch(:plugins)
-      end
-
-      # Returns options names allowed in `Serega#new` method
-      # @return [Array<Symbol>] allowed options keys
-      def initiate_keys
-        opts.fetch(:initiate_keys)
       end
 
       # Returns options names allowed in `Serega.attribute` method
