@@ -175,7 +175,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
   end
 
   describe "serialization to data" do
-    subject(:result) { user_serializer.to_data(users, serialize_opts) }
+    subject(:result) { user_serializer.to_data(users, **serialize_opts) }
 
     let(:user_serializer) do
       Class.new(Serega) do
@@ -222,7 +222,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
   end
 
   describe "serialization to structs" do
-    subject(:result) { user_serializer.to_struct(users, serialize_opts) }
+    subject(:result) { user_serializer.to_struct(users, **serialize_opts) }
 
     let(:user_serializer) do
       Class.new(Serega) do
@@ -308,6 +308,96 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
     it "returns the root config" do
       expect(frozen_config.root).to be_a Serega::SeregaPlugins::Root::RootConfig
+    end
+  end
+
+  describe "serialization options" do
+    subject(:result) { target.public_send(method_name, user, **opts) }
+
+    let(:serializer) do
+      Class.new(Serega) do
+        plugin :root
+        attribute :name
+
+        private
+
+        # Returns what the plugin passes to the patched `Serega#serialize`
+        def serialize(_object, opts, mode:, **)
+          [opts, mode]
+        end
+      end
+    end
+
+    let(:target) { serializer.new }
+    let(:method_name) { :to_h }
+    let(:user) { double(name: "Ann") }
+    let(:opts) { {root: :user} }
+    let(:validator) { instance_double(serializer::CheckSerializeParams, validate: nil) }
+
+    before { allow(serializer::CheckSerializeParams).to receive(:new).and_return(validator) }
+
+    it "validates the plugin options and passes them to #serialize" do
+      expect(result).to eq [{root: :user}, :hash]
+      expect(serializer::CheckSerializeParams).to have_received(:new).with(root: :user)
+      expect(validator).to have_received(:validate)
+    end
+
+    context "without plugin options" do
+      let(:opts) { {context: {current_user: "Ann"}, many: false} }
+
+      it "passes the frozen empty Hash without validation" do
+        expect(result[0]).to equal Serega::FROZEN_EMPTY_HASH
+        expect(serializer::CheckSerializeParams).not_to have_received(:new)
+      end
+    end
+
+    context "with #call" do
+      let(:method_name) { :call }
+
+      it "serializes to a Hash" do
+        expect(result).to eq [{root: :user}, :hash]
+      end
+    end
+
+    context "with #to_data" do
+      let(:method_name) { :to_data }
+
+      it "serializes to Data" do
+        expect(result).to eq [{root: :user}, :data]
+      end
+    end
+
+    context "with #to_struct" do
+      let(:method_name) { :to_struct }
+
+      it "serializes to Struct" do
+        expect(result).to eq [{root: :user}, :struct]
+      end
+    end
+
+    context "with the serializer class" do
+      let(:target) { serializer }
+      let(:opts) { {only: :name, root: :user} }
+
+      it "passes the plugin options without the modifiers" do
+        expect(result).to eq [{root: :user}, :hash]
+      end
+
+      context "with .to_data" do
+        let(:method_name) { :to_data }
+
+        it "serializes to Data" do
+          expect(result).to eq [{root: :user}, :data]
+        end
+      end
+
+      context "with .to_struct" do
+        let(:method_name) { :to_struct }
+
+        it "serializes to Struct" do
+          expect(result).to eq [{root: :user}, :struct]
+        end
+      end
     end
   end
 end

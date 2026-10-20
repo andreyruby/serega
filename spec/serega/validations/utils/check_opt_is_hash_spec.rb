@@ -12,4 +12,10 @@ RSpec.describe Serega::SeregaValidations::Utils::CheckOptIsHash do
     expect { described_class.call({many: nil}, :many) }.to raise_error Serega::SeregaError, error(:many, nil)
     expect { described_class.call({many: 0}, :many) }.to raise_error Serega::SeregaError, error(:many, 0)
   end
+
+  context "without the option" do
+    it "accepts the options" do
+      expect { described_class.call({}, :many) }.not_to raise_error
+    end
+  end
 end

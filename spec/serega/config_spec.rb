@@ -236,7 +236,6 @@ RSpec.describe Serega::SeregaConfig do
     it "generates default config" do
       expect(config.__send__(:opts).keys).to match_array %i[
         plugins
-        initiate_keys
         serialize_keys
         attribute_keys
         check_attribute_name
@@ -253,7 +252,6 @@ RSpec.describe Serega::SeregaConfig do
 
       expect(config.plugins).to eq []
       expect(config.serialize_keys).to match_array(%i[context many])
-      expect(config.initiate_keys).to match_array(%i[only except with check_initiate_params])
       expect(config.attribute_keys).to match_array(
         %i[
           method

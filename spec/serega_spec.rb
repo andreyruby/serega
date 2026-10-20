@@ -149,4 +149,19 @@ RSpec.describe Serega do
       expect(serializer_class.attributes).to eq(foo: foo, bar: bar)
     end
   end
+
+  describe "#to_h" do
+    subject(:result) { serializer_class.new.to_h(user, context: context, many: false) }
+
+    let(:serializer_class) { Class.new(described_class) { attribute :name } }
+    let(:user) { double(name: "Ann") }
+    let(:context) { {current_user: "Ann"} }
+
+    before { allow(Serega::SeregaValidations::CheckSerializeKeywords).to receive(:call) }
+
+    it "checks the serialization options and serializes the object" do
+      expect(result).to eq(name: "Ann")
+      expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with(context, false)
+    end
+  end
 end

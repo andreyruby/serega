@@ -2,7 +2,7 @@
 
 RSpec.describe Serega do
   describe "serialization context" do
-    subject(:result) { user_serializer.to_h(user, opts) }
+    subject(:result) { user_serializer.to_h(user, **opts) }
 
     let(:user_serializer) do
       Class.new(described_class) do
@@ -13,7 +13,7 @@ RSpec.describe Serega do
     let(:user) { Struct.new(:id).new(1) }
 
     context "without a context" do
-      let(:opts) { nil }
+      let(:opts) { {} }
 
       it "passes a frozen empty Hash" do
         expect(result[:context]).to be_frozen.and eq({})
@@ -35,21 +35,10 @@ RSpec.describe Serega do
         expect(context).not_to be_frozen
       end
     end
-
-    context "with String option names" do
-      let(:opts) { {"context" => context} }
-      let(:context) { {current_user_id: 1} }
-
-      it "does not change the given options" do
-        result
-
-        expect(opts).to eq("context" => context)
-      end
-    end
   end
 
   describe ".new" do
-    subject(:serializer) { user_serializer.new(modifiers) }
+    subject(:serializer) { user_serializer.new(only: only) }
 
     let(:user_serializer) do
       Class.new(described_class) do
@@ -58,12 +47,13 @@ RSpec.describe Serega do
       end
     end
 
-    let(:modifiers) { {"only" => [:first_name]} }
+    let(:only) { [:first_name] }
 
     it "does not change the given modifiers" do
       serializer
 
-      expect(modifiers).to eq("only" => [:first_name])
+      expect(only).to eq [:first_name]
+      expect(only).not_to be_frozen
     end
   end
 end

@@ -4,7 +4,8 @@ class Serega
   # @private
   module SeregaValidations
     #
-    # Validations of serialization options
+    # Validations of the serialization options other than :context and
+    # :many. CheckSerializeKeywords checks :context and :many.
     #
     # @private
     class CheckSerializeParams
@@ -18,7 +19,7 @@ class Serega
         #
         # Initializes validator for serialization options
         #
-        # @param opts [Hash] serialization options
+        # @param opts [Hash] serialization options other than :context and :many
         #
         # @return [void]
         #
@@ -35,11 +36,10 @@ class Serega
 
         private
 
+        # Patched in:
+        # - plugin :context_metadata (checks the context metadata is a Hash)
         def check_opts
           Utils::CheckAllowedKeys.call(opts, serializer_class.config.serialize_keys, :serialize)
-
-          Utils::CheckOptIsHash.call(opts, :context)
-          Utils::CheckOptIsBool.call(opts, :many)
         end
 
         def serializer_class

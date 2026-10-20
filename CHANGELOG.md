@@ -6,6 +6,9 @@
   See [Ractors](docs/ractors.md).
 - **BREAKING**: Raise the minimum supported Ruby version to 3.3. Ruby 3.2 has
   reached its end of life.
+- **BREAKING**: `new`, `to_h`, `to_data`, `to_struct` and `call` take keyword
+  arguments: pass a Hash of options with `**`, with Symbol keys. Unknown options
+  raise `ArgumentError`. See [Serializing](docs/serializing.md).
 - **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
   under the root key. See [Plugin :root](docs/plugins.md#plugin-root).
 - **BREAKING**: Moved the `:if`, `:unless`, `:if_value` and `:unless_value`

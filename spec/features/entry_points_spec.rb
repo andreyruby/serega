@@ -15,148 +15,78 @@ RSpec.describe Serega do
     let(:modifiers) { {except: :except} }
     let(:serialize_opts) { {context: {data: "bar"}} }
 
-    let(:serializer) { serializer_class.new(modifiers) }
+    let(:serializer) { serializer_class.new(**modifiers) }
 
     describe "#call" do
       it "returns serialized response" do
-        expect(serializer.call("foo", serialize_opts)).to eq({obj: "foo", ctx: "bar"})
-      end
-
-      context "with string opts" do
-        before do
-          modifiers.transform_keys!(&:to_s)
-          serialize_opts.transform_keys!(&:to_s)
-        end
-
-        it "returns correct response when options provided with string keys" do
-          expect(serializer.call("foo", serialize_opts)).to eq({obj: "foo", ctx: "bar"})
-        end
+        expect(serializer.call("foo", **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
       end
     end
 
     describe "#to_h" do
       it "returns serialized response same as .call method" do
-        expect(serializer.to_h("foo", serialize_opts)).to eq({obj: "foo", ctx: "bar"})
+        expect(serializer.to_h("foo", **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
       end
     end
 
     describe ".call" do
       it "returns serialized to response" do
-        expect(serializer_class.call("foo", modifiers.merge(serialize_opts))).to eq({obj: "foo", ctx: "bar"})
-      end
-
-      context "with string opts" do
-        before do
-          modifiers.transform_keys!(&:to_s)
-          serialize_opts.transform_keys!(&:to_s)
-        end
-
-        it "returns correct response when options provided with string keys" do
-          expect(serializer_class.call("foo", modifiers.merge(serialize_opts))).to eq({obj: "foo", ctx: "bar"})
-        end
+        expect(serializer_class.call("foo", **modifiers, **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
       end
     end
 
     describe ".to_h" do
       it "returns serialized response same as .call method" do
-        expect(serializer_class.to_h("foo", modifiers.merge(serialize_opts))).to eq({obj: "foo", ctx: "bar"})
+        expect(serializer_class.to_h("foo", **modifiers, **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
       end
     end
 
     describe "#to_data" do
       it "returns a Data object with correct members" do
-        result = serializer.to_data("foo", serialize_opts)
+        result = serializer.to_data("foo", **serialize_opts)
         expect(result).to be_a(Data)
         expect(result.obj).to eq "foo"
         expect(result.ctx).to eq "bar"
       end
 
       it "returns nil when object is nil" do
-        expect(serializer.to_data(nil, serialize_opts)).to be_nil
-      end
-
-      context "with string opts" do
-        before do
-          modifiers.transform_keys!(&:to_s)
-          serialize_opts.transform_keys!(&:to_s)
-        end
-
-        it "returns correct response when options provided with string keys" do
-          result = serializer.to_data("foo", serialize_opts)
-          expect(result.obj).to eq "foo"
-          expect(result.ctx).to eq "bar"
-        end
+        expect(serializer.to_data(nil, **serialize_opts)).to be_nil
       end
     end
 
     describe ".to_data" do
       it "returns a Data object with correct members" do
-        result = serializer_class.to_data("foo", modifiers.merge(serialize_opts))
+        result = serializer_class.to_data("foo", **modifiers, **serialize_opts)
         expect(result).to be_a(Data)
         expect(result.obj).to eq "foo"
         expect(result.ctx).to eq "bar"
       end
 
       it "returns nil when object is nil" do
-        expect(serializer_class.to_data(nil, modifiers.merge(serialize_opts))).to be_nil
-      end
-
-      context "with string opts" do
-        before do
-          modifiers.transform_keys!(&:to_s)
-          serialize_opts.transform_keys!(&:to_s)
-        end
-
-        it "returns correct response when options provided with string keys" do
-          result = serializer_class.to_data("foo", modifiers.merge(serialize_opts))
-          expect(result.obj).to eq "foo"
-          expect(result.ctx).to eq "bar"
-        end
+        expect(serializer_class.to_data(nil, **modifiers, **serialize_opts)).to be_nil
       end
     end
 
     describe "#to_struct" do
       it "returns a Struct object with serialized attributes" do
-        result = serializer.to_struct("foo", serialize_opts)
+        result = serializer.to_struct("foo", **serialize_opts)
 
         expect(result).to be_a(Struct)
         expect(result.to_h).to eq(obj: "foo", ctx: "bar")
       end
 
       it "returns nil when object is nil" do
-        expect(serializer.to_struct(nil, serialize_opts)).to be_nil
-      end
-
-      context "with string opts" do
-        before do
-          modifiers.transform_keys!(&:to_s)
-          serialize_opts.transform_keys!(&:to_s)
-        end
-
-        it "returns a Struct object with serialized attributes" do
-          expect(serializer.to_struct("foo", serialize_opts).to_h).to eq(obj: "foo", ctx: "bar")
-        end
+        expect(serializer.to_struct(nil, **serialize_opts)).to be_nil
       end
     end
 
     describe ".to_struct" do
       it "returns a Struct object with serialized attributes" do
-        expect(serializer_class.to_struct("foo", modifiers.merge(serialize_opts)).to_h).to eq(obj: "foo", ctx: "bar")
+        expect(serializer_class.to_struct("foo", **modifiers, **serialize_opts).to_h).to eq(obj: "foo", ctx: "bar")
       end
 
       it "returns nil when object is nil" do
-        expect(serializer_class.to_struct(nil, modifiers.merge(serialize_opts))).to be_nil
-      end
-
-      context "with string opts" do
-        before do
-          modifiers.transform_keys!(&:to_s)
-          serialize_opts.transform_keys!(&:to_s)
-        end
-
-        it "returns a Struct object with serialized attributes" do
-          expect(serializer_class.to_struct("foo", modifiers.merge(serialize_opts)).to_h).to eq(obj: "foo", ctx: "bar")
-        end
+        expect(serializer_class.to_struct(nil, **modifiers, **serialize_opts)).to be_nil
       end
     end
   end

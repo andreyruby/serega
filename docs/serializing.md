@@ -23,7 +23,16 @@ serialization options:
   [Context](context.md);
 - `:many` — serializes the object as a list (`true`) or as one object
   (`false`). By default, an `Enumerable` that is not a `Hash` or `Struct` is a
-  list.
+  list. Pass it when you know, to skip the check.
+
+The options are keyword arguments. Pass a Hash of options with `**`:
+
+```ruby
+UserSerializer.to_h(user, **options)
+```
+
+An unknown option raises `ArgumentError`. With the `:root` or
+`:context_metadata` plugin, it raises `Serega::SeregaError`.
 
 ## JSON
 
@@ -58,12 +67,13 @@ result.
 ## Reusing a serializer
 
 A serializer instance prepares its serialization plan once. Reuse it to
-serialize many times with the same fields:
+serialize many times with the same fields. Its methods take the
+serialization options:
 
 ```ruby
 serializer = UserSerializer.new(only: [:username])
-serializer.to_h(user)
-serializer.to_struct(other_user)
+serializer.to_h(user, many: false)
+serializer.to_struct(users, context: {current_user: current_user})
 ```
 
 Class methods cache plans too: `config.max_cached_plans_per_serializer_count`

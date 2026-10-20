@@ -118,9 +118,34 @@ class Serega
       #
       # Serega additional/patched class methods
       #
+      # The serialization methods take `**opts`: the `root:` option, and the
+      # options of plugins loaded after this one, like `:context_metadata`.
+      # Core methods take only their own keywords, thus only serializers with
+      # this plugin pay for the options Hash.
+      #
       # @see Serega
       #
       module ClassMethods
+        # @see Serega::ClassMethods#call
+        def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+            .to_h(object, context: context, many: many, **opts)
+        end
+
+        # @see Serega::ClassMethods#to_data
+        def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+            .to_data(object, context: context, many: many, **opts)
+        end
+
+        # @see Serega::ClassMethods#to_struct
+        def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+            .to_struct(object, context: context, many: many, **opts)
+        end
+
+        alias_method :to_h, :call
+
         #
         # Configures response root key
         #
@@ -219,11 +244,39 @@ class Serega
       #
       # Serega additional/patched instance methods
       #
+      # The serialization methods take `**opts`, see ClassMethods. The
+      # options reach `#serialize` as its `opts`, after CheckSerializeParams
+      # validates them.
+      #
       # @see Serega
       #
       # @private
       module InstanceMethods
+        # @see Serega::InstanceMethods#call
+        def call(object, context: nil, many: nil, **opts)
+          serialize_to(:hash, object, context, many, checked_opts(opts))
+        end
+
+        # @see Serega::InstanceMethods#to_data
+        def to_data(object, context: nil, many: nil, **opts)
+          serialize_to(:data, object, context, many, checked_opts(opts))
+        end
+
+        # @see Serega::InstanceMethods#to_struct
+        def to_struct(object, context: nil, many: nil, **opts)
+          serialize_to(:struct, object, context, many, checked_opts(opts))
+        end
+
+        alias_method :to_h, :call
+
         private
+
+        def checked_opts(opts)
+          return FROZEN_EMPTY_HASH if opts.empty?
+
+          self.class::CheckSerializeParams.new(opts).validate
+          opts
+        end
 
         def serialize(object, opts, context:, many:, mode:)
           result = super

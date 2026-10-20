@@ -77,7 +77,7 @@ RSpec.describe Serega::SeregaPlugins::DepthLimit do
       expect { posts_serializer.new }.to raise_error Serega::SeregaError, "Depth limit was exceeded"
 
       fields = {only: {comments: :post}} # post -> comments -> post (depth is 3)
-      expect { posts_serializer.new(fields) }
+      expect { posts_serializer.new(**fields) }
         .to raise_error Serega::SeregaError, "Depth limit was exceeded"
     end
 
@@ -94,7 +94,7 @@ RSpec.describe Serega::SeregaPlugins::DepthLimit do
 
     it "does not raise error if depth error was not exceeded" do
       fields = {only: {comments: :text}} # post -> comments (depth is 2)
-      expect { posts_serializer.new(fields) }.not_to raise_error
+      expect { posts_serializer.new(**fields) }.not_to raise_error
     end
   end
 

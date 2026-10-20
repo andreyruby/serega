@@ -108,12 +108,6 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect { user_serializer.new(only: :email) }.to raise_error Serega::AttributeNotExist
     end
 
-    it "validates the other initiate options of a cached plan" do
-      user_serializer.new(only: :first_name)
-
-      expect { user_serializer.new(only: :first_name, foo: 1) }.to raise_error Serega::SeregaError, /foo/
-    end
-
     it "removes the oldest plan from a full cache" do
       result1 = plan(only: {first_name: {}})
       plan(only: {last_name: {}})

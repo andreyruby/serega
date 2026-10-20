@@ -38,7 +38,6 @@ require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
 require_relative "serega/utils/ractor_local"
 require_relative "serega/utils/serialized_attribute_error"
-require_relative "serega/utils/symbol_keys"
 require_relative "serega/utils/to_hash"
 require_relative "serega/attribute_value_resolvers/batch"
 require_relative "serega/attribute_value_resolvers/const"
@@ -78,6 +77,7 @@ require_relative "serega/validations/initiate/check_modifiers"
 require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_formatter"
+require_relative "serega/validations/check_serialize_keywords"
 require_relative "serega/validations/check_serialize_params"
 
 require_relative "serega/batch_loader"
@@ -447,67 +447,55 @@ class Serega
       @prepare_initial_objects_signature
     end
 
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
+
     #
     # Serializes provided object to Hash
     #
     # @param object [Object] Object to serialize
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # @param only [Array, Hash, String, Symbol, nil] The only attributes to serialize
+    # @param with [Array, Hash, String, Symbol, nil] Attributes (usually hidden) to serialize additionally
+    # @param except [Array, Hash, String, Symbol, nil] Attributes to hide
+    # @param check_initiate_params [Boolean, nil] Validates provided modifiers (Default is `config.check_initiate_params`)
+    # @param context [Hash, nil] Serialization context
+    # @param many [Boolean, nil] Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Hash] Serialization result
     #
-    def call(object, opts = nil)
-      opts &&= SeregaUtils::SymbolKeys.call(opts)
-      modifiers_opts = init_modifier_opts(opts)
-      serialize_opts = init_serialize_opts(opts)
-      new(modifiers_opts).to_h(object, serialize_opts)
+    def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        .to_h(object, context: context, many: many)
     end
+
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
 
     #
     # Serializes provided object to a tree of Ruby Data objects
     #
-    # @param object [Object] Object to serialize
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # @param (see #call)
     #
     # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
     #
-    def to_data(object, opts = nil)
-      opts &&= SeregaUtils::SymbolKeys.call(opts)
-      modifiers_opts = init_modifier_opts(opts)
-      serialize_opts = init_serialize_opts(opts)
-      new(modifiers_opts).to_data(object, serialize_opts)
+    def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        .to_data(object, context: context, many: many)
     end
+
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
 
     #
     # Serializes provided object to a tree of Ruby Struct objects
     #
-    # @param object [Object] Object to serialize
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # @param (see #call)
     #
     # @return [Struct, Array<Struct>, nil] Serialization result as Struct object(s)
     #
-    def to_struct(object, opts = nil)
-      opts &&= SeregaUtils::SymbolKeys.call(opts)
-      modifiers_opts = init_modifier_opts(opts)
-      serialize_opts = init_serialize_opts(opts)
-      new(modifiers_opts).to_struct(object, serialize_opts)
+    def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        .to_struct(object, context: context, many: many)
     end
 
     alias_method :to_h, :call
@@ -571,14 +559,6 @@ class Serega
     def check_unlocked
       raise SeregaError, "#{self} can not be changed after it was made shareable" if @shareable
       raise SeregaError, "#{self} can not be changed after it was used for serialization" if @locked
-    end
-
-    def init_modifier_opts(opts)
-      (!opts || opts.empty?) ? FROZEN_EMPTY_HASH : opts.slice(*config.initiate_keys)
-    end
-
-    def init_serialize_opts(opts)
-      (!opts || opts.empty?) ? nil : opts.except(*config.initiate_keys)
     end
 
     # Patched in:
@@ -693,18 +673,15 @@ class Serega
     #
     # Instantiates new Serega class
     #
-    # @param opts [Hash, nil] Serializer modifiers and other instantiating options
-    # @option opts [Array, Hash, String, Symbol] :only The only attributes to serialize
-    # @option opts [Array, Hash, String, Symbol] :except Attributes to hide
-    # @option opts [Array, Hash, String, Symbol] :with Attributes (usually hidden) to serialize additionally
-    # @option opts [Boolean] :validate Validates provided modifiers (Default is true)
+    # @param only [Array, Hash, String, Symbol, nil] The only attributes to serialize
+    # @param with [Array, Hash, String, Symbol, nil] Attributes (usually hidden) to serialize additionally
+    # @param except [Array, Hash, String, Symbol, nil] Attributes to hide
+    # @param check_initiate_params [Boolean, nil] Validates provided modifiers (Default is `config.check_initiate_params`)
     #
-    def initialize(opts = nil)
-      opts = (opts.nil? || opts.empty?) ? FROZEN_EMPTY_HASH : SeregaUtils::SymbolKeys.call(opts)
-      check_initiate_params = !opts.empty? && opts.fetch(:check_initiate_params) { config.check_initiate_params }
-      check_option_names(opts) if check_initiate_params
-
-      @plan = self.class.plan_cache.fetch(opts[:only], opts[:with], opts[:except], check_initiate_params: check_initiate_params)
+    def initialize(only: nil, with: nil, except: nil, check_initiate_params: nil)
+      modifiers = !(only.nil? && with.nil? && except.nil?)
+      check_initiate_params = config.check_initiate_params if modifiers && check_initiate_params.nil?
+      @plan = self.class.plan_cache.fetch(only, with, except, check_initiate_params: modifiers && check_initiate_params)
     end
 
     #
@@ -715,51 +692,50 @@ class Serega
     # @private
     attr_reader :plan
 
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
+
     #
     # Serializes provided object to Hash
     #
     # @param object [Object] Object to serialize
-    # @param opts [Hash, nil] Serializing options
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # @param context [Hash, nil] Serialization context
+    # @param many [Boolean, nil] Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
     #
     # @return [Hash] Serialization result
     #
-    def call(object, opts = nil)
-      serialize_to(:hash, object, opts)
+    def call(object, context: nil, many: nil)
+      serialize_to(:hash, object, context, many, FROZEN_EMPTY_HASH)
     end
 
-    # @see #call
-    def to_h(object, opts = nil)
-      call(object, opts)
-    end
+    alias_method :to_h, :call
+
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
 
     #
     # Serializes provided object to Data objects
     #
-    # @param object [Object] Object to serialize
-    # @param opts [Hash, nil] Serializing options
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # @param (see #call)
     #
     # @return [Data] Serialization result
     #
-    def to_data(object, opts = nil)
-      serialize_to(:data, object, opts)
+    def to_data(object, context: nil, many: nil)
+      serialize_to(:data, object, context, many, FROZEN_EMPTY_HASH)
     end
+
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
 
     #
     # Serializes provided object to Struct objects
     #
-    # @param object [Object] Object to serialize
-    # @param opts [Hash, nil] Serializing options
-    # @option opts [Hash] :context Serialization context
-    # @option opts [Boolean] :many Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # @param (see #call)
     #
     # @return [Struct, Array<Struct>, nil] Serialization result
     #
-    def to_struct(object, opts = nil)
-      serialize_to(:struct, object, opts)
+    def to_struct(object, context: nil, many: nil)
+      serialize_to(:struct, object, context, many, FROZEN_EMPTY_HASH)
     end
 
     private
@@ -768,24 +744,14 @@ class Serega
       self.class.config
     end
 
-    def check_option_names(opts)
-      SeregaValidations::Utils::CheckAllowedKeys.call(opts, config.initiate_keys, :initiate)
-    end
-
-    def serialize_to(mode, object, opts)
-      opts = normalize_serialization_opts(opts)
-      context = opts[:context] || FROZEN_EMPTY_HASH
+    # Serializes the object with the serialization options. `opts` holds the
+    # options other than :context and :many.
+    def serialize_to(mode, object, context, many, opts)
+      SeregaValidations::CheckSerializeKeywords.call(context, many)
+      context ||= FROZEN_EMPTY_HASH
       object = prepare_objects(object, context)
-      many = opts.fetch(:many) { SeregaUtils::CollectionDetector.call(object) }
+      many = SeregaUtils::CollectionDetector.call(object) if many.nil?
       serialize(object, opts, context: context, many: many, mode: mode)
-    end
-
-    def normalize_serialization_opts(opts)
-      return FROZEN_EMPTY_HASH if opts.nil? || opts.empty?
-
-      opts = SeregaUtils::SymbolKeys.call(opts)
-      self.class::CheckSerializeParams.new(opts).validate
-      opts
     end
 
     def prepare_objects(objects, context)
