@@ -103,9 +103,8 @@ end
 
 ## Benchmarks
 
-Serializations per second, more is better.
-
-JSON strings:
+Serializations of preloaded ActiveRecord records to JSON strings, per second,
+more is better:
 
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
@@ -117,51 +116,8 @@ JSON strings:
 | active_model_serializers |    68,363 |     1,022 |                       79 |     118 |         — |
 | *hand-written Hash*      | 2,271,217 |    25,775 |                    2,342 |   4,856 |     3,506 |
 
-Hashes:
-
-| Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
-|--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **serega**               | 1,086,564 |    34,839 |                    3,217 |   6,589 |     4,961 |
-| oj_serializers           | 3,431,306 |    36,480 |                    2,957 |       — |         — |
-| panko_serializer         |   783,211 |    13,096 |                    1,266 |   2,430 |     1,709 |
-| alba                     | 1,035,371 |    16,143 |                    1,442 |       — |         — |
-| blueprinter              |   709,166 |    10,062 |                      987 |       — |         — |
-| active_model_serializers |    70,542 |     1,043 |                       80 |     119 |         — |
-| *hand-written Hash*      | 3,812,230 |    37,498 |                    3,096 |   6,222 |     4,747 |
-
-A post has five attributes, one of them a time formatted with `iso8601(3)`.
-With relations, it adds its author and 10 comments. `only:` and `except:`
-select nested fields of the posts with relations; "—" means the gem has no
-runtime field selection. Records are preloaded ActiveRecord models.
-
-Each gem renders JSON its own way: serega, alba and blueprinter with
-`JSON.generate`, oj_serializers and panko_serializer with Oj,
-active_model_serializers with ActiveSupport. alba and panko_serializer return
-String keys, the others Symbol keys. The serializers use the fastest
-definition options of their gems:
-
-- serega: `format: [:iso8601, 3]`, and `many:` on relations;
-- alba: resource methods instead of attribute blocks;
-- blueprinter: `PublicSendExtractor` as the default extractor, and an
-  extractor for times instead of field blocks;
-- panko_serializer, active_model_serializers and oj_serializers: serializer
-  methods for times.
-
-serega serializers and panko_serializer array serializers are prepared once
-with `.new` and reused by every call. The other gems take the object in `.new`
-or serialize with class methods, and panko_serializer instances for one object
-are single-use.
-
-Each case is a script in [`benchmarks/`](benchmarks) that checks every gem
-returns the same data as the hand-written Hash before measuring. Measured on
-Apple M4, Ruby 4.0.5 with YJIT, alba 4.0.1, blueprinter 1.3.0, panko_serializer
-0.8.5, active_model_serializers 0.10.16, oj_serializers 3.0.2, activerecord
-8.1.4.
-
-```sh
-ruby benchmarks/relations.rb         # single, collection, relations, only, except
-FAST=1 ruby benchmarks/relations.rb  # a short round
-```
+Hashes, the details of each case and how to run them:
+[benchmarks/README.md](benchmarks/README.md).
 
 ## Features
 
