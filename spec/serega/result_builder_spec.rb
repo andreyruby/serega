@@ -211,4 +211,48 @@ RSpec.describe Serega::SeregaResultBuilder do
       end
     end
   end
+
+  describe "#call_one" do
+    subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
+
+    let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
+
+    it "builds the Hash of the object" do
+      expect(result_builder.call_one(user, {})).to eq(name: "Ann", email: "ann@example.com")
+    end
+
+    context "with the :data mode" do
+      let(:mode) { :data }
+
+      it "builds the Data object of the object" do
+        data_class = serializer::SeregaResultBuilder.data_class_for(%i[name email])
+
+        expect(result_builder.call_one(user, {})).to eq data_class.new("Ann", "ann@example.com")
+      end
+    end
+
+    context "with a relation" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :posts, serializer: Class.new(Serega)
+        end
+      end
+
+      it "is not defined" do
+        expect(result_builder).not_to respond_to(:call_one)
+      end
+    end
+
+    context "with a batch attribute" do
+      let(:serializer) do
+        Class.new(Serega) do
+          attribute :name, batch: {use: proc { |ids| ids }, id: :email}
+        end
+      end
+
+      it "is not defined" do
+        expect(result_builder).not_to respond_to(:call_one)
+      end
+    end
+  end
 end

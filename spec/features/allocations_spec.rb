@@ -35,8 +35,8 @@ RSpec.describe Serega, if: RUBY_ENGINE == "ruby" && RUBY_VERSION >= "4.0" do
       let(:object) { users[0] }
       let(:many) { false }
 
-      it "allocates the serialized Hash, the sources and the serialized Array" do
-        expect(serialize).to allocate_objects(T_HASH: 1, T_ARRAY: 2)
+      it "allocates only the serialized Hash" do
+        expect(serialize).to allocate_objects(T_HASH: 1)
       end
     end
   end
