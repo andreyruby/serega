@@ -332,9 +332,10 @@ RSpec.describe Serega::SeregaAttribute do
   end
 
   describe "#value_code" do
-    subject(:code) { attribute_class.new(name: :name, opts: opts).value_code("source") }
+    subject(:code) { attribute_class.new(name: :name, opts: opts).value_code("source", constants_prefix) }
 
     let(:opts) { {} }
+    let(:constants_prefix) { "" }
 
     it "returns the code of the value reader" do
       expect(code).to eq "source.name"
@@ -385,6 +386,15 @@ RSpec.describe Serega::SeregaAttribute do
 
       it "returns the code that formats the value or the default" do
         expect(code).to eq "FORMATTERS[:name].call((value = source.name).nil? ? DEFAULTS[:name] : value)"
+      end
+    end
+
+    context "with a constants prefix" do
+      let(:opts) { {format: proc { |name| name.upcase }, default: "Ann"} }
+      let(:constants_prefix) { "SeregaAttributeValues::" }
+
+      it "returns the code that reads the constants with the prefix" do
+        expect(code).to eq "SeregaAttributeValues::FORMATTERS[:name].call((value = source.name).nil? ? SeregaAttributeValues::DEFAULTS[:name] : value)"
       end
     end
 

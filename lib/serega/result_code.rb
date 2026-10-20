@@ -5,8 +5,8 @@ class Serega
   # Generates the Ruby code of the `SeregaResultBuilder#call` method of one
   # plan in one serialization mode. The method reads all values of a source,
   # then makes its serialized object in one step: a Hash literal,
-  # `Struct.new` or `Data.new`. Simple attributes are read with their
-  # SeregaAttributeValues method, for example `attribute_values.read_name(source)`.
+  # `Struct.new` or `Data.new`. The code reads plain attributes directly,
+  # for example `source.name`.
   #
   # Points without relations and batch loaders get a `#call_one(source,
   # context)` method too. It returns the serialized object of one source,
@@ -17,7 +17,6 @@ class Serega
   #
   #   def call(sources, context, batches, relations)
   #     points = @points
-  #     attribute_values = @attribute_values
   #     point_0 = points[0]
   #     relation_values_1 = relations[points[1]]
   #     size = sources.size
@@ -27,7 +26,7 @@ class Serega
   #       source = sources[source_index]
   #       value_0 =
   #         begin
-  #           attribute_values.read_id(source)
+  #           source.id
   #         rescue => error
   #           Serega::SeregaUtils::SerializedAttributeError.call(error, point_0)
   #         end
@@ -112,10 +111,8 @@ class Serega
       # that the code of the points reads
       def variables_code
         point_variables = @points.each_with_index.flat_map { |point, index| point_variables_code(point, index) }
-        plain_reads = @points.any? { |point| !point.child_plan && point.attribute.value_method }
         shared = ["points = @points"]
         shared << "result_class = @result_class" unless mode == :hash
-        shared << "attribute_values = @attribute_values" if plain_reads
         [*shared, *point_variables]
       end
 
@@ -167,12 +164,14 @@ class Serega
         RUBY
       end
 
-      # Code that reads the value of the point
+      # Code that reads the value of the point. A plain attribute reads its
+      # `:const`, `:default` and formatter values from the constants of
+      # SeregaAttributeValues.
       def read_value_code(point, index)
         return "relation_values_#{index}[source_index]" if point.child_plan
 
-        value_method = point.attribute.value_method
-        return "attribute_values.#{value_method}(source)" if value_method
+        attribute = point.attribute
+        return attribute.value_code("source", "SeregaAttributeValues::") if attribute.value_method
         return "attribute_#{index}.value(source, context)" if point.batch_loaders.empty?
 
         "attribute_#{index}.value(source, context, batches: batches_#{index})"

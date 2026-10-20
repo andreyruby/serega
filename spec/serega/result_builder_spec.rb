@@ -209,6 +209,15 @@ RSpec.describe Serega::SeregaResultBuilder do
         expect { result_builder.call([user], {}, nil, nil) }
           .to raise_error(NoMethodError, /when serializing the 'email' attribute/)
       end
+
+      it "puts the attribute line above the generated code line in the backtrace" do
+        location = serializer.attributes[:email].location
+
+        expect { result_builder.call([user], {}, nil, nil) }.to raise_error(NoMethodError) do |error|
+          expect(error.backtrace[0]).to eq "#{location}:in 'attribute :email of #{serializer}'"
+          expect(error.backtrace[1]).to start_with "(serega generated code):"
+        end
+      end
     end
   end
 
