@@ -15,5 +15,6 @@ gem "mdl", "~> 0.13", require: false # Markdown linter
 gem "rdoc", "~> 8.1", require: false # Generates and checks API documentation coverage
 gem "rbs", "~> 4.0", require: false # Validates the type signatures in sig/
 gem "steep", "~> 2.1", require: false # Checks lib/ against the type signatures
+gem "rubocop-on-rbs", "~> 2.2", require: false # Lints the type signatures in sig/
 
 gemspec name: "serega", path: "../"

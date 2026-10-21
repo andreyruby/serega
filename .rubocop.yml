@@ -5,6 +5,7 @@ plugins:
   - rubocop-performance
   - rubocop-rspec
   - rubocop-rake
+  - rubocop-on-rbs
 
 inherit_gem:
   standard: config/base.yml
@@ -16,7 +17,6 @@ AllCops:
     - coverage/**/*
     - doc/**/*
     - pkg/**/*
-    - sig/**/*
     - vendor/bundle/**/*
 
 
