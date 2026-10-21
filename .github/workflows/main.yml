@@ -1,8 +1,10 @@
 name: Ruby
 
+# Pull requests run on pull_request, thus push runs only for master
 on:
-  - push
-  - pull_request
+  push:
+    branches: [master]
+  pull_request:
 
 jobs:
   lint:
