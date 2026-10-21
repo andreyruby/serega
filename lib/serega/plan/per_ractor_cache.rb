@@ -22,7 +22,7 @@ class Serega
       # @see SeregaPlan::Cache::InstanceMethods#fetch
       #
       def fetch(only, with, except, check_initiate_params: false)
-        plan_cache = SeregaUtils::RactorLocal.fetch(@key) { @serializer_class.plan_cache_class.new(@serializer_class) }
+        plan_cache = SeregaUtils::RactorLocal.fetch(@key) { SeregaPlan::Cache.new(@serializer_class) }
         plan_cache.fetch(only, with, except, check_initiate_params: check_initiate_params)
       end
     end

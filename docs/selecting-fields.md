@@ -89,15 +89,10 @@ fields:
 
 ## Fields from a request
 
-With the [`:string_modifiers`](plugins.md#plugin-string_modifiers) plugin,
-fields can be one String, with nested fields in parentheses. This fits query
+Fields can be one String, with nested fields in parentheses. This fits query
 parameters like `GET /users?fields=username,friends(username,email)`.
 
 ```ruby
-class AppSerializer < Serega
-  plugin :string_modifiers
-end
-
 UserSerializer.to_h(bruce, only: "username,friends(username,email)")
 # => {username: "batman", friends: [{username: "alfred", email: "alfred@wayne.com"}]}
 

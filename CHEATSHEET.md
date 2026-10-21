@@ -20,7 +20,6 @@
 - [Configuration](#configuration)
 - [Presenter](#presenter)
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
-- [Plugin `:string_modifiers`](#plugin-string_modifiers)
 - [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
 - [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
 - [Errors](#errors)
@@ -203,6 +202,7 @@ UserSerializer.to_h(user, with: [:phone]) # => {name: "Felonious", email: "gru@e
 ```ruby
 # Nested
 UserSerializer.to_h(user, only: [:name, { posts: [:title] }])
+UserSerializer.to_h(user, only: 'name,posts(title)') # one String, e.g. from GET ?fields=...
 ```
 
 ```ruby
@@ -512,8 +512,7 @@ Define a base serializer once, then put shared setup there.
 
 ```ruby
 class AppSerializer < Serega
-  plugin :string_modifiers      # shared by every subclass
-  config.check_initiate_params = false
+  config.check_initiate_params = false # shared by every subclass
   config.base_serializer = self # nested serializers from attribute blocks inherit AppSerializer
 end
 
@@ -526,7 +525,7 @@ class PostSerializer < AppSerializer
 end
 ```
 
-Both `UserSerializer` and `PostSerializer` now have `:string_modifiers` enabled — no need to opt in twice.
+Both `UserSerializer` and `PostSerializer` now skip unknown fields — no need to configure them twice.
 
 Set defaults in the base class — see [Configuration][configuration], and the plugin sections below.
 
@@ -739,27 +738,6 @@ UserSerializer.to_h(user) # AR Preloader runs declared preloads automatically
 ```
 
 Needs preloads declared on attributes — see [Preloads][preloads].
-
----
-
-## Plugin `:string_modifiers`
-
-```ruby
-class UserSerializer < Serega
-  plugin :string_modifiers
-  attribute :first_name
-  attribute :last_name
-end
-
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru'),
-                    only: 'first_name')
-# => {first_name: "Felonious"}
-
-# Nested:
-UserSerializer.to_h(post, only: 'title,author(first_name,email)')
-```
-
-Old Hash/Array forms still work. Great for `GET ?fields=...` query params.
 
 ---
 

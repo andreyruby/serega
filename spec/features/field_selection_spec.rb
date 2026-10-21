@@ -389,6 +389,25 @@ RSpec.describe Serega do
         expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle", friend: {last_name: "Pennyworth"}}})
       end
     end
+
+    context "with options given as Strings" do
+      let(:friend) { double(first_name: "Selina", last_name: "Kyle") }
+      let(:user) { double(first_name: "Bruce", last_name: "Wayne", friend: friend) }
+
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :first_name
+          attribute :last_name
+          attribute :friend, serializer: self, hide: true
+        end
+      end
+
+      let(:modifiers) { {with: "friend", except: "last_name,friend(first_name)"} }
+
+      it "reads nested fields from parentheses" do
+        expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle"}})
+      end
+    end
   end
 
   describe "validating initiate options" do

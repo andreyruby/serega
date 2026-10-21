@@ -48,8 +48,5 @@ class Serega
         def root=: ({ one: key, many: key } value) -> void
       end
     end
-
-    module StringModifiers
-    end
   end
 end
