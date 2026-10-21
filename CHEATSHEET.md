@@ -19,9 +19,9 @@
 - [Prepare Initial Objects](#prepare-initial-objects)
 - [Configuration](#configuration)
 - [Presenter](#presenter)
-- [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
-- [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
-- [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
+- [ActiveRecord Preloads](#activerecord-preloads)
+- [Required `many:`](#required-many)
+- [Root Key and Metadata](#root-key-and-metadata)
 - [Errors](#errors)
 
 <!-- tocstop -->
@@ -328,7 +328,7 @@ end
 ```
 
 DB preloads for `:serializer` attributes — see [Preloads][preloads].
-Force `many:` on every relation — see [Plugin `:explicit_many_option`][plugin-explicit_many_option].
+Force `many:` on every relation — see [Required `many:`][required-many].
 
 ---
 
@@ -411,7 +411,7 @@ class AppSerializer < Serega
 end
 ```
 
-[Plugin `:activerecord_preloads`][plugin-activerecord_preloads] registers one
+[`plugin :activerecord_preloads`][activerecord-preloads] registers one
 for you (built on `ActiveRecord::Associations::Preloader`), so enabling it loads
 every declared association once, automatically — no N+1. For another ORM — or for
 plain non-ORM objects — register your own handler: it can load data from any
@@ -527,7 +527,7 @@ end
 
 Both `UserSerializer` and `PostSerializer` now skip unknown fields — no need to configure them twice.
 
-Set defaults in the base class — see [Configuration][configuration], and the plugin sections below.
+Set defaults in the base class — see [Configuration][configuration].
 
 ---
 
@@ -727,7 +727,7 @@ context (see [Context][context]).
 
 ---
 
-## Plugin `:activerecord_preloads`
+## ActiveRecord Preloads
 
 ```ruby
 class AppSerializer < Serega
@@ -741,7 +741,7 @@ Needs preloads declared on attributes — see [Preloads][preloads].
 
 ---
 
-## Plugin `:explicit_many_option`
+## Required `many:`
 
 ```ruby
 class AppSerializer < Serega
@@ -765,7 +765,7 @@ end
 
 ---
 
-## Plugin `:root` / `:metadata` / `:context_metadata`
+## Root Key and Metadata
 
 ```ruby
 class UserSerializer < Serega
@@ -818,7 +818,7 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 # => {users: [{first_name: "Felonious"}, {first_name: "Lucy"}], show: "Despicable Me", page: 1}
 ```
 
-> 💡 **Recommendation:** instead of mixing these three plugins, build an
+> 💡 **Recommendation:** instead of mixing `:root`, `:metadata` and `:context_metadata`, build an
 > envelope serializer with plain `:data` and `:meta` attributes — then every
 > response field plays by the same rules (field selection, formatters,
 > `if`/`unless`):
@@ -849,7 +849,7 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 [prepare-initial-objects]: #prepare-initial-objects
 [preloads]: #preloads
 [configuration]: #configuration
-[plugin-activerecord_preloads]: #plugin-activerecord_preloads
+[activerecord-preloads]: #activerecord-preloads
 [presenter]: #presenter
 [depth-limit]: #configdepth_limit--deepest-nesting-of-fields
-[plugin-explicit_many_option]: #plugin-explicit_many_option
+[required-many]: #required-many

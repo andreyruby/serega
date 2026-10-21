@@ -2,7 +2,7 @@
 
 class Serega
   module SeregaPlugins
-    # Plugin `:explicit_many_option`: requires the `:many` option on every
+    # `plugin :explicit_many_option` requires the `:many` option on every
     # relation, an attribute with `:serializer` or a block
     #
     # ```ruby
@@ -11,7 +11,7 @@ class Serega
     # attribute :comments, serializer: CommentSerializer, many: true
     # ```
     #
-    # See [Plugin :explicit_many_option](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-explicit_many_option).
+    # See [:many](https://github.com/andreyruby/serega/blob/master/docs/attributes.md#many).
     module ExplicitManyOption
       # @return [Symbol] Plugin name
       def self.plugin_name # :nodoc:

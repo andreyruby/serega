@@ -2,7 +2,7 @@
 
 class Serega
   module SeregaPlugins
-    # Plugin `:activerecord_preloads`: loads every `:preload` of the serialized
+    # `plugin :activerecord_preloads` loads every `:preload` of the serialized
     # fields once, with `ActiveRecord::Associations::Preloader`
     #
     # ```ruby
@@ -12,7 +12,7 @@ class Serega
     # end
     # ```
     #
-    # See [Plugin :activerecord_preloads](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-activerecord_preloads).
+    # See [ActiveRecord preloads](https://github.com/andreyruby/serega/blob/master/docs/preloads.md#activerecord).
     module ActiverecordPreloads
       #
       # @return [Symbol] Plugin name

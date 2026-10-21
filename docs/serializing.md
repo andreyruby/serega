@@ -32,8 +32,8 @@ The options are keyword arguments. Pass a Hash of options with `**`:
 UserSerializer.to_h(user, **options)
 ```
 
-An unknown option raises `ArgumentError`. With the `:root` or
-`:context_metadata` plugin, it raises `Serega::SeregaError`.
+An unknown option raises `ArgumentError`. With `plugin :root` or
+`plugin :context_metadata`, it raises `Serega::SeregaError`.
 
 ## JSON
 
