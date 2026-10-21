@@ -41,6 +41,9 @@ jobs:
       - name: Check API documentation coverage
         run: bundle exec rake rdoc:coverage
 
+      - name: Validate type signatures
+        run: bundle exec rbs -I sig validate
+
   benchmarks:
     runs-on: ubuntu-24.04
     name: Benchmarks

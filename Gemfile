@@ -24,6 +24,7 @@ gem "rubocop-performance", "~> 1.22", require: false
 #
 gem "allocation_stats", require: false
 gem "rdoc", "~> 8.1", require: false
+gem "rbs", "~> 4.0", require: false
 gem "mdl", "~> 0.13", require: false
 
 gem "debug", ">= 1.0"

@@ -2,24 +2,16 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:string_modifiers`: accepts `only:`, `except:` and `with:` as
+    # one String, with nested fields in parentheses
     #
-    # Plugin :string_modifiers
+    # ```ruby
+    # plugin :string_modifiers
     #
-    # Allows `:only`, `:except` and `:with` to be given as a single comma-separated
-    # string, with nested attributes in parentheses. Useful for accepting a field
-    # list straight from a query parameter.
+    # UserSerializer.to_h(user, only: "username,friends(first_name)")
+    # ```
     #
-    # @example
-    #   class UserSerializer < Serega
-    #     plugin :string_modifiers
-    #
-    #     attribute :username
-    #     attribute :first_name
-    #     attribute :addresses, serializer: AddressSerializer, hide: true
-    #   end
-    #
-    #   UserSerializer.to_h(user, only: "username,addresses(line1,line2)")
-    #
+    # See [Plugin :string_modifiers](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-string_modifiers).
     module StringModifiers
       # @return [Symbol] Plugin name
       def self.plugin_name # :nodoc:

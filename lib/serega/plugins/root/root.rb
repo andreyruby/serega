@@ -2,53 +2,18 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:root`: wraps results in a root key, `:data` by default
     #
-    # Plugin :root
+    # ```ruby
+    # plugin :root                                     # {data: ...}
+    # plugin :root, root: :users                       # one key for objects and lists
+    # plugin :root, root_one: :user, root_many: :users # separate keys
     #
-    # Adds a root key to serialized data.
+    # UserSerializer.to_h(user, root: :user) # => {user: {username: "batman"}}
+    # UserSerializer.to_h(user, root: nil)   # => {username: "batman"}
+    # ```
     #
-    # Accepts options:
-    #  - :root - specifies root for all responses
-    #  - :root_one - specifies root for single object serialization only
-    #  - :root_many - specifies root for multiple objects serialization only
-    #
-    # Adds additional config options:
-    #   - config.root.one
-    #   - config.root.many
-    #   - config.root.one=
-    #   - config.root.many=
-    #
-    # Default root is `:data`.
-    #
-    # Root can also be changed per serialization, or removed entirely by
-    # providing `root: nil` (per serialization it can still be added back).
-    #
-    # @example Define plugin
-    #   class UserSerializer < Serega
-    #     plugin :root # default root is :data
-    #   end
-    #
-    #   class UserSerializer < Serega
-    #     plugin :root, root: :users
-    #   end
-    #
-    #   class UserSerializer < Serega
-    #     plugin :root, root_one: :user, root_many: :people
-    #   end
-    #
-    #   class UserSerializer < Serega
-    #     plugin :root, root: nil # no root by default
-    #   end
-    #
-    # @example Change root per serialization:
-    #   class UserSerializer < Serega
-    #     plugin :root
-    #   end
-    #
-    #   UserSerializer.to_h(nil)              # => {:data=>nil}
-    #   UserSerializer.to_h(nil, root: :user) # => {:user=>nil}
-    #   UserSerializer.to_h(nil, root: nil)   # => nil
-    #
+    # See [Plugin :root](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-root).
     module Root
       # @return [Symbol] Default response root key
       ROOT_DEFAULT = :data # :nodoc:
@@ -110,16 +75,7 @@ class Serega
         config.serialize_keys << :root
       end
 
-      #
-      # Serega additional/patched class methods
-      #
-      # The serialization methods take `**opts`: the `root:` option, and the
-      # options of plugins loaded after this one, like `:context_metadata`.
-      # Core methods take only their own keywords, thus only serializers with
-      # this plugin pay for the options Hash.
-      #
-      # @see Serega
-      #
+      # Class methods the plugin adds to serializers
       module ClassMethods
         # @see Serega::ClassMethods#call
         def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
@@ -147,15 +103,13 @@ class Serega
 
         alias_method :to_h, :call # :nodoc:
 
+        # Sets the root keys: one key for objects and lists, or separate `one:`
+        # and `many:` keys
         #
-        # Configures response root key
-        #
-        # @param root [String, Symbol, nil] Specifies common root keyword used when serializing one or multiple objects
-        # @param one [String, Symbol, nil] Specifies root keyword used when serializing one object
-        # @param many [String, Symbol, nil] Specifies root keyword used when serializing multiple objects
-        #
-        # @return [Hash] Configured root names
-        #
+        # ```ruby
+        # root :users
+        # root one: :user, many: :users
+        # ```
         def root(root = nil, one: nil, many: nil)
           one ||= root
           many ||= root
@@ -164,7 +118,7 @@ class Serega
         end
       end
 
-      # Root config object
+      # Root keys, `config.root`
       class RootConfig
         attr_reader :opts # :nodoc:
 
@@ -181,44 +135,30 @@ class Serega
           @opts = opts
         end
 
-        # @return [Symbol, String, nil] defined root for single-object serialization
+        # Root key of one object
         def one
           opts.fetch(:one)
         end
 
-        # @return [Symbol, String, nil] defined root for many-objects serialization
+        # Root key of a list
         def many
           opts.fetch(:many)
         end
 
-        #
-        # Set root for single-object serialization
-        #
-        # @param value [Symbol, String, nil] root key
-        #
-        # @return [Symbol, String, nil] root key for single-object serialization
+        # Sets #one
         def one=(value)
           opts[:one] = value
         end
 
-        #
-        # Set root for multiple-object serialization
-        #
-        # @param value [Symbol, String, nil] root key
-        #
-        # @return [Symbol, String, nil] root key for multiple-object serialization
+        # Sets #many
         def many=(value)
           opts[:many] = value
         end
       end
 
-      #
-      # Serega::SeregaConfig additional/patched class methods
-      #
-      # @see Serega::SeregaConfig
-      #
+      # Config methods the plugin adds to Serega::SeregaConfig
       module ConfigInstanceMethods
-        # @return [Serega::SeregaPlugins::Root::RootConfig] current root config
+        # Root keys
         def root
           @plugin_configs[:root] ||= RootConfig.new(opts.fetch(:root))
         end
@@ -229,13 +169,7 @@ class Serega
           super
         end
 
-        # Set root for one-object and many-objects serialization types
-        #
-        # @param value [Hash]
-        # @option value [Symbol, String, nil] :one Root for one-object serialization type
-        # @option value [Symbol, String, nil] :many Root for many-objects serialization type
-        #
-        # @return [void]
+        # Sets the root keys from a Hash with `:one` and `:many`
         def root=(value)
           root.one = value.fetch(:one)
           root.many = value.fetch(:many)

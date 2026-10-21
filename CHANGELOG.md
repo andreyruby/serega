@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- The gem ships RBS type signatures of its public API in
+  [`sig/`](sig/serega.rbs).
 - `.attributes` returns the attributes by name. See
   [Listing attributes](docs/attributes.md#listing-attributes).
 - **BREAKING**: `:only` with only nested fields of a level hides no fields of

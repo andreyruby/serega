@@ -177,6 +177,7 @@ DEPENDENCIES
   mdl (~> 0.13)
   ostruct (~> 0.6.3)
   rake (~> 13.0)
+  rbs (~> 4.0)
   rdoc (~> 8.1)
   rspec (~> 3.0)
   rubocop-performance (~> 1.22)

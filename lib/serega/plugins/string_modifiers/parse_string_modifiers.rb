@@ -2,22 +2,6 @@
 
 class Serega
   module SeregaPlugins
-    #
-    # Plugin :string_modifiers
-    #
-    # Allows to specify modifiers as strings.
-    #
-    # Serialized attributes must be split with `,` and nested attributes can be defined inside brackets `(`, `)`.
-    #
-    # @example
-    #   PostSerializer.plugin :string_modifiers
-    #   PostSerializer.new(only: "id,user(id,username)").to_h(post)
-    #   PostSerializer.new(except: "user(username,email)").to_h(post)
-    #   PostSerializer.new(with: "user(email)").to_h(post)
-    #
-    #   # Modifiers can still be provided old way with nested hashes or arrays.
-    #   PostSerializer.new(with: {user: %i[email, username]}).to_h(post)
-    #
     module StringModifiers
       #
       # Modifiers parser

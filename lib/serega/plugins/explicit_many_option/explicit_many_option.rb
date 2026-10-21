@@ -2,29 +2,16 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:explicit_many_option`: requires the `:many` option on every
+    # relation, an attribute with `:serializer` or a block
     #
-    # Plugin :explicit_many_option
+    # ```ruby
+    # plugin :explicit_many_option
     #
-    # Requires the `:many` option on every relationship attribute (an
-    # attribute with the `:serializer` option or a block defining a nested
-    # serializer), so it's always explicit whether it returns one object or many.
+    # attribute :comments, serializer: CommentSerializer, many: true
+    # ```
     #
-    # @example
-    #   class BaseSerializer < Serega
-    #     plugin :explicit_many_option
-    #     config.base_serializer = self
-    #   end
-    #
-    #   class PostSerializer < BaseSerializer
-    #     attribute :text
-    #
-    #     attribute :user, many: false do
-    #       attribute :name
-    #     end
-    #
-    #     attribute :comments, serializer: PostSerializer, many: true
-    #   end
-    #
+    # See [Plugin :explicit_many_option](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-explicit_many_option).
     module ExplicitManyOption
       # @return [Symbol] Plugin name
       def self.plugin_name # :nodoc:
