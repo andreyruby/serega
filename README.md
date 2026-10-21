@@ -83,7 +83,7 @@ end
 class UserSerializer < AppSerializer
   attribute :id
   attribute :name
-  attribute :email, if: proc { |user, ctx| user == ctx[:current_user] }
+  attribute :email, value: proc { |user, ctx| user.email if user == ctx[:current_user] }
   attribute :avatar_url, hide: true
 end
 
@@ -92,11 +92,11 @@ class UsersController < ApplicationController
   def index
     users = UserSerializer.to_h(
       User.all,
-      only: params[:fields],              # GET /users?fields=id,name
+      only: params[:fields],              # "id,name" from GET /users?fields=id,name
       context: {current_user: current_user}
     )
 
-    render json: {users: users}
+    render json: users
   end
 end
 ```
