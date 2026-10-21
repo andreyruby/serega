@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `.to_json` / `#to_json`, `JSON.generate` of the `.to_h` result. See
+  [JSON](docs/serializing.md#json).
 - **BREAKING**: Moved the depth limit from the `:depth_limit` plugin to core:
   set `config.depth_limit = 10` in place of `plugin :depth_limit, limit: 10`.
   See [Depth limit](docs/configuration.md#depth-limit).

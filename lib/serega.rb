@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "serega/version"
 
 # Parent class for your serializers
@@ -526,6 +527,22 @@ class Serega
         .to_struct(object, context: context, many: many)
     end
 
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
+
+    #
+    # Serializes provided object to a JSON String: `JSON.generate` of the
+    # `.to_h` result
+    #
+    # @param (see #call)
+    #
+    # @return [String] Serialization result as JSON
+    #
+    def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        .to_json(object, context: context, many: many)
+    end
+
     alias_method :to_h, :call
 
     #
@@ -735,6 +752,21 @@ class Serega
     #
     def to_struct(object, context: nil, many: nil)
       serialize_to(:struct, object, context, many, FROZEN_EMPTY_HASH)
+    end
+
+    # Patched in:
+    # - plugin :root (takes the options of plugins)
+
+    #
+    # Serializes provided object to a JSON String: `JSON.generate` of the
+    # `#to_h` result
+    #
+    # @param (see #call)
+    #
+    # @return [String] Serialization result as JSON
+    #
+    def to_json(object, context: nil, many: nil)
+      JSON.generate(call(object, context: context, many: many))
     end
 
     private

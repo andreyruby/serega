@@ -50,7 +50,7 @@ The first plan locks the class. Later definition calls raise.
 
 `SeregaEngine::Run` (`lib/serega/engine/run.rb`) is one serialization. It has the mode, the context, and the source groups: one root group and one group per relation. A group holds the sources of one plan. It serializes the groups in two passes.
 
-The flow of `UserSerializer.to_h(users, only: [:id, :posts], context: {})` (`lib/serega.rb`). `to_data` and `to_struct` do the same with the `:data` and `:struct` modes:
+The flow of `UserSerializer.to_h(users, only: [:id, :posts], context: {})` (`lib/serega.rb`). `to_data` and `to_struct` do the same with the `:data` and `:struct` modes, and `to_json` encodes the `to_h` result with `JSON.generate`:
 
 ```
 UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, context:, many:)

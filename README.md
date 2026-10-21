@@ -90,7 +90,7 @@ end
 # app/controllers/users_controller.rb
 class UsersController < ApplicationController
   def index
-    users = UserSerializer.to_h(
+    users = UserSerializer.to_json(
       User.all,
       only: params[:fields],              # "id,name" from GET /users?fields=id,name
       context: {current_user: current_user}
