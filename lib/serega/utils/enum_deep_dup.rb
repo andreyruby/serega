@@ -4,14 +4,12 @@ class Serega
   #
   # Utilities
   #
-  # @private
-  module SeregaUtils
+  module SeregaUtils # :nodoc:
     #
     # Duplicates nested hashes, arrays and strings
     # It does not duplicate any other values
     #
-    # @private
-    class EnumDeepDup
+    class EnumDeepDup # :nodoc:
       class << self
         #
         # Deeply duplicate provided Array, Hash or String data

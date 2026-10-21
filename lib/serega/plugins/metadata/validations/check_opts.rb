@@ -7,8 +7,7 @@ class Serega
         #
         # Validator for meta_attribute options
         #
-        # @private
-        class CheckOpts
+        class CheckOpts # :nodoc:
           class << self
             #
             # Validates meta_attribute options

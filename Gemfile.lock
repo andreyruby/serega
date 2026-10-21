@@ -86,12 +86,11 @@ GEM
       logger
       prism (>= 1.6.0)
       tsort
-    rdoc (8.0.0)
+    rdoc (8.1.0)
       erb
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
-    redcarpet (3.6.1)
     regexp_parser (2.12.0)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -165,7 +164,6 @@ GEM
       unicode-emoji (~> 4.1)
     unicode-emoji (4.2.0)
     uri (1.1.1)
-    yard (0.9.44)
 
 PLATFORMS
   arm64-darwin-24
@@ -179,7 +177,7 @@ DEPENDENCIES
   mdl (~> 0.13)
   ostruct (~> 0.6.3)
   rake (~> 13.0)
-  redcarpet (~> 3.5)
+  rdoc (~> 8.1)
   rspec (~> 3.0)
   rubocop-performance (~> 1.22)
   rubocop-rake (~> 0.6)
@@ -188,7 +186,6 @@ DEPENDENCIES
   simplecov (~> 0.21)
   sqlite3
   standard (~> 1.42)
-  yard
 
 BUNDLED WITH
   4.0.15

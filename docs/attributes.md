@@ -259,6 +259,23 @@ they can be used in URLs without escaping. Other names raise
 `Serega::SeregaError`. `config.check_attribute_name = false` turns the check
 off.
 
+## Listing attributes
+
+`.attributes` returns the attributes by name, hidden and inherited ones too:
+
+```ruby
+class UserSerializer < Serega
+  attribute :username
+  attribute :email, hide: true
+end
+
+class AdminSerializer < UserSerializer
+  attribute :role
+end
+
+AdminSerializer.attributes.keys # => [:username, :email, :role]
+```
+
 ## All options
 
 | Option | Purpose |

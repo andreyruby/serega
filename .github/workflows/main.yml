@@ -38,11 +38,8 @@ jobs:
       - name: Check documentation table of contents and links
         run: bundle exec rake docs:check
 
-      - name: Check YARD documentation coverage
-        run: |
-          bundle exec yard doc --no-cache --quiet
-          bundle exec yard stats --list-undoc | tee yard_stats.txt
-          grep -q "100.00% documented" yard_stats.txt
+      - name: Check API documentation coverage
+        run: bundle exec rake rdoc:coverage
 
   benchmarks:
     runs-on: ubuntu-24.04

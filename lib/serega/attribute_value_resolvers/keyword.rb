@@ -4,13 +4,11 @@ class Serega
   #
   # Attribute value resolvers
   #
-  # @private
-  module AttributeValueResolvers
+  module AttributeValueResolvers # :nodoc:
     #
     # Value resolver class for attributes with :keyword option
     #
-    # @private
-    class Keyword
+    class Keyword # :nodoc:
       def initialize(keyword)
         @keyword = keyword
       end

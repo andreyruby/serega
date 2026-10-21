@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Validator for formatters defined with `Serega.formatter` or given
     # directly as the attribute :format option
     #
-    # @private
-    class CheckFormatter
+    class CheckFormatter # :nodoc:
       class << self
         #
         # Checks the formatter is a callable with valid parameters, a method

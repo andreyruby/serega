@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `.attributes` returns the attributes by name. See
+  [Listing attributes](docs/attributes.md#listing-attributes).
 - **BREAKING**: `:only` with only nested fields of a level hides no fields of
   that level when `:except` or `:with` names fields there: each relation can
   use its own option. See [Combining options](docs/selecting-fields.md#combining-options).

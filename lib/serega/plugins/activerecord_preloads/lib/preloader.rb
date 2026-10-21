@@ -4,8 +4,7 @@ class Serega
   module SeregaPlugins
     module ActiverecordPreloads
       # Handles preloads for different types of initial records
-      # @private
-      class Preloader
+      class Preloader # :nodoc:
         class << self
           # Preloads associations to records
           #
@@ -38,8 +37,7 @@ class Serega
       end
 
       # Associations loader for prepared records
-      # @private
-      class Loader
+      class Loader # :nodoc:
         # :nocov: We can check only one version of activerecord
 
         # Preloads associations to records
@@ -60,8 +58,7 @@ class Serega
       end
 
       # Preloader adapter for ActiveRecord object
-      # @private
-      class ActiverecordObject
+      class ActiverecordObject # :nodoc:
         class << self
           #
           # Checks object is kind of ActiveRecord::Base
@@ -87,8 +84,7 @@ class Serega
       end
 
       # Preloader adapter for ActiveRecord::Relation
-      # @private
-      class ActiverecordRelation
+      class ActiverecordRelation # :nodoc:
         class << self
           #
           # Checks object is kind of ActiveRecord::Relation
@@ -115,8 +111,7 @@ class Serega
       end
 
       # Preloader adapter for Array of ActiveRecord objects
-      # @private
-      class ActiverecordArray
+      class ActiverecordArray # :nodoc:
         class << self
           #
           # Checks object is an array of ActiveRecord::Base objects
@@ -151,8 +146,7 @@ class Serega
       end
 
       # Preloader adapter for Enumerator with ActiveRecord objects
-      # @private
-      class ActiverecordEnumerator
+      class ActiverecordEnumerator # :nodoc:
         class << self
           #
           # Checks object is an Enumerator with each value is a ActiveRecord::Base object

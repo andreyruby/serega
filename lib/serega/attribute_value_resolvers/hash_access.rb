@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module AttributeValueResolvers
+  module AttributeValueResolvers # :nodoc:
     #
     # Settings of the :hash_access option
     #
-    # @private
-    class HashAccessResolver
+    class HashAccessResolver # :nodoc:
       # Allowed hash access modes
       MODES = %i[symbol string].freeze
     end
@@ -16,8 +14,7 @@ class Serega
     # Builds value resolver for attributes with the :delegate option using
     # hash access on any of its steps
     #
-    # @private
-    class HashAccessDelegateResolver
+    class HashAccessDelegateResolver # :nodoc:
       #
       # Creates resolver that delegates through the provided step readers
       #
@@ -35,8 +32,7 @@ class Serega
     #
     # Value resolver for attributes with the :hash_access option
     #
-    # @private
-    class HashAccessKeyword
+    class HashAccessKeyword # :nodoc:
       def initialize(name, mode, allow_missing_key)
         @key = (mode == :symbol) ? name.to_sym : name.to_s
         @allow_missing_key = allow_missing_key
@@ -74,8 +70,7 @@ class Serega
     #
     # Value resolver for attributes with :hash_access and :delegate (without :allow_nil) options
     #
-    # @private
-    class HashAccessDelegate
+    class HashAccessDelegate # :nodoc:
       def initialize(to_step, final_step)
         @to_step = to_step
         @final_step = final_step
@@ -109,8 +104,7 @@ class Serega
     #
     # Value resolver for attributes with :hash_access and :delegate (with :allow_nil) options
     #
-    # @private
-    class HashAccessDelegateAllowNil
+    class HashAccessDelegateAllowNil # :nodoc:
       def initialize(to_step, final_step)
         @to_step = to_step
         @final_step = final_step

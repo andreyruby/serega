@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Attribute `:const` option validator
       #
-      # @private
-      class CheckOptConst
+      class CheckOptConst # :nodoc:
         class << self
           #
           # Checks attribute :const option

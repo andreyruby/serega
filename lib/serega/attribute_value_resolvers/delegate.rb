@@ -4,13 +4,11 @@ class Serega
   #
   # Attribute value resolvers
   #
-  # @private
-  module AttributeValueResolvers
+  module AttributeValueResolvers # :nodoc:
     #
     # Builds value resolver class for attributes with :delegate option
     #
-    # @private
-    class DelegateResolver
+    class DelegateResolver # :nodoc:
       #
       # Creates resolver that delegates method call to another object
       #
@@ -27,8 +25,7 @@ class Serega
     #
     # Value resolver class for attributes with :delegate (with :allow_nil) option
     #
-    # @private
-    class DelegateAllowNil
+    class DelegateAllowNil # :nodoc:
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to
         @method_name = method_name
@@ -60,8 +57,7 @@ class Serega
     #
     # Value resolver class for attributes with :delegate (without :allow_nil) option
     #
-    # @private
-    class Delegate
+    class Delegate # :nodoc:
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to
         @method_name = method_name

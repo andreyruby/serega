@@ -1,18 +1,15 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Attribute parameters validators
     #
-    # @private
-    module Attribute
+    module Attribute # :nodoc:
       #
       # Attribute `block` parameter validator
       #
-      # @private
-      class CheckBlock
+      class CheckBlock # :nodoc:
         # Explains the changed attribute block behavior. Shown when the block
         # looks like an old-style value block — it accepts parameters or
         # defines no attributes.

@@ -213,7 +213,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 
 - 📋 [Cheatsheet](CHEATSHEET.md) — every option on one page
 - 📚 [Guides](docs/README.md) — each feature in depth
-- 🔎 [API docs](https://rubydoc.info/gems/serega) — YARD reference
+- 🔎 [API docs](https://rubydoc.info/gems/serega) — public classes and methods
 - 📝 [Changelog](CHANGELOG.md)
 
 ## Development

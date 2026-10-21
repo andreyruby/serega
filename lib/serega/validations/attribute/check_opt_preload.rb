@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Validator for attribute :preload option
       #
-      # @private
-      class CheckOptPreload
+      class CheckOptPreload # :nodoc:
         class << self
           #
           # Checks :preload option

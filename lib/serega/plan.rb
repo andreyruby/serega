@@ -5,13 +5,11 @@ class Serega
   # Constructs plan - list of serialized attributes.
   # We will traverse this plan to construct serialized response.
   #
-  # @private
-  class SeregaPlan
+  class SeregaPlan # :nodoc:
     #
     # SeregaPlan instance methods
     #
-    # @private
-    module InstanceMethods
+    module InstanceMethods # :nodoc:
       # Serializer of the plan
       # @return [Class<Serega>]
       attr_reader :serializer_class

@@ -1,16 +1,14 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaUtils
+  module SeregaUtils # :nodoc:
     #
     # Utility to check if an object should be serialized as a collection.
     #
     # Hashes and Structs are Enumerable, but enumerate their own member
     # values, so they are treated as single objects.
     #
-    # @private
-    class CollectionDetector
+    class CollectionDetector # :nodoc:
       # Number of classes a Hash of known classes keeps
       MAX_KNOWN_CLASSES = 8
 

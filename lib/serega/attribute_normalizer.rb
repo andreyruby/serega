@@ -4,13 +4,11 @@ class Serega
   #
   # Prepares provided attribute options
   #
-  # @private
-  class SeregaAttributeNormalizer
+  class SeregaAttributeNormalizer # :nodoc:
     #
     # AttributeNormalizer instance methods
     #
-    # @private
-    module AttributeNormalizerInstanceMethods
+    module AttributeNormalizerInstanceMethods # :nodoc:
       # Attribute initial params
       # @return [Hash] Attribute initial params
       attr_reader :init_name, :init_opts, :init_block

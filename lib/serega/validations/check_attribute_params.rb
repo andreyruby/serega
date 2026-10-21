@@ -4,18 +4,15 @@ class Serega
   #
   # Validations
   #
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Validations for attribute params
     #
-    # @private
-    class CheckAttributeParams
+    class CheckAttributeParams # :nodoc:
       #
       # Validations for attribute params instance methods
       #
-      # @private
-      module InstanceMethods
+      module InstanceMethods # :nodoc:
         # @return [Symbol] validated attribute name
         attr_reader :name
 

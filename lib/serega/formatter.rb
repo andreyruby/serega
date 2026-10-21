@@ -11,8 +11,7 @@ class Serega
   #
   # With `allow_nil: true` a nil value stays nil and is not formatted.
   #
-  # @private
-  class SeregaFormatter
+  class SeregaFormatter # :nodoc:
     # @return [#call, nil] Callable that formats a value, nil for a method formatter
     attr_reader :callable
 

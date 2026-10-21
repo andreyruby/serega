@@ -4,14 +4,12 @@ class Serega
   #
   # Attribute value resolvers
   #
-  # @private
-  module AttributeValueResolvers
+  module AttributeValueResolvers # :nodoc:
     #
     # Value resolver of attributes with the :batch option and without the
     # :value option. Reads the value of the object from the loaded batch.
     #
-    # @private
-    class Batch
+    class Batch # :nodoc:
       def initialize(loader_name, id_method)
         @loader_name = loader_name
         @id_method = id_method

@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Attribute `:batch` option validator
       #
-      # @private
-      class CheckOptBatch
+      class CheckOptBatch # :nodoc:
         class << self
           #
           # Checks attribute :batch option

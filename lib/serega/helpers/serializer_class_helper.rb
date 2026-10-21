@@ -4,13 +4,11 @@ class Serega
   #
   # Helpers
   #
-  # @private
-  module SeregaHelpers
+  module SeregaHelpers # :nodoc:
     #
     # Stores link to current serializer class
     #
-    # @private
-    module SerializerClassHelper
+    module SerializerClassHelper # :nodoc:
       # Shows serializer class current class is namespaced under
       # @return [Class<Serega>] Serializer class that current class is namespaced under.
       attr_accessor :serializer_class

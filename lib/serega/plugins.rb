@@ -17,8 +17,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def register_plugin(name, mod)
+      def register_plugin(name, mod) # :nodoc:
         @plugins[name] = mod
       end
 
@@ -37,8 +36,7 @@ class Serega
       #
       # @return [Class<Module>] Plugin core module
       #
-      # @private
-      def find_plugin(name)
+      def find_plugin(name) # :nodoc:
         return name if name.is_a?(Module)
         return @plugins[name] if @plugins.key?(name)
 

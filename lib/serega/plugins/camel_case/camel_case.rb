@@ -31,14 +31,13 @@ class Serega
     #
     module CamelCase
       # Default camel-case transformation
-      TRANSFORM_DEFAULT = proc { |attribute_name|
+      TRANSFORM_DEFAULT = proc { |attribute_name| # :nodoc:
         attribute_name.gsub!(/_[a-z]/) { |m| m[-1].upcase! }
         attribute_name
       }
 
       # @return [Symbol] Plugin name
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :camel_case
       end
 
@@ -48,9 +47,7 @@ class Serega
       # @param opts [Hash] plugin options
       #
       # @return [void]
-      #
-      # @private
-      def self.before_load_plugin(serializer_class, **opts)
+      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
         allowed_keys = %i[transform]
         opts.each_key do |key|
           next if allowed_keys.include?(key)
@@ -69,8 +66,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
         serializer_class::SeregaAttributeNormalizer.include(AttributeNormalizerInstanceMethods)
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
@@ -84,8 +80,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.after_load_plugin(serializer_class, **opts)
+      def self.after_load_plugin(serializer_class, **opts) # :nodoc:
         config = serializer_class.config
         config.opts[:camel_case] = {}
         config.camel_case.transform = opts[:transform] || TRANSFORM_DEFAULT
@@ -105,7 +100,7 @@ class Serega
         end
 
         # Builds the camel_case config before freezing
-        def freeze
+        def freeze # :nodoc:
           camel_case
           super
         end
@@ -116,8 +111,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckAttributeParams
       #
-      # @private
-      module CheckAttributeParamsInstanceMethods
+      module CheckAttributeParamsInstanceMethods # :nodoc:
         private
 
         def check_opts
@@ -129,8 +123,7 @@ class Serega
       #
       # Validator for attribute :camel_case option
       #
-      # @private
-      class CheckOptCamelCase
+      class CheckOptCamelCase # :nodoc:
         class << self
           #
           # Checks attribute :camel_case option must be boolean
@@ -155,7 +148,7 @@ class Serega
 
       # CamelCase config object
       class CamelCaseConfig
-        attr_reader :opts
+        attr_reader :opts # :nodoc:
 
         #
         # Initializes CamelCaseConfig object
@@ -165,7 +158,7 @@ class Serega
         #
         # @return [Serega::SeregaPlugins::CamelCase::CamelCaseConfig] CamelCaseConfig object
         #
-        def initialize(opts)
+        def initialize(opts) # :nodoc:
           @opts = opts
         end
 
@@ -196,8 +189,7 @@ class Serega
       #
       # @see SeregaAttributeNormalizer::AttributeInstanceMethods
       #
-      # @private
-      module AttributeNormalizerInstanceMethods
+      module AttributeNormalizerInstanceMethods # :nodoc:
         private
 
         #

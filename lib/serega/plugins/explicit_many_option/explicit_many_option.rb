@@ -27,8 +27,7 @@ class Serega
     #
     module ExplicitManyOption
       # @return [Symbol] Plugin name
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :explicit_many_option
       end
 
@@ -40,8 +39,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         require_relative "validations/check_opt_many"
 
         serializer_class::CheckAttributeParams.include(CheckAttributeParamsInstanceMethods)
@@ -52,8 +50,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckAttributeParams
       #
-      # @private
-      module CheckAttributeParamsInstanceMethods
+      module CheckAttributeParamsInstanceMethods # :nodoc:
         private
 
         def check_opts

@@ -159,3 +159,14 @@ namespace :docs do
     puts "Documentation tables of contents and links are valid"
   end
 end
+
+require "rdoc/task"
+
+# `rake rdoc` writes the API documentation to doc/, `rake rdoc:coverage` fails
+# on undocumented public code
+RDoc::Task.new do |rdoc|
+  gemspec = Gem::Specification.load("serega.gemspec")
+  rdoc.rdoc_dir = "doc"
+  rdoc.options.concat(gemspec.rdoc_options)
+  rdoc.rdoc_files.include(*gemspec.extra_rdoc_files, "lib/**/*.rb")
+end

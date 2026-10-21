@@ -4,13 +4,11 @@ class Serega
   #
   # Stores serialized attribute data
   #
-  # @private
-  class SeregaAttribute
+  class SeregaAttribute # :nodoc:
     #
     # Attribute instance methods
     #
-    # @private
-    module AttributeInstanceMethods
+    module AttributeInstanceMethods # :nodoc:
       # Serializer of the attribute
       # @return [Class<Serega>] Serializer of the attribute
       attr_reader :serializer_class

@@ -6,13 +6,11 @@ class Serega
       #
       # Stores Attribute data
       #
-      # @private
-      class MetaAttribute
+      class MetaAttribute # :nodoc:
         #
         # Stores Attribute instance methods
         #
-        # @private
-        module InstanceMethods
+        module InstanceMethods # :nodoc:
           # @return [Symbol] Meta attribute name
           attr_reader :name
 

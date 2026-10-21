@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Attribute `:hash_access` option validator
       #
-      # @private
-      class CheckOptHashAccess
+      class CheckOptHashAccess # :nodoc:
         class << self
           #
           # Checks attribute :hash_access option

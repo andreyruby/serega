@@ -36,8 +36,7 @@ class Serega
     #
     module Metadata
       # @return [Symbol] Plugin name
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :metadata
       end
 
@@ -47,9 +46,7 @@ class Serega
       # @param _opts [Hash] Plugin options
       #
       # @return [void]
-      #
-      # @private
-      def self.before_load_plugin(serializer_class, **_opts)
+      def self.before_load_plugin(serializer_class, **_opts) # :nodoc:
         unless serializer_class.plugin_used?(:root)
           raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded after the :root plugin. Please load the :root plugin first"
         end
@@ -63,8 +60,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
@@ -92,17 +88,16 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.after_load_plugin(serializer_class, **_opts)
+      def self.after_load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.config.opts[:metadata] = {attribute_keys: %i[const hide_nil hide_empty value]}
       end
 
       #
       # Config for `metadata` plugin
       #
-      class MetadataConfig
+      class MetadataConfig # :nodoc:
         # @return [Hash] metadata options
-        attr_reader :opts
+        attr_reader :opts # :nodoc:
 
         #
         # Initializes context_metadata config object
@@ -111,14 +106,14 @@ class Serega
         #
         # @return [Serega::SeregaPlugins::Metadata::MetadataConfig]
         #
-        def initialize(opts)
+        def initialize(opts) # :nodoc:
           @opts = opts
         end
 
         #
         # Returns allowed metadata attribute keys
         #
-        def attribute_keys
+        def attribute_keys # :nodoc:
           opts.fetch(:attribute_keys)
         end
       end
@@ -128,14 +123,14 @@ class Serega
       #
       # @see Serega::SeregaConfig
       #
-      module ConfigInstanceMethods
+      module ConfigInstanceMethods # :nodoc:
         # @return [Serega::SeregaPlugins::Metadata::MetadataConfig] metadata config
         def metadata
           @plugin_configs[:metadata] ||= MetadataConfig.new(opts.fetch(:metadata))
         end
 
         # Builds the metadata config before freezing
-        def freeze
+        def freeze # :nodoc:
           metadata
           super
         end
@@ -152,7 +147,7 @@ class Serega
         #
         # @return [Hash<Symbol => Serega::SeregaPlugins::Metadata::MetaAttribute>] Added metadata attributes
         #
-        def meta_attributes
+        def meta_attributes # :nodoc:
           @meta_attributes
         end
 
@@ -193,8 +188,7 @@ class Serega
       #
       # @see Serega
       #
-      # @private
-      module InstanceMethods
+      module InstanceMethods # :nodoc:
         private
 
         def serialize(object, opts, context, many, mode)

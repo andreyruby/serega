@@ -13,7 +13,6 @@ gem "simplecov", "~> 0.21", require: false
 gem "rubocop-rake", "~> 0.6", require: false
 gem "rubocop-rspec", "~> 3.2", require: false
 gem "rubocop-performance", "~> 1.22", require: false
-gem "redcarpet", "~> 3.5", require: false
 # Can be used in test like:
 #  require 'allocation_stats'
 #
@@ -24,7 +23,7 @@ gem "redcarpet", "~> 3.5", require: false
 #  puts stats.allocations(alias_paths: true).group_by(:sourcefile, :sourceline).to_text
 #
 gem "allocation_stats", require: false
-gem "yard", require: false
+gem "rdoc", "~> 8.1", require: false
 gem "mdl", "~> 0.13", require: false
 
 gem "debug", ">= 1.0"

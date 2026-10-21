@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  class SeregaPlan
+  class SeregaPlan # :nodoc:
     #
     # Shareable plans cache of a shareable serializer, keeps the plans of each
     # Ractor apart
     #
-    # @private
-    class PerRactorCache
+    class PerRactorCache # :nodoc:
       #
       # @param serializer_class [Class<Serega>] Serializer of the plans
       #

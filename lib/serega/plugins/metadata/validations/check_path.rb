@@ -7,8 +7,7 @@ class Serega
         #
         # Validator for meta_attribute :path parameter
         #
-        # @private
-        class CheckPath
+        class CheckPath # :nodoc:
           # Regexp for valid path
           FORMAT = /\A[\w~-]+\z/
 

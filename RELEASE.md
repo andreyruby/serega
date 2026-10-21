@@ -5,7 +5,7 @@ Steps to release a new version:
 1. Check documentation
 
    ```bash
-   yard doc --no-cache --quiet && yard stats --list-undoc
+   bundle exec rake rdoc:coverage
    ```
 
 2. Run and fix all warnings

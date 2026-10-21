@@ -4,8 +4,7 @@ class Serega
   #
   # Serialization engine
   #
-  # @private
-  module SeregaEngine
+  module SeregaEngine # :nodoc:
     # Value of an attribute skipped by its conditions. It is also the pull of
     # a skipped relation.
     SKIP = Object.new.freeze
@@ -22,8 +21,7 @@ class Serega
     # - Build pass, from the last group up. Each group builds its serialized
     #   objects. The serialized related objects are ready at this time.
     #
-    # @private
-    class Run
+    class Run # :nodoc:
       class << self
         # Serializes the object(s) with the plan in a new run. A flat plan
         # builds its serialized object(s) with its result builder, without a

@@ -21,11 +21,10 @@ class Serega
     #
     module ContextMetadata
       # Default context metadata option name
-      DEFAULT_CONTEXT_METADATA_KEY = :meta
+      DEFAULT_CONTEXT_METADATA_KEY = :meta # :nodoc:
 
       # @return [Symbol] Plugin name
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :context_metadata
       end
 
@@ -35,9 +34,7 @@ class Serega
       # @param opts [Hash] Plugin options
       #
       # @return [void]
-      #
-      # @private
-      def self.before_load_plugin(serializer_class, **opts)
+      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
         allowed_keys = %i[context_metadata_key]
         opts.each_key do |key|
           next if allowed_keys.include?(key)
@@ -60,8 +57,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
         serializer_class::CheckSerializeParams.include(CheckSerializeParamsInstanceMethods)
@@ -75,8 +71,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.after_load_plugin(serializer_class, **opts)
+      def self.after_load_plugin(serializer_class, **opts) # :nodoc:
         config = serializer_class.config
         meta_key = opts[:context_metadata_key] || DEFAULT_CONTEXT_METADATA_KEY
         config.opts[:context_metadata] = {key: meta_key}
@@ -88,7 +83,7 @@ class Serega
       #
       class ContextMetadataConfig
         # @return [Hash] context_metadata options
-        attr_reader :opts
+        attr_reader :opts # :nodoc:
 
         #
         # Initializes context_metadata config object
@@ -97,7 +92,7 @@ class Serega
         # @param serialize_keys [Array<Symbol>] Allowed serialization options of the serializer
         #
         # @return [Serega::SeregaPlugins::ContextMetadata::ContextMetadataConfig]
-        def initialize(opts, serialize_keys)
+        def initialize(opts, serialize_keys) # :nodoc:
           @opts = opts
           @serialize_keys = serialize_keys
         end
@@ -133,7 +128,7 @@ class Serega
         end
 
         # Builds the context_metadata config before freezing
-        def freeze
+        def freeze # :nodoc:
           context_metadata
           super
         end
@@ -144,8 +139,7 @@ class Serega
       #
       # @see Serega::SeregaValidations::CheckSerializeParams
       #
-      # @private
-      module CheckSerializeParamsInstanceMethods
+      module CheckSerializeParamsInstanceMethods # :nodoc:
         private
 
         def check_opts
@@ -161,8 +155,7 @@ class Serega
       #
       # @see Serega
       #
-      # @private
-      module InstanceMethods
+      module InstanceMethods # :nodoc:
         private
 
         def serialize(object, opts, context, many, mode)

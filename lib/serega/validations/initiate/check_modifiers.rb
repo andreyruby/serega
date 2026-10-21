@@ -1,18 +1,15 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Validations that take place when initializing serializer
     #
-    # @private
-    module Initiate
+    module Initiate # :nodoc:
       #
       # Modifiers validation
       #
-      # @private
-      class CheckModifiers
+      class CheckModifiers # :nodoc:
         #
         # Instantiates modifiers validator
         #

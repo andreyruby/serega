@@ -4,13 +4,11 @@ class Serega
   #
   # Named batch loader. Loads values of many objects in one call.
   #
-  # @private
-  class SeregaBatchLoader
+  class SeregaBatchLoader # :nodoc:
     #
     # SeregaBatchLoader instance methods
     #
-    # @private
-    module InstanceMethods
+    module InstanceMethods # :nodoc:
       # Batch loader name
       # @return [Symbol] Batch loader name
       attr_reader :name

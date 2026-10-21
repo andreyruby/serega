@@ -45,8 +45,7 @@ class Serega
       #
       # @return [Symbol] Plugin name
       #
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :activerecord_preloads
       end
 
@@ -56,9 +55,7 @@ class Serega
       # @param opts [Hash] plugin options
       #
       # @return [void]
-      #
-      # @private
-      def self.before_load_plugin(serializer_class, **opts)
+      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
         opts.each_key do |key|
           raise SeregaError, "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. No options are allowed"
         end
@@ -72,8 +69,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         require_relative "lib/preloader"
       end
 
@@ -85,8 +81,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.after_load_plugin(serializer_class, **_opts)
+      def self.after_load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.preload_with do |objects, preloads|
           Preloader.preload(objects, preloads)
         end

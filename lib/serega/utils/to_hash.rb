@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaUtils
+  module SeregaUtils # :nodoc:
     #
     # Utility to transform almost anything to Hash
     #
-    # @private
-    class ToHash
+    class ToHash # :nodoc:
       class << self
         #
         # Constructs deep hashes from provided data

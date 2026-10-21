@@ -6,8 +6,7 @@ class Serega
       #
       # Validator for attribute :many option
       #
-      # @private
-      class CheckOptMany
+      class CheckOptMany # :nodoc:
         class << self
           #
           # Checks attribute :many option must be provided with relations
