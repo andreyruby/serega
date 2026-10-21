@@ -65,6 +65,7 @@ class Serega
 
   # Attribute of a serializer. Its methods are internal.
   class SeregaAttribute
+    def initialize: (singleton(Serega) serializer_class, name: Symbol | String, ?opts: Hash[Symbol, untyped], ?block: Proc?, ?location: String?) -> void
   end
 
   # Parent class of presenters. Its methods are internal.
