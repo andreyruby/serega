@@ -89,6 +89,26 @@ RSpec.describe Serega do
         expect(serializer_class.to_struct(nil, **modifiers, **serialize_opts)).to be_nil
       end
     end
+
+    describe "#to_json" do
+      it "returns the serialized response as JSON" do
+        expect(serializer.to_json("foo", **serialize_opts)).to eq '{"obj":"foo","ctx":"bar"}'
+      end
+
+      it "returns JSON null when object is nil" do
+        expect(serializer.to_json(nil, **serialize_opts)).to eq "null"
+      end
+    end
+
+    describe ".to_json" do
+      it "returns the serialized response as JSON" do
+        expect(serializer_class.to_json("foo", **modifiers, **serialize_opts)).to eq '{"obj":"foo","ctx":"bar"}'
+      end
+
+      it "returns JSON null when object is nil" do
+        expect(serializer_class.to_json(nil, **modifiers, **serialize_opts)).to eq "null"
+      end
+    end
   end
 
   describe "serializing to Struct objects" do

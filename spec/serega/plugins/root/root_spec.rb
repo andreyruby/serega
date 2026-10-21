@@ -375,6 +375,14 @@ RSpec.describe Serega::SeregaPlugins::Root do
       end
     end
 
+    context "with #to_json" do
+      let(:method_name) { :to_json }
+
+      it "serializes to a Hash and encodes it as JSON" do
+        expect(result).to eq '[{"root":"user"},"hash"]'
+      end
+    end
+
     context "with the serializer class" do
       let(:target) { serializer }
       let(:opts) { {only: :name, root: :user} }
@@ -396,6 +404,14 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
         it "serializes to Struct" do
           expect(result).to eq [{root: :user}, :struct]
+        end
+      end
+
+      context "with .to_json" do
+        let(:method_name) { :to_json }
+
+        it "serializes to a Hash and encodes it as JSON" do
+          expect(result).to eq '[{"root":"user"},"hash"]'
         end
       end
     end

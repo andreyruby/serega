@@ -177,6 +177,7 @@ UserSerializer.to_h(user) # => {name: "Felonious Gru"}
 UserSerializer.to_h([user]) # auto array detection => [{name: "Felonious Gru"}]
 UserSerializer.to_data(user) # Ruby Data object => #<data name="Felonious Gru">
 UserSerializer.to_struct(user) # Ruby Struct object => #<struct name="Felonious Gru">
+UserSerializer.to_json(user) # JSON String => "{\"name\":\"Felonious Gru\"}"
 UserSerializer.new(only: [:name]).to_h(user) # reuse — serialization plan built once
 ```
 

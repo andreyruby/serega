@@ -37,12 +37,20 @@ An unknown option raises `ArgumentError`. With the `:root` or
 
 ## JSON
 
-Serega returns Hashes. Convert them to JSON with any JSON library:
+`.to_json` returns a JSON String: `JSON.generate` of the `.to_h` result. It
+takes the same options as `.to_h`.
 
 ```ruby
-JSON.generate(UserSerializer.to_h(user))
+UserSerializer.to_json(user)
+# => "{\"username\":\"batman\",\"posts\":[{\"title\":\"Gotham at night\"}]}"
 
-render json: UserSerializer.to_h(user) # Rails
+render json: UserSerializer.to_json(user) # Rails renders the String as it is
+```
+
+To encode with another JSON library, pass it the `.to_h` result:
+
+```ruby
+Oj.dump(UserSerializer.to_h(user), mode: :compat)
 ```
 
 ## Struct and Data results
@@ -74,7 +82,7 @@ serialization options:
 ```ruby
 serializer = UserSerializer.new(only: [:username])
 serializer.to_h(user, many: false)
-serializer.to_struct(users, context: {current_user: current_user})
+serializer.to_json(users, context: {current_user: current_user})
 ```
 
 Class methods cache plans too: `config.max_cached_plans_per_serializer_count`

@@ -144,6 +144,12 @@ class Serega
             .to_struct(object, context: context, many: many, **opts)
         end
 
+        # @see Serega::ClassMethods#to_json
+        def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+            .to_json(object, context: context, many: many, **opts)
+        end
+
         alias_method :to_h, :call
 
         #
@@ -265,6 +271,11 @@ class Serega
         # @see Serega::InstanceMethods#to_struct
         def to_struct(object, context: nil, many: nil, **opts)
           serialize_to(:struct, object, context, many, checked_opts(opts))
+        end
+
+        # @see Serega::InstanceMethods#to_json
+        def to_json(object, context: nil, many: nil, **opts)
+          JSON.generate(call(object, context: context, many: many, **opts))
         end
 
         alias_method :to_h, :call
