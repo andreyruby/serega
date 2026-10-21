@@ -401,7 +401,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       let(:opts) { {batch: likes} }
 
       it "returns a batch loader named after the attribute" do
-        expect(loader).to be_a(serializer_class::SeregaBatchLoader).and have_attributes(name: :likes_count, block: likes)
+        expect(loader).to be_a(Serega::SeregaBatchLoader).and have_attributes(name: :likes_count, block: likes)
       end
     end
 

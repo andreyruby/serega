@@ -12,6 +12,10 @@ class Serega
     #
     # @private
     module InstanceMethods
+      # Serializer of the plan
+      # @return [Class<Serega>]
+      attr_reader :serializer_class
+
       # Parent plan point
       # @return [SeregaPlanPoint, nil]
       attr_reader :parent_plan_point
@@ -31,6 +35,7 @@ class Serega
       #
       # Instantiate new serialization plan
       #
+      # @param serializer_class [Class<Serega>] Serializer of the plan
       # @param parent_plan_point [SeregaPlanPoint, nil] Parent plan_point
       # @param modifiers [Hash] Serialization parameters
       # @option modifiers [Hash] :only The only attributes to serialize
@@ -42,9 +47,10 @@ class Serega
       #
       # @return [SeregaPlan] Serialization plan
       #
-      def initialize(parent_plan_point, modifiers)
+      def initialize(serializer_class, parent_plan_point, modifiers)
         check_depth_limit(parent_plan_point) if parent_plan_point
         serializer_class.lock
+        @serializer_class = serializer_class
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
         @relation_points = points.select(&:child_plan).freeze
@@ -78,13 +84,6 @@ class Serega
       attr_reader :flat
       alias_method :flat?, :flat
       private :flat
-
-      #
-      # Serializer class of current plan
-      #
-      def serializer_class
-        self.class.serializer_class
-      end
 
       #
       # Result builder of this plan in the serialization mode
@@ -132,7 +131,7 @@ class Serega
               {only: only[name], with: with[name], except: except[name]}
             end
 
-          point = serializer_class::SeregaPlanPoint.new(self, attribute, child_fields)
+          point = SeregaPlanPoint.new(self, attribute, child_fields)
           points << point.freeze
         end
 
@@ -141,6 +140,5 @@ class Serega
     end
 
     include InstanceMethods
-    extend SeregaHelpers::SerializerClassHelper
   end
 end

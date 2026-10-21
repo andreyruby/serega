@@ -2,8 +2,8 @@
 
 RSpec.describe Serega::SeregaUtils::SerializedAttributeError do
   let(:error) { KeyError.new("key not found") }
-  let(:point) { double(name: :full_name, attribute: attribute, class: double(serializer_class: "UserSerializer")) }
-  let(:attribute) { double(name: :full_name, location: location, class: double(serializer_class: "UserSerializer")) }
+  let(:point) { double(name: :full_name, attribute: attribute, plan: double(serializer_class: "UserSerializer")) }
+  let(:attribute) { double(name: :full_name, location: location, serializer_class: "UserSerializer") }
   let(:location) { "app/serializers/user_serializer.rb:3" }
 
   describe ".call" do

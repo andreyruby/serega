@@ -88,7 +88,7 @@ class Serega
       #   `Pulls.collect`, one per source of the parent group
       # @return [SeregaSourceGroup] New source group
       def new_source_group(plan, sources, pulls)
-        plan.serializer_class::SeregaSourceGroup.new(self, plan, sources, pulls)
+        SeregaSourceGroup.new(self, plan, sources, pulls)
       end
 
       private

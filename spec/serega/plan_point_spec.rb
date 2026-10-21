@@ -4,7 +4,7 @@ RSpec.describe Serega::SeregaPlanPoint do
   let(:base) { Class.new(Serega) }
 
   def point_for(serializer, name)
-    serializer::SeregaPlan.new(nil, {}).points.find { |point| point.name == name }
+    Serega::SeregaPlan.new(serializer, nil, {}).points.find { |point| point.name == name }
   end
 
   describe "#preloads" do

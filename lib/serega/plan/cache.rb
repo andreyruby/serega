@@ -19,10 +19,12 @@ class Serega
       # @private
       module InstanceMethods
         #
-        # Initializes empty plans cache of the current serializer
+        # Initializes empty plans cache of the serializer
         #
-        def initialize
-          @serializer_class = self.class.serializer_class
+        # @param serializer_class [Class<Serega>] Serializer of the plans
+        #
+        def initialize(serializer_class)
+          @serializer_class = serializer_class
           @default_plan = nil
           @plans = {}
         end
@@ -52,7 +54,7 @@ class Serega
         private
 
         def default_plan
-          @default_plan ||= @serializer_class::SeregaPlan.new(nil, FROZEN_EMPTY_HASH)
+          @default_plan ||= SeregaPlan.new(@serializer_class, nil, FROZEN_EMPTY_HASH)
         end
 
         def cached_plan(only, with, except, max_size, check_initiate_params)
@@ -80,7 +82,7 @@ class Serega
           return default_plan if modifiers[:only].empty? && modifiers[:with].empty? && modifiers[:except].empty?
 
           validate(modifiers) if check_initiate_params
-          @serializer_class::SeregaPlan.new(nil, modifiers)
+          SeregaPlan.new(@serializer_class, nil, modifiers)
         end
 
         def parse_modifiers(only, with, except)
@@ -103,7 +105,6 @@ class Serega
       end
 
       include InstanceMethods
-      extend SeregaHelpers::SerializerClassHelper
     end
   end
 end

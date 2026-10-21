@@ -139,7 +139,7 @@ class Serega
         use = batch_option&.fetch(:use)
         return unless use.respond_to?(:call)
 
-        self.class.serializer_class::SeregaBatchLoader.new(name: name, block: use)
+        SeregaBatchLoader.new(name: name, block: use)
       end
 
       #

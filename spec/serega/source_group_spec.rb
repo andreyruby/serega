@@ -1,21 +1,15 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaSourceGroup do
-  subject(:source_group) { user_serializer::SeregaSourceGroup.new(run, plan, [user1, user2], pulls) }
+  subject(:source_group) { described_class.new(run, plan, [user1, user2], pulls) }
 
   let(:user_serializer) { Class.new(Serega) { attribute :name } }
-  let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
+  let(:plan) { Serega::SeregaPlan.new(user_serializer, nil, {}) }
   let(:run) { Serega::SeregaEngine::Run.new(:hash, context) }
   let(:context) { {locale: :en} }
   let(:pulls) { [2] }
   let(:user1) { double(name: "Ann") }
   let(:user2) { double(name: "Bob") }
-
-  describe ".serializer_class" do
-    it "returns the serializer class" do
-      expect(user_serializer::SeregaSourceGroup.serializer_class).to equal user_serializer
-    end
-  end
 
   describe "#sources" do
     it "returns the sources" do

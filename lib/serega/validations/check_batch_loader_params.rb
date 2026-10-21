@@ -77,7 +77,6 @@ class Serega
       end
 
       include InstanceMethods
-      extend Serega::SeregaHelpers::SerializerClassHelper
     end
   end
 end

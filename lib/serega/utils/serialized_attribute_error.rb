@@ -29,7 +29,7 @@ class Serega
         #
         def call(error, point)
           location = point.attribute.location
-          serializer_class = point.class.serializer_class
+          serializer_class = point.plan.serializer_class
           defined_at = location ? ", #{location}" : ""
 
           exception = error.exception(<<~MESSAGE.strip)
@@ -56,7 +56,7 @@ class Serega
 
           raise error.exception(<<~MESSAGE.strip)
             #{error.message}
-            (when checking the :#{condition_name} condition of the '#{attribute.name}' attribute in #{attribute.class.serializer_class}#{defined_at})
+            (when checking the :#{condition_name} condition of the '#{attribute.name}' attribute in #{attribute.serializer_class}#{defined_at})
           MESSAGE
         end
 
