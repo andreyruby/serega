@@ -29,5 +29,5 @@ see the [Cheatsheet](../CHEATSHEET.md).
 - [Configuration](configuration.md) — all config options
 - [Ractors](ractors.md) — serialize in parallel Ractors
 - [Plugins](plugins.md) — `activerecord_preloads`, `string_modifiers`, `root`,
-  `metadata`, `camel_case` and others
+  `metadata` and others
 - [Errors](errors.md) — errors Serega raises

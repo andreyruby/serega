@@ -207,7 +207,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - [Presenter](docs/presenter.md) — write computed attributes as methods
 - [Prepare initial objects](docs/prepare-initial-objects.md) — serialize records by ids
 - [Configuration](docs/configuration.md) — all config options
-- [Plugins](docs/plugins.md) — `root`, `metadata`, `camel_case` and others
+- [Plugins](docs/plugins.md) — `root`, `metadata`, `string_modifiers` and others
 
 ## Documentation
 

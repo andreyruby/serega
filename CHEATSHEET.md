@@ -21,7 +21,6 @@
 - [Presenter](#presenter)
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
 - [Plugin `:string_modifiers`](#plugin-string_modifiers)
-- [Plugin `:camel_case`](#plugin-camel_case)
 - [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
 - [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
 - [Errors](#errors)
@@ -761,25 +760,6 @@ UserSerializer.to_h(post, only: 'title,author(first_name,email)')
 ```
 
 Old Hash/Array forms still work. Great for `GET ?fields=...` query params.
-
----
-
-## Plugin `:camel_case`
-
-```ruby
-class UserSerializer < Serega
-  plugin :camel_case
-  attribute :first_name
-  attribute :last_name
-  attribute :full_name, camel_case: false # opt out
-end
-
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', full_name: 'Felonious Gru'))
-# => {firstName: "Felonious", lastName: "Gru", full_name: "Felonious Gru"}
-```
-
-⚠️ Modifiers must use camelCase. Doesn't touch `:root` / `:metadata` keys.
-Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
 
 ---
 

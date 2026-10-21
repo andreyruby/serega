@@ -18,7 +18,6 @@ end
 | [`:root`](#plugin-root) | Wraps results in a root key |
 | [`:metadata`](#plugin-metadata) | Adds metadata defined in the serializer |
 | [`:context_metadata`](#plugin-context_metadata) | Adds metadata given per serialization |
-| [`:camel_case`](#plugin-camel_case) | Serializes keys in camelCase |
 | [`:explicit_many_option`](#plugin-explicit_many_option) | Requires `:many` on relations |
 
 ## Plugin :activerecord_preloads
@@ -155,35 +154,6 @@ UserSerializer.to_h(user, meta: {version: "1.0.1"})
 `plugin :context_metadata, context_metadata_key: :extra` or
 `config.context_metadata.key = :extra` changes the option name. The previous
 name raises `Serega::SeregaError`.
-
-## Plugin :camel_case
-
-Serializes attribute keys in camelCase. Keys are transformed once, when
-attributes are defined.
-
-```ruby
-class AppSerializer < Serega
-  plugin :camel_case
-end
-
-class UserSerializer < AppSerializer
-  attribute :first_name
-  attribute :last_name
-  attribute :full_name, camel_case: false, value: proc { |user| "#{user.first_name} #{user.last_name}" }
-end
-
-UserSerializer.to_h(user)
-# => {firstName: "Bruce", lastName: "Wayne", full_name: "Bruce Wayne"}
-
-UserSerializer.to_h(user, only: :firstName) # select fields by camelCase names
-# => {firstName: "Bruce"}
-```
-
-- `camel_case: false` keeps an attribute name as is.
-- `plugin :camel_case, transform: ->(name) { name.camelize(:lower) }` sets a
-  custom transformation.
-- Keys of the `:root`, `:metadata` and `:context_metadata` plugins are not
-  transformed.
 
 ## Plugin :explicit_many_option
 

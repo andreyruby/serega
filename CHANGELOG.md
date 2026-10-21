@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Removed the `:camel_case` plugin. Name camelCase attributes
+  directly: `attribute :firstName, method: :first_name`. See
+  [Attribute names](docs/attributes.md#attribute-names).
 - The guides and the API docs are published at
   [andreyruby.github.io/serega](https://andreyruby.github.io/serega/).
 - The gem ships RBS type signatures of its public API in
