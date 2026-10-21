@@ -1,0 +1,52 @@
+name: Docs
+
+# Publishes `rake rdoc` (README, guides and API) to GitHub Pages
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push waits for the running deploy
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      BUNDLE_GEMFILE: gemfiles/8.1.gemfile
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v6
+
+      # https://github.com/ruby/setup-ruby
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: Build documentation
+        run: bundle exec rake rdoc
+
+      # https://github.com/actions/upload-pages-artifact
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: doc
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # https://github.com/actions/deploy-pages
+      - id: deployment
+        uses: actions/deploy-pages@v5

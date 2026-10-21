@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- The guides and the API docs are published at
+  [andreyruby.github.io/serega](https://andreyruby.github.io/serega/).
 - The gem ships RBS type signatures of its public API in
   [`sig/`](sig/serega.rbs).
 - `.attributes` returns the attributes by name. See
