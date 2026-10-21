@@ -19,7 +19,7 @@ class Serega
       #
       # Returns serialization plan from the plans cache of the current Ractor
       #
-      # @see SeregaPlan::Cache::InstanceMethods#fetch
+      # @see SeregaPlan::Cache#fetch
       #
       def fetch(only, with, except, check_initiate_params: false)
         plan_cache = SeregaUtils::RactorLocal.fetch(@key) { SeregaPlan::Cache.new(@serializer_class) }

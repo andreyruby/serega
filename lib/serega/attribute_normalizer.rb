@@ -5,443 +5,436 @@ class Serega
   # Prepares provided attribute options
   #
   class SeregaAttributeNormalizer # :nodoc:
+    # Attribute initial params
+    # @return [Hash] Attribute initial params
+    attr_reader :init_name, :init_opts, :init_block
+
     #
-    # AttributeNormalizer instance methods
+    # Instantiates attribute options normalizer
     #
-    module AttributeNormalizerInstanceMethods # :nodoc:
-      # Attribute initial params
-      # @return [Hash] Attribute initial params
-      attr_reader :init_name, :init_opts, :init_block
-
-      #
-      # Instantiates attribute options normalizer
-      #
-      # @param serializer_class [Class<Serega>] Serializer of the attribute
-      # @param initials [Hash] new attribute options
-      #
-      # @return [SeregaAttributeNormalizer] Instantiated attribute options normalizer
-      #
-      def initialize(serializer_class, initials)
-        @serializer_class = serializer_class
-        @init_name = initials[:name]
-        @init_opts = initials[:opts]
-        @init_block = initials[:block]
-        @method_name = nil
-      end
-
-      #
-      # Symbolized initial attribute name
-      #
-      # @return [Symbol] Attribute normalized name
-      #
-      def name
-        @name ||= prepare_name
-      end
-
-      #
-      # Symbolized initial attribute method name
-      #
-      # @return [Symbol] Attribute normalized method name
-      #
-      def method_name
-        @method_name ||= prepare_method_name
-      end
-
-      #
-      # Combines all options to return single block that will be used to find
-      # attribute value during serialization
-      #
-      # @return [#call] Attribute normalized callable value block
-      #
-      def value_block
-        @value_block ||= prepare_value_block
-      end
-
-      #
-      # Detects value block parameters signature
-      #
-      # @return [String] value block parameters signature
-      #
-      def value_block_signature
-        @value_block_signature ||= SeregaUtils::MethodSignature.call(value_block, pos_limit: 2, keyword_args: [:ctx])
-      end
-
-      #
-      # Shows if attribute is specified to be hidden
-      #
-      # @return [Boolean, nil] if attribute must be hidden by default
-      #
-      def hide
-        return @hide if instance_variable_defined?(:@hide)
-
-        @hide = prepare_hide
-      end
-
-      #
-      # Shows if attribute is specified to be a one-to-many relationship
-      #
-      # @return [Boolean, nil] if attribute is specified to be a one-to-many relationship
-      #
-      def many
-        return @many if instance_variable_defined?(:@many)
-
-        @many = prepare_many
-      end
-
-      #
-      # Shows specified attribute serializer
-      # @return [Serega, String, #callable, nil] specified serializer
-      #
-      def serializer
-        return @serializer if instance_variable_defined?(:@serializer)
-
-        @serializer = prepare_serializer
-      end
-
-      #
-      # Shows the default attribute value. It is a value that replaces found nils.
-      #
-      # When custom :default is not specified, we set empty array as default when `many: true` specified
-      #
-      # @return [Object] Attribute default value
-      #
-      def default
-        return @default if instance_variable_defined?(:@default)
-
-        @default = prepare_default
-      end
-
-      #
-      # Preloads declared for this attribute, passed through as provided.
-      #
-      # @return [Object, nil] declared preloads, or nil when the attribute has none
-      #
-      def preloads
-        return @preloads if instance_variable_defined?(:@preloads)
-
-        @preloads = prepare_preloads
-      end
-
-      # Shows specified batch loaders names
-      # @return [Array<Symbol>] specified serializer
-      #
-      def batch_loaders
-        @batch_loaders ||= prepare_batch_loaders
-      end
-
-      #
-      # Batch loader given directly as the :batch option. It is named after the
-      # attribute and belongs to the attribute only.
-      #
-      # @return [SeregaBatchLoader, nil] Batch loader, or nil without a callable :batch option
-      #
-      def inline_batch_loader
-        use = batch_option&.fetch(:use)
-        return unless use.respond_to?(:call)
-
-        SeregaBatchLoader.new(name: name, block: use)
-      end
-
-      #
-      # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
-      # condition calls the method of this name.
-      #
-      # @return [Hash, nil] Condition of each given option, or nil without conditions
-      #
-      def conditions
-        conditions = init_opts.slice(:if, :unless, :if_value, :unless_value)
-        return if conditions.empty?
-
-        conditions.transform_values do |condition|
-          condition.is_a?(Symbol) ? AttributeValueResolvers::Keyword.new(condition) : condition
-        end
-      end
-
-      #
-      # Formatter of the :format option. A Symbol option is the name of a
-      # formatter defined with `Serega.formatter`.
-      #
-      # @return [SeregaFormatter, nil] Formatter, or nil without the :format option
-      #
-      def formatter
-        format = init_opts[:format]
-        return unless format
-
-        format.is_a?(Symbol) ? @serializer_class.formatters.fetch(format) : SeregaFormatter.new(format)
-      end
-
-      private
-
-      def prepare_name
-        init_name.to_sym
-      end
-
-      def prepare_value_block
-        init_opts[:value] \
-          || prepare_const_block \
-          || prepare_delegate_block \
-          || prepare_batch_loader_block \
-          || prepare_keyword_block
-      end
-
-      def prepare_hide
-        # Return provided directly value
-        hide = init_opts[:hide]
-        return hide if (hide == true) || (hide == false)
-
-        hide_setting = config.hide_by_default
-        return true if hide_setting == true
-        return true if hide_setting == :auto && preload_or_batch?
-
-        # Return nil for undefined value which means "not hide" but allows
-        # to change this value by plugins
-        nil
-      end
-
-      # The `hide_by_default = :auto` criterion: hide attributes that fetch extra
-      # data on demand — those declared with `:preload` or an explicit `:batch`.
-      #
-      # This is intentionally narrower than a "goes through the batch mechanism"
-      # check (`SeregaPlanPoint#batch?`): a plain relation (`serializer:` without
-      # `:preload`) is batch-processed too, but it only serializes an already-loaded
-      # nested object, so it stays visible by default.
-      def preload_or_batch?
-        !!(preloads || init_opts.key?(:batch))
-      end
-
-      def config
-        @serializer_class.config
-      end
-
-      def prepare_many
-        init_opts[:many]
-      end
-
-      def prepare_serializer
-        block = init_block
-        return init_opts[:serializer] unless block
-
-        prepare_block_serializer(block)
-      end
-
-      # Builds an anonymous nested serializer from the attribute block.
-      #
-      # The serializer is a regular subclass of an explicitly chosen base —
-      # the :base_serializer attribute option or `config.base_serializer` —
-      # so it inherits everything the base has: plugins, config, attributes,
-      # batch loaders, the preload handler. Nested values can be any objects,
-      # which is why the base is chosen explicitly instead of inheriting from
-      # the current serializer. Its `inspect` is overridden to
-      # `CurrentSerializer.<attribute_name>` so error messages and debugging
-      # output point back to the defining attribute.
-      # Guards against cyclic definitions before building: inheriting the base
-      # serializer copies its attributes, and copying a block attribute builds
-      # its nested serializer — meeting the same block again while it is being
-      # built means the base serializer (transitively) contains the block
-      # attribute being built, so inheriting from it would recurse forever.
-      # The "in progress" mark is kept on the block itself — its identity is
-      # what defines the cycle (the same Proc object is shared by all copies
-      # of the attribute).
-      def prepare_block_serializer(block)
-        if block.instance_variable_defined?(:@serega_building_nested_serializer)
-          raise SeregaError,
-            "Can not define a nested serializer for attribute :#{name} —" \
-            " its base serializer #{block_base_serializer.inspect} (transitively)" \
-            " contains this same block attribute (cyclic definition)"
-        end
-
-        block.instance_variable_set(:@serega_building_nested_serializer, true)
-        begin
-          build_block_serializer(block)
-        ensure
-          block.remove_instance_variable(:@serega_building_nested_serializer)
-        end
-      end
-
-      def build_block_serializer(block)
-        label = "#{@serializer_class.inspect}.<#{name}>"
-
-        serializer = Class.new(block_base_serializer) do
-          define_singleton_method(:inspect) { label }
-          define_singleton_method(:to_s) { label }
-          instance_exec(&block)
-        end
-
-        # An empty nested serializer means the block was intended as an
-        # old-style value block — raise the explaining error.
-        raise SeregaError, SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE if serializer.attributes.empty?
-
-        serializer
-      end
-
-      # Base class for the nested serializer. Must be chosen explicitly —
-      # usually a settings-only serializer holding plugins and configuration
-      # (e.g. `config.base_serializer = self` in an application base class).
-      def block_base_serializer
-        base_serializer = init_opts[:base_serializer] || config.base_serializer
-        return base_serializer if base_serializer
-
-        raise SeregaError,
-          "Attribute block requires a base serializer for the nested serializer." \
-          " Provide the `base_serializer: <SerializerClass>` attribute option" \
-          " or set `config.base_serializer = <SerializerClass>`"
-      end
-
-      def prepare_method_name
-        (init_opts[:method] || init_name).to_sym
-      end
-
-      def prepare_const_block
-        return unless init_opts.key?(:const)
-
-        AttributeValueResolvers::Const.new(init_opts[:const])
-      end
-
-      def prepare_keyword_block
-        mode, allow_nil = hash_access
-        return AttributeValueResolvers::Keyword.new(method_name) unless mode
-
-        AttributeValueResolvers::HashAccessKeyword.new(method_name, mode, allow_nil)
-      end
-
-      # Reads the value from the loaded batch of the only batch loader
-      def prepare_batch_loader_block
-        batch = batch_option
-        return unless batch
-
-        AttributeValueResolvers::Batch.new(batch_loaders.first, batch[:id])
-      end
-
-      # Batch loader names whose loaded data this attribute's value needs. An
-      # attribute without the :batch option has none.
-      def prepare_batch_loaders
-        batch = batch_option
-        return FROZEN_EMPTY_ARRAY unless batch
-
-        use = batch[:use]
-        use.respond_to?(:call) ? [name] : Array(use).map(&:to_sym)
-      end
-
-      # The :batch option as `{use:, id:}`. `true` and a Hash without :use use
-      # the loader named after the attribute.
-      def batch_option
-        return @batch_option if instance_variable_defined?(:@batch_option)
-
-        @batch_option = prepare_batch_option
-      end
-
-      def prepare_batch_option
-        batch = init_opts[:batch]
-        return unless batch
-
-        batch = {use: batch} unless batch.is_a?(Hash)
-        use = batch.fetch(:use, true)
-        {use: (use == true) ? name : use, id: batch[:id] || config.batch_id_option}
-      end
-
-      def prepare_default
-        init_opts.fetch(:default) { many ? FROZEN_EMPTY_ARRAY : nil }
-      end
-
-      # `delegate: {to_hash_access: ...}` configures hash access for the
-      # intermediate (:to) read, `delegate: {hash_access: ...}` for the
-      # final (:method) read. A step without its sub-option keeps a plain
-      # method read.
-      def prepare_delegate_block
-        delegate = init_opts[:delegate]
-        return unless delegate
-
-        key_method_name = delegate[:method] || method_name
-        delegate_to = delegate[:to]
-        delegate_allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
-
-        to_access = delegate[:to_hash_access]
-        final_access = delegate[:hash_access]
-        unless to_access || final_access
-          return AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, delegate_allow_nil)
-        end
-
-        to_step = delegate_to_step(delegate_to, to_access)
-        final_step = delegate_final_step(key_method_name, final_access)
-        AttributeValueResolvers::HashAccessDelegateResolver.get(to_step, final_step, delegate_allow_nil)
-      end
-
-      def delegate_to_step(delegate_to, access)
-        return AttributeValueResolvers::Keyword.new(delegate_to) unless access
-
-        mode, allow_missing_key = parse_hash_access(access)
-        AttributeValueResolvers::HashAccessKeyword.new(delegate_to, mode, allow_missing_key)
-      end
-
-      def delegate_final_step(key_method_name, access)
-        return AttributeValueResolvers::Keyword.new(key_method_name) unless access
-
-        mode, allow_missing_key = parse_hash_access(access)
-        AttributeValueResolvers::HashAccessKeyword.new(key_method_name, mode, allow_missing_key)
-      end
-
-      # Resolves the :hash_access option of plain attributes
-      # @return [Array(Symbol, Boolean), nil] mode and allow_missing_key pair,
-      #   or nil when hash access is not enabled for this attribute
-      def hash_access
-        option = init_opts[:hash_access]
-        return unless option
-
-        parse_hash_access(option)
-      end
-
-      # Resolves a :hash_access value (`true`, a Symbol mode or a
-      # `{mode:, allow_missing_key:}` Hash) into a mode and allow_missing_key
-      # pair. `true` and a Hash omitting :mode resolve to
-      # `config.hash_access.default_mode`.
-      def parse_hash_access(option)
-        defaults = config.hash_access
-
-        case option
-        when true then [defaults.default_mode, defaults.default_allow_missing_key]
-        when Symbol then [option, defaults.default_allow_missing_key]
-        else
-          mode = option.fetch(:mode) { defaults.default_mode }
-          allow_missing_key = option.fetch(:allow_missing_key) { defaults.default_allow_missing_key }
-          [mode, allow_missing_key]
-        end
-      end
-
-      # Prepares preloads for this attribute.
-      #
-      # The value is passed through as provided (Symbol, Array, Hash, or any
-      # custom value an ORM understands) — it is the data handed to the
-      # serializer's `preload_with` handler.
-      #
-      # @return [Object, nil] preloads as provided, or nil when the attribute has none
-      def prepare_preloads
-        # Explicit preload option (false or nil disables preloading)
-        return init_opts[:preload] || nil if init_opts.key?(:preload)
-
-        # Auto-preload the delegated association
-        if config.auto_preload.fetch(:has_delegate_option) && init_opts[:delegate]
-          return auto_preload_value(init_opts[:delegate][:to])
-        end
-
-        # Auto-preload the nested serializer's association
-        # (a block defines a nested serializer, same as the :serializer option)
-        if config.auto_preload.fetch(:has_serializer_option) && (init_opts[:serializer] || init_block) && !init_opts.key?(:batch)
-          return auto_preload_value(method_name)
-        end
-
-        nil
-      end
-
-      # Skips auto-preloading of methods that return the object
-      # itself (:itself by default) — they are not associations,
-      # so preloading them would fail or make no sense.
-      def auto_preload_value(preload_method)
-        return nil if config.auto_preload_excluded_methods.include?(preload_method.to_sym)
-
-        preload_method
+    # @param serializer_class [Class<Serega>] Serializer of the attribute
+    # @param initials [Hash] new attribute options
+    #
+    # @return [SeregaAttributeNormalizer] Instantiated attribute options normalizer
+    #
+    def initialize(serializer_class, initials)
+      @serializer_class = serializer_class
+      @init_name = initials[:name]
+      @init_opts = initials[:opts]
+      @init_block = initials[:block]
+      @method_name = nil
+    end
+
+    #
+    # Symbolized initial attribute name
+    #
+    # @return [Symbol] Attribute normalized name
+    #
+    def name
+      @name ||= prepare_name
+    end
+
+    #
+    # Symbolized initial attribute method name
+    #
+    # @return [Symbol] Attribute normalized method name
+    #
+    def method_name
+      @method_name ||= prepare_method_name
+    end
+
+    #
+    # Combines all options to return single block that will be used to find
+    # attribute value during serialization
+    #
+    # @return [#call] Attribute normalized callable value block
+    #
+    def value_block
+      @value_block ||= prepare_value_block
+    end
+
+    #
+    # Detects value block parameters signature
+    #
+    # @return [String] value block parameters signature
+    #
+    def value_block_signature
+      @value_block_signature ||= SeregaUtils::MethodSignature.call(value_block, pos_limit: 2, keyword_args: [:ctx])
+    end
+
+    #
+    # Shows if attribute is specified to be hidden
+    #
+    # @return [Boolean, nil] if attribute must be hidden by default
+    #
+    def hide
+      return @hide if instance_variable_defined?(:@hide)
+
+      @hide = prepare_hide
+    end
+
+    #
+    # Shows if attribute is specified to be a one-to-many relationship
+    #
+    # @return [Boolean, nil] if attribute is specified to be a one-to-many relationship
+    #
+    def many
+      return @many if instance_variable_defined?(:@many)
+
+      @many = prepare_many
+    end
+
+    #
+    # Shows specified attribute serializer
+    # @return [Serega, String, #callable, nil] specified serializer
+    #
+    def serializer
+      return @serializer if instance_variable_defined?(:@serializer)
+
+      @serializer = prepare_serializer
+    end
+
+    #
+    # Shows the default attribute value. It is a value that replaces found nils.
+    #
+    # When custom :default is not specified, we set empty array as default when `many: true` specified
+    #
+    # @return [Object] Attribute default value
+    #
+    def default
+      return @default if instance_variable_defined?(:@default)
+
+      @default = prepare_default
+    end
+
+    #
+    # Preloads declared for this attribute, passed through as provided.
+    #
+    # @return [Object, nil] declared preloads, or nil when the attribute has none
+    #
+    def preloads
+      return @preloads if instance_variable_defined?(:@preloads)
+
+      @preloads = prepare_preloads
+    end
+
+    # Shows specified batch loaders names
+    # @return [Array<Symbol>] specified serializer
+    #
+    def batch_loaders
+      @batch_loaders ||= prepare_batch_loaders
+    end
+
+    #
+    # Batch loader given directly as the :batch option. It is named after the
+    # attribute and belongs to the attribute only.
+    #
+    # @return [SeregaBatchLoader, nil] Batch loader, or nil without a callable :batch option
+    #
+    def inline_batch_loader
+      use = batch_option&.fetch(:use)
+      return unless use.respond_to?(:call)
+
+      SeregaBatchLoader.new(name: name, block: use)
+    end
+
+    #
+    # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
+    # condition calls the method of this name.
+    #
+    # @return [Hash, nil] Condition of each given option, or nil without conditions
+    #
+    def conditions
+      conditions = init_opts.slice(:if, :unless, :if_value, :unless_value)
+      return if conditions.empty?
+
+      conditions.transform_values do |condition|
+        condition.is_a?(Symbol) ? AttributeValueResolvers::Keyword.new(condition) : condition
       end
     end
 
-    include AttributeNormalizerInstanceMethods
+    #
+    # Formatter of the :format option. A Symbol option is the name of a
+    # formatter defined with `Serega.formatter`.
+    #
+    # @return [SeregaFormatter, nil] Formatter, or nil without the :format option
+    #
+    def formatter
+      format = init_opts[:format]
+      return unless format
+
+      format.is_a?(Symbol) ? @serializer_class.formatters.fetch(format) : SeregaFormatter.new(format)
+    end
+
+    private
+
+    def prepare_name
+      init_name.to_sym
+    end
+
+    def prepare_value_block
+      init_opts[:value] \
+        || prepare_const_block \
+        || prepare_delegate_block \
+        || prepare_batch_loader_block \
+        || prepare_keyword_block
+    end
+
+    def prepare_hide
+      # Return provided directly value
+      hide = init_opts[:hide]
+      return hide if (hide == true) || (hide == false)
+
+      hide_setting = config.hide_by_default
+      return true if hide_setting == true
+      return true if hide_setting == :auto && preload_or_batch?
+
+      # Return nil for undefined value which means "not hide" but allows
+      # to change this value by plugins
+      nil
+    end
+
+    # The `hide_by_default = :auto` criterion: hide attributes that fetch extra
+    # data on demand — those declared with `:preload` or an explicit `:batch`.
+    #
+    # This is intentionally narrower than a "goes through the batch mechanism"
+    # check (`SeregaPlanPoint#batch?`): a plain relation (`serializer:` without
+    # `:preload`) is batch-processed too, but it only serializes an already-loaded
+    # nested object, so it stays visible by default.
+    def preload_or_batch?
+      !!(preloads || init_opts.key?(:batch))
+    end
+
+    def config
+      @serializer_class.config
+    end
+
+    def prepare_many
+      init_opts[:many]
+    end
+
+    def prepare_serializer
+      block = init_block
+      return init_opts[:serializer] unless block
+
+      prepare_block_serializer(block)
+    end
+
+    # Builds an anonymous nested serializer from the attribute block.
+    #
+    # The serializer is a regular subclass of an explicitly chosen base —
+    # the :base_serializer attribute option or `config.base_serializer` —
+    # so it inherits everything the base has: plugins, config, attributes,
+    # batch loaders, the preload handler. Nested values can be any objects,
+    # which is why the base is chosen explicitly instead of inheriting from
+    # the current serializer. Its `inspect` is overridden to
+    # `CurrentSerializer.<attribute_name>` so error messages and debugging
+    # output point back to the defining attribute.
+    # Guards against cyclic definitions before building: inheriting the base
+    # serializer copies its attributes, and copying a block attribute builds
+    # its nested serializer — meeting the same block again while it is being
+    # built means the base serializer (transitively) contains the block
+    # attribute being built, so inheriting from it would recurse forever.
+    # The "in progress" mark is kept on the block itself — its identity is
+    # what defines the cycle (the same Proc object is shared by all copies
+    # of the attribute).
+    def prepare_block_serializer(block)
+      if block.instance_variable_defined?(:@serega_building_nested_serializer)
+        raise SeregaError,
+          "Can not define a nested serializer for attribute :#{name} —" \
+          " its base serializer #{block_base_serializer.inspect} (transitively)" \
+          " contains this same block attribute (cyclic definition)"
+      end
+
+      block.instance_variable_set(:@serega_building_nested_serializer, true)
+      begin
+        build_block_serializer(block)
+      ensure
+        block.remove_instance_variable(:@serega_building_nested_serializer)
+      end
+    end
+
+    def build_block_serializer(block)
+      label = "#{@serializer_class.inspect}.<#{name}>"
+
+      serializer = Class.new(block_base_serializer) do
+        define_singleton_method(:inspect) { label }
+        define_singleton_method(:to_s) { label }
+        instance_exec(&block)
+      end
+
+      # An empty nested serializer means the block was intended as an
+      # old-style value block — raise the explaining error.
+      raise SeregaError, SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE if serializer.attributes.empty?
+
+      serializer
+    end
+
+    # Base class for the nested serializer. Must be chosen explicitly —
+    # usually a settings-only serializer holding plugins and configuration
+    # (e.g. `config.base_serializer = self` in an application base class).
+    def block_base_serializer
+      base_serializer = init_opts[:base_serializer] || config.base_serializer
+      return base_serializer if base_serializer
+
+      raise SeregaError,
+        "Attribute block requires a base serializer for the nested serializer." \
+        " Provide the `base_serializer: <SerializerClass>` attribute option" \
+        " or set `config.base_serializer = <SerializerClass>`"
+    end
+
+    def prepare_method_name
+      (init_opts[:method] || init_name).to_sym
+    end
+
+    def prepare_const_block
+      return unless init_opts.key?(:const)
+
+      AttributeValueResolvers::Const.new(init_opts[:const])
+    end
+
+    def prepare_keyword_block
+      mode, allow_nil = hash_access
+      return AttributeValueResolvers::Keyword.new(method_name) unless mode
+
+      AttributeValueResolvers::HashAccessKeyword.new(method_name, mode, allow_nil)
+    end
+
+    # Reads the value from the loaded batch of the only batch loader
+    def prepare_batch_loader_block
+      batch = batch_option
+      return unless batch
+
+      AttributeValueResolvers::Batch.new(batch_loaders.first, batch[:id])
+    end
+
+    # Batch loader names whose loaded data this attribute's value needs. An
+    # attribute without the :batch option has none.
+    def prepare_batch_loaders
+      batch = batch_option
+      return FROZEN_EMPTY_ARRAY unless batch
+
+      use = batch[:use]
+      use.respond_to?(:call) ? [name] : Array(use).map(&:to_sym)
+    end
+
+    # The :batch option as `{use:, id:}`. `true` and a Hash without :use use
+    # the loader named after the attribute.
+    def batch_option
+      return @batch_option if instance_variable_defined?(:@batch_option)
+
+      @batch_option = prepare_batch_option
+    end
+
+    def prepare_batch_option
+      batch = init_opts[:batch]
+      return unless batch
+
+      batch = {use: batch} unless batch.is_a?(Hash)
+      use = batch.fetch(:use, true)
+      {use: (use == true) ? name : use, id: batch[:id] || config.batch_id_option}
+    end
+
+    def prepare_default
+      init_opts.fetch(:default) { many ? FROZEN_EMPTY_ARRAY : nil }
+    end
+
+    # `delegate: {to_hash_access: ...}` configures hash access for the
+    # intermediate (:to) read, `delegate: {hash_access: ...}` for the
+    # final (:method) read. A step without its sub-option keeps a plain
+    # method read.
+    def prepare_delegate_block
+      delegate = init_opts[:delegate]
+      return unless delegate
+
+      key_method_name = delegate[:method] || method_name
+      delegate_to = delegate[:to]
+      delegate_allow_nil = delegate.fetch(:allow_nil) { config.delegate_default_allow_nil }
+
+      to_access = delegate[:to_hash_access]
+      final_access = delegate[:hash_access]
+      unless to_access || final_access
+        return AttributeValueResolvers::DelegateResolver.get(delegate_to, key_method_name, delegate_allow_nil)
+      end
+
+      to_step = delegate_to_step(delegate_to, to_access)
+      final_step = delegate_final_step(key_method_name, final_access)
+      AttributeValueResolvers::HashAccessDelegateResolver.get(to_step, final_step, delegate_allow_nil)
+    end
+
+    def delegate_to_step(delegate_to, access)
+      return AttributeValueResolvers::Keyword.new(delegate_to) unless access
+
+      mode, allow_missing_key = parse_hash_access(access)
+      AttributeValueResolvers::HashAccessKeyword.new(delegate_to, mode, allow_missing_key)
+    end
+
+    def delegate_final_step(key_method_name, access)
+      return AttributeValueResolvers::Keyword.new(key_method_name) unless access
+
+      mode, allow_missing_key = parse_hash_access(access)
+      AttributeValueResolvers::HashAccessKeyword.new(key_method_name, mode, allow_missing_key)
+    end
+
+    # Resolves the :hash_access option of plain attributes
+    # @return [Array(Symbol, Boolean), nil] mode and allow_missing_key pair,
+    #   or nil when hash access is not enabled for this attribute
+    def hash_access
+      option = init_opts[:hash_access]
+      return unless option
+
+      parse_hash_access(option)
+    end
+
+    # Resolves a :hash_access value (`true`, a Symbol mode or a
+    # `{mode:, allow_missing_key:}` Hash) into a mode and allow_missing_key
+    # pair. `true` and a Hash omitting :mode resolve to
+    # `config.hash_access.default_mode`.
+    def parse_hash_access(option)
+      defaults = config.hash_access
+
+      case option
+      when true then [defaults.default_mode, defaults.default_allow_missing_key]
+      when Symbol then [option, defaults.default_allow_missing_key]
+      else
+        mode = option.fetch(:mode) { defaults.default_mode }
+        allow_missing_key = option.fetch(:allow_missing_key) { defaults.default_allow_missing_key }
+        [mode, allow_missing_key]
+      end
+    end
+
+    # Prepares preloads for this attribute.
+    #
+    # The value is passed through as provided (Symbol, Array, Hash, or any
+    # custom value an ORM understands) — it is the data handed to the
+    # serializer's `preload_with` handler.
+    #
+    # @return [Object, nil] preloads as provided, or nil when the attribute has none
+    def prepare_preloads
+      # Explicit preload option (false or nil disables preloading)
+      return init_opts[:preload] || nil if init_opts.key?(:preload)
+
+      # Auto-preload the delegated association
+      if config.auto_preload.fetch(:has_delegate_option) && init_opts[:delegate]
+        return auto_preload_value(init_opts[:delegate][:to])
+      end
+
+      # Auto-preload the nested serializer's association
+      # (a block defines a nested serializer, same as the :serializer option)
+      if config.auto_preload.fetch(:has_serializer_option) && (init_opts[:serializer] || init_block) && !init_opts.key?(:batch)
+        return auto_preload_value(method_name)
+      end
+
+      nil
+    end
+
+    # Skips auto-preloading of methods that return the object
+    # itself (:itself by default) — they are not associations,
+    # so preloading them would fail or make no sense.
+    def auto_preload_value(preload_method)
+      return nil if config.auto_preload_excluded_methods.include?(preload_method.to_sym)
+
+      preload_method
+    end
   end
 end
