@@ -12,14 +12,8 @@ class Serega
       private_constant :SEPARATOR, :COMMA, :LPAREN
 
       class << self
-        #
         # Parses string modifiers
         #
-        # @param fields [String]
-        #
-        # @return [Hash] parsed modifiers in form of nested hash
-        #
-        # @example
         #   parse("user") => { user: {} }
         #   parse("user(id)") => { user: { id: {} } }
         #   parse("user(id,name)") => { user: { id: {}, name: {} } }

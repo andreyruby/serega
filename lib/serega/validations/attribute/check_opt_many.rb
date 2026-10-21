@@ -8,17 +8,7 @@ class Serega
       #
       class CheckOptMany # :nodoc:
         class << self
-          #
           # Checks attribute :many option
-          #
-          # @param opts [Hash] Attribute options
-          # @param block [nil, Proc] Attribute block
-          # @param required [Boolean] Whether a relation must have the option
-          #
-          # @raise [SeregaError] SeregaError that option has invalid value
-          #
-          # @return [void]
-          #
           def call(opts, block = nil, required = false)
             if opts.key?(:many)
               check_many_option_makes_sence(opts, block)

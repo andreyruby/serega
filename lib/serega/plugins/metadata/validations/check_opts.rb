@@ -9,18 +9,8 @@ class Serega
         #
         class CheckOpts # :nodoc:
           class << self
-            #
             # Validates meta_attribute options
             # Checks used options are allowed and then checks options values.
-            #
-            # @param opts [Hash] Attribute options
-            # @param block [Proc] Attribute block
-            # @param allowed_keys [Array<Symbol>] Allowed options keys
-            #
-            # @raise [SeregaError] when attribute has invalid options
-            #
-            # @return [void]
-            #
             def call(opts, block, allowed_keys)
               check_allowed_options_keys(opts, allowed_keys)
               check_each_opt(opts, block)

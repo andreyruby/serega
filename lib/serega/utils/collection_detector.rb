@@ -13,18 +13,10 @@ class Serega
       MAX_KNOWN_CLASSES = 8
 
       class << self
-        #
         # Checks if provided object is a collection of objects. Remembers the
         # answer for the class of the object in `known_classes`, up to
         # MAX_KNOWN_CLASSES classes: `is_a?(Enumerable)` checks all
         # ancestors of a class that does not include Enumerable.
-        #
-        # @param object [Object] Object to serialize
-        # @param known_classes [Hash{Class => Boolean}] Answers by class,
-        #   compared by identity
-        #
-        # @return [Boolean] whether object should be serialized as a collection
-        #
         def call(object, known_classes)
           return true if object.instance_of?(Array)
 

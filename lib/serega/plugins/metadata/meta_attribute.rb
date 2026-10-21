@@ -7,29 +7,19 @@ class Serega
       # Stores Attribute data
       #
       class MetaAttribute # :nodoc:
-        # @return [Symbol] Meta attribute name
+        # Meta attribute name
         attr_reader :name
 
-        # @return [Symbol] Meta attribute full path
+        # Meta attribute full path
         attr_reader :path
 
-        # @return [Proc] Meta attribute options
+        # Meta attribute options
         attr_reader :opts
 
-        # @return [Proc,nil] Meta attribute originally added block
+        # Meta attribute originally added block
         attr_reader :block
 
-        #
         # Initializes new meta attribute
-        #
-        # @param serializer_class [Class<Serega>] Serializer of the meta attribute
-        #
-        # @param path [Array<Symbol, String>] Path for metadata of attribute
-        #
-        # @param opts [Hash] metadata attribute options
-        #
-        # @param block [Proc] Proc that receives object(s) and context and finds value
-        #
         def initialize(serializer_class, path:, opts:, block:)
           check(serializer_class.config, path, opts, block)
 
@@ -42,14 +32,7 @@ class Serega
             SeregaUtils::MethodSignature.call(@normalized_block, pos_limit: 2, keyword_args: [])
         end
 
-        #
         # Finds attribute value
-        #
-        # @param object [Object] Object(s) to serialize
-        # @param context [Hash, nil] Serialization context
-        #
-        # @return [Object] Serialized meta attribute value
-        #
         def value(object, context)
           case normalized_block_signature
           when "0" then normalized_block.call

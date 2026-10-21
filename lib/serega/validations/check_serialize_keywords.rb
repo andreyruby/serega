@@ -7,16 +7,7 @@ class Serega
     #
     class CheckSerializeKeywords # :nodoc:
       class << self
-        #
         # Checks the context is a Hash and many is a boolean, when given
-        #
-        # @param context [Hash, nil] Serialization context
-        # @param many [Boolean, nil] Whether the object is a collection
-        #
-        # @raise [SeregaError] Serialization option validation error
-        #
-        # @return [void]
-        #
         def call(context, many)
           unless context.nil? || context.is_a?(Hash)
             raise SeregaError, "Invalid option :context => #{context.inspect}. Must have a Hash value"

@@ -20,25 +20,16 @@ class Serega
           " use the `value: <callable>` option instead."
 
         class << self
-          #
           # Checks block parameter provided with attribute.
           #
           # The block defines attributes of a nested anonymous serializer, so
           # it is executed in the context of that serializer and must accept
           # no parameters.
           #
-          # @example
           #   attribute :statistics, method: :itself do
           #     attribute :likes_count
           #     attribute :comments_count
           #   end
-          #
-          # @param block [Proc] Block that defines nested serializer attributes
-          #
-          # @raise [SeregaError] SeregaError that block has invalid arguments
-          #
-          # @return [void]
-          #
           def call(block)
             return unless block
 

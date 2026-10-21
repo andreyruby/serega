@@ -8,36 +8,18 @@ class Serega
     @plugins = {}
 
     class << self
-      #
       # Registers given plugin to be able to load it using symbol name.
       #
-      # @param name [Symbol] Plugin name
-      # @param mod [Module] Plugin module
-      #
-      # @example Register plugin
       #   SeregaPlugins.register_plugin(:plugin_name, PluginModule)
-      #
-      # @return [void]
-      #
       def register_plugin(name, mod) # :nodoc:
         @plugins[name] = mod
       end
 
+      # Loads plugin code and returns plugin core module. Raises SeregaError
+      # when the plugin does not exist.
       #
-      # Loads plugin code and returns plugin core module.
-      #
-      # @param name [Symbol, Module] plugin name or plugin itself
-      #
-      # @raise [SeregaError] Raises SeregaError when plugin was not found
-      #
-      # @example Find plugin when providing name
       #   SeregaPlugins.find_plugin(:root) # => SeregaPlugins::Root
-      #
-      # @example Find plugin when providing plugin itself
       #   SeregaPlugins.find_plugin(Root) # => Root
-      #
-      # @return [Class<Module>] Plugin core module
-      #
       def find_plugin(name) # :nodoc:
         return name if name.is_a?(Module)
         return @plugins[name] if @plugins.key?(name)

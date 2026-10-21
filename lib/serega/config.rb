@@ -57,18 +57,10 @@ class Serega
 
     # Config options
     module SeregaConfigInstanceMethods
-      #
       # Shows current config as Hash
-      #
-      # @return [Hash] config options
-      #
       attr_reader :opts # :nodoc:
 
-      #
       # Initializes new config instance.
-      #
-      # @param opts [Hash] Initial config options
-      #
       def initialize(opts = nil) # :nodoc:
         opts ||= DEFAULTS
         @opts = SeregaUtils::EnumDeepDup.call(opts)
@@ -76,23 +68,17 @@ class Serega
         @plugin_configs = {}
       end
 
-      #
       # Shows used plugins
-      #
-      # @return [Array] Used plugins
-      #
       def plugins # :nodoc:
         opts.fetch(:plugins)
       end
 
       # Returns options names allowed in `Serega.attribute` method
-      # @return [Array<Symbol>] Allowed options keys for attribute initialization
       def attribute_keys # :nodoc:
         opts.fetch(:attribute_keys)
       end
 
       # Returns options names allowed in `call, to_h` methods
-      # @return [Array<Symbol>] Allowed options keys for serialization
       def serialize_keys # :nodoc:
         opts.fetch(:serialize_keys)
       end
@@ -193,12 +179,8 @@ class Serega
           end
       end
 
-      #
       # Builds lazy config objects before freezing, thus a frozen config
       # returns them
-      #
-      # @return [SeregaConfig] frozen config
-      #
       def freeze # :nodoc:
         hash_access
         super
@@ -273,16 +255,10 @@ class Serega
 
     # Defaults of the `hash_access:` attribute option, `config.hash_access`
     class HashAccessConfig
-      # @return [Hash] hash_access config options
+      # hash_access config options
       attr_reader :opts # :nodoc:
 
-      #
       # Initializes HashAccessConfig object
-      #
-      # @param opts [Hash] hash_access config options
-      #
-      # @return [Serega::SeregaConfig::HashAccessConfig]
-      #
       def initialize(opts) # :nodoc:
         @opts = opts
       end

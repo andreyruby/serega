@@ -19,11 +19,9 @@ require_relative "serega/version"
 # See the [guides](https://github.com/andreyruby/serega/blob/master/docs/README.md).
 class Serega
   # Frozen hash
-  # @return [Hash] frozen hash
   FROZEN_EMPTY_HASH = {}.freeze # :nodoc:
 
   # Frozen array
-  # @return [Array] frozen array
   FROZEN_EMPTY_ARRAY = [].freeze # :nodoc:
 
   # Locks serializers one at a time
@@ -153,13 +151,7 @@ class Serega
       plugin
     end
 
-    #
     # Checks plugin is used
-    #
-    # @param name [Symbol, Class<Module>] Plugin name or plugin module itself
-    #
-    # @return [Boolean] Is plugin used
-    #
     def plugin_used?(name) # :nodoc:
       plugin_name =
         case name
@@ -181,29 +173,17 @@ class Serega
       @attributes
     end
 
-    #
     # Lists defined batch loaders
-    #
-    # @return [Hash] batch loaders list
-    #
     def batch_loaders # :nodoc:
       @batch_loaders
     end
 
-    #
     # Lists defined formatters
-    #
-    # @return [Hash<Symbol, SeregaFormatter>] Formatters by name
-    #
     def formatters # :nodoc:
       @formatters
     end
 
-    #
     # Cached serialization plans
-    #
-    # @return [SeregaPlan::Cache, SeregaPlan::PerRactorCache] Serialization plans cache
-    #
     def plan_cache # :nodoc:
       @plan_cache
     # :nocov:
@@ -214,35 +194,21 @@ class Serega
       # :nocov:
     end
 
-    #
     # Lists blocks given to `presenter`, in definition order
-    #
-    # @return [Array<Proc>] presenter blocks list
-    #
     def presenter_blocks # :nodoc:
       @presenter_blocks
     end
 
-    #
     # Returns (and caches) the Data class of the serialized objects with the
     # given members
-    #
-    # @param point_names [Array<Symbol>] Attribute names for the Data members
-    # @return [Class] Subclass of Data
-    #
     def data_class_for(point_names) # :nodoc:
       classes = @data_classes
       classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :data_classes)) { {} } if classes.frozen?
       classes[point_names] ||= Data.define(*point_names)
     end
 
-    #
     # Returns (and caches) the Struct class of the serialized objects with
     # the given members
-    #
-    # @param point_names [Array<Symbol>] Attribute names for the Struct members
-    # @return [Class] Subclass of Struct
-    #
     def struct_class_for(point_names) # :nodoc:
       classes = @struct_classes
       classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :struct_classes)) { {} } if classes.frozen?
@@ -416,11 +382,7 @@ class Serega
       @prepare_initial_objects = handler
     end
 
-    #
     # Signature of the registered prepare_initial_objects handler
-    #
-    # @return [String, nil] Handler signature
-    #
     attr_reader :prepare_initial_objects_signature # :nodoc:
 
     # Patched in:
@@ -499,12 +461,8 @@ class Serega
 
     alias_method :to_h, :call
 
-    #
     # Locks serializer definitions and config from changes.
     # Called when a serialization plan is built for the serializer.
-    #
-    # @return [void]
-    #
     def lock # :nodoc:
       return if @locked
 
@@ -549,11 +507,7 @@ class Serega
       self
     end
 
-    #
     # Shows whether `make_shareable!` was called
-    #
-    # @return [Boolean] whether the serializer is shareable
-    #
     def shareable? # :nodoc:
       @shareable
     end
@@ -644,11 +598,8 @@ class Serega
       @plan = self.class.plan_cache.fetch(only, with, except, check_initiate_params: modifiers && check_initiate_params)
     end
 
-    #
     # Plan for serialization.
     # This plan can be traversed to find serialized attributes and nested attributes.
-    #
-    # @return [Serega::SeregaPlan] Serialization plan
     attr_reader :plan # :nodoc:
 
     # Patched in:

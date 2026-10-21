@@ -11,30 +11,17 @@ class Serega
       CachedPlan = Struct.new(:plan, :validated)
       private_constant :CachedPlan
 
-      #
       # Initializes empty plans cache of the serializer
-      #
-      # @param serializer_class [Class<Serega>] Serializer of the plans
-      #
       def initialize(serializer_class)
         @serializer_class = serializer_class
         @default_plan = nil
         @plans = {}
       end
 
-      #
       # Returns serialization plan for provided modifiers.
       # The plan without modifiers is always cached; plans with modifiers are
       # cached by modifiers as provided when `max_cached_plans_per_serializer_count`
       # is positive. Modifiers are parsed and validated when a plan is built.
-      #
-      # @param only [Hash, Array, String, Symbol, nil] The only attributes to serialize
-      # @param with [Hash, Array, String, Symbol, nil] Attributes (usually marked `hide: true`) to serialize additionally
-      # @param except [Hash, Array, String, Symbol, nil] Attributes to hide
-      # @param check_initiate_params [Boolean] Validates modifiers
-      #
-      # @return [SeregaPlan] Serialization plan
-      #
       def fetch(only, with, except, check_initiate_params: false)
         return default_plan if only.nil? && with.nil? && except.nil?
 

@@ -18,18 +18,7 @@ class Serega
           @error_attributes = nil
         end
 
-        #
         # Validates provided fields names are existing attributes
-        #
-        # @param serializer_class [Serega]
-        # @param only [Hash] `only` modifier
-        # @param with [Hash] `with` modifier
-        # @param except [Hash] `except` modifier
-        #
-        # @raise [Serega::AttributeNotExist] when some checked modifier has not existing attribute
-        #
-        # @return [void]
-        #
         def call(serializer_class, only, with, except)
           validate(serializer_class, only)
           validate(serializer_class, with)

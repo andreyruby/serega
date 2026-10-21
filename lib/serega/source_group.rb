@@ -13,34 +13,28 @@ class Serega
   #   are built, thus the relation values are ready.
   #
   class SeregaSourceGroup # :nodoc:
-    # @return [SeregaEngine::Run] Serialization run
+    # Serialization run
     attr_reader :run
 
-    # @return [SeregaPlan] Serialization plan
+    # Serialization plan
     attr_reader :plan
 
-    # @return [Hash] Serialization context
+    # Serialization context
     attr_reader :context
 
-    # @return [Array] Sources (or their presenters)
+    # Sources (or their presenters)
     attr_reader :sources
 
-    # @return [Array<Hash, Struct, Data>, nil] Serialized object of each
-    #   source, after #build
+    # Serialized object of each
+    # source, after #build
     attr_reader :serialized
 
-    # @return [Array<Integer, nil, Object>] Pulls from
-    #   `SeregaEngine::Pulls.collect`, one per source of the parent group
+    # Pulls from
+    # `SeregaEngine::Pulls.collect`, one per source of the parent group
     attr_reader :pulls
 
     # Each source is wrapped in the serializer's presenter, so value reading
     # and batch loaders alike see presenters.
-    #
-    # @param run [SeregaEngine::Run] Serialization run
-    # @param plan [SeregaPlan] Serialization plan
-    # @param sources [Array] Sources
-    # @param pulls [Array<Integer, nil, Object>] Pulls from
-    #   `SeregaEngine::Pulls.collect`, one per source of the parent group
     def initialize(run, plan, sources, pulls)
       @run = run
       @plan = plan
@@ -55,8 +49,6 @@ class Serega
     end
 
     # Runs the preloads, and makes one child group per relation point.
-    #
-    # @return [Array<SeregaSourceGroup>] Child groups
     def discover
       run_preloads
 
@@ -68,8 +60,6 @@ class Serega
     end
 
     # Builds the serialized objects.
-    #
-    # @return [void]
     def build
       batches = plan.points.map { |point| batches_for(point) } if plan.batch_points?
       relations = @child_groups&.transform_values do |child_group|
@@ -117,10 +107,8 @@ class Serega
 
     # Loads the batch loaders of the point, each once for all sources of
     # the group. An attribute with an inline batch loader uses it, other
-    # attributes use the named batch loaders of the serializer.
-    #
-    # @return [Hash, nil] Loaded values per loader name, or nil when the
-    #   point has no batch loaders
+    # attributes use the named batch loaders of the serializer. Returns nil
+    # when the point has no batch loaders.
     def batches_for(point)
       names = point.batch_loaders
       return if names.empty?
@@ -144,8 +132,6 @@ class Serega
 
     # Reads the relation source of every source: what the relation
     # attribute returns, for example `user.posts`.
-    #
-    # @return [Array] Relation source of each source
     def read_relation_sources(point, batches)
       attribute = point.attribute
       value_method = attribute.value_method
@@ -163,8 +149,6 @@ class Serega
 
     # Reads the relation source of every source of a conditional relation.
     # A source failing the :if or :unless condition gets SKIP.
-    #
-    # @return [Array] Relation source or SKIP of each source
     def read_conditional_relation_sources(point, batches)
       attribute = point.attribute
       value_method = attribute.value_method

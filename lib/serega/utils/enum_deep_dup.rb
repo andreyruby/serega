@@ -11,14 +11,8 @@ class Serega
     #
     class EnumDeepDup # :nodoc:
       class << self
-        #
         # Deeply duplicate provided Array, Hash or String data
         # It does not duplicate any other values
-        #
-        # @param data [Hash, Array, String] Data to duplicate
-        #
-        # @return [Hash, Array, String] Duplicated data
-        #
         def call(data)
           case data
           when Hash

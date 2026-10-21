@@ -15,13 +15,7 @@ class Serega
         @id_method = id_method
       end
 
-      #
       # Finds the object attribute value in the loaded batches
-      #
-      # @param obj [Object] Object to serialize
-      # @param batches [Hash] Loaded batches by loader name
-      # @return [Object] Attribute value
-      #
       def call(obj, batches:)
         batches.fetch(@loader_name)[obj.public_send(@id_method)]
       end

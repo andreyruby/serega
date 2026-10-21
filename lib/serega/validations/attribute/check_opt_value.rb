@@ -8,15 +8,7 @@ class Serega
       #
       class CheckOptValue # :nodoc:
         class << self
-          #
           # Checks attribute :value option
-          #
-          # @param opts [Hash] Attribute options
-          #
-          # @raise [SeregaError] SeregaError that option has invalid value
-          #
-          # @return [void]
-          #
           def call(opts)
             return unless opts.key?(:value)
 

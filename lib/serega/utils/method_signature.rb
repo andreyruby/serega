@@ -15,16 +15,9 @@ class Serega
       private_constant :SYMBOL_TO_PROC_SIGNATURE_RUBY3
 
       class << self
-        #
-        # Generates method arguments signature
-        #
-        # @param callable [#call] callable object
-        # @param pos_limit [Integer] Max count of positional parameters
-        # @param keyword_args [Array<Symbol>] List of accepted keyword argument names
-        #
-        # @return [String] Method signature which consist of number of positional parameters and
-        #    keyword parameter names joined with undescrore.
-        #
+        # Generates method arguments signature: the count of positional
+        # parameters and the keyword parameter names, joined with underscores,
+        # like "1_ctx"
         def call(callable, pos_limit:, keyword_args: [])
           params = (callable.is_a?(Proc) || callable.is_a?(Method)) ? callable.parameters : callable.method(:call).parameters
 

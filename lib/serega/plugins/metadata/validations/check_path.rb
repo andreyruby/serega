@@ -14,15 +14,8 @@ class Serega
           private_constant :FORMAT
 
           class << self
-            #
             # Checks allowed characters.
             # Allowed characters: "a-z", "A-Z", "0-9", "_", "-", "~".
-            #
-            # @param path [Array<String, Symbol>] Metadata attribute path names
-            #
-            # @raise [SeregaError] when metadata attribute name has invalid format
-            # @return [void]
-            #
             def call(path)
               path.each { |attr_name| check_name(attr_name) }
             end

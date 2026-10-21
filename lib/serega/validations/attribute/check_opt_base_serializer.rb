@@ -8,18 +8,9 @@ class Serega
       #
       class CheckOptBaseSerializer # :nodoc:
         class << self
-          #
           # Checks attribute :base_serializer option. It specifies the parent
           # class for the nested serializer defined with the attribute block,
           # so it makes sense only when a block is provided.
-          #
-          # @param opts [Hash] Attribute options
-          # @param block [nil, Proc] Attribute block (defines a nested serializer)
-          #
-          # @raise [SeregaError] SeregaError that option has invalid value
-          #
-          # @return [void]
-          #
           def call(opts, block = nil)
             return unless opts.key?(:base_serializer)
 

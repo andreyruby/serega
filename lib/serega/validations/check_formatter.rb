@@ -8,20 +8,10 @@ class Serega
     #
     class CheckFormatter # :nodoc:
       class << self
-        #
         # Checks the formatter is a callable with valid parameters, a method
         # name, or an Array of a method name and its arguments. The attribute
         # :format option also accepts a Hash with one of them as :use and the
         # :allow_nil option.
-        #
-        # @param formatter_name [Symbol, nil] Name of the formatter, nil for the
-        #   attribute :format option
-        # @param formatter [#call, Symbol, Array, Hash] Formatter
-        #
-        # @raise [SeregaError] Formatter validation error
-        #
-        # @return [void]
-        #
         def call(formatter_name, formatter)
           if formatter.is_a?(Hash) && !formatter_name
             Utils::CheckAllowedKeys.call(formatter, %i[use allow_nil], :formatter)

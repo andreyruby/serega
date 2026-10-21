@@ -9,25 +9,16 @@ class Serega
     # Validations for attribute params
     #
     class CheckAttributeParams # :nodoc:
-      # @return [Symbol] validated attribute name
+      # Validated attribute name
       attr_reader :name
 
-      # @return [Hash] validated attribute options
+      # Validated attribute options
       attr_reader :opts
 
-      # @return [nil, Proc] validated attribute block
+      # Validated attribute block
       attr_reader :block
 
-      #
       # Initializes attribute params validator
-      #
-      # @param serializer_class [Class<Serega>] serializer of the attribute
-      # @param name [Symbol] attribute name
-      # @param opts [Hash] attribute options
-      # @param block [nil, Proc] block provided to attribute
-      #
-      # @return [void]
-      #
       def initialize(serializer_class, name, opts, block)
         @serializer_class = serializer_class
         @name = name

@@ -8,17 +8,7 @@ class Serega
       #
       class CheckOptBatch # :nodoc:
         class << self
-          #
           # Checks attribute :batch option
-          #
-          # @param serializer_class [Class<Serega>] Serializer of the attribute
-          # @param name [Symbol, String] Attribute name
-          # @param opts [Hash] Attribute options
-          #
-          # @raise [SeregaError] Attribute validation error
-          #
-          # @return [void]
-          #
           def call(serializer_class, name, opts)
             return unless opts.key?(:batch)
 

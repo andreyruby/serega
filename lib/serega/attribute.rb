@@ -6,67 +6,41 @@ class Serega
   #
   class SeregaAttribute # :nodoc:
     # Serializer of the attribute
-    # @return [Class<Serega>] Serializer of the attribute
     attr_reader :serializer_class
 
     # Attribute initial params
-    # @return [Hash] Attribute initial params
     attr_reader :initials
 
     # Attribute name
-    # @return [Symbol] Attribute name
     attr_reader :name
 
     # Where the attribute is defined
-    # @return [String, nil] "path:line" of the `attribute` call
     def location
       initials[:location]
     end
 
     # Attribute :many option
-    # @return [Boolean, nil] Attribute :many option
     attr_reader :many
 
     # Attribute :default option
-    # @return [Object, nil] Attribute :default option
     attr_reader :default
 
     # Attribute :hide option
-    # @return [Boolean, nil] Attribute :hide option
     attr_reader :hide
 
     # Attribute :preloads option
-    # @return [Hash, nil] Attribute :preloads option
     attr_reader :preloads
 
     # Batch loader names required to detect attribute value
-    # @return [Array<Symbol>] Batch loader names
     attr_reader :batch_loaders
 
     # Batch loader given directly as the :batch option
-    # @return [SeregaBatchLoader, nil] Batch loader of this attribute only
     attr_reader :inline_batch_loader
 
     # Attribute :if, :unless, :if_value and :unless_value conditions
-    # @return [SeregaConditions, nil] Conditions, or nil without conditions
     attr_reader :conditions
 
-    #
     # Initializes new attribute
-    #
-    # @param serializer_class [Class<Serega>] Serializer of the attribute
-    # @param name [Symbol, String] Name of attribute
-    # @param opts [Hash] Attribute options
-    # @option opts [Symbol] :method Object method name to fetch attribute value
-    # @option opts [Hash] :delegate Allows to fetch value from nested object
-    # @option opts [Boolean] :hide Specify `true` to not serialize this attribute by default
-    # @option opts [Boolean] :many Specifies has_many relationship. By default is detected via object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)
-    # @option opts [Proc, #call] :value Custom block or callable to find attribute value
-    # @option opts [Symbol, #call, Array, Hash] :format Formatter name or formatter that formats the value
-    # @option opts [Serega, Proc] :serializer Relationship serializer class. Use `proc { MySerializer }` if serializers have cross references
-    # @param block [Proc] Defines attributes of a nested anonymous serializer
-    # @param location [String, nil] Where the attribute is defined, "path:line"
-    #
     def initialize(serializer_class, name:, opts: {}, block: nil, location: nil)
       SeregaValidations::CheckAttributeParams.new(serializer_class, name, opts, block).validate
 
@@ -84,23 +58,20 @@ class Serega
     end
 
     # Name of the SeregaAttributeValues method that reads the value
-    # @return [Symbol, nil] Method name, or nil when the value is read with #value
     attr_reader :value_method
 
-    # @return [Boolean] Whether the attribute has an :if, :unless, :if_value or :unless_value condition
+    # Whether the attribute has an :if, :unless, :if_value or :unless_value condition
     def conditional?
       !@conditions.nil?
     end
 
     # Shows whether attribute has specified serializer
-    # @return [Boolean] Checks if attribute is relationship (if :serializer option exists)
     def relation?
       !@serializer.nil?
     end
 
     # Shows specified serializer class. A frozen attribute resolves its
     # String or Proc serializer on each call.
-    # @return [Serega, nil] Attribute serializer if exists
     def serializer
       serializer = @serializer
       return serializer if (serializer.is_a?(Class) && (serializer < Serega)) || !serializer
@@ -109,17 +80,10 @@ class Serega
       frozen? ? serializer : (@serializer = serializer)
     end
 
-    #
     # Finds attribute value
     #
     # Generated code reads plain attributes without this method, with
     # their #value_code.
-    #
-    # @param object [Object] Object to serialize
-    # @param context [Hash, nil] Serialization context
-    #
-    # @return [Object] Serialized attribute value
-    #
     def value(object, context, batches: nil)
       # Signatures should match allowed signatures in CheckOptValue
       result =
@@ -137,17 +101,9 @@ class Serega
       @formatter ? @formatter.call(result, context) : result
     end
 
-    #
     # Ruby code that reads the attribute value of the source. `:const` and
     # `:default` values and formatters come from the `CONSTANTS`,
     # `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` of SeregaAttributeValues.
-    #
-    # @param source_variable [String] Name of the source variable in the code
-    # @param constants_prefix [String] Code before the constant names, for
-    #   example `SeregaAttributeValues::`
-    #
-    # @return [String, nil] Code, or nil when the value is read with #value
-    #
     def value_code(source_variable, constants_prefix = "")
       code =
         case @value_block
@@ -169,17 +125,7 @@ class Serega
       @formatter.code(code, "#{constants_prefix}FORMATTERS[#{name.inspect}]", "#{constants_prefix}FORMATTER_ARGS[#{name.inspect}]")
     end
 
-    #
     # Checks if attribute must be added to serialized response
-    #
-    # @param only [Hash] The only attributes to serialize
-    # @param except [Hash] Attributes to hide
-    # @param with [Hash] Hidden attributes to serialize additionally
-    # @param only_limits [Boolean] Whether `only` hides the attributes it
-    #   does not name
-    #
-    # @return [Boolean]
-    #
     def visible?(only, except, with, only_limits)
       return false if except.member?(name) && except[name].empty?
       return true if only.member?(name) || with.member?(name)

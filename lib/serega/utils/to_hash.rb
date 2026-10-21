@@ -7,12 +7,8 @@ class Serega
     #
     class ToHash # :nodoc:
       class << self
-        #
         # Constructs deep hashes from provided data
         #
-        # @param value [Array, Hash, String, Symbol, NilClass, FalseClass, TrueClass] Value to transform
-        #
-        # @example
         #   Serega::SeregaUtils::ToHash.(nil) # => {}
         #   Serega::SeregaUtils::ToHash.(true) # => {}
         #   Serega::SeregaUtils::ToHash.(false) # => {}
@@ -22,9 +18,6 @@ class Serega
         #   Serega::SeregaUtils::ToHash.({ foo: nil, bar: true }) # => {:foo=>{}, :bar=>{}}
         #   Serega::SeregaUtils::ToHash.({ foo: :bar }) # => {:foo=>{:bar=>{}}}
         #   Serega::SeregaUtils::ToHash.({ foo: [:bar] }) # => {:foo=>{:bar=>{}}}
-        #
-        # @return [Hash] Transformed data
-        #
         def call(value)
           case value
           when Array then array_to_hash(value)

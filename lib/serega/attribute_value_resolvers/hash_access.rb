@@ -15,15 +15,7 @@ class Serega
     # hash access on any of its steps
     #
     class HashAccessDelegateResolver # :nodoc:
-      #
       # Creates resolver that delegates through the provided step readers
-      #
-      # @param to_step [#call] reader of the intermediate object
-      # @param final_step [#call] reader of the final value
-      # @param delegate_allow_nil [Boolean] whether a nil intermediate object resolves to nil
-      #
-      # @return [HashAccessDelegate, HashAccessDelegateAllowNil] resolver instance
-      #
       def self.get(to_step, final_step, delegate_allow_nil)
         delegate_allow_nil ? HashAccessDelegateAllowNil.new(to_step, final_step) : HashAccessDelegate.new(to_step, final_step)
       end
@@ -38,12 +30,7 @@ class Serega
         @allow_missing_key = allow_missing_key
       end
 
-      #
       # Reads the key from the record
-      #
-      # @param object [Object] object to serialize or delegation step value
-      # @return [Object] the value found
-      #
       def call(object)
         return object[@key] if @allow_missing_key
 
@@ -53,12 +40,7 @@ class Serega
         end
       end
 
-      #
       # Ruby code that reads the key, the same way as #call
-      #
-      # @param source_variable [String] Name of the source variable in the code
-      # @return [String] Code
-      #
       def code(source_variable)
         key = @key.is_a?(String) ? "#{@key.inspect}.freeze" : @key.inspect
         return "#{source_variable}[#{key}]" if @allow_missing_key
@@ -76,22 +58,12 @@ class Serega
         @final_step = final_step
       end
 
-      #
       # Delegates the value reading through the intermediate object
-      #
-      # @param object [Object] object to serialize
-      # @return [Object] the value found
-      #
       def call(object)
         @final_step.call(@to_step.call(object))
       end
 
-      #
       # Ruby code that delegates the value reading, the same way as #call
-      #
-      # @param source_variable [String] Name of the source variable in the code
-      # @return [String, nil] Code, or nil when a step has no code
-      #
       def code(source_variable)
         to_code = @to_step.code(source_variable)
         final_code = @final_step.code("intermediate")
@@ -110,13 +82,8 @@ class Serega
         @final_step = final_step
       end
 
-      #
       # Delegates the value reading through the intermediate object,
       # resolving a nil intermediate to nil
-      #
-      # @param object [Object] object to serialize
-      # @return [Object, nil] the value found
-      #
       def call(object)
         intermediate = @to_step.call(object)
         return if intermediate.nil?
@@ -124,12 +91,7 @@ class Serega
         @final_step.call(intermediate)
       end
 
-      #
       # Ruby code that delegates the value reading, the same way as #call
-      #
-      # @param source_variable [String] Name of the source variable in the code
-      # @return [String, nil] Code, or nil when a step has no code
-      #
       def code(source_variable)
         to_code = @to_step.code(source_variable)
         final_code = @final_step.code("intermediate")

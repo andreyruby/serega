@@ -8,15 +8,7 @@ class Serega
       #
       class CheckOptUnlessValue # :nodoc:
         class << self
-          #
           # Checks attribute :unless_value option that must be [nil, Symbol, Proc, #call]
-          #
-          # @param opts [Hash] Attribute options
-          #
-          # @raise [SeregaError] Attribute validation error
-          #
-          # @return [void]
-          #
           def call(opts)
             return unless opts.key?(:unless_value)
 

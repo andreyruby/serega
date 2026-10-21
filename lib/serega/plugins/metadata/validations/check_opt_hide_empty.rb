@@ -9,15 +9,7 @@ class Serega
         #
         class CheckOptHideEmpty # :nodoc:
           class << self
-            #
             # Checks attribute :hide_empty option
-            #
-            # @param opts [Hash] Attribute options
-            #
-            # @raise [SeregaError] SeregaError that option has invalid value
-            #
-            # @return [void]
-            #
             def call(opts)
               return unless opts.key?(:hide_empty)
 

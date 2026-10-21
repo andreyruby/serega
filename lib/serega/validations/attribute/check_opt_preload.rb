@@ -8,14 +8,7 @@ class Serega
       #
       class CheckOptPreload # :nodoc:
         class << self
-          #
           # Checks :preload option
-          #
-          # @param opts [Hash] Attribute options
-          #
-          # @raise [SeregaError] validation error
-          #
-          # @return [void]
           def call(opts)
             return unless opts.key?(:preload)
 
