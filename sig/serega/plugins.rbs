@@ -5,19 +5,6 @@ class Serega
     module ActiverecordPreloads
     end
 
-    module CamelCase
-      module ConfigInstanceMethods
-        def camel_case: () -> CamelCaseConfig
-      end
-
-      class CamelCaseConfig
-        def initialize: (Hash[Symbol, untyped] opts) -> void
-
-        def transform: () -> untyped
-        def transform=: (untyped value) -> untyped
-      end
-    end
-
     module ContextMetadata
       module ConfigInstanceMethods
         def context_metadata: () -> ContextMetadataConfig

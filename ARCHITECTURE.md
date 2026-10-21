@@ -242,7 +242,6 @@ Each serializer class gets subclasses of `SeregaConfig`, `SeregaAttributeNormali
 |---|---|---|
 | `:root` | `Serega#serialize` | wraps the serialized object(s): `{root => serialized}` |
 | `:metadata`, `:context_metadata` | `Serega#serialize` | add metadata keys next to the root key |
-| `:camel_case` | `SeregaAttributeNormalizer` | camelizes attribute names |
 | `:activerecord_preloads` | `preload_with` handler | runs `ActiveRecord::Associations::Preloader` in `SeregaSourceGroup#run_preloads` |
 | `:string_modifiers` | `Serega.plan_cache_class` | returns its `SeregaPlan::Cache` subclass that parses modifiers from strings like `"name,posts(title)"` |
 

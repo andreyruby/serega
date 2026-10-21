@@ -259,6 +259,14 @@ they can be used in URLs without escaping. Other names raise
 `Serega::SeregaError`. `config.check_attribute_name = false` turns the check
 off.
 
+The name is the serialized key as is. A camelCase key reads its value with
+`:method`:
+
+```ruby
+attribute :firstName, method: :first_name
+# => {firstName: "Bruce"}
+```
+
 ## Listing attributes
 
 `.attributes` returns the attributes by name, hidden and inherited ones too:

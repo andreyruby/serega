@@ -263,10 +263,10 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       end
 
       it "inherits base serializer plugins" do
-        base_serializer.plugin :camel_case
+        base_serializer.plugin :string_modifiers
         nested = nested_serializer_for(proc { attribute :name })
 
-        expect(nested.plugin_used?(:camel_case)).to be true
+        expect(nested.plugin_used?(:string_modifiers)).to be true
       end
 
       it "inherits base serializer config without sharing it" do

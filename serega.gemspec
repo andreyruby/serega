@@ -13,8 +13,8 @@ Gem::Specification.new do |spec|
     Serializes Ruby objects into Hashes, ready for further conversion to JSON
     or other formats, with a simple DSL for selecting fields and solving N+1
     queries through batch loading. Extendable through a Roda/Shrine-style
-    plugin system, with built-in plugins for presenters, formatters, camel_case
-    keys, depth limiting, and more. No runtime dependencies.
+    plugin system, with built-in plugins for presenters, formatters, depth
+    limiting, and more. No runtime dependencies.
   DESC
   spec.homepage = "https://github.com/andreyruby/serega"
   spec.license = "MIT"
