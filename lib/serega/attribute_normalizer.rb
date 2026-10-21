@@ -16,11 +16,13 @@ class Serega
       #
       # Instantiates attribute options normalizer
       #
+      # @param serializer_class [Class<Serega>] Serializer of the attribute
       # @param initials [Hash] new attribute options
       #
       # @return [SeregaAttributeNormalizer] Instantiated attribute options normalizer
       #
-      def initialize(initials)
+      def initialize(serializer_class, initials)
+        @serializer_class = serializer_class
         @init_name = initials[:name]
         @init_opts = initials[:opts]
         @init_block = initials[:block]
@@ -165,7 +167,7 @@ class Serega
         format = init_opts[:format]
         return unless format
 
-        format.is_a?(Symbol) ? self.class.serializer_class.formatters.fetch(format) : SeregaFormatter.new(format)
+        format.is_a?(Symbol) ? @serializer_class.formatters.fetch(format) : SeregaFormatter.new(format)
       end
 
       private
@@ -208,7 +210,7 @@ class Serega
       end
 
       def config
-        self.class.serializer_class.config
+        @serializer_class.config
       end
 
       def prepare_many
@@ -257,7 +259,7 @@ class Serega
       end
 
       def build_block_serializer(block)
-        label = "#{self.class.serializer_class.inspect}.<#{name}>"
+        label = "#{@serializer_class.inspect}.<#{name}>"
 
         serializer = Class.new(block_base_serializer) do
           define_singleton_method(:inspect) { label }
@@ -440,7 +442,6 @@ class Serega
       end
     end
 
-    extend Serega::SeregaHelpers::SerializerClassHelper
     include AttributeNormalizerInstanceMethods
   end
 end

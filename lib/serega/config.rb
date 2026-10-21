@@ -318,6 +318,5 @@ class Serega
     end
 
     include SeregaConfigInstanceMethods
-    extend Serega::SeregaHelpers::SerializerClassHelper
   end
 end

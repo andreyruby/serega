@@ -25,13 +25,15 @@ class Serega
         #
         # Initializes attribute params validator
         #
+        # @param serializer_class [Class<Serega>] serializer of the attribute
         # @param name [Symbol] attribute name
         # @param opts [Hash] attribute options
         # @param block [nil, Proc] block provided to attribute
         #
         # @return [void]
         #
-        def initialize(name, opts, block)
+        def initialize(serializer_class, name, opts, block)
+          @serializer_class = serializer_class
           @name = name
           @opts = opts
           @block = block
@@ -58,7 +60,7 @@ class Serega
           Attribute::CheckOptBaseSerializer.call(opts, block)
           Attribute::CheckOptConst.call(opts)
           Attribute::CheckOptDelegate.call(opts)
-          Attribute::CheckOptFormat.call(opts, self.class.serializer_class)
+          Attribute::CheckOptFormat.call(opts, @serializer_class)
           Attribute::CheckOptHashAccess.call(opts)
           Attribute::CheckOptHide.call(opts)
           Attribute::CheckOptIf.call(opts)
@@ -70,7 +72,7 @@ class Serega
           Attribute::CheckOptUnless.call(opts)
           Attribute::CheckOptUnlessValue.call(opts)
           Attribute::CheckOptValue.call(opts)
-          Attribute::CheckOptBatch.call(self.class.serializer_class, name, opts)
+          Attribute::CheckOptBatch.call(@serializer_class, name, opts)
         end
 
         def check_block
@@ -78,20 +80,19 @@ class Serega
         end
 
         def allowed_opts_keys
-          self.class.serializer_class.config.attribute_keys
+          @serializer_class.config.attribute_keys
         end
 
         def check_attribute_name
-          self.class.serializer_class.config.check_attribute_name
+          @serializer_class.config.check_attribute_name
         end
 
         def require_many
-          self.class.serializer_class.config.require_many
+          @serializer_class.config.require_many
         end
       end
 
       include InstanceMethods
-      extend Serega::SeregaHelpers::SerializerClassHelper
     end
   end
 end

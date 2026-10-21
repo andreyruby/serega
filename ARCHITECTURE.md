@@ -234,7 +234,7 @@ It finds the line of the generated code as the first line from the bottom that d
 
 ## Per-serializer classes
 
-Each serializer class gets subclasses of `SeregaConfig`, `SeregaAttributeNormalizer`, `CheckAttributeParams`, `CheckSerializeParams` and `SeregaAttributeValues` in its `inherited` hook (`lib/serega.rb`), for example `UserSerializer::SeregaConfig`. `serializer_class` on these classes returns the serializer, and `SeregaAttributeValues` holds the value methods of the serializer's attributes. Plugins include modules into these subclasses. Thus a plugin changes only the serializer that loads it, and the serializer's subclasses. Other internal classes are shared by all serializers, and plugins do not include modules into them: an attribute, a plan and a plans cache get their serializer in `new`, a plan point and a source group read it from their plan, and each result builder is the instance of its own subclass of `SeregaResultBuilder`.
+Each serializer class gets subclasses of `SeregaConfig` and `SeregaAttributeValues` in its `inherited` hook (`lib/serega.rb`), for example `UserSerializer::SeregaConfig`. Plugins include their config modules into the `SeregaConfig` subclass, thus a plugin changes only the config of the serializer that loads it, and of the serializer's subclasses. `SeregaAttributeValues` holds the value methods of the serializer's attributes. Other internal classes are shared by all serializers, and plugins do not include modules into them: an attribute, its normalizer and its params check, a plan and a plans cache get their serializer in `new`, a plan point and a source group read it from their plan, and each result builder is the instance of its own subclass of `SeregaResultBuilder`.
 
 ## Where plugins change the flow
 

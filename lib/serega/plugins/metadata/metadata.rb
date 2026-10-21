@@ -54,10 +54,6 @@ class Serega
         require_relative "validations/check_opt_value"
         require_relative "validations/check_opts"
         require_relative "validations/check_path"
-
-        meta_attribute_class = Class.new(MetaAttribute)
-        meta_attribute_class.serializer_class = serializer_class
-        serializer_class.const_set(:MetaAttribute, meta_attribute_class)
       end
 
       #
@@ -141,7 +137,7 @@ class Serega
         # ```
         def meta_attribute(*path, **opts, &block)
           check_unlocked
-          attribute = self::MetaAttribute.new(path: path, opts: opts, block: block)
+          attribute = MetaAttribute.new(self, path: path, opts: opts, block: block)
           meta_attributes[attribute.name] = attribute
         end
 
@@ -150,9 +146,6 @@ class Serega
         def inherited(subclass)
           super
 
-          meta_attribute_class = Class.new(self::MetaAttribute)
-          meta_attribute_class.serializer_class = subclass
-          subclass.const_set(:MetaAttribute, meta_attribute_class)
           subclass.instance_variable_set(:@meta_attributes, {})
 
           # Assign same metadata attributes

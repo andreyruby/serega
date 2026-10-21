@@ -7,8 +7,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
   let(:name) { :name }
   let(:opts) { {opt1: :foo, opt2: :bar} }
   let(:block) { proc {} }
-  let(:params) { [name, opts, block] }
-  let(:described_class) { serializer::CheckAttributeParams }
+  let(:params) { [serializer, name, opts, block] }
 
   before do
     allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call)

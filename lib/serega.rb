@@ -40,7 +40,6 @@ class Serega
 end
 
 require_relative "serega/errors"
-require_relative "serega/helpers/serializer_class_helper"
 require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
@@ -88,7 +87,6 @@ require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_formatter"
 require_relative "serega/validations/check_serialize_keywords"
-require_relative "serega/validations/check_serialize_params"
 
 require_relative "serega/batch_loader"
 require_relative "serega/config"
@@ -110,16 +108,6 @@ class Serega
   @presenter_blocks = []
   @data_classes = {}
   @struct_classes = {}
-
-  # Validates `Serializer.attribute` params
-  check_attribute_params_class = Class.new(SeregaValidations::CheckAttributeParams)
-  check_attribute_params_class.serializer_class = self
-  const_set(:CheckAttributeParams, check_attribute_params_class)
-
-  # Validates `serializer#call(obj, PARAMS)` params
-  check_serialize_params_class = Class.new(SeregaValidations::CheckSerializeParams)
-  check_serialize_params_class.serializer_class = self
-  const_set(:CheckSerializeParams, check_serialize_params_class)
 
   #
   # Class methods of serializers: they define attributes and serialize
@@ -578,11 +566,9 @@ class Serega
     end
 
     # Patched in:
-    # - plugin :metadata (defines MetaAttribute and copies meta_attributes to subclasses)
+    # - plugin :metadata (copies meta_attributes to subclasses)
     def inherited(subclass)
-      config_class = Class.new(self::SeregaConfig)
-      config_class.serializer_class = subclass
-      subclass.const_set(:SeregaConfig, config_class)
+      subclass.const_set(:SeregaConfig, Class.new(self::SeregaConfig))
       subclass.instance_variable_set(:@config, subclass::SeregaConfig.new(config.opts))
       subclass.instance_variable_set(:@attributes, {})
       subclass.instance_variable_set(:@batch_loaders, {})
@@ -600,19 +586,7 @@ class Serega
 
       subclass.const_set(:SeregaAttributeValues, Class.new(self::SeregaAttributeValues))
 
-      attribute_normalizer_class = Class.new(self::SeregaAttributeNormalizer)
-      attribute_normalizer_class.serializer_class = subclass
-      subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
-
       subclass.instance_variable_set(:@plan_cache, SeregaPlan::Cache.new(subclass))
-
-      check_attribute_params_class = Class.new(self::CheckAttributeParams)
-      check_attribute_params_class.serializer_class = subclass
-      subclass.const_set(:CheckAttributeParams, check_attribute_params_class)
-
-      check_serialize_params_class = Class.new(self::CheckSerializeParams)
-      check_serialize_params_class.serializer_class = subclass
-      subclass.const_set(:CheckSerializeParams, check_serialize_params_class)
 
       # Assign same batch loaders before the attributes that use them
       batch_loaders.each_value do |loader|

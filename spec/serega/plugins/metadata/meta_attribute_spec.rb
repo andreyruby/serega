@@ -11,7 +11,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute do
   end
 
   describe "validations" do
-    subject(:validate) { serializer::MetaAttribute.new(path: path, opts: opts, block: block) }
+    subject(:validate) { described_class.new(serializer, path: path, opts: opts, block: block) }
 
     let(:path) { ["PATH"] }
     let(:opts) { {foo: :bar} }
@@ -63,7 +63,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute do
   end
 
   describe "#value" do
-    subject(:value) { serializer::MetaAttribute.new(path: ["path"], opts: opts, block: block).value(obj, ctx) }
+    subject(:value) { described_class.new(serializer, path: ["path"], opts: opts, block: block).value(obj, ctx) }
 
     let(:opts) { {} }
     let(:block) { nil }
@@ -120,7 +120,7 @@ RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute do
   end
 
   describe "#hide?" do
-    let(:attr) { serializer::MetaAttribute.new(path: ["path"], opts: opts, block: block) }
+    let(:attr) { described_class.new(serializer, path: ["path"], opts: opts, block: block) }
     let(:opts) { {} }
     let(:block) { proc {} }
 

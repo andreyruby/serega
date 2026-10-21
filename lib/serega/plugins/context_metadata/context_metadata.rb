@@ -55,7 +55,6 @@ class Serega
       def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
-        serializer_class::CheckSerializeParams.include(CheckSerializeParamsInstanceMethods)
       end
 
       #
@@ -119,28 +118,18 @@ class Serega
       end
 
       #
-      # CheckSerializeParams class additional/patched instance methods
-      #
-      # @see Serega::SeregaValidations::CheckSerializeParams
-      #
-      module CheckSerializeParamsInstanceMethods # :nodoc:
-        private
-
-        def check_opts
-          super
-
-          meta_key = self.class.serializer_class.config.context_metadata.key
-          SeregaValidations::Utils::CheckOptIsHash.call(opts, meta_key)
-        end
-      end
-
-      #
       # Serega additional/patched instance methods
       #
       # @see Serega
       #
       module InstanceMethods # :nodoc:
         private
+
+        def checked_opts(opts)
+          checked_opts = super
+          SeregaValidations::Utils::CheckOptIsHash.call(checked_opts, self.class.config.context_metadata.key)
+          checked_opts
+        end
 
         def serialize(object, opts, context, many, mode)
           result = super
