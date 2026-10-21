@@ -2,38 +2,18 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:metadata`: adds metadata defined with
+    # Serega::SeregaPlugins::Metadata::ClassMethods#meta_attribute. Load the
+    # `:root` plugin first.
     #
-    # Plugin :metadata
+    # ```ruby
+    # plugin :root
+    # plugin :metadata
     #
-    # Depends on: `:root` plugin, that must be loaded first
+    # meta_attribute :version, const: "1.2.3"
+    # ```
     #
-    # Adds metadata to the serialized response via the class-level
-    # `meta_attribute` method, which accepts:
-    #
-    # - `*path` [Array<Symbol>] - nested hash keys
-    # - `**options` [Hash]
-    #   - `:const` - a constant metadata value
-    #   - `:value` - a `#callable` producing the metadata value
-    #   - `:hide_nil` - hide the key if the value is nil (`false` by default)
-    #   - `:hide_empty` - hide the key if the value is nil or empty (`false` by default)
-    # - `&block` - computes the value for this meta attribute
-    #
-    # @example
-    #  class AppSerializer < Serega
-    #    plugin :root
-    #    plugin :metadata
-    #
-    #    meta_attribute(:version, const: '1.2.3')
-    #    meta_attribute(:ab_tests, :names, value: ABTests.new.method(:names))
-    #    meta_attribute(:meta, :paging, hide_nil: true) do |records, ctx|
-    #      next unless records.respond_to?(:total_count)
-    #
-    #      { page: records.page, per_page: records.per_page, total_count: records.total_count }
-    #    end
-    #  end
-    #
-    #  AppSerializer.to_h(nil) # => {:data=>nil, :version=>"1.2.3", :ab_tests=>{:names=> ... }}
-    #
+    # See [Plugin :metadata](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-metadata).
     module Metadata
       # @return [Symbol] Plugin name
       def self.plugin_name # :nodoc:
@@ -136,11 +116,7 @@ class Serega
         end
       end
 
-      #
-      # Serega class additional/patched class methods
-      #
-      # @see Serega::SeregaConfig
-      #
+      # Class methods the plugin adds to serializers
       module ClassMethods
         #
         # List of added metadata attributes
@@ -151,15 +127,18 @@ class Serega
           @meta_attributes
         end
 
+        # Adds metadata under a path of keys. The value is `const:`, a `value:`
+        # callable or a block, which receive the serialized objects and the
+        # context. `hide_nil: true` skips `nil` values, `hide_empty: true` skips
+        # `nil` and empty values.
         #
-        # Define metadata attribute
+        # ```ruby
+        # meta_attribute :meta, :paging, hide_nil: true do |records, ctx|
+        #   next unless records.respond_to?(:total_count)
         #
-        # @param path [String, Symbol] Metadata attribute path keys
-        # @param opts [Hash] Metadata attribute options
-        # @param block [Proc] Block to fetch metadata attribute value
-        #
-        # @return [Serega::SeregaPlugins::Metadata::MetaAttribute] Added metadata attribute
-        #
+        #   {page: records.current_page, total_count: records.total_count}
+        # end
+        # ```
         def meta_attribute(*path, **opts, &block)
           check_unlocked
           attribute = self::MetaAttribute.new(path: path, opts: opts, block: block)

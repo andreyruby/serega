@@ -1,21 +1,25 @@
 # frozen_string_literal: true
 
 class Serega
+  # Raised on invalid definitions and options, and on changes of a locked
+  # serializer. Parent class of the other Serega errors.
   #
-  # Base exception class
-  #
+  # See [Errors](https://github.com/andreyruby/serega/blob/master/docs/errors.md).
   class SeregaError < StandardError; end
 
-  # Raised when serializer is initiated using not existing attribute
+  # Raised when `only:`, `except:` or `with:` names an unknown field
   #
-  # @example
-  #   Serega.new(only: 'FOO')
-  #   # => Attribute 'FOO' not exists (Serega::AttributeNotExist)
+  # ```ruby
+  # UserSerializer.to_h(user, only: [:nickname, {friends: :age}])
+  # # => Serega::AttributeNotExist: Not existing attributes: nickname, friends(age)
+  # ```
+  #
+  # See [Unknown fields](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md#unknown-fields).
   class AttributeNotExist < SeregaError
-    # @return [Class<Serega>, nil] Serializer that has no such attributes
+    # Serializer that has no such fields
     attr_reader :serializer
 
-    # @return [Array<String>, nil] Unknown attributes, for example ["nickname", "friends(age)"]
+    # Unknown fields, for example `["nickname", "friends(age)"]`
     attr_reader :attributes
 
     def initialize(message = nil, serializer = nil, attributes = nil) # :nodoc:
@@ -25,14 +29,18 @@ class Serega
     end
   end
 
-  # Raised when a serialization plan nests deeper than `config.depth_limit`
-  # of the root serializer
+  # Raised when fields nest deeper than `config.depth_limit` of the
+  # serializer that starts the serialization
   #
-  # @example
-  #   UserSerializer.new(with: {friends: :friends})
-  #   # => Depth limit was exceeded (Serega::DepthLimitError)
+  # ```ruby
+  # UserSerializer.to_h(user, with: {friends: :friends})
+  # # => Serega::DepthLimitError: Depth limit was exceeded
+  # ```
+  #
+  # See [Depth limit](https://github.com/andreyruby/serega/blob/master/docs/configuration.md#depth-limit).
   class DepthLimitError < SeregaError
-    # @return [String] Path of the plan that exceeds the limit
+    # Path that exceeds the limit, for example
+    # `UserSerializer (depth limit: 2) -> friends -> friends`
     attr_reader :details
 
     def initialize(message = nil, details = nil) # :nodoc:

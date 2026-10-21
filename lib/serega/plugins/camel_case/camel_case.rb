@@ -2,33 +2,16 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:camel_case`: serializes attribute keys in camelCase. The
+    # `camel_case: false` attribute option keeps a name as is, and the
+    # `transform:` plugin option sets the transformation.
     #
-    # Plugin :camel_case
+    # ```ruby
+    # plugin :camel_case
+    # plugin :camel_case, transform: ->(name) { name.camelize(:lower) }
+    # ```
     #
-    # CamelCases every attribute name automatically, replacing `_x` with `X`
-    # throughout the string. Runs once, when the attribute is defined, not on
-    # every serialization.
-    #
-    # Provide a custom transformation with
-    # `plugin :camel_case, transform: ->(name) { name.camelize }`.
-    #
-    # Skip camelCase for a single attribute with `camel_case: false`.
-    #
-    # @example Define plugin
-    #  class AppSerializer < Serega
-    #    plugin :camel_case
-    #  end
-    #
-    #  class UserSerializer < AppSerializer
-    #    attribute :first_name
-    #    attribute :last_name
-    #    attribute :full_name, camel_case: false, value: proc { |user| [user.first_name, user.last_name].compact.join(" ") }
-    #  end
-    #
-    #  require "ostruct"
-    #  user = OpenStruct.new(first_name: "Bruce", last_name: "Wayne")
-    #  UserSerializer.to_h(user) # {firstName: "Bruce", lastName: "Wayne", full_name: "Bruce Wayne"}
-    #
+    # See [Plugin :camel_case](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-camel_case).
     module CamelCase
       # Default camel-case transformation
       TRANSFORM_DEFAULT = proc { |attribute_name| # :nodoc:
@@ -88,13 +71,9 @@ class Serega
         config.attribute_keys << :camel_case
       end
 
-      #
-      # Config class additional/patched instance methods
-      #
-      # @see Serega::SeregaConfig
-      #
+      # Config methods the plugin adds to Serega::SeregaConfig
       module ConfigInstanceMethods
-        # @return [Serega::SeregaPlugins::CamelCase::CamelCaseConfig] `camel_case` plugin config
+        # Config of the plugin
         def camel_case
           @plugin_configs[:camel_case] ||= CamelCaseConfig.new(opts.fetch(:camel_case))
         end
@@ -146,7 +125,7 @@ class Serega
         end
       end
 
-      # CamelCase config object
+      # Config of the `:camel_case` plugin, `config.camel_case`
       class CamelCaseConfig
         attr_reader :opts # :nodoc:
 
@@ -162,16 +141,12 @@ class Serega
           @opts = opts
         end
 
-        # @return [#call] defined object that transforms name
+        # Callable that transforms an attribute name String
         def transform
           opts.fetch(:transform)
         end
 
-        # Sets transformation callable object
-        #
-        # @param value [#call] transformation
-        #
-        # @return [#call] camel_case plugin transformation callable object
+        # Sets #transform, a callable with one parameter
         def transform=(value)
           raise SeregaError, "Transform value must respond to #call" unless value.respond_to?(:call)
 

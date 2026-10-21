@@ -2,45 +2,17 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:activerecord_preloads`: loads every `:preload` of the serialized
+    # fields once, with `ActiveRecord::Associations::Preloader`
     #
-    # Plugin :activerecord_preloads
+    # ```ruby
+    # class AppSerializer < Serega
+    #   plugin :activerecord_preloads
+    #   config.auto_preload = true
+    # end
+    # ```
     #
-    # Automatically preloads associations of the objects to serialize
-    #
-    # Every association declared with `:preload` is loaded once during serialization using
-    # ActiveRecord::Associations::Preloader, so there are no N+1 queries.
-    #
-    # @example
-    #   class AppSerializer < Serega
-    #     config.auto_preload = true
-    #     plugin :activerecord_preloads
-    #   end
-    #
-    #   class AlbumSerializer < AppSerializer
-    #     # no preloads
-    #     attribute :title
-    #
-    #     # preloads :downloads, as manually specified
-    #     attribute :downloads_count, preload: :downloads, value: proc { |album| album.downloads.count }
-    #   end
-    #
-    #   class UserSerializer < AppSerializer
-    #     # no preloads
-    #     attribute :username
-    #
-    #     # preloads :user_stats, as auto_preload is enabled for :delegate attributes
-    #     attribute :comments_count, delegate: { to: :user_stats }
-    #
-    #     # preloads :albums, as auto_preload is enabled for :serializer attributes
-    #     attribute :albums, serializer: AlbumSerializer
-    #   end
-    #
-    #   UserSerializer.to_h(users)
-    #   # 1 query to load :user_stats for all users
-    #   # + 1 query to load :albums for all users
-    #   # + 1 query to load :downloads for all albums
-    #   # = 3 queries total, regardless of how many users/albums are serialized
-    #
+    # See [Plugin :activerecord_preloads](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-activerecord_preloads).
     module ActiverecordPreloads
       #
       # @return [Symbol] Plugin name

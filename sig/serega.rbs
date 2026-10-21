@@ -1,0 +1,130 @@
+class Serega
+  VERSION: String
+
+  # Fields of the `only:`, `except:` and `with:` options
+  type fields = Symbol | String | Array[fields] | Hash[Symbol | String, fields]
+
+  # Serialization context
+  type context = Hash[untyped, untyped]
+
+  extend ClassMethods
+  include InstanceMethods
+
+  module ClassMethods
+    attr_reader config: SeregaConfig
+
+    def plugin: (Symbol | Module name, **untyped opts) -> Module
+
+    def attributes: () -> Hash[Symbol, SeregaAttribute]
+
+    def attribute: (Symbol | String name, **untyped opts) ?{ () [self: singleton(Serega)] -> void } -> SeregaAttribute
+
+    def batch: (Symbol | String name, untyped loader) -> void
+             | (Symbol | String name) { (untyped objects) -> untyped } -> void
+             | (Symbol | String name) { (untyped objects, context context) -> untyped } -> void
+             | (Symbol | String name) { (untyped objects, ctx: context) -> untyped } -> void
+
+    def formatter: (Symbol name, untyped formatter, ?allow_nil: bool) -> void
+                 | (Symbol name, ?allow_nil: bool) { (untyped value) -> untyped } -> void
+                 | (Symbol name, ?allow_nil: bool) { (untyped value, context context) -> untyped } -> void
+                 | (Symbol name, ?allow_nil: bool) { (untyped value, ctx: context) -> untyped } -> void
+
+    def presenter: () -> singleton(SeregaPresenter)?
+                 | () { () [self: singleton(SeregaPresenter)] -> void } -> singleton(SeregaPresenter)
+
+    def preload_with: () -> untyped
+                    | (untyped handler) -> untyped
+                    | () { (untyped objects, untyped preloads) -> void } -> untyped
+
+    def prepare_initial_objects: () -> untyped
+                               | (untyped handler) -> untyped
+                               | () { (untyped objects) -> untyped } -> untyped
+                               | () { (untyped objects, context context) -> untyped } -> untyped
+                               | () { (untyped objects, ctx: context) -> untyped } -> untyped
+
+    # Results are `untyped`: plugins change their shape
+    def call: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> untyped
+    alias to_h call
+    def to_data: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> untyped
+    def to_struct: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> untyped
+    def to_json: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> String
+
+    def make_shareable!: () -> self
+  end
+
+  module InstanceMethods
+    def initialize: (?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?) -> void
+
+    def call: (untyped object, ?context: context?, ?many: bool?, **untyped) -> untyped
+    alias to_h call
+    def to_data: (untyped object, ?context: context?, ?many: bool?, **untyped) -> untyped
+    def to_struct: (untyped object, ?context: context?, ?many: bool?, **untyped) -> untyped
+    def to_json: (untyped object, ?context: context?, ?many: bool?, **untyped) -> String
+  end
+
+  # Attribute of a serializer. Its methods are internal.
+  class SeregaAttribute
+  end
+
+  # Parent class of presenters. Its methods are internal.
+  class SeregaPresenter
+  end
+
+  class SeregaError < StandardError
+  end
+
+  class AttributeNotExist < SeregaError
+    attr_reader serializer: singleton(Serega)?
+    attr_reader attributes: Array[String]?
+  end
+
+  class DepthLimitError < SeregaError
+    attr_reader details: String?
+  end
+
+  class SeregaConfig
+    include SeregaConfigInstanceMethods
+
+    module SeregaConfigInstanceMethods
+      def check_initiate_params: () -> bool
+      def check_initiate_params=: (bool value) -> bool
+
+      def check_attribute_name: () -> bool
+      def check_attribute_name=: (bool value) -> bool
+
+      def delegate_default_allow_nil: () -> bool
+      def delegate_default_allow_nil=: (bool value) -> bool
+
+      def hide_by_default: () -> (bool | :auto)
+      def hide_by_default=: (bool | :auto value) -> (bool | :auto)
+
+      def base_serializer: () -> singleton(Serega)?
+      def base_serializer=: (singleton(Serega) value) -> singleton(Serega)
+
+      def depth_limit: () -> Integer?
+      def depth_limit=: (Integer? value) -> Integer?
+
+      def max_cached_plans_per_serializer_count: () -> Integer
+      def max_cached_plans_per_serializer_count=: (Integer value) -> Integer
+
+      def batch_id_option: () -> Symbol
+      def batch_id_option=: (Symbol value) -> Symbol
+
+      def auto_preload: () -> { has_delegate_option: bool, has_serializer_option: bool }
+      def auto_preload=: (bool | { ?has_delegate_option: bool, ?has_serializer_option: bool } value) -> { has_delegate_option: bool, has_serializer_option: bool }
+
+      def auto_preload_excluded_methods: () -> Array[Symbol]
+      def auto_preload_excluded_methods=: (Array[Symbol] value) -> Array[Symbol]
+
+      def hash_access: () -> HashAccessConfig
+    end
+
+    class HashAccessConfig
+      def default_mode: () -> (:symbol | :string)
+      def default_mode=: (:symbol | :string value) -> (:symbol | :string)
+
+      def default_allow_missing_key: () -> bool
+      def default_allow_missing_key=: (bool value) -> bool
+    end
+  end
+end

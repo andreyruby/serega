@@ -1,9 +1,17 @@
 # frozen_string_literal: true
 
 class Serega
+  # Config of a serializer, `config` in a serializer class. Subclasses copy
+  # the config of their parent and can change it.
   #
-  # Stores serialization config
+  # ```ruby
+  # class AppSerializer < Serega
+  #   config.auto_preload = true
+  #   config.hide_by_default = :auto
+  # end
+  # ```
   #
+  # See [Configuration](https://github.com/andreyruby/serega/blob/master/docs/configuration.md).
   class SeregaConfig
     # :nocov: We can't use both :oj and :json adapters together
 
@@ -46,7 +54,7 @@ class Serega
     }.freeze
     # :nocov:
 
-    # SeregaConfig Instance methods
+    # Config options
     module SeregaConfigInstanceMethods
       #
       # Shows current config as Hash
@@ -88,53 +96,37 @@ class Serega
         opts.fetch(:serialize_keys)
       end
 
-      # Returns :check_initiate_params config option
-      # @return [Boolean] Current :check_initiate_params config option
+      # Whether unknown fields of `only:`, `except:` and `with:` raise
+      # `Serega::AttributeNotExist`. `true` by default.
       def check_initiate_params
         opts.fetch(:check_initiate_params)
       end
 
-      # Sets :check_initiate_params config option
-      #
-      # @param value [Boolean] Set :check_initiate_params config option
-      #
-      # @return [Boolean] :check_initiate_params config option
+      # Sets #check_initiate_params
       def check_initiate_params=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:check_initiate_params] = value
       end
 
-      # Returns :delegate_default_allow_nil config option
-      # @return [Boolean] Current :delegate_default_allow_nil config option
+      # Default `allow_nil:` of the `:delegate` attribute option. `false` by
+      # default.
       def delegate_default_allow_nil
         opts.fetch(:delegate_default_allow_nil)
       end
 
-      # Sets :delegate_default_allow_nil config option
-      #
-      # @param value [Boolean] Set :delegate_default_allow_nil config option
-      #
-      # @return [Boolean] :delegate_default_allow_nil config option
+      # Sets #delegate_default_allow_nil
       def delegate_default_allow_nil=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:delegate_default_allow_nil] = value
       end
 
-      # Returns :auto_preload_excluded_methods config option — methods that are
-      # never auto-preloaded, as they return the object itself and
-      # not an association
-      # @return [Array<Symbol>] Current :auto_preload_excluded_methods config option
+      # Methods that #auto_preload never preloads, as they return the object
+      # itself. `[:itself, :__getobj__]` by default.
       def auto_preload_excluded_methods
         opts.fetch(:auto_preload_excluded_methods)
       end
 
-      # Sets :auto_preload_excluded_methods config option — methods that are
-      # never auto-preloaded. Applies to the `:method` option of attributes
-      # with a serializer and to the `delegate: {to: ...}` option.
-      #
-      # @param value [Array<Symbol>] Method names to skip in auto-preload
-      #
-      # @return [Array<Symbol>] New :auto_preload_excluded_methods config option
+      # Sets #auto_preload_excluded_methods
       def auto_preload_excluded_methods=(value)
         unless value.is_a?(Array) && value.all?(Symbol)
           raise SeregaError, "Must be an Array of Symbols, #{value.inspect} provided"
@@ -143,41 +135,31 @@ class Serega
         opts[:auto_preload_excluded_methods] = value
       end
 
-      # Returns :base_serializer config option — the parent class for nested
-      # serializers defined with attribute blocks
-      # @return [Class, nil] Current :base_serializer config option
+      # Parent class of nested serializers defined with an attribute block.
+      # `nil` by default.
       def base_serializer
         opts.fetch(:base_serializer)
       end
 
-      # Sets :base_serializer config option — the parent class for nested
-      # serializers defined with attribute blocks. Usually a settings-only
-      # serializer, e.g. `config.base_serializer = self` in an application
-      # base serializer class.
+      # Sets #base_serializer, a Serega subclass
       #
-      # @param value [Class] Serega or its subclass
-      #
-      # @return [Class] New :base_serializer config option
+      # ```ruby
+      # config.base_serializer = self
+      # ```
       def base_serializer=(value)
         raise SeregaError, "Must be a Serega subclass, #{value.inspect} provided" if !value.is_a?(Class) || !(value <= Serega)
 
         opts[:base_serializer] = value
       end
 
-      # Returns :hide_by_default config option
-      # @return [Boolean, Symbol] Current :hide_by_default config option
+      # Which attributes are hidden without the `:hide` option: `false` for none
+      # (the default), `true` for all, `:auto` for attributes with preloads or
+      # batch loaders.
       def hide_by_default
         opts.fetch(:hide_by_default)
       end
 
-      # Sets :hide_by_default config option
-      #
-      # @param value [Boolean, Symbol] Accepted values:
-      #   - false (default) — nothing is hidden by default
-      #   - true — all attributes are hidden by default
-      #   - :auto — hides attributes that declare :preload or :batch
-      #
-      # @return [Boolean, Symbol] New :hide_by_default config option
+      # Sets #hide_by_default
       def hide_by_default=(value)
         opts[:hide_by_default] =
           case value
@@ -188,13 +170,15 @@ class Serega
           end
       end
 
-      # @return [Hash] auto_preload option
+      # Attributes that get preloads automatically: `:delegate` attributes with
+      # `has_delegate_option` and `:serializer` attributes with
+      # `has_serializer_option`. Both are `false` by default.
       def auto_preload
         opts.fetch(:auto_preload)
       end
 
-      # Validates and sets auto_preload option
-      # @return [Hash] New auto_preload option with attributes that trigger auto preload
+      # Sets #auto_preload: `true` or `false` for both kinds of attributes, or a
+      # Hash with `has_delegate_option` and `has_serializer_option`
       def auto_preload=(value)
         opts[:auto_preload] =
           case value
@@ -219,79 +203,62 @@ class Serega
         super
       end
 
-      # Returns the hash_access config object
-      # @return [Serega::SeregaConfig::HashAccessConfig] hash_access config object
+      # Defaults of the `hash_access:` attribute option
       def hash_access
         @hash_access ||= HashAccessConfig.new(opts.fetch(:hash_access))
       end
 
-      # Returns :max_cached_plans_per_serializer_count config option
-      # @return [Boolean] Current :max_cached_plans_per_serializer_count config option
+      # How many serialization plans with field selection the serializer
+      # caches, `20` by default. `0` disables the cache.
       def max_cached_plans_per_serializer_count
         opts.fetch(:max_cached_plans_per_serializer_count)
       end
 
-      # Sets :max_cached_plans_per_serializer_count config option
-      #
-      # @param value [Boolean] Set :check_initiate_params config option
-      #
-      # @return [Boolean] New :max_cached_plans_per_serializer_count config option
+      # Sets #max_cached_plans_per_serializer_count
       def max_cached_plans_per_serializer_count=(value)
         raise SeregaError, "Must have Integer value, #{value.inspect} provided" unless value.is_a?(Integer)
         opts[:max_cached_plans_per_serializer_count] = value
       end
 
-      # Returns :depth_limit config option
-      # @return [Integer, nil] Deepest plan nesting allowed, nil for no limit
+      # Deepest nesting of serialized fields, `nil` for no limit (the default).
+      # The limit of the serializer that starts the serialization applies.
       def depth_limit
         opts.fetch(:depth_limit)
       end
 
-      # Sets :depth_limit config option
-      #
-      # @param value [Integer, nil] Deepest plan nesting allowed, nil for no limit
-      #
-      # @return [Integer, nil] New :depth_limit config option
+      # Sets #depth_limit: a positive Integer or `nil`
       def depth_limit=(value)
         valid = value.nil? || (value.is_a?(Integer) && value.positive?)
         raise SeregaError, "Must have positive Integer or nil value, #{value.inspect} provided" unless valid
         opts[:depth_limit] = value
       end
 
-      # Returns whether attributes names check is disabled
+      # Whether attribute names may contain only `a-z`, `A-Z`, `0-9`, `_`, `-`
+      # and `~`. `true` by default.
       def check_attribute_name
         opts.fetch(:check_attribute_name)
       end
 
-      # Sets :check_attribute_name config option
-      #
-      # @param value [Boolean] Set :check_attribute_name config option
-      #
-      # @return [Boolean] New :check_attribute_name config option
+      # Sets #check_attribute_name
       def check_attribute_name=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:check_attribute_name] = value
       end
 
-      # Returns current batch_id_option
+      # Method that returns the id of an object for batch loaders, `:id` by
+      # default
       def batch_id_option
         opts.fetch(:batch_id_option)
       end
 
-      # Sets :batch_id_option config option
-      #
-      # @param value [Symbol] Set :batch_id_option config option
-      #
-      # @return [Symbol] New :check_attribute_name config option
+      # Sets #batch_id_option
       def batch_id_option=(value)
         raise SeregaError, "Must have Symbol value, #{value.inspect} provided" unless value.is_a?(Symbol)
         opts[:batch_id_option] = value
       end
     end
 
-    #
-    # Config for the `hash_access:` attribute option
-    #
+    # Defaults of the `hash_access:` attribute option, `config.hash_access`
     class HashAccessConfig
       # @return [Hash] hash_access config options
       attr_reader :opts # :nodoc:
@@ -307,14 +274,12 @@ class Serega
         @opts = opts
       end
 
-      # @return [Symbol] mode used by `hash_access: true` (default :symbol)
+      # Mode of `hash_access: true`: `:symbol` (the default) or `:string` keys
       def default_mode
         opts.fetch(:default_mode)
       end
 
-      # Sets the mode used by `hash_access: true`
-      # @param value [Symbol] one of :symbol, :string
-      # @return [Symbol] new default mode
+      # Sets #default_mode
       def default_mode=(value)
         unless AttributeValueResolvers::HashAccessResolver::MODES.include?(value)
           raise SeregaError, "Invalid hash_access default_mode #{value.inspect}. Allowed modes: :symbol, :string"
@@ -323,14 +288,13 @@ class Serega
         opts[:default_mode] = value
       end
 
-      # @return [Boolean] allow_missing_key used when an attribute omits it
+      # Whether a missing Hash key gives `nil` instead of raising `KeyError`.
+      # `false` by default.
       def default_allow_missing_key
         opts.fetch(:default_allow_missing_key)
       end
 
-      # Sets the allow_missing_key used when an attribute omits it
-      # @param value [Boolean]
-      # @return [Boolean] new default allow_missing_key
+      # Sets #default_allow_missing_key
       def default_allow_missing_key=(value)
         unless value == true || value == false
           raise SeregaError, "Invalid hash_access default_allow_missing_key #{value.inspect}. Must be a Boolean"

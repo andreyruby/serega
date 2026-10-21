@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 class Serega
-  # Serega gem version
-  #
-  # @return [String] SemVer gem version
-  #
+  # Version of the gem
   VERSION = File.read(File.join(File.dirname(__FILE__), "../../VERSION")).strip
 end

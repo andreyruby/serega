@@ -2,23 +2,18 @@
 
 class Serega
   module SeregaPlugins
+    # Plugin `:context_metadata`: adds metadata given per serialization with
+    # the `:meta` option. Load the `:root` plugin first.
     #
-    # Plugin :context_metadata
+    # ```ruby
+    # plugin :root
+    # plugin :context_metadata
     #
-    # Depends on: `:root` plugin, that must be loaded first
+    # UserSerializer.to_h(user, meta: {version: "1.0.1"})
+    # # => {data: {username: "batman"}, version: "1.0.1"}
+    # ```
     #
-    # Adds metadata supplied per serialization call (as opposed to `:metadata`,
-    # which is defined statically on the serializer).
-    #
-    # @example
-    #   class UserSerializer < Serega
-    #     plugin :root, root: :data
-    #     plugin :context_metadata, context_metadata_key: :meta
-    #   end
-    #
-    #   UserSerializer.to_h(nil, meta: { version: '1.0.1' })
-    #   # => {:data=>nil, :version=>"1.0.1"}
-    #
+    # See [Plugin :context_metadata](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-context_metadata).
     module ContextMetadata
       # Default context metadata option name
       DEFAULT_CONTEXT_METADATA_KEY = :meta # :nodoc:
@@ -78,9 +73,7 @@ class Serega
         config.serialize_keys << meta_key
       end
 
-      #
-      # Config for `context_metadata` plugin
-      #
+      # Config of the `:context_metadata` plugin, `config.context_metadata`
       class ContextMetadataConfig
         # @return [Hash] context_metadata options
         attr_reader :opts # :nodoc:
@@ -97,17 +90,12 @@ class Serega
           @serialize_keys = serialize_keys
         end
 
-        # Key that should be used to define metadata
+        # Name of the serialization option with metadata, `:meta` by default
         def key
           opts.fetch(:key)
         end
 
-        # Sets key that should be used to define metadata, and allows it as a
-        # serialization option in place of the previous key
-        #
-        # @param new_key [Symbol, nil] New key
-        #
-        # @return [Symbol, nil] New key
+        # Sets #key. The previous name raises Serega::SeregaError.
         def key=(new_key)
           previous_key = key
           opts[:key] = new_key
@@ -116,13 +104,9 @@ class Serega
         end
       end
 
-      #
-      # Config class additional/patched instance methods
-      #
-      # @see Serega::SeregaConfig
-      #
+      # Config methods the plugin adds to Serega::SeregaConfig
       module ConfigInstanceMethods
-        # @return [Serega::SeregaPlugins::ContextMetadata::ContextMetadataConfig] context_metadata config
+        # Config of the plugin
         def context_metadata
           @plugin_configs[:context_metadata] ||= ContextMetadataConfig.new(opts.fetch(:context_metadata), serialize_keys)
         end

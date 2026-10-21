@@ -3,7 +3,20 @@
 require "json"
 require_relative "serega/version"
 
-# Parent class for your serializers
+# Parent class of serializers. A serializer lists attributes and serializes
+# objects to Hashes, JSON, Data or Struct objects:
+#
+# ```ruby
+# class UserSerializer < Serega
+#   attribute :first_name
+#   attribute :email, hide: true
+# end
+#
+# UserSerializer.to_h(user)                # => {first_name: "Bruce"}
+# UserSerializer.to_h(user, with: :email)  # => {first_name: "Bruce", email: "bruce@wayne.com"}
+# ```
+#
+# See the [guides](https://github.com/andreyruby/serega/blob/master/docs/README.md).
 class Serega
   # Frozen hash
   # @return [Hash] frozen hash
@@ -108,19 +121,26 @@ class Serega
   const_set(:CheckSerializeParams, check_serialize_params_class)
 
   #
-  # Serializers class methods
+  # Class methods of serializers: they define attributes and serialize
   #
   module ClassMethods
-    # Returns current config
-    # @return [SeregaConfig] current serializer config
+    # Config of the serializer. Subclasses copy it.
+    #
+    # ```ruby
+    # config.hide_by_default = true
+    # ```
+    #
+    # See [Configuration](https://github.com/andreyruby/serega/blob/master/docs/configuration.md).
     attr_reader :config
+
     #
-    # Enables plugin for current serializer
+    # Loads a plugin by name, with its options. Subclasses get the plugin too.
     #
-    # @param name [Symbol, Class<Module>] Plugin name or plugin module itself
-    # @param opts [Hash>] Plugin options
+    # ```ruby
+    # plugin :root, root_one: :user, root_many: :users
+    # ```
     #
-    # @return [class<Module>] Loaded plugin module
+    # See [Plugins](https://github.com/andreyruby/serega/blob/master/docs/plugins.md).
     #
     def plugin(name, **opts)
       check_unlocked
@@ -163,7 +183,9 @@ class Serega
     #
     # Attributes by name, hidden and inherited ones too
     #
-    # @return [Hash] Attributes by name
+    # ```ruby
+    # UserSerializer.attributes.keys # => [:first_name, :email]
+    # ```
     #
     def attributes
       @attributes
@@ -248,25 +270,28 @@ class Serega
     end
 
     #
-    # Adds attribute
+    # Adds an attribute. By default its value is `object.<name>`, and the
+    # options change that:
     #
-    # @param name [Symbol] Attribute name. Attribute value will be found by executing `object.<name>`
-    # @param opts [Hash] Options to serialize attribute
-    # @param block [Proc] Defines attributes of a nested anonymous serializer.
-    #   The block is executed in the context of that serializer, so everything
-    #   available in a serializer class body can be used inside. The attribute
-    #   value (found by name/:method/:value/:delegate/:const/:batch as usual)
-    #   is serialized with this nested serializer. The nested serializer
-    #   inherits from the `:base_serializer` attribute option or
-    #   `config.base_serializer` (one of them is required).
+    # ```ruby
+    # attribute :first_name
+    # attribute :name, method: :full_name
+    # attribute :email, hide: true
+    # attribute :posts, serializer: PostSerializer
+    # ```
     #
-    # @example
-    #   attribute :statistics, method: :itself do
-    #     attribute :likes_count
-    #     attribute :comments_count
-    #   end
+    # A block defines the attributes of a nested serializer. It inherits from
+    # the `:base_serializer` option or `config.base_serializer`:
     #
-    # @return [Serega::SeregaAttribute] Added attribute
+    # ```ruby
+    # attribute :statistics, method: :itself do
+    #   attribute :likes_count
+    #   attribute :comments_count
+    # end
+    # ```
+    #
+    # See [Attributes](https://github.com/andreyruby/serega/blob/master/docs/attributes.md#all-options)
+    # for all options.
     #
     def attribute(name, **opts, &block)
       check_unlocked
@@ -276,32 +301,18 @@ class Serega
     end
 
     #
-    # Defines a batch loader
+    # Defines a named batch loader: a callable or a block that receives the
+    # objects, and the context as a second parameter or as the `:ctx`
+    # keyword. It returns the values by object id. Subclasses inherit it.
     #
-    # @example
-    #   batch :tags, PostTagsLoader
+    # ```ruby
+    # batch :likes_count, ->(users) { Like.where(user: users).group(:user_id).count }
+    # batch(:rank) { |users, ctx:| Rank.for(users, ctx[:season]) }
     #
-    # @example with block
-    #   batch_loader(:tags) do |posts|
-    #     Tags.where(post: posts).group(:post_id).pluck(:post_id, Arel.sql('ARRAY_AGG(tags.tag ORDER BY tag)')).to_h
-    #   end
+    # attribute :likes_count, batch: true
+    # ```
     #
-    #   attribute :tags, batch: :tags, value: { |post, batch:| batch[:tags][post.id] }
-    #
-    # @example with context
-    #   batch_loader(:tags) do |posts, ctx:|
-    #     next {} if ctx[:bot]
-    #
-    #     Tags.where(post: posts).group(:post_id).pluck(:post_id, Arel.sql('ARRAY_AGG(tags.tag ORDER BY tag)')).to_h
-    #   end
-    #
-    #   attribute :tags, batch: :tags, value: { |post, batch:| batch[:tags][post.id] }
-    #
-    # @param name [Symbol] A batch loader name
-    # @param value [#call] Batch loader
-    # @param block [Proc] Batch loader
-    #
-    # @return [#call] Batch loader
+    # See [Batch loading](https://github.com/andreyruby/serega/blob/master/docs/batch-loading.md).
     #
     def batch(name, value = nil, &block)
       check_unlocked
@@ -312,27 +323,21 @@ class Serega
     end
 
     #
-    # Defines a named formatter for the attribute :format option. A formatter
+    # Defines a named formatter for the `:format` attribute option. A formatter
     # is a method name called on the value, an Array of a method name and its
-    # arguments, or a callable that receives the value, and the context as a
-    # second parameter or as the :ctx keyword.
+    # arguments, or a callable or a block that receives the value, and the
+    # context as a second parameter or as the `:ctx` keyword. With
+    # `allow_nil: true` a `nil` value stays `nil`. Subclasses inherit it.
     #
-    # @example
-    #   formatter :string, :to_s
-    #   formatter :iso8601, [:iso8601, 3], allow_nil: true
-    #   formatter :money, ->(cents) { cents / 100.0 }
+    # ```ruby
+    # formatter :string, :to_s
+    # formatter :iso8601, [:iso8601, 3]
+    # formatter(:money) { |cents, ctx| "#{cents / 100.0} #{ctx[:currency]}" }
     #
-    #   attribute :created_at, format: :iso8601
+    # attribute :created_at, format: :iso8601
+    # ```
     #
-    # @example with block
-    #   formatter(:money) { |cents, ctx| (cents / 100.0).round(ctx[:digits]) }
-    #
-    # @param name [Symbol] Formatter name
-    # @param value [#call, Symbol, Array] Formatter
-    # @param allow_nil [Boolean] Keeps nil values without formatting them
-    # @param block [Proc] Formatter
-    #
-    # @return [SeregaFormatter] Formatter
+    # See [Formatters](https://github.com/andreyruby/serega/blob/master/docs/formatters.md).
     #
     def formatter(name, value = nil, allow_nil: false, &block)
       check_unlocked
@@ -346,19 +351,21 @@ class Serega
     end
 
     #
-    # Defines presenter methods — evaluates the block inside the serializer's own
-    # presenter class. Multiple blocks accumulate.
+    # Defines presenter methods: attributes read their values from them. The
+    # block runs in the presenter class of the serializer, and each call adds
+    # methods. Returns the presenter class, `nil` without one.
     #
-    #   presenter do
-    #     def name
-    #       [first_name, last_name].compact.join(" ")
-    #     end
+    # ```ruby
+    # attribute :name
+    #
+    # presenter do
+    #   def name
+    #     [first_name, last_name].compact.join(" ")
     #   end
+    # end
+    # ```
     #
-    # @param block [Proc] Presenter methods
-    #
-    # @return [Class<SeregaPresenter>, nil] the serializer presenter class,
-    #   nil when the serializer has none
+    # See [Presenter](https://github.com/andreyruby/serega/blob/master/docs/presenter.md).
     #
     def presenter(&block)
       return @presenter_class unless block
@@ -371,23 +378,17 @@ class Serega
     end
 
     #
-    # Registers (or returns) the handler used to preload an attribute's
-    # associations onto the records gathered during serialization.
+    # Sets the handler that preloads the `:preload` value of an attribute. It
+    # runs once per attribute with a preload, with the objects to serialize
+    # and the preloads. Without arguments, returns the handler. Subclasses
+    # inherit it.
     #
-    # The handler is called once per preloaded attribute with the gathered
-    # objects and that attribute's preloads. ORM plugins register a handler
-    # that performs the actual eager loading.
+    # ```ruby
+    # preload_with { |objects, preloads| RecordPreloader.call(objects, preloads) }
+    # preload_with AppPreloader
+    # ```
     #
-    # @example with a block
-    #   preload_with { |objects, preloads| MyORM.eager_load(objects, preloads) }
-    #
-    # @example with a callable value
-    #   preload_with MyPreloader
-    #
-    # @param value [#call, nil] Preload handler accepting two positional arguments
-    # @param block [Proc] Preload handler accepting two positional arguments
-    #
-    # @return [#call, nil] The registered preload handler
+    # See [Preloads](https://github.com/andreyruby/serega/blob/master/docs/preloads.md).
     #
     def preload_with(value = nil, &block)
       return @preload_with if value.nil? && block.nil?
@@ -405,37 +406,19 @@ class Serega
     end
 
     #
-    # Registers (or returns) the handler that replaces the objects to serialize
-    # before serialization starts.
+    # Sets the handler that replaces the objects given to the serializer, for
+    # example ids with records. It runs once per serialization, before Serega
+    # detects a list, and receives the objects, and the context as a second
+    # parameter or as the `:ctx` keyword. Objects of relations skip it.
+    # Without arguments, returns the handler.
     #
-    # The handler is called once per serialization with the objects provided to
-    # `.call`/`.to_h`/`.to_data` and the serialization context. Its result is
-    # serialized instead of the provided objects, which allows to accept ids or
-    # other references and load the records in one place.
+    # ```ruby
+    # prepare_initial_objects { |user_ids| User.where(id: user_ids) }
+    # prepare_initial_objects { |ids, ctx:| User.where(id: ids, account: ctx[:account]) }
+    # prepare_initial_objects UsersLoader
+    # ```
     #
-    # The handler runs before the `:many` option is detected, so it may turn a
-    # single object into a collection and back. A provided `:many` serialization
-    # option is still used as is.
-    #
-    # The handler runs only for the objects given to the serializer, and not
-    # for the objects of nested serializers.
-    #
-    # @example with a block
-    #   prepare_initial_objects { |user_ids| User.where(id: user_ids) }
-    #
-    # @example with a context
-    #   prepare_initial_objects { |user_ids, ctx| User.where(id: user_ids, account: ctx[:account]) }
-    #
-    # @example with a keyword context
-    #   prepare_initial_objects { |user_ids, ctx:| User.where(id: user_ids, account: ctx[:account]) }
-    #
-    # @example with a callable value
-    #   prepare_initial_objects UsersLoader
-    #
-    # @param value [#call, nil] Handler accepting (objects), (objects, context) or (objects, ctx:)
-    # @param block [Proc] Handler accepting (objects), (objects, context) or (objects, ctx:)
-    #
-    # @return [#call, nil] The registered handler
+    # See [Prepare initial objects](https://github.com/andreyruby/serega/blob/master/docs/prepare-initial-objects.md).
     #
     def prepare_initial_objects(value = nil, &block)
       return @prepare_initial_objects if value.nil? && block.nil?
@@ -464,17 +447,24 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to Hash
+    # Serializes an object or a list to a Hash or an Array of Hashes. `nil`
+    # serializes to `nil`.
     #
-    # @param object [Object] Object to serialize
-    # @param only [Array, Hash, String, Symbol, nil] The only attributes to serialize
-    # @param with [Array, Hash, String, Symbol, nil] Attributes (usually hidden) to serialize additionally
-    # @param except [Array, Hash, String, Symbol, nil] Attributes to hide
-    # @param check_initiate_params [Boolean, nil] Validates provided modifiers (Default is `config.check_initiate_params`)
-    # @param context [Hash, nil] Serialization context
-    # @param many [Boolean, nil] Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
+    # - `only`, `except`, `with`: fields to serialize, to skip and to add,
+    #   see [Selecting fields](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md);
+    # - `check_initiate_params`: `false` skips unknown fields, by default
+    #   `config.check_initiate_params`;
+    # - `context`: data for attribute values and conditions;
+    # - `many`: `true` serializes a list, `false` one object. By default an
+    #   `Enumerable` that is not a `Hash` or `Struct` is a list.
     #
-    # @return [Hash] Serialization result
+    # ```ruby
+    # UserSerializer.to_h(user)                     # => {first_name: "Bruce"}
+    # UserSerializer.to_h([user], with: :email)     # => [{first_name: "Bruce", email: "bruce@wayne.com"}]
+    # UserSerializer.to_h(user, context: {admin: true})
+    # ```
+    #
+    # See [Serializing](https://github.com/andreyruby/serega/blob/master/docs/serializing.md).
     #
     def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
       new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
@@ -485,11 +475,11 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to a tree of Ruby Data objects
+    # Serializes like #to_h, to `Data` objects
     #
-    # @param (see #call)
-    #
-    # @return [Data, Array<Data>, nil] Serialization result as Data object(s)
+    # ```ruby
+    # UserSerializer.to_data(user) # => #<data first_name="Bruce">
+    # ```
     #
     def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
       new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
@@ -500,11 +490,11 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to a tree of Ruby Struct objects
+    # Serializes like #to_h, to `Struct` objects
     #
-    # @param (see #call)
-    #
-    # @return [Struct, Array<Struct>, nil] Serialization result as Struct object(s)
+    # ```ruby
+    # UserSerializer.to_struct(user) # => #<struct first_name="Bruce">
+    # ```
     #
     def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
       new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
@@ -515,12 +505,12 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to a JSON String: `JSON.generate` of the
-    # `.to_h` result
+    # Serializes like #to_h, to a JSON String: `JSON.generate` of the #to_h
+    # result
     #
-    # @param (see #call)
-    #
-    # @return [String] Serialization result as JSON
+    # ```ruby
+    # UserSerializer.to_json(user) # => "{\"first_name\":\"Bruce\"}"
+    # ```
     #
     def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
       new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
@@ -547,14 +537,20 @@ class Serega
     end
 
     #
-    # Makes the serializer shareable between Ractors. Call `make_shareable!`
-    # at the end of a definition to serialize in other Ractors.
-    #
-    # Locks the serializer and makes its definitions and its nested
-    # serializers defined with blocks shareable. A serializer with a
+    # Makes the serializer shareable between Ractors. Call it at the end of a
+    # definition to serialize in other Ractors. It locks the serializer and
+    # its nested serializers defined with blocks. A serializer with a
     # definition that can not be shared serializes in the main Ractor only.
     #
-    # @return [Class<Serega>] the serializer
+    # ```ruby
+    # class UserSerializer < Serega
+    #   attribute :first_name
+    #
+    #   make_shareable!
+    # end
+    # ```
+    #
+    # See [Ractors](https://github.com/andreyruby/serega/blob/master/docs/ractors.md).
     #
     def make_shareable!
       return self if @shareable
@@ -662,16 +658,19 @@ class Serega
   end
 
   #
-  # Serializers instance methods
+  # Instance methods of serializers. An instance keeps its field selection
+  # and serializes many times.
   #
   module InstanceMethods
     #
-    # Instantiates new Serega class
+    # Prepares a serializer with a field selection. The options are the field
+    # options of Serega::ClassMethods#to_h.
     #
-    # @param only [Array, Hash, String, Symbol, nil] The only attributes to serialize
-    # @param with [Array, Hash, String, Symbol, nil] Attributes (usually hidden) to serialize additionally
-    # @param except [Array, Hash, String, Symbol, nil] Attributes to hide
-    # @param check_initiate_params [Boolean, nil] Validates provided modifiers (Default is `config.check_initiate_params`)
+    # ```ruby
+    # serializer = UserSerializer.new(only: [:first_name])
+    # serializer.to_h(user)  # => {first_name: "Bruce"}
+    # serializer.to_h(users) # => [{first_name: "Bruce"}, {first_name: "Alfred"}]
+    # ```
     #
     def initialize(only: nil, with: nil, except: nil, check_initiate_params: nil)
       modifiers = !(only.nil? && with.nil? && except.nil?)
@@ -690,13 +689,12 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to Hash
+    # Serializes an object or a list to a Hash or an Array of Hashes, with the
+    # serialization options of Serega::ClassMethods#to_h
     #
-    # @param object [Object] Object to serialize
-    # @param context [Hash, nil] Serialization context
-    # @param many [Boolean, nil] Set true if provided multiple objects (Default `object.is_a?(Enumerable) && !object.is_a?(Hash) && !object.is_a?(Struct)`)
-    #
-    # @return [Hash] Serialization result
+    # ```ruby
+    # UserSerializer.new.to_h(user, context: {admin: true})
+    # ```
     #
     def call(object, context: nil, many: nil)
       if many.equal?(false) && (builder = @plan.direct_hash_builder) && !object.nil? && (context.nil? || context.is_a?(Hash))
@@ -712,11 +710,7 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to Data objects
-    #
-    # @param (see #call)
-    #
-    # @return [Data] Serialization result
+    # Serializes like #to_h, to `Data` objects
     #
     def to_data(object, context: nil, many: nil)
       serialize_to(:data, object, context, many, FROZEN_EMPTY_HASH)
@@ -726,11 +720,7 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to Struct objects
-    #
-    # @param (see #call)
-    #
-    # @return [Struct, Array<Struct>, nil] Serialization result
+    # Serializes like #to_h, to `Struct` objects
     #
     def to_struct(object, context: nil, many: nil)
       serialize_to(:struct, object, context, many, FROZEN_EMPTY_HASH)
@@ -740,12 +730,8 @@ class Serega
     # - plugin :root (takes the options of plugins)
 
     #
-    # Serializes provided object to a JSON String: `JSON.generate` of the
-    # `#to_h` result
-    #
-    # @param (see #call)
-    #
-    # @return [String] Serialization result as JSON
+    # Serializes like #to_h, to a JSON String: `JSON.generate` of the #to_h
+    # result
     #
     def to_json(object, context: nil, many: nil)
       JSON.generate(call(object, context: context, many: many))

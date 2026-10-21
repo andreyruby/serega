@@ -1,0 +1,62 @@
+# Plugins add these modules when they are loaded, thus a type checker does
+# not see them on serializers and configs.
+class Serega
+  module SeregaPlugins
+    module ActiverecordPreloads
+    end
+
+    module CamelCase
+      module ConfigInstanceMethods
+        def camel_case: () -> CamelCaseConfig
+      end
+
+      class CamelCaseConfig
+        def transform: () -> untyped
+        def transform=: (untyped value) -> untyped
+      end
+    end
+
+    module ContextMetadata
+      module ConfigInstanceMethods
+        def context_metadata: () -> ContextMetadataConfig
+      end
+
+      class ContextMetadataConfig
+        def key: () -> Symbol?
+        def key=: (Symbol? new_key) -> Symbol?
+      end
+    end
+
+    module ExplicitManyOption
+    end
+
+    module Metadata
+      module ClassMethods
+        def meta_attribute: (*Symbol | String path, **untyped opts) ?{ (untyped objects, context context) -> untyped } -> void
+      end
+    end
+
+    module Root
+      type key = Symbol | String | nil
+
+      module ClassMethods
+        def root: (?key root, ?one: key, ?many: key) -> void
+      end
+
+      class RootConfig
+        def one: () -> key
+        def one=: (key value) -> key
+        def many: () -> key
+        def many=: (key value) -> key
+      end
+
+      module ConfigInstanceMethods
+        def root: () -> RootConfig
+        def root=: ({ one: key, many: key } value) -> void
+      end
+    end
+
+    module StringModifiers
+    end
+  end
+end

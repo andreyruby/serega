@@ -177,6 +177,7 @@ DEPENDENCIES
   activerecord (~> 8.1)
   mdl (~> 0.13)
   rake (~> 13.0)
+  rbs (~> 4.0)
   rdoc (~> 8.1)
   rspec (~> 3.11)
   rubocop-rake (~> 0.6)
