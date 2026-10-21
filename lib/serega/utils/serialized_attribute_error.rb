@@ -12,19 +12,12 @@ class Serega
       GENERATED_CODE_FILE = "(serega generated code)"
 
       class << self
-        #
         # Reraises an error raised while a value is read, preloaded or batch
         # loaded. An error raised in the generated code gets a backtrace line at
         # the attribute, above the line of the generated code:
         #
         #   app/serializers/user_serializer.rb:3:in 'attribute :full_name of UserSerializer'
         #   (serega generated code):20:in 'call'
-        #
-        # @param error [Exception] Original error
-        # @param point [SeregaPlanPoint] Plan point being serialized
-        #
-        # @return [void]
-        #
         def call(error, point)
           location = point.attribute.location
           serializer_class = point.plan.serializer_class
@@ -38,16 +31,8 @@ class Serega
           raise exception
         end
 
-        #
         # Reraises an error raised by an :if, :unless, :if_value or
         # :unless_value condition
-        #
-        # @param error [Exception] Original error
-        # @param attribute [SeregaAttribute] Attribute with the condition
-        # @param condition_name [Symbol] Condition option name
-        #
-        # @return [void]
-        #
         def condition(error, attribute, condition_name)
           location = attribute.location
           defined_at = location ? ", #{location}" : ""

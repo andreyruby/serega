@@ -10,13 +10,7 @@ class Serega
     #
     class EnumDeepFreeze # :nodoc:
       class << self
-        #
         # Freezes nested hashes and arrays, replaces strings with frozen copies
-        #
-        # @param data [Hash, Array, String] data to freeze
-        #
-        # @return [Hash, Array, String] deeply frozen data
-        #
         def call(data)
           case data
           when Hash

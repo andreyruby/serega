@@ -8,15 +8,7 @@ class Serega
       #
       class CheckOptHashAccess # :nodoc:
         class << self
-          #
           # Checks attribute :hash_access option
-          #
-          # @param opts [Hash] Attribute options
-          #
-          # @raise [SeregaError] Attribute validation error
-          #
-          # @return [void]
-          #
           def call(opts)
             return unless opts.key?(:hash_access)
 

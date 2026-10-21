@@ -3,7 +3,6 @@
 require "delegate"
 
 class Serega
-  #
   # Wraps the object to serialize, so computed attribute values can be defined as
   # methods instead of `:value` callables.
   #
@@ -17,7 +16,6 @@ class Serega
   # The `presenter do ... end` block is evaluated inside the serializer's own
   # SeregaPresenter class, so multiple blocks accumulate.
   #
-  # @example
   #   class UserSerializer < Serega
   #     attribute :name
   #     attribute :role
@@ -32,7 +30,6 @@ class Serega
   #       end
   #     end
   #   end
-  #
   class SeregaPresenter < SimpleDelegator # :nodoc:
     # Method names of delegators defined with a compiled `def`
     PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
@@ -51,16 +48,10 @@ class Serega
       end
     end
 
-    #
     # Includes into each presenter class its own `Delegators` module.
     # Delegators to the methods of the wrapped object are defined there after the
     # first #method_missing hit. Presenter methods override them and can call
     # them via `super`.
-    #
-    # @param subclass [Class<SeregaPresenter>] New presenter class
-    #
-    # @return [void]
-    #
     def self.inherited(subclass)
       super
       delegators = Module.new
@@ -69,14 +60,8 @@ class Serega
       subclass.include(delegators)
     end
 
-    #
     # Defines a method that delegates to the wrapped object in the
     # presenter class `Delegators` module
-    #
-    # @param name [Symbol] Method name
-    #
-    # @return [void]
-    #
     def self.define_delegator(name)
       delegators = self::Delegators
 
@@ -91,10 +76,6 @@ class Serega
       end
     end
 
-    #
-    # @param object [Object] Object to wrap
-    # @param ctx [Hash, nil] Serialization context
-    #
     def initialize(object, ctx = nil)
       super(object)
       @__ctx__ = ctx

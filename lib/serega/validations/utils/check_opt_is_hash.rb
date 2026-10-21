@@ -8,13 +8,6 @@ class Serega
       #
       class CheckOptIsHash # :nodoc:
         # Checks hash key value is Hash
-        #
-        # @param opts [Hash] Some options Hash
-        # @param key [Object] Hash key
-        #
-        # @raise [Serega::SeregaError] error when provided key exists and value is not a Hash
-        #
-        # @return [void]
         def self.call(opts, key)
           return unless opts.key?(key)
 

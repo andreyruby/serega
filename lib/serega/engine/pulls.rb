@@ -18,36 +18,16 @@ class Serega
 
       module_function
 
-      #
       # Collects the sources of the relation sources, and the pull of each
       # relation source
-      #
-      # @param relation_sources [Array] Relation source of each source of the
-      #   parent group: what the relation attribute returns
-      # @param many [Boolean, nil] Whether a relation source is a collection
-      # @param known_classes [Hash{Class => Boolean}] Whether objects of a
-      #   class are collections, see SeregaUtils::CollectionDetector
-      #
-      # @return [Array(Array, Array)] Sources, and the pull of each relation source
-      #
       def collect(relation_sources, many, known_classes)
         sources = []
         pulls = relation_sources.map { |relation_source| append(sources, relation_source, many, known_classes) }
         [sources, pulls]
       end
 
-      #
       # Collects like `.collect`, and keeps SKIP of a skipped relation source
       # as its pull
-      #
-      # @param relation_sources [Array] Relation source or SKIP of each source
-      #   of the parent group
-      # @param many [Boolean, nil] Whether a relation source is a collection
-      # @param known_classes [Hash{Class => Boolean}] Whether objects of a
-      #   class are collections, see SeregaUtils::CollectionDetector
-      #
-      # @return [Array(Array, Array)] Sources, and the pull of each relation source
-      #
       def collect_conditional(relation_sources, many, known_classes)
         sources = []
         pulls = relation_sources.map do |relation_source|
@@ -56,18 +36,8 @@ class Serega
         [sources, pulls]
       end
 
-      #
       # Appends the source(s) of one relation source to sources, and returns
       # its pull
-      #
-      # @param sources [Array] Sources list
-      # @param relation_source [Object] Relation source, or the root source(s)
-      # @param many [Boolean, nil] Whether the relation source is a collection
-      # @param known_classes [Hash{Class => Boolean}] Whether objects of a
-      #   class are collections, see SeregaUtils::CollectionDetector
-      #
-      # @return [Integer, nil, Object] Pull
-      #
       def append(sources, relation_source, many, known_classes)
         return if relation_source.nil?
 
@@ -81,16 +51,9 @@ class Serega
         end
       end
 
-      #
       # Takes the relation value of each pull from the front of the
       # serialized objects. The serialized objects follow the order of the
       # pulls. Empties the serialized objects.
-      #
-      # @param serialized [Array<Hash, Struct, Data>] Serialized objects of the child group
-      # @param pulls [Array<Integer, nil, Object>] Pulls from `.collect`
-      #
-      # @return [Array] Relation value of each pull
-      #
       def take!(serialized, pulls)
         pulls.map do |pull|
           case pull

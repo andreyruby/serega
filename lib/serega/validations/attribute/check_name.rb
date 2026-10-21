@@ -11,15 +11,8 @@ class Serega
         FORMAT = /\A[\w~-]+\z/
 
         class << self
-          #
           # Checks allowed characters.
           # Allowed characters: "a-z", "A-Z", "0-9", "_", "-", "~".
-          #
-          # @param name [String, Symbol] Attribute name
-          #
-          # @raise [SeregaError] when name has invalid format
-          # @return [void]
-          #
           def call(name)
             raise SeregaError, message(name.to_s) unless FORMAT.match?(name)
           end

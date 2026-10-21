@@ -9,15 +9,7 @@ class Serega
         #
         class CheckOptConst # :nodoc:
           class << self
-            #
             # Checks meta_attribute :const option
-            #
-            # @param opts [Hash] MetaAttribute options
-            #
-            # @raise [SeregaError] validation error
-            #
-            # @return [void]
-            #
             def call(opts, block = nil)
               return unless opts.key?(:const)
 

@@ -6,14 +6,8 @@ class Serega
   #
   class SeregaShareable # :nodoc:
     class << self
-      #
       # Makes the serializer definitions shareable between Ractors, except the
       # plans cache. A definition that can not be shared stays as it is.
-      #
-      # @param serializer_class [Class<Serega>] Serializer
-      #
-      # @return [String, nil] First reason a definition can not be shared
-      #
       def call(serializer_class)
         reasons = []
 

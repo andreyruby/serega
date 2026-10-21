@@ -40,11 +40,8 @@ class Serega
     PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
 
     # Serialization mode
-    # @return [Symbol] :hash, :data or :struct
     attr_reader :mode
 
-    # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-    # @param points [Array<SeregaPlanPoint>] Serialized plan points
     def initialize(mode, points)
       @mode = mode
       @points = points
@@ -58,8 +55,6 @@ class Serega
     # - `conditions_N` checks the conditions of a conditional attribute.
     # - `relation_values_N` holds the relation values of all sources.
     # - `value_N` holds the value of the current source.
-    #
-    # @return [String] Code of the methods
     def to_s
       variables = variables_code.join("\n  ")
       values = values_code

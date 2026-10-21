@@ -8,17 +8,8 @@ class Serega
       #
       class CheckOptFormat # :nodoc:
         class << self
-          #
           # Checks attribute :format option is the name of an added formatter
           # or a valid formatter
-          #
-          # @param opts [Hash] Attribute options
-          # @param serializer_class [Class<Serega>] Serializer of the attribute
-          #
-          # @raise [SeregaError] Attribute validation error
-          #
-          # @return [void]
-          #
           def call(opts, serializer_class)
             return unless opts.key?(:format)
 

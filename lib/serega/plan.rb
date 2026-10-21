@@ -7,40 +7,22 @@ class Serega
   #
   class SeregaPlan # :nodoc:
     # Serializer of the plan
-    # @return [Class<Serega>]
     attr_reader :serializer_class
 
     # Parent plan point
-    # @return [SeregaPlanPoint, nil]
     attr_reader :parent_plan_point
 
     # Serialization points
-    # @return [Array<SeregaPlanPoint>] points to serialize
     attr_reader :points
 
     # Serialization points with child plans
-    # @return [Array<SeregaPlanPoint>] points to serialize with nested serializers
     attr_reader :relation_points
 
     # Whether the root objects of a class are collections
-    # @return [Hash{Class => Boolean}] Answers by class, see SeregaUtils::CollectionDetector
     attr_reader :collection_classes
 
-    #
-    # Instantiate new serialization plan
-    #
-    # @param serializer_class [Class<Serega>] Serializer of the plan
-    # @param parent_plan_point [SeregaPlanPoint, nil] Parent plan_point
-    # @param modifiers [Hash] Serialization parameters
-    # @option modifiers [Hash] :only The only attributes to serialize
-    # @option modifiers [Hash] :except Attributes to hide
-    # @option modifiers [Hash] :with Hidden attributes to serialize additionally
-    #
-    # @raise [DepthLimitError] when the plan nests deeper than the depth limit
-    #   of the root serializer
-    #
-    # @return [SeregaPlan] Serialization plan
-    #
+    # Instantiate new serialization plan. Raises DepthLimitError when the plan
+    # nests deeper than the depth limit of the root serializer.
     def initialize(serializer_class, parent_plan_point, modifiers)
       check_depth_limit(parent_plan_point) if parent_plan_point
       serializer_class.lock
@@ -64,15 +46,13 @@ class Serega
     end
 
     # Serialization points with preloads
-    # @return [Array<SeregaPlanPoint>] points to run preloads for
     attr_reader :preload_points
 
     # Hash result builder of a flat root plan whose serializer prepares no
     # initial objects. `Serega#call` builds one source with it directly.
-    # @return [SeregaResultBuilder, nil] Result builder, or nil for other plans
     attr_reader :direct_hash_builder
 
-    # @return [Boolean] Whether any point uses batch loaders
+    # Whether any point uses batch loaders
     def batch_points?
       @batch_points
     end
@@ -80,19 +60,11 @@ class Serega
     # A flat plan has no relations, preloads, batch loaders and presenter.
     # Its sources need no source groups. YJIT reads an attr_reader without
     # a method call, and the alias keeps it.
-    #
-    # @return [Boolean] Whether the plan is flat
     attr_reader :flat
     alias_method :flat?, :flat
     private :flat
 
-    #
     # Result builder of this plan in the serialization mode
-    #
-    # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-    #
-    # @return [SeregaResultBuilder] Result builder
-    #
     def result_builder(mode)
       @result_builders[mode] ||= SeregaResultBuilder.build(serializer_class, mode, points)
     end

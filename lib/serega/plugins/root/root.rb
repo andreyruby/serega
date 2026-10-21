@@ -15,20 +15,15 @@ class Serega
     #
     # See [Root key](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#root-key).
     module Root
-      # @return [Symbol] Default response root key
+      # Default response root key
       ROOT_DEFAULT = :data # :nodoc:
 
-      # @return [Symbol] Plugin name
+      # Plugin name
       def self.plugin_name # :nodoc:
         :root
       end
 
       # Checks requirements to load plugin
-      #
-      # @param serializer_class [Class<Serega>] Current serializer class
-      # @param opts [Hash] plugin options
-      #
-      # @return [void]
       def self.before_load_plugin(serializer_class, **opts) # :nodoc:
         allowed_keys = %i[root root_one root_many]
         opts.each_key do |key|
@@ -42,28 +37,14 @@ class Serega
         end
       end
 
-      #
       # Applies plugin code to specific serializer
-      #
-      # @param serializer_class [Class<Serega>] Current serializer class
-      # @param _opts [Hash] Plugin options
-      #
-      # @return [void]
-      #
       def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
       end
 
-      #
       # Adds config options and runs other callbacks after plugin was loaded
-      #
-      # @param serializer_class [Class<Serega>] Current serializer class
-      # @param opts [Hash] Plugin options
-      #
-      # @return [void]
-      #
       def self.after_load_plugin(serializer_class, **opts) # :nodoc:
         config = serializer_class.config
         default = opts.fetch(:root, ROOT_DEFAULT)
@@ -77,25 +58,21 @@ class Serega
 
       # Class methods the plugin adds to serializers
       module ClassMethods
-        # @see Serega::ClassMethods#call
         def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_h(object, context: context, many: many, **opts)
         end
 
-        # @see Serega::ClassMethods#to_data
         def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_data(object, context: context, many: many, **opts)
         end
 
-        # @see Serega::ClassMethods#to_struct
         def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_struct(object, context: context, many: many, **opts)
         end
 
-        # @see Serega::ClassMethods#to_json
         def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_json(object, context: context, many: many, **opts)
@@ -122,15 +99,7 @@ class Serega
       class RootConfig
         attr_reader :opts # :nodoc:
 
-        #
         # Initializes RootConfig object
-        #
-        # @param opts [Hash] root options
-        # @option opts [Symbol, String, nil] :one root for single-object serialization
-        # @option opts [Symbol, String, nil] :many root for many-objects serialization
-        #
-        # @return [SeregaPlugins::Root::RootConfig] RootConfig object
-        #
         def initialize(opts) # :nodoc:
           @opts = opts
         end
@@ -176,32 +145,24 @@ class Serega
         end
       end
 
-      #
       # Serega additional/patched instance methods
       #
       # The serialization methods take `**opts`, see ClassMethods. The
       # options reach `#serialize` as its `opts`, after #checked_opts
       # validates them.
-      #
-      # @see Serega
-      #
       module InstanceMethods # :nodoc:
-        # @see Serega::InstanceMethods#call
         def call(object, context: nil, many: nil, **opts)
           serialize_to(:hash, object, context, many, checked_opts(opts))
         end
 
-        # @see Serega::InstanceMethods#to_data
         def to_data(object, context: nil, many: nil, **opts)
           serialize_to(:data, object, context, many, checked_opts(opts))
         end
 
-        # @see Serega::InstanceMethods#to_struct
         def to_struct(object, context: nil, many: nil, **opts)
           serialize_to(:struct, object, context, many, checked_opts(opts))
         end
 
-        # @see Serega::InstanceMethods#to_json
         def to_json(object, context: nil, many: nil, **opts)
           JSON.generate(call(object, context: context, many: many, **opts))
         end

@@ -12,15 +12,12 @@ class Serega
   # With `allow_nil: true` a nil value stays nil and is not formatted.
   #
   class SeregaFormatter # :nodoc:
-    # @return [#call, nil] Callable that formats a value, nil for a method formatter
+    # Callable that formats a value, nil for a method formatter
     attr_reader :callable
 
-    # @return [Array, nil] Arguments of the method, nil for a callable formatter
+    # Arguments of the method, nil for a callable formatter
     attr_reader :args
 
-    #
-    # @param formatter [#call, Symbol, Array, Hash] Formatter
-    #
     def initialize(formatter)
       formatter = {use: formatter} unless formatter.is_a?(Hash)
       use = formatter[:use]
@@ -40,14 +37,7 @@ class Serega
       end
     end
 
-    #
     # Formats the value
-    #
-    # @param value [Object] Value to format
-    # @param context [Hash] Serialization context
-    #
-    # @return [Object] Formatted value
-    #
     def call(value, context)
       return if value.nil? && @allow_nil
       return value.public_send(@method_name, *@args) if @method_name
@@ -59,18 +49,10 @@ class Serega
       end
     end
 
-    #
     # Ruby code that formats the value of `value_code`. A method is called
     # directly, for example `(source.created_at).iso8601(3)`. Literal
     # arguments are written in the code, other arguments are read from the
     # Array that `args_code` reads. A callable is read with `callable_code`.
-    #
-    # @param value_code [String] Code of the value to format
-    # @param callable_code [String] Code of the callable
-    # @param args_code [String] Code of the method arguments
-    #
-    # @return [String, nil] Code, or nil when the formatter needs the context
-    #
     def code(value_code, callable_code, args_code)
       return method_call_code(value_code, args_code) if @method_name
       return unless @signature == "1"

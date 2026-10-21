@@ -6,27 +6,19 @@ class Serega
     # Batch loader parameters validators
     #
     class CheckBatchLoaderParams # :nodoc:
-      # @return [Symbol] validated batch_loader name
+      # Validated batch_loader name
       attr_reader :name
 
-      # @return [nil, #call] validated batch_loader value or block
+      # Validated batch_loader value or block
       attr_reader :batch_loader
 
       # Instantiates batch loader params checker
-      # @param name [Symbol, String] Batch loader name
-      # @param batch_loader [Proc, #call] Batch loader
       def initialize(name, batch_loader)
         @name = name
         @batch_loader = batch_loader
       end
 
-      #
       # Checks batch loader parameters
-      #
-      # @raise [SeregaError] SeregaError that batch loader has invalid arguments
-      #
-      # @return [void]
-      #
       def validate
         check_name
         check_loader

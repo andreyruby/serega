@@ -6,19 +6,12 @@ class Serega
   #
   class SeregaBatchLoader # :nodoc:
     # Batch loader name
-    # @return [Symbol] Batch loader name
     attr_reader :name
 
     # Batch loader block
-    # @return [#call] Batch loader block
     attr_reader :block
 
-    #
     # Initializes new batch loader
-    #
-    # @param name [Symbol, String] Batch loader name
-    # @param block [#call] Batch loader block
-    #
     def initialize(name:, block:)
       SeregaValidations::CheckBatchLoaderParams.new(name, block).validate
 
@@ -28,9 +21,6 @@ class Serega
     end
 
     # Loads values for objects
-    # @param objects [Array] Objects to serialize
-    # @param context [Hash] Serialization context
-    # @return [Object] Loaded values
     def load(objects, context)
       case signature
       when "1" then block.call(objects)
@@ -42,7 +32,6 @@ class Serega
     private
 
     # Batch loader block signature
-    # @return [String] Batch loader block signature
     attr_reader :signature
   end
 end

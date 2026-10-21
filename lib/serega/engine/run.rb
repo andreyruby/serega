@@ -26,14 +26,6 @@ class Serega
         # Serializes the object(s) with the plan in a new run. A flat plan
         # builds its serialized object(s) with its result builder, without a
         # run, and one source without the sources Array.
-        #
-        # @param plan [SeregaPlan] Serialization plan
-        # @param object [Object] Object(s) to serialize
-        # @param many [Boolean, nil] Whether the object is a collection
-        # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-        # @param context [Hash] Serialization context
-        #
-        # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
         def call(plan, object, many, mode, context)
           return new(mode, context).call(plan, object, many: many) unless plan.flat?
           return if object.nil?
@@ -48,27 +40,17 @@ class Serega
       end
 
       # Serialization mode
-      # @return [Symbol] :hash, :data or :struct
       attr_reader :mode
 
       # Serialization context
-      # @return [Hash] Serialization context
       attr_reader :context
 
-      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-      # @param context [Hash] Serialization context
       def initialize(mode, context)
         @mode = mode
         @context = context
       end
 
       # Serializes the object(s) with the plan.
-      #
-      # @param plan [SeregaPlan] Serialization plan
-      # @param object [Object] Object(s) to serialize
-      # @param many [Boolean, nil] Whether the object is a collection
-      #
-      # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
       def call(plan, object, many:)
         return if object.nil?
 
@@ -79,12 +61,6 @@ class Serega
       end
 
       # Makes a source group of the plan.
-      #
-      # @param plan [SeregaPlan] Serialization plan
-      # @param sources [Array] Sources
-      # @param pulls [Array<Integer, nil, Object>] Pulls from
-      #   `Pulls.collect`, one per source of the parent group
-      # @return [SeregaSourceGroup] New source group
       def new_source_group(plan, sources, pulls)
         SeregaSourceGroup.new(self, plan, sources, pulls)
       end

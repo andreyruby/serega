@@ -8,13 +8,6 @@ class Serega
       #
       class CheckOptIsStringOrSymbol # :nodoc:
         # Checks hash key has String or Symbol value
-        #
-        # @param opts [Hash] Some options Hash
-        # @param key [Object] Hash key
-        #
-        # @raise [Serega::SeregaError] error when provided key exists and value is not String or Symbol
-        #
-        # @return [void]
         def self.call(opts, key)
           return unless opts.key?(key)
 

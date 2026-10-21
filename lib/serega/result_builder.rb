@@ -11,7 +11,6 @@ class Serega
   #
   class SeregaResultBuilder # :nodoc:
     class << self
-      #
       # Makes a result builder and generates its methods:
       #
       #   call(sources, context, batches, relations) -> Array<Hash, Struct, Data>
@@ -29,11 +28,6 @@ class Serega
       # methods of an object with a singleton class slower. The subclass gets
       # the methods before the instance is made: YJIT ran `#call` of a builder
       # made first slower.
-      #
-      # @param (see #initialize)
-      #
-      # @return [SeregaResultBuilder] Result builder
-      #
       def build(serializer_class, mode, points)
         builder_class = Class.new(self)
         # The generated code reads the `:const`, `:default` and formatter values from its constants
@@ -44,16 +38,9 @@ class Serega
     end
 
     # Serialization mode
-    # @return [Symbol] :hash, :data or :struct
     attr_reader :mode
 
-    #
     # Instantiates new result builder
-    #
-    # @param serializer_class [Class<Serega>] Serializer of the points
-    # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-    # @param points [Array<SeregaPlanPoint>] Serialized plan points
-    #
     def initialize(serializer_class, mode, points)
       @mode = mode
       @points = points

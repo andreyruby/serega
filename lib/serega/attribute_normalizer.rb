@@ -6,17 +6,9 @@ class Serega
   #
   class SeregaAttributeNormalizer # :nodoc:
     # Attribute initial params
-    # @return [Hash] Attribute initial params
     attr_reader :init_name, :init_opts, :init_block
 
-    #
     # Instantiates attribute options normalizer
-    #
-    # @param serializer_class [Class<Serega>] Serializer of the attribute
-    # @param initials [Hash] new attribute options
-    #
-    # @return [SeregaAttributeNormalizer] Instantiated attribute options normalizer
-    #
     def initialize(serializer_class, initials)
       @serializer_class = serializer_class
       @init_name = initials[:name]
@@ -25,93 +17,58 @@ class Serega
       @method_name = nil
     end
 
-    #
     # Symbolized initial attribute name
-    #
-    # @return [Symbol] Attribute normalized name
-    #
     def name
       @name ||= prepare_name
     end
 
-    #
     # Symbolized initial attribute method name
-    #
-    # @return [Symbol] Attribute normalized method name
-    #
     def method_name
       @method_name ||= prepare_method_name
     end
 
-    #
     # Combines all options to return single block that will be used to find
     # attribute value during serialization
-    #
-    # @return [#call] Attribute normalized callable value block
-    #
     def value_block
       @value_block ||= prepare_value_block
     end
 
-    #
     # Detects value block parameters signature
-    #
-    # @return [String] value block parameters signature
-    #
     def value_block_signature
       @value_block_signature ||= SeregaUtils::MethodSignature.call(value_block, pos_limit: 2, keyword_args: [:ctx])
     end
 
-    #
     # Shows if attribute is specified to be hidden
-    #
-    # @return [Boolean, nil] if attribute must be hidden by default
-    #
     def hide
       return @hide if instance_variable_defined?(:@hide)
 
       @hide = prepare_hide
     end
 
-    #
     # Shows if attribute is specified to be a one-to-many relationship
-    #
-    # @return [Boolean, nil] if attribute is specified to be a one-to-many relationship
-    #
     def many
       return @many if instance_variable_defined?(:@many)
 
       @many = prepare_many
     end
 
-    #
     # Shows specified attribute serializer
-    # @return [Serega, String, #callable, nil] specified serializer
-    #
     def serializer
       return @serializer if instance_variable_defined?(:@serializer)
 
       @serializer = prepare_serializer
     end
 
-    #
     # Shows the default attribute value. It is a value that replaces found nils.
     #
     # When custom :default is not specified, we set empty array as default when `many: true` specified
-    #
-    # @return [Object] Attribute default value
-    #
     def default
       return @default if instance_variable_defined?(:@default)
 
       @default = prepare_default
     end
 
-    #
     # Preloads declared for this attribute, passed through as provided.
-    #
-    # @return [Object, nil] declared preloads, or nil when the attribute has none
-    #
     def preloads
       return @preloads if instance_variable_defined?(:@preloads)
 
@@ -119,18 +76,12 @@ class Serega
     end
 
     # Shows specified batch loaders names
-    # @return [Array<Symbol>] specified serializer
-    #
     def batch_loaders
       @batch_loaders ||= prepare_batch_loaders
     end
 
-    #
     # Batch loader given directly as the :batch option. It is named after the
     # attribute and belongs to the attribute only.
-    #
-    # @return [SeregaBatchLoader, nil] Batch loader, or nil without a callable :batch option
-    #
     def inline_batch_loader
       use = batch_option&.fetch(:use)
       return unless use.respond_to?(:call)
@@ -138,12 +89,8 @@ class Serega
       SeregaBatchLoader.new(name: name, block: use)
     end
 
-    #
     # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
     # condition calls the method of this name.
-    #
-    # @return [Hash, nil] Condition of each given option, or nil without conditions
-    #
     def conditions
       conditions = init_opts.slice(:if, :unless, :if_value, :unless_value)
       return if conditions.empty?
@@ -153,12 +100,8 @@ class Serega
       end
     end
 
-    #
     # Formatter of the :format option. A Symbol option is the name of a
     # formatter defined with `Serega.formatter`.
-    #
-    # @return [SeregaFormatter, nil] Formatter, or nil without the :format option
-    #
     def formatter
       format = init_opts[:format]
       return unless format
@@ -377,8 +320,6 @@ class Serega
     end
 
     # Resolves the :hash_access option of plain attributes
-    # @return [Array(Symbol, Boolean), nil] mode and allow_missing_key pair,
-    #   or nil when hash access is not enabled for this attribute
     def hash_access
       option = init_opts[:hash_access]
       return unless option
@@ -408,8 +349,6 @@ class Serega
     # The value is passed through as provided (Symbol, Array, Hash, or any
     # custom value an ORM understands) — it is the data handed to the
     # serializer's `preload_with` handler.
-    #
-    # @return [Object, nil] preloads as provided, or nil when the attribute has none
     def prepare_preloads
       # Explicit preload option (false or nil disables preloading)
       return init_opts[:preload] || nil if init_opts.key?(:preload)
