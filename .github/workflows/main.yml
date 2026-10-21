@@ -44,6 +44,9 @@ jobs:
       - name: Validate type signatures
         run: bundle exec rbs -I sig validate
 
+      - name: Check lib against the type signatures
+        run: bundle exec steep check
+
   benchmarks:
     runs-on: ubuntu-24.04
     name: Benchmarks

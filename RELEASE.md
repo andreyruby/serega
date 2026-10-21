@@ -5,7 +5,7 @@ Steps to release a new version:
 1. Check documentation
 
    ```bash
-   bundle exec rake rdoc:coverage && bundle exec rbs -I sig validate
+   bundle exec rake rdoc:coverage && bundle exec rbs -I sig validate && bundle exec steep check
    ```
 
 2. Run and fix all warnings
