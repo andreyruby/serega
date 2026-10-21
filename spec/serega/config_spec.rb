@@ -27,6 +27,15 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#require_many=" do
+    it "validates value is boolean" do
+      expect { config.require_many = false }.not_to raise_error
+      expect { config.require_many = true }.not_to raise_error
+      expect { config.require_many = nil }
+        .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
+    end
+  end
+
   describe "#delegate_default_allow_nil=" do
     it "validates value is boolean" do
       expect { config.delegate_default_allow_nil = false }.not_to raise_error
@@ -261,6 +270,7 @@ RSpec.describe Serega::SeregaConfig do
         serialize_keys
         attribute_keys
         check_attribute_name
+        require_many
         check_initiate_params
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
@@ -297,6 +307,7 @@ RSpec.describe Serega::SeregaConfig do
         ]
       )
       expect(config.check_attribute_name).to be true
+      expect(config.require_many).to be false
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 20

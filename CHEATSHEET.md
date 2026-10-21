@@ -745,7 +745,8 @@ Needs preloads declared on attributes — see [Preloads][preloads].
 
 ```ruby
 class AppSerializer < Serega
-  plugin :explicit_many_option
+  config.require_many = true
+  config.base_serializer = self # for relations defined with a block
 end
 
 class PostSerializer < AppSerializer

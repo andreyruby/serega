@@ -98,6 +98,9 @@ class Serega
       def check_attribute_name: () -> bool
       def check_attribute_name=: (bool value) -> bool
 
+      def require_many: () -> bool
+      def require_many=: (bool value) -> bool
+
       def delegate_default_allow_nil: () -> bool
       def delegate_default_allow_nil=: (bool value) -> bool
 

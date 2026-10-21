@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Moved the `:explicit_many_option` plugin to core: set
+  `config.require_many = true` in place of `plugin :explicit_many_option`.
+  See [`:many`](docs/attributes.md#many).
 - **BREAKING**: Moved the `:string_modifiers` plugin to core: `:only`,
   `:except` and `:with` accept one String like `"name,posts(title)"`. Remove
   `plugin :string_modifiers`. See [Fields from a request](docs/selecting-fields.md#fields-from-a-request).

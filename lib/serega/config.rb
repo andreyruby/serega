@@ -41,6 +41,7 @@ class Serega
       ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
+      require_many: false,
       check_initiate_params: true,
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 20,
@@ -243,6 +244,18 @@ class Serega
       def check_attribute_name=(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
         opts[:check_attribute_name] = value
+      end
+
+      # Whether every relation, an attribute with `:serializer` or a block,
+      # must have the `:many` option. `false` by default.
+      def require_many
+        opts.fetch(:require_many)
+      end
+
+      # Sets #require_many
+      def require_many=(value)
+        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
+        opts[:require_many] = value
       end
 
       # Method that returns the id of an object for batch loaders, `:id` by
