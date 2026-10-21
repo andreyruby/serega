@@ -227,7 +227,7 @@ The generated `#call` has a virtual file name. For an error raised there, `Seria
 app/models/user.rb:12:in 'User#full_name'
 app/serializers/user_serializer.rb:3:in 'attribute :full_name of UserSerializer'
 (serega generated code):20:in 'call'
-lib/serega/source_group.rb:134:in 'Serega::SeregaSourceGroup::InstanceMethods#build'
+lib/serega/source_group.rb:78:in 'Serega::SeregaSourceGroup#build'
 ```
 
 It finds the line of the generated code as the first line from the bottom that differs from the call stack of the rescue: there the backtrace has the line of the read, the call stack the line of the rescue. Ruby 3.3 has an extra `rescue in` line in the call stack, and the match does not depend on it. `backtrace_locations` keeps the lines without the attribute line.

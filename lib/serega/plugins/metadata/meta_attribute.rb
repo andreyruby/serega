@@ -7,83 +7,76 @@ class Serega
       # Stores Attribute data
       #
       class MetaAttribute # :nodoc:
+        # @return [Symbol] Meta attribute name
+        attr_reader :name
+
+        # @return [Symbol] Meta attribute full path
+        attr_reader :path
+
+        # @return [Proc] Meta attribute options
+        attr_reader :opts
+
+        # @return [Proc,nil] Meta attribute originally added block
+        attr_reader :block
+
         #
-        # Stores Attribute instance methods
+        # Initializes new meta attribute
         #
-        module InstanceMethods # :nodoc:
-          # @return [Symbol] Meta attribute name
-          attr_reader :name
+        # @param serializer_class [Class<Serega>] Serializer of the meta attribute
+        #
+        # @param path [Array<Symbol, String>] Path for metadata of attribute
+        #
+        # @param opts [Hash] metadata attribute options
+        #
+        # @param block [Proc] Proc that receives object(s) and context and finds value
+        #
+        def initialize(serializer_class, path:, opts:, block:)
+          check(serializer_class.config, path, opts, block)
 
-          # @return [Symbol] Meta attribute full path
-          attr_reader :path
+          @name = path.join(".").to_sym
+          @path = SeregaUtils::EnumDeepDup.call(path)
+          @opts = SeregaUtils::EnumDeepDup.call(opts)
+          @block = block
+          @normalized_block = normalize_block(opts[:value], opts[:const], block)
+          @normalized_block_signature =
+            SeregaUtils::MethodSignature.call(@normalized_block, pos_limit: 2, keyword_args: [])
+        end
 
-          # @return [Proc] Meta attribute options
-          attr_reader :opts
-
-          # @return [Proc,nil] Meta attribute originally added block
-          attr_reader :block
-
-          #
-          # Initializes new meta attribute
-          #
-          # @param serializer_class [Class<Serega>] Serializer of the meta attribute
-          #
-          # @param path [Array<Symbol, String>] Path for metadata of attribute
-          #
-          # @param opts [Hash] metadata attribute options
-          #
-          # @param block [Proc] Proc that receives object(s) and context and finds value
-          #
-          def initialize(serializer_class, path:, opts:, block:)
-            check(serializer_class.config, path, opts, block)
-
-            @name = path.join(".").to_sym
-            @path = SeregaUtils::EnumDeepDup.call(path)
-            @opts = SeregaUtils::EnumDeepDup.call(opts)
-            @block = block
-            @normalized_block = normalize_block(opts[:value], opts[:const], block)
-            @normalized_block_signature =
-              SeregaUtils::MethodSignature.call(@normalized_block, pos_limit: 2, keyword_args: [])
-          end
-
-          #
-          # Finds attribute value
-          #
-          # @param object [Object] Object(s) to serialize
-          # @param context [Hash, nil] Serialization context
-          #
-          # @return [Object] Serialized meta attribute value
-          #
-          def value(object, context)
-            case normalized_block_signature
-            when "0" then normalized_block.call
-            when "1" then normalized_block.call(object)
-            else normalized_block.call(object, context)
-            end
-          end
-
-          def hide?(value)
-            (!!opts[:hide_nil] && value.nil?) || (!!opts[:hide_empty] && (value.nil? || (value.respond_to?(:empty?) && value.empty?)))
-          end
-
-          private
-
-          attr_reader :normalized_block, :normalized_block_signature
-
-          def normalize_block(value, const, block)
-            return proc { const } if const
-
-            value || block
-          end
-
-          def check(config, path, opts, block)
-            CheckPath.call(path) if config.check_attribute_name
-            CheckOpts.call(opts, block, config.metadata.attribute_keys)
-            CheckBlock.call(block) if block
+        #
+        # Finds attribute value
+        #
+        # @param object [Object] Object(s) to serialize
+        # @param context [Hash, nil] Serialization context
+        #
+        # @return [Object] Serialized meta attribute value
+        #
+        def value(object, context)
+          case normalized_block_signature
+          when "0" then normalized_block.call
+          when "1" then normalized_block.call(object)
+          else normalized_block.call(object, context)
           end
         end
 
-        include InstanceMethods
+        def hide?(value)
+          (!!opts[:hide_nil] && value.nil?) || (!!opts[:hide_empty] && (value.nil? || (value.respond_to?(:empty?) && value.empty?)))
+        end
+
+        private
+
+        attr_reader :normalized_block, :normalized_block_signature
+
+        def normalize_block(value, const, block)
+          return proc { const } if const
+
+          value || block
+        end
+
+        def check(config, path, opts, block)
+          CheckPath.call(path) if config.check_attribute_name
+          CheckOpts.call(opts, block, config.metadata.attribute_keys)
+          CheckBlock.call(block) if block
+        end
       end
     end
   end
