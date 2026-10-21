@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **BREAKING**: `:only` with only nested fields of a level hides no fields of
+  that level when `:except` or `:with` names fields there: each relation can
+  use its own option. See [Combining options](docs/selecting-fields.md#combining-options).
 - Add `.to_json` / `#to_json`, `JSON.generate` of the `.to_h` result. See
   [JSON](docs/serializing.md#json).
 - **BREAKING**: Moved the depth limit from the `:depth_limit` plugin to core:

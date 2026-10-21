@@ -127,10 +127,11 @@ class Serega
         only = modifiers[:only] || FROZEN_EMPTY_HASH
         except = modifiers[:except] || FROZEN_EMPTY_HASH
         with = modifiers[:with] || FROZEN_EMPTY_HASH
+        only_limits = only_limits?(only, except, with)
         points = []
 
         serializer_class.attributes.each_value do |attribute|
-          next unless attribute.visible?(only: only, except: except, with: with)
+          next unless attribute.visible?(only, except, with, only_limits)
 
           child_fields =
             if attribute.relation?
@@ -143,6 +144,16 @@ class Serega
         end
 
         points.freeze
+      end
+
+      # `only` hides the fields it does not name when it names a field of
+      # this level without nested fields, or when `except` hides no field and
+      # `with` adds no field of this level
+      def only_limits?(only, except, with)
+        return false if only.empty?
+        return true if only.each_value.any?(&:empty?)
+
+        with.empty? && except.each_value.none?(&:empty?)
       end
     end
 

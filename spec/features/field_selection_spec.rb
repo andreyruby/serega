@@ -341,6 +341,54 @@ RSpec.describe Serega do
         expect(result).to eq({comment: {text: "TEXT"}})
       end
     end
+
+    context "with :except of an attribute and :only of relation fields" do
+      let(:comment) { double(text: "TEXT", author: "AUTHOR") }
+
+      let(:comment_serializer) do
+        Class.new(Serega) do
+          attribute :text
+          attribute :author
+        end
+      end
+
+      let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: comment) }
+
+      let(:user_serializer) do
+        child_serializer = comment_serializer
+        Class.new(Serega) do
+          attribute :first_name
+          attribute :last_name
+          attribute :comment, serializer: child_serializer
+        end
+      end
+
+      let(:modifiers) { {except: :last_name, only: {comment: :text}} }
+
+      it "returns the other attributes and only the requested relation fields" do
+        expect(result).to eq({first_name: "FIRST_NAME", comment: {text: "TEXT"}})
+      end
+    end
+
+    context "with options that change on each of three levels" do
+      let(:friend_of_friend) { double(first_name: "Alfred", last_name: "Pennyworth") }
+      let(:friend) { double(first_name: "Selina", last_name: "Kyle", friend: friend_of_friend) }
+      let(:user) { double(first_name: "Bruce", last_name: "Wayne", friend: friend) }
+
+      let(:user_serializer) do
+        Class.new(Serega) do
+          attribute :first_name
+          attribute :last_name
+          attribute :friend, serializer: self, hide: true
+        end
+      end
+
+      let(:modifiers) { {only: [:first_name, {friend: {friend: :last_name}}], except: {friend: :first_name}} }
+
+      it "selects the fields of each level with its own option" do
+        expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle", friend: {last_name: "Pennyworth"}}})
+      end
+    end
   end
 
   describe "validating initiate options" do

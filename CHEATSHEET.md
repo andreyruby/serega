@@ -207,6 +207,14 @@ UserSerializer.to_h(user, only: [:name, { posts: [:title] }])
 ```
 
 ```ruby
+# Combined: :except wins, :only and :with both add fields
+UserSerializer.to_h(user, only: [:name, :email], except: [:email]) # => {name: "Felonious"}
+UserSerializer.to_h(user, only: [:name], with: [:phone]) # => {name: "Felonious", phone: "555-1234"}
+```
+
+Each relation can use its own option, see [Combining options][combining-options].
+
+```ruby
 # Unknown attribute
 UserSerializer.to_h(user, only: [:address])
 # => raises Serega::AttributeNotExist
@@ -876,6 +884,7 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 
 [attributes]: #attribute-options
 [field-selection]: #field-selection--only-except-with
+[combining-options]: docs/selecting-fields.md#combining-options
 [context]: #context
 [relations]: #relations
 [batch-loading]: #batch-loading-n1
