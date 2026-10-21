@@ -23,7 +23,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(PlainRuby.post(POST)) },
-          "serega" => -> { JSON.generate(serega_serializer.to_h(POST, many: false)) },
+          "serega" => -> { serega_serializer.to_json(POST, many: false) },
           "alba" => -> { alba_serializer.new(POST).serialize },
           "blueprinter" => -> { blueprinter_serializer.render(POST) },
           "panko_serializer" => -> { panko_serializer.new.serialize_to_json(POST) },
@@ -58,7 +58,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map { |post| PlainRuby.post(post) }) },
-          "serega" => -> { JSON.generate(serega_serializer.to_h(POSTS, many: true)) },
+          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
           "alba" => -> { alba_serializer.new(POSTS).serialize },
           "blueprinter" => -> { blueprinter_serializer.render(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
@@ -93,7 +93,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map { |post| PlainRuby.post_with_relations(post) }) },
-          "serega" => -> { JSON.generate(serega_serializer.to_h(POSTS, many: true)) },
+          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
           "alba" => -> { alba_serializer.new(POSTS).serialize },
           "blueprinter" => -> { blueprinter_serializer.render(POSTS, view: :with_relations) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
@@ -136,7 +136,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map(&plain_ruby)) },
-          "serega" => -> { JSON.generate(serega_serializer.to_h(POSTS, many: true)) },
+          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
           "active_model_serializers" => lambda {
             ActiveModelSerializers::SerializableResource.new(POSTS, serializer: ActiveModel::Serializer::CollectionSerializer, each_serializer: ams_serializer, fields: ams_fields).to_json
@@ -171,7 +171,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map(&plain_ruby)) },
-          "serega" => -> { JSON.generate(serega_serializer.to_h(POSTS, many: true)) },
+          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) }
         },
         hash: {

@@ -71,8 +71,9 @@ first value that differs.
   separate methods, active_model_serializers with
   `serializer: ActiveModel::Serializer::CollectionSerializer`. alba and
   blueprinter have no such option and check the object's class.
-- **JSON.** Each gem renders JSON its own way: serega, alba and blueprinter
-  with `JSON.generate`, oj_serializers and panko_serializer with Oj,
+- **JSON.** Each gem renders JSON its own way: serega with `to_json`, which
+  calls `JSON.generate`, alba and blueprinter with `JSON.generate`,
+  oj_serializers and panko_serializer with Oj,
   active_model_serializers with ActiveSupport. oj_serializers loads with
   `Oj.default_options = {use_raw_json: true}`, thus it keeps Oj out of the
   JSON encoding of active_model_serializers.
