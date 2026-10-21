@@ -11,13 +11,13 @@ JSON strings:
 <!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **serega**               | 2,024,026 |    26,330 |                    2,612 |   5,151 |     3,775 |
-| oj_serializers           |   730,279 |    21,000 |                    2,147 |       — |         — |
-| panko_serializer         |   536,656 |    16,796 |                    1,635 |   3,872 |     2,649 |
-| alba                     |   762,701 |    13,701 |                    1,292 |       — |         — |
-| blueprinter              |   598,444 |     8,774 |                      903 |       — |         — |
-| active_model_serializers |    66,869 |     1,035 |                       79 |     117 |         — |
-| *hand-written Hash*      | 2,174,936 |    25,561 |                    2,421 |   4,822 |     3,416 |
+| **Serega**               | 2,379,261 |    27,634 |                    2,752 |   6,380 |     4,342 |
+| oj_serializers           |   787,237 |    21,976 |                    2,281 |       — |         — |
+| panko_serializer         |   551,857 |    17,715 |                    1,715 |   3,938 |     2,634 |
+| alba                     |   848,911 |    14,043 |                    1,249 |       — |         — |
+| blueprinter              |   657,010 |     9,216 |                      914 |       — |         — |
+| active_model_serializers |    70,687 |     1,052 |                       81 |     122 |         — |
+| *hand-written Hash*      | 2,450,662 |    28,238 |                    2,639 |   5,922 |     4,000 |
 <!-- benchmarks:json:end -->
 
 Hashes:
@@ -25,13 +25,13 @@ Hashes:
 <!-- benchmarks:hash -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **serega**               | 3,284,688 |    37,763 |                    3,444 |   6,800 |     5,208 |
-| oj_serializers           | 3,270,214 |    36,039 |                    3,082 |       — |         — |
-| panko_serializer         |   780,050 |    13,424 |                    1,315 |   2,301 |     1,734 |
-| alba                     | 1,029,599 |    16,290 |                    1,460 |       — |         — |
-| blueprinter              |   695,835 |     9,945 |                    1,012 |       — |         — |
-| active_model_serializers |    68,096 |     1,049 |                       81 |     119 |         — |
-| *hand-written Hash*      | 3,681,565 |    37,399 |                    3,168 |   6,197 |     4,716 |
+| **Serega**               | 3,849,814 |    42,576 |                    3,879 |   8,937 |     6,341 |
+| oj_serializers           | 3,592,834 |    40,529 |                    3,372 |       — |         — |
+| panko_serializer         |   815,518 |    13,810 |                    1,346 |   2,664 |     1,823 |
+| alba                     | 1,205,664 |    17,316 |                    1,453 |       — |         — |
+| blueprinter              |   784,825 |    10,351 |                    1,012 |       — |         — |
+| active_model_serializers |    74,610 |     1,057 |                       80 |     123 |         — |
+| *hand-written Hash*      | 3,978,056 |    42,410 |                    3,561 |   7,703 |     5,657 |
 <!-- benchmarks:hash:end -->
 
 "—" means the gem has no runtime field selection.
