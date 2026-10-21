@@ -100,6 +100,41 @@ RSpec.describe Serega::SeregaPlan do
       )
     end
 
+    context "when :only names nested fields only" do
+      subject(:result) { plan(only: {d: {d1: {}}}, except: except, with: with) }
+
+      let(:except) { {} }
+      let(:with) { {} }
+
+      it "returns the named relation only" do
+        expect(result).to satisfy_attribute_names(d: {d1: nil})
+      end
+
+      context "when :except hides an attribute of the level" do
+        let(:except) { {a2: {}} }
+
+        it "returns the other not hidden attributes and the named relation" do
+          expect(result).to satisfy_attribute_names(a1: nil, d: {d1: nil})
+        end
+      end
+
+      context "when :except hides nested fields only" do
+        let(:except) { {d: {d2: {}}} }
+
+        it "returns the named relation only" do
+          expect(result).to satisfy_attribute_names(d: {d1: nil})
+        end
+      end
+
+      context "when :with adds an attribute of the level" do
+        let(:with) { {a3: {}} }
+
+        it "returns the not hidden attributes, the added attribute and the named relation" do
+          expect(result).to satisfy_attribute_names(a1: nil, a2: nil, a3: nil, d: {d1: nil})
+        end
+      end
+    end
+
     context "with cyclic relations" do
       let(:current_serializer) { post_serializer }
       let(:post_depth_limit) { 2 }

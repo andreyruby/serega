@@ -407,51 +407,83 @@ RSpec.describe Serega::SeregaAttribute do
   end
 
   describe "#visible?" do
-    def default
-      {except: {}, only: {}, with: {}}
+    subject(:visible) { attribute.visible?(only, except, with, only_limits) }
+
+    let(:attribute) { described_class.new(serializer_class, name: :name, opts: {hide: hide}) }
+    let(:hide) { false }
+    let(:only) { {} }
+    let(:except) { {} }
+    let(:with) { {} }
+    let(:only_limits) { false }
+
+    it "returns true" do
+      expect(visible).to be true
     end
 
-    def except(key)
-      {except: {key => {}}, only: {}, with: {}}
+    context "when the attribute is hidden" do
+      let(:hide) { true }
+
+      it "returns false" do
+        expect(visible).to be false
+      end
     end
 
-    def only(key)
-      {except: {}, only: {key => {}}, with: {}}
+    context "when :only limits the level to other attributes" do
+      let(:only) { {other: {}} }
+      let(:only_limits) { true }
+
+      it "returns false" do
+        expect(visible).to be false
+      end
     end
 
-    def with(key)
-      {except: {}, only: {}, with: {key => {}}}
+    context "when :only names nested fields of other attributes without limiting the level" do
+      let(:only) { {other: {nested: {}}} }
+      let(:only_limits) { false }
+
+      it "returns true" do
+        expect(visible).to be true
+      end
     end
 
-    it "returns by default true when attribute is not hidden" do
-      expect(described_class.new(serializer_class, name: :name).visible?(**default)).to be true
+    context "when :only names the hidden attribute" do
+      let(:hide) { true }
+      let(:only) { {name: {}} }
+      let(:only_limits) { true }
+
+      it "returns true" do
+        expect(visible).to be true
+      end
     end
 
-    it "returns by default false when attribute is hidden" do
-      expect(described_class.new(serializer_class, name: :name, opts: {hide: true}).visible?(**default)).to be false
+    context "when :with names the hidden attribute on a level that :only limits" do
+      let(:hide) { true }
+      let(:only) { {other: {}} }
+      let(:with) { {name: {}} }
+      let(:only_limits) { true }
+
+      it "returns true" do
+        expect(visible).to be true
+      end
     end
 
-    it "returns false when attribute is hidden via :only parameter" do
-      expect(described_class.new(serializer_class, name: :name).visible?(**only(:other))).to be false
+    context "when :except names the attribute that :only and :with name" do
+      let(:only) { {name: {}} }
+      let(:except) { {name: {}} }
+      let(:with) { {name: {}} }
+      let(:only_limits) { true }
+
+      it "returns false" do
+        expect(visible).to be false
+      end
     end
 
-    it "returns true when attribute is shown via :only parameter" do
-      expect(described_class.new(serializer_class, name: :name, opts: {hide: true}).visible?(**only(:name))).to be true
-    end
+    context "when :except names nested fields of the attribute" do
+      let(:except) { {name: {nested: {}}} }
 
-    it "returns true when attribute is shown via :with parameter" do
-      expect(described_class.new(serializer_class, name: :name, opts: {hide: true}).visible?(**with(:name))).to be true
-    end
-
-    it "returns false when attribute is hidden via :except parameter" do
-      expect(described_class.new(serializer_class, name: :name).visible?(**except(:name))).to be false
-    end
-
-    it "skips :except parameter if it has nested keys" do
-      args = except(:name)
-      args[:except][:name] = {foo: {}}
-
-      expect(described_class.new(serializer_class, name: :name).visible?(**args)).to be true
+      it "returns true" do
+        expect(visible).to be true
+      end
     end
   end
 end

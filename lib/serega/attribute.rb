@@ -178,22 +178,18 @@ class Serega
       #
       # Checks if attribute must be added to serialized response
       #
-      # @param modifiers [Hash] Serialization modifiers
-      # @option modifiers [Hash] :only The only attributes to serialize
-      # @option modifiers [Hash] :except Attributes to hide
-      # @option modifiers [Hash] :with Hidden attributes to serialize additionally
+      # @param only [Hash] The only attributes to serialize
+      # @param except [Hash] Attributes to hide
+      # @param with [Hash] Hidden attributes to serialize additionally
+      # @param only_limits [Boolean] Whether `only` hides the attributes it
+      #   does not name
       #
       # @return [Boolean]
       #
-      def visible?(modifiers)
-        except = modifiers[:except] || FROZEN_EMPTY_HASH
-        only = modifiers[:only] || FROZEN_EMPTY_HASH
-        with = modifiers[:with] || FROZEN_EMPTY_HASH
-
+      def visible?(only, except, with, only_limits)
         return false if except.member?(name) && except[name].empty?
-        return true if only.member?(name)
-        return true if with.member?(name)
-        return false unless only.empty?
+        return true if only.member?(name) || with.member?(name)
+        return false if only_limits
 
         !hide
       end
