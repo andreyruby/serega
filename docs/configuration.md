@@ -31,6 +31,35 @@ it.
 | `check_attribute_name` | `true` | Allows only `a-z`, `A-Z`, `0-9`, `_`, `-`, `~` in attribute names |
 | `check_initiate_params` | `true` | Raises on unknown fields in `:only`, `:except`, `:with` |
 | `max_cached_plans_per_serializer_count` | `20` | Serialization plans cached per serializer, `0` disables the cache |
+| `depth_limit` | `nil` | Deepest nesting of serialized fields, see [Depth limit](#depth-limit) |
+
+## Depth limit
+
+`config.depth_limit` guards against expensive requests and cyclic relations.
+The limit of the serializer that starts the serialization applies to all
+nested serializers.
+
+```ruby
+class AppSerializer < Serega
+  config.depth_limit = 10
+end
+
+class UserSerializer < AppSerializer
+  config.depth_limit = 2
+  attribute :friends, serializer: -> { UserSerializer }, hide: true
+end
+
+UserSerializer.to_h(user, with: :friends) # depth 2
+UserSerializer.to_h(user, with: {friends: :friends})
+# => Serega::DepthLimitError: Depth limit was exceeded
+```
+
+`Serega::DepthLimitError#details` shows the path:
+`UserSerializer (depth limit: 2) -> friends -> friends`.
+
+The limit is checked when the serialization plan is built, before any
+serialization. Call `UserSerializer.new(with: params[:with])` early to
+validate a request before running other code.
 
 ## Plan cache
 

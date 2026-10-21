@@ -36,6 +36,7 @@ class Serega
       check_initiate_params: true,
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 20,
+      depth_limit: nil,
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
       auto_preload_excluded_methods: %i[itself __getobj__].freeze,
       hide_by_default: false,
@@ -238,6 +239,23 @@ class Serega
       def max_cached_plans_per_serializer_count=(value)
         raise SeregaError, "Must have Integer value, #{value.inspect} provided" unless value.is_a?(Integer)
         opts[:max_cached_plans_per_serializer_count] = value
+      end
+
+      # Returns :depth_limit config option
+      # @return [Integer, nil] Deepest plan nesting allowed, nil for no limit
+      def depth_limit
+        opts.fetch(:depth_limit)
+      end
+
+      # Sets :depth_limit config option
+      #
+      # @param value [Integer, nil] Deepest plan nesting allowed, nil for no limit
+      #
+      # @return [Integer, nil] New :depth_limit config option
+      def depth_limit=(value)
+        valid = value.nil? || (value.is_a?(Integer) && value.positive?)
+        raise SeregaError, "Must have positive Integer or nil value, #{value.inspect} provided" unless valid
+        opts[:depth_limit] = value
       end
 
       # Returns whether attributes names check is disabled

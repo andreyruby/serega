@@ -31,18 +31,19 @@ class Serega
       #
       # Instantiate new serialization plan
       #
-      # Patched by
-      #  - depth_limit plugin, which checks depth limit is not exceeded when adding new plan
-      #
       # @param parent_plan_point [SeregaPlanPoint, nil] Parent plan_point
       # @param modifiers [Hash] Serialization parameters
       # @option modifiers [Hash] :only The only attributes to serialize
       # @option modifiers [Hash] :except Attributes to hide
       # @option modifiers [Hash] :with Hidden attributes to serialize additionally
       #
+      # @raise [DepthLimitError] when the plan nests deeper than the depth limit
+      #   of the root serializer
+      #
       # @return [SeregaPlan] Serialization plan
       #
       def initialize(parent_plan_point, modifiers)
+        check_depth_limit(parent_plan_point) if parent_plan_point
         serializer_class.lock
         @parent_plan_point = parent_plan_point
         @points = attributes_points(modifiers)
@@ -97,6 +98,24 @@ class Serega
       end
 
       private
+
+      def check_depth_limit(parent_plan_point)
+        depth = 2
+        root_plan = parent_plan_point.plan
+        while (point = root_plan.parent_plan_point)
+          depth += 1
+          root_plan = point.plan
+        end
+
+        root_serializer = root_plan.serializer_class
+        limit = root_serializer.config.depth_limit
+        return if limit.nil? || depth <= limit
+
+        names = [parent_plan_point.name]
+        point = parent_plan_point
+        names.unshift(point.name) while (point = point.plan.parent_plan_point)
+        raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{names.join(" -> ")}")
+      end
 
       def attributes_points(modifiers)
         only = modifiers[:only] || FROZEN_EMPTY_HASH

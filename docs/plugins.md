@@ -19,7 +19,6 @@ end
 | [`:metadata`](#plugin-metadata) | Adds metadata defined in the serializer |
 | [`:context_metadata`](#plugin-context_metadata) | Adds metadata given per serialization |
 | [`:camel_case`](#plugin-camel_case) | Serializes keys in camelCase |
-| [`:depth_limit`](#plugin-depth_limit) | Limits the nesting depth of requested fields |
 | [`:explicit_many_option`](#plugin-explicit_many_option) | Requires `:many` on relations |
 
 ## Plugin :activerecord_preloads
@@ -185,33 +184,6 @@ UserSerializer.to_h(user, only: :firstName) # select fields by camelCase names
   custom transformation.
 - Keys of the `:root`, `:metadata` and `:context_metadata` plugins are not
   transformed.
-
-## Plugin :depth_limit
-
-Limits how deep requested fields can nest, against expensive requests and
-cyclic relations. The `:limit` option is required.
-
-```ruby
-class AppSerializer < Serega
-  plugin :depth_limit, limit: 10
-end
-
-class UserSerializer < AppSerializer
-  config.depth_limit.limit = 2
-  attribute :friends, serializer: UserSerializer, hide: true
-end
-
-UserSerializer.to_h(user, with: :friends) # depth 2
-UserSerializer.to_h(user, with: {friends: :friends})
-# => Serega::DepthLimitError: Depth limit was exceeded
-```
-
-`Serega::DepthLimitError#details` shows the path:
-`UserSerializer (depth limit: 2) -> friends -> friends`.
-
-The limit is checked when the serialization plan is built, before any
-serialization. Call `UserSerializer.new(with: params[:with])` early to
-validate a request before running other code.
 
 ## Plugin :explicit_many_option
 
