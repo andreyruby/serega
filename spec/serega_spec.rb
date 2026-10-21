@@ -93,15 +93,11 @@ RSpec.describe Serega do
       expect(parent.prepare_initial_objects).to equal parent_handler
     end
 
-    it "links internal classes to the child serializer" do
+    it "gives the child serializer its own config class" do
       parent = Class.new(described_class)
       child = Class.new(parent)
 
-      %w[
-        SeregaConfig SeregaAttributeNormalizer CheckAttributeParams CheckSerializeParams
-      ].each do |const_name|
-        expect(child.const_get(const_name).serializer_class).to eq(child), const_name
-      end
+      expect(child::SeregaConfig.superclass).to equal parent::SeregaConfig
     end
   end
 

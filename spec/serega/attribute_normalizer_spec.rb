@@ -2,29 +2,28 @@
 
 RSpec.describe Serega::SeregaAttributeNormalizer do
   let(:serializer_class) { Class.new(Serega) }
-  let(:normalizer) { serializer_class::SeregaAttributeNormalizer }
 
   describe "#name" do
     it "symbolizes name" do
-      attribute = normalizer.new(name: "current_name")
+      attribute = described_class.new(serializer_class, name: "current_name")
       expect(attribute.name).to eq :current_name
     end
   end
 
   describe "#method_name" do
     it "returns symbolized :method options" do
-      attribute = normalizer.new(name: "current_name", opts: {method: "method"})
+      attribute = described_class.new(serializer_class, name: "current_name", opts: {method: "method"})
       expect(attribute.method_name).to eq :method
     end
 
     it "returns name when :method option not provided" do
-      attribute = normalizer.new(name: "current_name", opts: {})
+      attribute = described_class.new(serializer_class, name: "current_name", opts: {})
       expect(attribute.method_name).to eq :current_name
     end
   end
 
   describe "#formatter" do
-    subject(:formatter) { normalizer.new(name: :balance, opts: opts).formatter }
+    subject(:formatter) { described_class.new(serializer_class, name: :balance, opts: opts).formatter }
 
     let(:money) { ->(cents) { cents / 100.0 } }
 
@@ -57,13 +56,13 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
   describe "#many" do
     it "returns provided :many option" do
-      expect(normalizer.new(opts: {many: true}).many).to be true
-      expect(normalizer.new(opts: {many: false}).many).to be false
-      expect(normalizer.new(opts: {}).many).to be_nil
+      expect(described_class.new(serializer_class, opts: {many: true}).many).to be true
+      expect(described_class.new(serializer_class, opts: {many: false}).many).to be false
+      expect(described_class.new(serializer_class, opts: {}).many).to be_nil
     end
 
     it "returns saved :many option" do
-      norm = normalizer.new(opts: {many: true})
+      norm = described_class.new(serializer_class, opts: {many: true})
       expect(norm.many).to be true
       expect(norm.instance_variable_get(:@many)).to be true
 
@@ -74,31 +73,31 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
   describe "#default" do
     it "returns provided :default option" do
-      expect(normalizer.new(opts: {default: 123, many: true}).default).to eq 123
+      expect(described_class.new(serializer_class, opts: {default: 123, many: true}).default).to eq 123
     end
 
     it "returns saved :default option" do
       default = []
-      norm = normalizer.new(opts: {default: default})
+      norm = described_class.new(serializer_class, opts: {default: default})
       expect(norm.default).to equal default
       expect(norm.default).to equal norm.default
     end
 
     it "returns empty array if no default provided, but many: true provided" do
-      norm = normalizer.new(opts: {many: true})
+      norm = described_class.new(serializer_class, opts: {many: true})
       expect(norm.default).to equal Serega::FROZEN_EMPTY_ARRAY
     end
   end
 
   describe "#hide" do
     it "returns provided :hide option" do
-      expect(normalizer.new(opts: {hide: true}).hide).to be true
-      expect(normalizer.new(opts: {hide: false}).hide).to be false
-      expect(normalizer.new(opts: {}).hide).to be_nil
+      expect(described_class.new(serializer_class, opts: {hide: true}).hide).to be true
+      expect(described_class.new(serializer_class, opts: {hide: false}).hide).to be false
+      expect(described_class.new(serializer_class, opts: {}).hide).to be_nil
     end
 
     it "returns saved :hide option" do
-      norm = normalizer.new(opts: {hide: true})
+      norm = described_class.new(serializer_class, opts: {hide: true})
 
       expect(norm.hide).to be true
       expect(norm.instance_variable_get(:@hide)).to be true
@@ -111,28 +110,28 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       before { serializer_class.config.hide_by_default = :auto }
 
       it "hides attribute with :preload" do
-        expect(normalizer.new(opts: {preload: :foo}).hide).to be true
+        expect(described_class.new(serializer_class, opts: {preload: :foo}).hide).to be true
       end
 
       it "hides attribute with :batch" do
-        expect(normalizer.new(name: :foo, opts: {batch: true}).hide).to be true
+        expect(described_class.new(serializer_class, name: :foo, opts: {batch: true}).hide).to be true
       end
 
       it "does not hide plain attribute" do
-        expect(normalizer.new(opts: {}).hide).to be_nil
+        expect(described_class.new(serializer_class, opts: {}).hide).to be_nil
       end
 
       it "does not hide attribute with :preload when preloads resolve to nil" do
-        expect(normalizer.new(opts: {preload: false}).hide).to be_nil
+        expect(described_class.new(serializer_class, opts: {preload: false}).hide).to be_nil
       end
 
       it "hides attribute with empty :batch use list (batch key present)" do
-        expect(normalizer.new(name: :foo, opts: {batch: {use: []}}).hide).to be(true)
+        expect(described_class.new(serializer_class, name: :foo, opts: {batch: {use: []}}).hide).to be(true)
       end
 
       it "does not hide attribute when auto preload resolves to an excluded method" do
         serializer_class.config.auto_preload = true
-        norm = normalizer.new(name: :statistics, opts: {serializer: "bar", method: :itself})
+        norm = described_class.new(serializer_class, name: :statistics, opts: {serializer: "bar", method: :itself})
         expect(norm.hide).to be_nil
       end
     end
@@ -140,28 +139,28 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     context "with hide_by_default: true" do
       it "returns true for any attribute without explicit hide option" do
         serializer_class.config.hide_by_default = true
-        expect(normalizer.new(opts: {}).hide).to be true
+        expect(described_class.new(serializer_class, opts: {}).hide).to be true
       end
 
       it "returns true for explicit hide: true" do
         serializer_class.config.hide_by_default = true
-        expect(normalizer.new(opts: {hide: true}).hide).to be true
+        expect(described_class.new(serializer_class, opts: {hide: true}).hide).to be true
       end
 
       it "returns false for explicit hide: false — attribute-level wins over config" do
         serializer_class.config.hide_by_default = true
-        expect(normalizer.new(opts: {hide: false}).hide).to be false
+        expect(described_class.new(serializer_class, opts: {hide: false}).hide).to be false
       end
     end
   end
 
   describe "#serializer" do
     it "returns provided :serializer option" do
-      expect(normalizer.new(opts: {serializer: 123}).serializer).to eq 123
+      expect(described_class.new(serializer_class, opts: {serializer: 123}).serializer).to eq 123
     end
 
     it "returns saved :serializer option" do
-      norm = normalizer.new(opts: {serializer: true})
+      norm = described_class.new(serializer_class, opts: {serializer: true})
 
       expect(norm.serializer).to be true
       expect(norm.instance_variable_get(:@serializer)).to be true
@@ -176,7 +175,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       before { serializer_class.config.base_serializer = base_serializer }
 
       def nested_serializer_for(block, opts: {})
-        normalizer.new(name: :author, opts: opts, block: block).serializer
+        described_class.new(serializer_class, name: :author, opts: opts, block: block).serializer
       end
 
       it "builds an anonymous nested serializer inherited from config.base_serializer" do
@@ -195,7 +194,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
       it "raises when no base serializer is chosen" do
         plain_serializer = Class.new(Serega)
-        plain_normalizer = plain_serializer::SeregaAttributeNormalizer.new(name: :author, opts: {}, block: proc { attribute :name })
+        plain_normalizer = described_class.new(plain_serializer, name: :author, opts: {}, block: proc { attribute :name })
 
         expect { plain_normalizer.serializer }.to raise_error Serega::SeregaError,
           "Attribute block requires a base serializer for the nested serializer." \
@@ -297,18 +296,18 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
   describe "#prepare_value_block" do
     it "ignores provided block, it defines a nested serializer, not a value" do
       block = proc {}
-      resolver = normalizer.new(name: :length, opts: {}, block: block).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, name: :length, opts: {}, block: block).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::Keyword)
     end
 
     it "returns provided value option" do
       value = lambda { |one, two| }
-      attribute = normalizer.new(opts: {value: value})
+      attribute = described_class.new(serializer_class, opts: {value: value})
       expect(attribute.send(:prepare_value_block)).to equal value
     end
 
     it "returns resolver generated by :method option" do
-      resolver = normalizer.new(opts: {method: :length}).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, opts: {method: :length}).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::Keyword)
       expect(resolver.call(double(length: 3))).to eq 3
     end
@@ -316,7 +315,8 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     it "returns resolver generated by :batch option" do
       batches_values = {attr1: {foo: 1}}
 
-      resolver = normalizer.new(
+      resolver = described_class.new(
+        serializer_class,
         name: :attr1,
         opts: {
           batch: {id: :itself}
@@ -328,7 +328,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
     it "returns resolver generated by :const option" do
       const = "123"
-      resolver = normalizer.new(opts: {const: const}).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, opts: {const: const}).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::Const)
       expect(resolver.call).to be const
     end
@@ -336,7 +336,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     it "returns resolver generated by :delegate option when nil is not allowed" do
       object = double(foo: double(name: "DELEGATED_NAME"))
       delegate = {to: :foo}
-      resolver = normalizer.new(name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::Delegate)
       expect(resolver.call(object)).to eq "DELEGATED_NAME"
     end
@@ -344,7 +344,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     it "returns resolver generated by :delegate option that uses :method option" do
       object = double(foo: double(bar: "DELEGATED_NAME"))
       delegate = {to: :foo, method: :bar}
-      resolver = normalizer.new(opts: {delegate: delegate}).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, opts: {delegate: delegate}).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::Delegate)
       expect(resolver.call(object)).to eq "DELEGATED_NAME"
     end
@@ -353,7 +353,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       object1 = double(foo: nil)
       object2 = double(foo: double(name: "NAME"))
       delegate = {to: :foo, allow_nil: true}
-      resolver = normalizer.new(name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::DelegateAllowNil)
       expect(resolver.call(object1)).to be_nil
       expect(resolver.call(object2)).to eq "NAME"
@@ -364,7 +364,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       object2 = double(foo: double(name: "NAME"))
       delegate = {to: :foo}
       serializer_class.config.delegate_default_allow_nil = true
-      resolver = normalizer.new(name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
+      resolver = described_class.new(serializer_class, name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
       expect(resolver).to be_a(Serega::AttributeValueResolvers::DelegateAllowNil)
       expect(resolver.call(object1)).to be_nil
       expect(resolver.call(object2)).to eq "NAME"
@@ -373,7 +373,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
   describe "prepare_batch_loaders" do
     def batch_loaders(name:, opts:)
-      normalizer.new(name: name, opts: opts).send(:prepare_batch_loaders)
+      described_class.new(serializer_class, name: name, opts: opts).send(:prepare_batch_loaders)
     end
 
     it "returns array of required batch loader names to send to attribute" do
@@ -393,7 +393,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
   end
 
   describe "#inline_batch_loader" do
-    subject(:loader) { normalizer.new(name: :likes_count, opts: opts).inline_batch_loader }
+    subject(:loader) { described_class.new(serializer_class, name: :likes_count, opts: opts).inline_batch_loader }
 
     let(:likes) { ->(users) { users.to_h { |user| [user.id, 10] } } }
 
@@ -431,7 +431,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
   end
 
   describe "#value_block with the :batch option" do
-    subject(:resolver) { normalizer.new(name: :likes_count, opts: {batch: batch}).value_block }
+    subject(:resolver) { described_class.new(serializer_class, name: :likes_count, opts: {batch: batch}).value_block }
 
     before { serializer_class.config.batch_id_option = :uuid }
 
@@ -507,7 +507,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
   describe "preloads functionality" do
     let(:initials) { {name: :foo, opts: opts, block: nil} }
     let(:opts) { {} }
-    let(:norm) { normalizer.new(**initials) }
+    let(:norm) { described_class.new(serializer_class, **initials) }
 
     describe "#preloads" do
       it "returns nil for regular attributes" do

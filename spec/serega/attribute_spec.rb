@@ -9,8 +9,10 @@ RSpec.describe Serega::SeregaAttribute do
       name = :current_name
       opts = {foo: :bar}
       block = proc { attribute :nested_name }
-      checker = instance_double(serializer_class::CheckAttributeParams, validate: nil)
-      allow(serializer_class::CheckAttributeParams).to receive(:new).with(name, opts, block).and_return(checker)
+      checker = instance_double(Serega::SeregaValidations::CheckAttributeParams, validate: nil)
+      allow(Serega::SeregaValidations::CheckAttributeParams).to receive(:new).and_call_original # attributes of the nested serializer
+      allow(Serega::SeregaValidations::CheckAttributeParams)
+        .to receive(:new).with(serializer_class, name, opts, block).and_return(checker)
 
       described_class.new(serializer_class, name: :current_name, opts: opts, block: block)
 
@@ -33,7 +35,7 @@ RSpec.describe Serega::SeregaAttribute do
 
     it "sets attribute instance variables using normalizer" do
       normalizer = instance_double(
-        serializer_class::SeregaAttributeNormalizer,
+        Serega::SeregaAttributeNormalizer,
         name: nil,
         many: nil,
         default: nil,
@@ -50,7 +52,7 @@ RSpec.describe Serega::SeregaAttribute do
       )
 
       initials = {name: :name, opts: {}, block: nil, location: "app/serializers/user_serializer.rb:3"}
-      allow(serializer_class::SeregaAttributeNormalizer).to receive(:new).with(initials).and_return(normalizer)
+      allow(Serega::SeregaAttributeNormalizer).to receive(:new).with(serializer_class, initials).and_return(normalizer)
       attribute = described_class.new(serializer_class, **initials)
 
       expect(attribute.instance_variables)

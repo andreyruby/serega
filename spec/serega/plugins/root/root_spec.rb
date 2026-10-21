@@ -314,7 +314,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
   describe "serialization options" do
     subject(:result) { target.public_send(method_name, user, **opts) }
 
-    let(:serializer) do
+    let!(:serializer) do
       Class.new(Serega) do
         plugin :root
         attribute :name
@@ -332,14 +332,13 @@ RSpec.describe Serega::SeregaPlugins::Root do
     let(:method_name) { :to_h }
     let(:user) { double(name: "Ann") }
     let(:opts) { {root: :user} }
-    let(:validator) { instance_double(serializer::CheckSerializeParams, validate: nil) }
 
-    before { allow(serializer::CheckSerializeParams).to receive(:new).and_return(validator) }
+    before { allow(Serega::SeregaValidations::Utils::CheckAllowedKeys).to receive(:call) }
 
     it "validates the plugin options and passes them to #serialize" do
       expect(result).to eq [{root: :user}, :hash]
-      expect(serializer::CheckSerializeParams).to have_received(:new).with(root: :user)
-      expect(validator).to have_received(:validate)
+      expect(Serega::SeregaValidations::Utils::CheckAllowedKeys)
+        .to have_received(:call).with({root: :user}, serializer.config.serialize_keys, :serialize)
     end
 
     context "without plugin options" do
@@ -347,7 +346,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
       it "passes the frozen empty Hash without validation" do
         expect(result[0]).to equal Serega::FROZEN_EMPTY_HASH
-        expect(serializer::CheckSerializeParams).not_to have_received(:new)
+        expect(Serega::SeregaValidations::Utils::CheckAllowedKeys).not_to have_received(:call)
       end
     end
 

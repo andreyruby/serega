@@ -26,14 +26,16 @@ class Serega
           #
           # Initializes new meta attribute
           #
+          # @param serializer_class [Class<Serega>] Serializer of the meta attribute
+          #
           # @param path [Array<Symbol, String>] Path for metadata of attribute
           #
           # @param opts [Hash] metadata attribute options
           #
           # @param block [Proc] Proc that receives object(s) and context and finds value
           #
-          def initialize(path:, opts:, block:)
-            check(path, opts, block)
+          def initialize(serializer_class, path:, opts:, block:)
+            check(serializer_class.config, path, opts, block)
 
             @name = path.join(".").to_sym
             @path = SeregaUtils::EnumDeepDup.call(path)
@@ -74,22 +76,13 @@ class Serega
             value || block
           end
 
-          def check(path, opts, block)
-            CheckPath.call(path) if check_attribute_name
-            CheckOpts.call(opts, block, attribute_keys)
+          def check(config, path, opts, block)
+            CheckPath.call(path) if config.check_attribute_name
+            CheckOpts.call(opts, block, config.metadata.attribute_keys)
             CheckBlock.call(block) if block
-          end
-
-          def attribute_keys
-            self.class.serializer_class.config.metadata.attribute_keys
-          end
-
-          def check_attribute_name
-            self.class.serializer_class.config.check_attribute_name
           end
         end
 
-        extend Serega::SeregaHelpers::SerializerClassHelper
         include InstanceMethods
       end
     end

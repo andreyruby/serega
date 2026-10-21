@@ -180,7 +180,7 @@ class Serega
       # Serega additional/patched instance methods
       #
       # The serialization methods take `**opts`, see ClassMethods. The
-      # options reach `#serialize` as its `opts`, after CheckSerializeParams
+      # options reach `#serialize` as its `opts`, after #checked_opts
       # validates them.
       #
       # @see Serega
@@ -210,10 +210,12 @@ class Serega
 
         private
 
+        # Patched in:
+        # - plugin :context_metadata (checks the context metadata is a Hash)
         def checked_opts(opts)
           return FROZEN_EMPTY_HASH if opts.empty?
 
-          self.class::CheckSerializeParams.new(opts).validate
+          SeregaValidations::Utils::CheckAllowedKeys.call(opts, self.class.config.serialize_keys, :serialize)
           opts
         end
 

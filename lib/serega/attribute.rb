@@ -72,7 +72,7 @@ class Serega
       # @param location [String, nil] Where the attribute is defined, "path:line"
       #
       def initialize(serializer_class, name:, opts: {}, block: nil, location: nil)
-        serializer_class::CheckAttributeParams.new(name, opts, block).validate
+        SeregaValidations::CheckAttributeParams.new(serializer_class, name, opts, block).validate
 
         @serializer_class = serializer_class
         @initials = SeregaUtils::EnumDeepFreeze.call(
@@ -82,7 +82,7 @@ class Serega
           location: location
         )
 
-        normalizer = serializer_class::SeregaAttributeNormalizer.new(initials)
+        normalizer = SeregaAttributeNormalizer.new(serializer_class, initials)
         set_normalized_vars(normalizer)
         @value_method = define_value_method(serializer_class)
       end

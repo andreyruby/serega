@@ -4,20 +4,6 @@ RSpec.describe Serega::SeregaConfig do
   let(:serializer_class) { Class.new(Serega) }
   let(:config) { serializer_class.config }
 
-  describe ".serializer_class=" do
-    it "assigns @serializer_class" do
-      config.class.serializer_class = :foo
-      expect(config.class.instance_variable_get(:@serializer_class)).to eq :foo
-    end
-  end
-
-  describe ".serializer_class" do
-    it "returns self @serializer_class" do
-      expect(config.class.instance_variable_get(:@serializer_class)).to equal serializer_class
-      expect(config.class.serializer_class).to equal serializer_class
-    end
-  end
-
   describe "#check_attribute_name=" do
     it "validates value is boolean" do
       expect { config.check_attribute_name = false }.not_to raise_error

@@ -30,10 +30,6 @@ RSpec.describe Serega::SeregaPlugins::Metadata do
     let(:parent) { Class.new(serializer) { plugin :metadata } }
     let(:child) { Class.new(parent) }
 
-    it "inherits MetaAttribute class" do
-      expect(parent::MetaAttribute).to be child::MetaAttribute.superclass
-    end
-
     it "inherits meta attributes" do
       parent_attr = parent.meta_attribute(:version, hide_nil: true) { "1.2.3" }
 
