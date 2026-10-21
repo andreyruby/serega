@@ -79,12 +79,25 @@ first value that differs.
 
 Apple M4, Ruby 4.0.5 with YJIT, alba 4.0.1, blueprinter 1.3.0,
 panko_serializer 0.8.5, active_model_serializers 0.10.16, oj_serializers
-3.0.2, activerecord 8.1.4. `support.rb` installs the gems with an inline
-Gemfile.
+3.0.2, activerecord 8.1.4. The gems come from
+`gemfiles/benchmarks.gemfile`, and `cases.rb` defines how each gem
+serializes each case.
 
 ## Running
 
 ```sh
+BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle install
 ruby benchmarks/relations.rb         # single, collection, relations, only, except
 FAST=1 ruby benchmarks/relations.rb  # a short round
+```
+
+`rake benchmarks:check` (`check.rb`) fails when Serega is more than 2% slower
+than the fastest other gem of a case, or slower than the hand-written Hash:
+more than 10% slower in the single and collection cases, slower at all in the
+relations, `only:` and `except:` cases. It measures each case for 0.5
+seconds, and a case that fails for 1.5 seconds more, and prints a table of the
+times. CI runs it on the latest Ruby:
+
+```sh
+bundle exec rake benchmarks:check
 ```
