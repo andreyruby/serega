@@ -13,19 +13,30 @@ class Serega
           #
           # @param opts [Hash] Attribute options
           # @param block [nil, Proc] Attribute block
+          # @param required [Boolean] Whether a relation must have the option
           #
           # @raise [SeregaError] SeregaError that option has invalid value
           #
           # @return [void]
           #
-          def call(opts, block = nil)
-            return unless opts.key?(:many)
-
-            check_many_option_makes_sence(opts, block)
-            Utils::CheckOptIsBool.call(opts, :many)
+          def call(opts, block = nil, required = false)
+            if opts.key?(:many)
+              check_many_option_makes_sence(opts, block)
+              Utils::CheckOptIsBool.call(opts, :many)
+            elsif required
+              check_many_option_not_required(opts, block)
+            end
           end
 
           private
+
+          def check_many_option_not_required(opts, block)
+            return if !opts[:serializer] && !block
+
+            raise SeregaError,
+              "Attribute option :many [Boolean] must be provided" \
+              " for attributes with :serializer option or a block"
+          end
 
           def check_many_option_makes_sence(opts, block)
             return if many_option_makes_sence?(opts, block)

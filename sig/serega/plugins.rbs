@@ -18,9 +18,6 @@ class Serega
       end
     end
 
-    module ExplicitManyOption
-    end
-
     module Metadata
       module ClassMethods
         def meta_attribute: (*Symbol | String path, **untyped opts) ?{ (untyped objects, context context) -> untyped } -> void

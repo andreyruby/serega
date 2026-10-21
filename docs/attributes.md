@@ -169,13 +169,13 @@ attribute :posts, serializer: PostSerializer, many: true
 # => {posts: []} when user.posts is nil
 ```
 
-`plugin :explicit_many_option` requires `:many` on every relation, an
+`config.require_many = true` requires `:many` on every relation, an
 attribute with `:serializer` or a block. A relation without `:many` raises
 `Serega::SeregaError`.
 
 ```ruby
 class AppSerializer < Serega
-  plugin :explicit_many_option
+  config.require_many = true
   config.base_serializer = self
 end
 

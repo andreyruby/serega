@@ -47,11 +47,21 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     expect(Serega::SeregaValidations::Attribute::CheckOptIfValue).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, name, opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts)
-    expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block, false)
     expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts, block)
     expect(Serega::SeregaValidations::Attribute::CheckOptUnless).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptUnlessValue).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptValue).to have_received(:call).with(opts)
+  end
+
+  context "when the config requires the :many option" do
+    let(:serializer) { Class.new(Serega) { config.require_many = true } }
+
+    it "checks the :many option as required" do
+      validate
+
+      expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block, true)
+    end
   end
 
   it "skips checking name if names check is disabled" do

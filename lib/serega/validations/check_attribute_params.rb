@@ -52,8 +52,6 @@ class Serega
           Attribute::CheckName.call(name)
         end
 
-        # Patched in:
-        # - plugin :context_metadata (checks context metadata option which is :meta by default)
         def check_opts
           Utils::CheckAllowedKeys.call(opts, allowed_opts_keys, :attribute)
 
@@ -66,7 +64,7 @@ class Serega
           Attribute::CheckOptIf.call(opts)
           Attribute::CheckOptIfValue.call(opts)
           Attribute::CheckOptMethod.call(opts)
-          Attribute::CheckOptMany.call(opts, block)
+          Attribute::CheckOptMany.call(opts, block, require_many)
           Attribute::CheckOptPreload.call(opts)
           Attribute::CheckOptSerializer.call(opts, block)
           Attribute::CheckOptUnless.call(opts)
@@ -85,6 +83,10 @@ class Serega
 
         def check_attribute_name
           self.class.serializer_class.config.check_attribute_name
+        end
+
+        def require_many
+          self.class.serializer_class.config.require_many
         end
       end
 
