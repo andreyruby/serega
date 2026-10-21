@@ -111,14 +111,6 @@ class Serega
   check_serialize_params_class.serializer_class = self
   const_set(:CheckSerializeParams, check_serialize_params_class)
 
-  # Validates `Serializer.batch` params
-  check_batch_loader_params_class = Class.new(SeregaValidations::CheckBatchLoaderParams)
-  check_batch_loader_params_class.serializer_class = self
-  const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
-
-  # Batch loaders of Serega validate params with Serega::CheckBatchLoaderParams
-  SeregaBatchLoader.serializer_class = self
-
   #
   # Serializers class methods
   #
@@ -203,6 +195,18 @@ class Serega
       @formatters
     end
 
+    # Patched in:
+    # - plugin :string_modifiers (returns its own cache class)
+    #
+    # Class of the serialization plans cache
+    #
+    # @return [Class<SeregaPlan::Cache>] Plans cache class
+    #
+    # @private
+    def plan_cache_class
+      SeregaPlan::Cache
+    end
+
     #
     # Cached serialization plans
     #
@@ -281,7 +285,7 @@ class Serega
     def attribute(name, **opts, &block)
       check_unlocked
       location = caller_locations.find { |caller_location| !caller_location.path.start_with?(LIB_PATH) }
-      attribute = self::SeregaAttribute.new(name: name, opts: opts, block: block, location: location && "#{location.path}:#{location.lineno}")
+      attribute = SeregaAttribute.new(self, name: name, opts: opts, block: block, location: location && "#{location.path}:#{location.lineno}")
       attributes[attribute.name] = attribute
     end
 
@@ -317,7 +321,7 @@ class Serega
       check_unlocked
       raise SeregaError, "Batch loader must be defined with a callable value or block" if (value && block) || (!value && !block)
 
-      batch_loader = self::SeregaBatchLoader.new(name: name, block: value || block)
+      batch_loader = SeregaBatchLoader.new(name: name, block: value || block)
       batch_loaders[batch_loader.name] = batch_loader
     end
 
@@ -606,36 +610,13 @@ class Serega
       subclass.instance_variable_set(:@shareable, false)
       subclass.instance_variable_set(:@unshareable_reason, nil)
 
-      attribute_class = Class.new(self::SeregaAttribute)
-      attribute_class.serializer_class = subclass
-      subclass.const_set(:SeregaAttribute, attribute_class)
-
       subclass.const_set(:SeregaAttributeValues, Class.new(self::SeregaAttributeValues))
 
       attribute_normalizer_class = Class.new(self::SeregaAttributeNormalizer)
       attribute_normalizer_class.serializer_class = subclass
       subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
 
-      plan_class = Class.new(self::SeregaPlan)
-      plan_class.serializer_class = subclass
-      subclass.const_set(:SeregaPlan, plan_class)
-
-      plan_point_class = Class.new(self::SeregaPlanPoint)
-      plan_point_class.serializer_class = subclass
-      subclass.const_set(:SeregaPlanPoint, plan_point_class)
-
-      plan_cache_class = Class.new(self::SeregaPlan::Cache)
-      plan_cache_class.serializer_class = subclass
-      plan_class.const_set(:Cache, plan_cache_class)
-      subclass.instance_variable_set(:@plan_cache, plan_cache_class.new)
-
-      batch_loader_class = Class.new(self::SeregaBatchLoader)
-      batch_loader_class.serializer_class = subclass
-      subclass.const_set(:SeregaBatchLoader, batch_loader_class)
-
-      source_group_class = Class.new(self::SeregaSourceGroup)
-      source_group_class.serializer_class = subclass
-      subclass.const_set(:SeregaSourceGroup, source_group_class)
+      subclass.instance_variable_set(:@plan_cache, subclass.plan_cache_class.new(subclass))
 
       check_attribute_params_class = Class.new(self::CheckAttributeParams)
       check_attribute_params_class.serializer_class = subclass
@@ -645,10 +626,6 @@ class Serega
       check_serialize_params_class.serializer_class = subclass
       subclass.const_set(:CheckSerializeParams, check_serialize_params_class)
 
-      check_batch_loader_params_class = Class.new(self::CheckBatchLoaderParams)
-      check_batch_loader_params_class.serializer_class = subclass
-      subclass.const_set(:CheckBatchLoaderParams, check_batch_loader_params_class)
-
       # Assign same batch loaders before the attributes that use them
       batch_loaders.each_value do |loader|
         subclass.batch(loader.name, loader.block)
@@ -656,7 +633,7 @@ class Serega
 
       # Assign same attributes
       attributes.each_value do |attr|
-        subclass_attribute = subclass::SeregaAttribute.new(**attr.initials)
+        subclass_attribute = SeregaAttribute.new(subclass, **attr.initials)
         subclass.attributes[subclass_attribute.name] = subclass_attribute
       end
 

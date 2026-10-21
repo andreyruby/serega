@@ -26,8 +26,7 @@ class Serega
       # @param block [#call] Batch loader block
       #
       def initialize(name:, block:)
-        serializer_class = self.class.serializer_class
-        serializer_class::CheckBatchLoaderParams.new(name, block).validate
+        SeregaValidations::CheckBatchLoaderParams.new(name, block).validate
 
         @name = name.to_sym
         @block = block
@@ -53,7 +52,6 @@ class Serega
       attr_reader :signature
     end
 
-    extend SeregaHelpers::SerializerClassHelper
     include InstanceMethods
   end
 end

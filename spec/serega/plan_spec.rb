@@ -41,10 +41,9 @@ RSpec.describe Serega::SeregaPlan do
   end
 
   let(:current_serializer) { a }
-  let(:described_class) { current_serializer::SeregaPlan }
 
   def plan(opts)
-    current_serializer::SeregaPlan.new(nil, opts)
+    Serega::SeregaPlan.new(current_serializer, nil, opts)
   end
 
   def satisfy_attribute_names(names)

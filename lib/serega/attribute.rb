@@ -11,6 +11,10 @@ class Serega
     #
     # @private
     module AttributeInstanceMethods
+      # Serializer of the attribute
+      # @return [Class<Serega>] Serializer of the attribute
+      attr_reader :serializer_class
+
       # Attribute initial params
       # @return [Hash] Attribute initial params
       attr_reader :initials
@@ -56,6 +60,7 @@ class Serega
       #
       # Initializes new attribute
       #
+      # @param serializer_class [Class<Serega>] Serializer of the attribute
       # @param name [Symbol, String] Name of attribute
       # @param opts [Hash] Attribute options
       # @option opts [Symbol] :method Object method name to fetch attribute value
@@ -68,10 +73,10 @@ class Serega
       # @param block [Proc] Defines attributes of a nested anonymous serializer
       # @param location [String, nil] Where the attribute is defined, "path:line"
       #
-      def initialize(name:, opts: {}, block: nil, location: nil)
-        serializer_class = self.class.serializer_class
+      def initialize(serializer_class, name:, opts: {}, block: nil, location: nil)
         serializer_class::CheckAttributeParams.new(name, opts, block).validate
 
+        @serializer_class = serializer_class
         @initials = SeregaUtils::EnumDeepFreeze.call(
           name: name,
           opts: SeregaUtils::EnumDeepDup.call(opts),
@@ -252,7 +257,6 @@ class Serega
       end
     end
 
-    extend Serega::SeregaHelpers::SerializerClassHelper
     include AttributeInstanceMethods
   end
 end

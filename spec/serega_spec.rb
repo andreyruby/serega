@@ -36,7 +36,8 @@ RSpec.describe Serega do
 
       # Check attributes are copied to child attributes
       child = Class.new(parent)
-      expect(child.attributes[:foo].class.superclass).to eq parent.attributes[:foo].class
+      expect(child.attributes[:foo]).not_to equal parent.attributes[:foo]
+      expect(child.attributes[:foo]).to have_attributes(name: :foo, serializer_class: child)
     end
 
     it "inherits same batch loaders" do
@@ -92,21 +93,12 @@ RSpec.describe Serega do
       expect(parent.prepare_initial_objects).to equal parent_handler
     end
 
-    it "inherits source group class" do
-      parent = Class.new(described_class)
-      child = Class.new(parent)
-
-      expect(child::SeregaSourceGroup.superclass).to eq parent::SeregaSourceGroup
-    end
-
     it "links internal classes to the child serializer" do
       parent = Class.new(described_class)
       child = Class.new(parent)
 
       %w[
-        SeregaConfig SeregaAttribute SeregaAttributeNormalizer
-        SeregaPlan SeregaPlan::Cache SeregaPlanPoint SeregaBatchLoader SeregaSourceGroup
-        CheckAttributeParams CheckSerializeParams CheckBatchLoaderParams
+        SeregaConfig SeregaAttributeNormalizer CheckAttributeParams CheckSerializeParams
       ].each do |const_name|
         expect(child.const_get(const_name).serializer_class).to eq(child), const_name
       end

@@ -15,7 +15,7 @@ RSpec.describe Serega::SeregaEngine::Run do
     end
   end
 
-  let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
+  let(:plan) { Serega::SeregaPlan.new(user_serializer, nil, {}) }
 
   describe ".call" do
     subject(:result) { described_class.call(plan, object, many, mode, context) }
@@ -33,7 +33,7 @@ RSpec.describe Serega::SeregaEngine::Run do
     end
 
     context "with a flat plan" do
-      let(:plan) { post_serializer::SeregaPlan.new(nil, {}) }
+      let(:plan) { Serega::SeregaPlan.new(post_serializer, nil, {}) }
       let(:object) { post }
 
       it "serializes the object without a run" do
@@ -112,8 +112,8 @@ RSpec.describe Serega::SeregaEngine::Run do
 
     let(:user) { double }
 
-    it "returns a new source group of the plan serializer" do
-      expect(source_group).to be_a user_serializer::SeregaSourceGroup
+    it "returns a new source group of the plan" do
+      expect(source_group).to be_a Serega::SeregaSourceGroup
       expect(source_group.plan).to equal plan
       expect(source_group.run).to equal run
       expect(source_group.sources).to eq [user]

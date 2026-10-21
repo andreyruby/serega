@@ -48,7 +48,7 @@ class Serega
         @plan = plan
         @attribute = attribute
         @name = attribute.name
-        @child_plan = serializer ? serializer::SeregaPlan.new(self, modifiers || FROZEN_EMPTY_HASH) : nil
+        @child_plan = serializer ? SeregaPlan.new(serializer, self, modifiers || FROZEN_EMPTY_HASH) : nil
         @collection_classes = @child_plan ? {}.compare_by_identity : nil
       end
 
@@ -83,7 +83,6 @@ class Serega
       end
     end
 
-    extend SeregaHelpers::SerializerClassHelper
     include InstanceMethods
   end
 end

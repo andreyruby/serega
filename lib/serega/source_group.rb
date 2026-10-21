@@ -51,7 +51,7 @@ class Serega
         @run = run
         @plan = plan
         @context = run.context
-        presenter = self.class.serializer_class.presenter
+        presenter = plan.serializer_class.presenter
         @sources = presenter ? sources.map { |source| presenter.new(source, @context) } : sources
         @pulls = pulls
         @child_groups = nil
@@ -106,7 +106,7 @@ class Serega
         points = plan.preload_points
         return if points.empty?
 
-        serializer_class = self.class.serializer_class
+        serializer_class = plan.serializer_class
         handler = serializer_class.preload_with
         sources = serializer_class.presenter ? @sources.map(&:__getobj__) : @sources
 
@@ -132,7 +132,7 @@ class Serega
         return if names.empty?
 
         inline_loader = point.attribute.inline_batch_loader
-        loaders = self.class.serializer_class.batch_loaders
+        loaders = plan.serializer_class.batch_loaders
         loaded_batches = (@loaded_batches ||= {}.compare_by_identity)
         names.to_h do |name|
           loader = inline_loader || loaders[name]
@@ -145,7 +145,7 @@ class Serega
       # SeregaAttributeValues of the serializer: the methods that read
       # attribute values with plain Ruby code
       def attribute_values
-        @attribute_values ||= self.class.serializer_class::SeregaAttributeValues.new
+        @attribute_values ||= plan.serializer_class::SeregaAttributeValues.new
       end
 
       # Reads the relation source of every source: what the relation
@@ -190,7 +190,6 @@ class Serega
       end
     end
 
-    extend Serega::SeregaHelpers::SerializerClassHelper
     include InstanceMethods
   end
 end

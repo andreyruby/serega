@@ -146,7 +146,7 @@ RSpec.describe Serega::SeregaConditions do
     end
 
     context "when the attribute location is unknown" do
-      let(:conditions) { serializer::SeregaAttribute.new(name: :email, opts: attribute_opts).conditions }
+      let(:conditions) { Serega::SeregaAttribute.new(serializer, name: :email, opts: attribute_opts).conditions }
 
       it "defines the checks in a file named after the attribute" do
         expect(conditions.method(:satisfy?).source_location).to eq ["(attribute email)", 1]

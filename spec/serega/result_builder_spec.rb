@@ -8,7 +8,7 @@ RSpec.describe Serega::SeregaResultBuilder do
     end
   end
 
-  let(:plan) { serializer::SeregaPlan.new(nil, {}) }
+  let(:plan) { Serega::SeregaPlan.new(serializer, nil, {}) }
   let(:mode) { :hash }
 
   describe ".build" do

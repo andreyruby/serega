@@ -5,7 +5,7 @@ RSpec.describe Serega::SeregaResultCode do
 
   let(:mode) { :hash }
   let(:serializer) { Class.new(Serega) { attribute :name } }
-  let(:plan) { serializer::SeregaPlan.new(nil, {}) }
+  let(:plan) { Serega::SeregaPlan.new(serializer, nil, {}) }
 
   describe "#to_s" do
     it "returns the code of the call method" do

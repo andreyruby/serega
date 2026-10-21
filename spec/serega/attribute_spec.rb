@@ -2,7 +2,6 @@
 
 RSpec.describe Serega::SeregaAttribute do
   let(:serializer_class) { Class.new(Serega) }
-  let(:attribute_class) { serializer_class::SeregaAttribute }
 
   describe ".initialize" do
     it "validates provided params" do
@@ -13,23 +12,23 @@ RSpec.describe Serega::SeregaAttribute do
       checker = instance_double(serializer_class::CheckAttributeParams, validate: nil)
       allow(serializer_class::CheckAttributeParams).to receive(:new).with(name, opts, block).and_return(checker)
 
-      attribute_class.new(name: :current_name, opts: opts, block: block)
+      described_class.new(serializer_class, name: :current_name, opts: opts, block: block)
 
       expect(checker).to have_received(:validate)
     end
 
     it "duplicates provided options" do
       opts = {serializer: "foo"}
-      attr_opts = attribute_class.new(name: :name, opts: opts).initials[:opts]
+      attr_opts = described_class.new(serializer_class, name: :name, opts: opts).initials[:opts]
       expect(opts).to eql attr_opts
       expect(attr_opts).not_to be(opts)
     end
 
     it "saves provided block" do
       serializer_class.config.base_serializer = Serega
-      expect(attribute_class.new(name: :name).initials[:block]).to be_nil
+      expect(described_class.new(serializer_class, name: :name).initials[:block]).to be_nil
       block = proc { attribute :nested_name }
-      expect(attribute_class.new(name: :name, block: block).initials[:block]).to eq block
+      expect(described_class.new(serializer_class, name: :name, block: block).initials[:block]).to eq block
     end
 
     it "sets attribute instance variables using normalizer" do
@@ -52,7 +51,7 @@ RSpec.describe Serega::SeregaAttribute do
 
       initials = {name: :name, opts: {}, block: nil, location: "app/serializers/user_serializer.rb:3"}
       allow(serializer_class::SeregaAttributeNormalizer).to receive(:new).with(initials).and_return(normalizer)
-      attribute = attribute_class.new(**initials)
+      attribute = described_class.new(serializer_class, **initials)
 
       expect(attribute.instance_variables)
         .to include(
@@ -74,8 +73,8 @@ RSpec.describe Serega::SeregaAttribute do
 
   describe "#relation?" do
     it "returns true if serializer option provided" do
-      expect(attribute_class.new(name: :name).relation?).to be false
-      expect(attribute_class.new(name: :name, opts: {serializer: serializer_class}).relation?).to be true
+      expect(described_class.new(serializer_class, name: :name).relation?).to be false
+      expect(described_class.new(serializer_class, name: :name, opts: {serializer: serializer_class}).relation?).to be true
     end
   end
 
@@ -84,16 +83,16 @@ RSpec.describe Serega::SeregaAttribute do
     let(:serializer_as_proc) { proc { serializer } }
 
     it "returns provided :serializer option" do
-      expect(attribute_class.new(name: :name, opts: {serializer: serializer}).serializer).to eq serializer
+      expect(described_class.new(serializer_class, name: :name, opts: {serializer: serializer}).serializer).to eq serializer
     end
 
     it "extracts provided :serializer from Proc" do
-      expect(attribute_class.new(name: :name, opts: {serializer: serializer_as_proc}).serializer).to eq serializer
+      expect(described_class.new(serializer_class, name: :name, opts: {serializer: serializer_as_proc}).serializer).to eq serializer
     end
 
     it "extracts provided :serializer from String" do
       Object.const_set(:AAA, serializer)
-      expect(attribute_class.new(name: :name, opts: {serializer: "AAA"}).serializer).to eq serializer
+      expect(described_class.new(serializer_class, name: :name, opts: {serializer: "AAA"}).serializer).to eq serializer
     end
   end
 
@@ -101,7 +100,7 @@ RSpec.describe Serega::SeregaAttribute do
     context "with no args" do
       it "gets value" do
         value = lambda { "NAME" }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(nil, nil)).to eq "NAME"
       end
     end
@@ -110,7 +109,7 @@ RSpec.describe Serega::SeregaAttribute do
       it "gets value" do
         obj = double(name: "NAME")
         value = proc { |obj| obj.name }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(obj, nil)).to eq "NAME"
       end
     end
@@ -120,7 +119,7 @@ RSpec.describe Serega::SeregaAttribute do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
         value = lambda { |obj, ctx| [obj.name, ctx[:foo]] }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx)).to eq ["NAME", "CTX"]
       end
     end
@@ -130,7 +129,7 @@ RSpec.describe Serega::SeregaAttribute do
         obj = double(name: "NAME")
         ctx = {foo: "CTX"}
         value = lambda { |obj, ctx:| [obj.name, ctx[:foo]] }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx)).to eq ["NAME", "CTX"]
       end
     end
@@ -141,7 +140,7 @@ RSpec.describe Serega::SeregaAttribute do
         ctx = nil
         batches = {foo: "LAZY"}
         value = lambda { |obj, batches:| [obj.name, batches[:foo]] }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "LAZY"]
       end
     end
@@ -152,7 +151,7 @@ RSpec.describe Serega::SeregaAttribute do
         ctx = {foo: "CTX"}
         batches = {foo: "LAZY"}
         value = lambda { |obj, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "CTX", "LAZY"]
       end
     end
@@ -163,7 +162,7 @@ RSpec.describe Serega::SeregaAttribute do
         ctx = {foo: "CTX"}
         batches = {foo: "LAZY"}
         value = lambda { |obj, _context, ctx:, batches:| [obj.name, ctx[:foo], batches[:foo]] }
-        attribute = attribute_class.new(name: :name, opts: {value: value})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value})
         expect(attribute.value(obj, ctx, batches: batches)).to eq ["NAME", "CTX", "LAZY"]
       end
     end
@@ -173,7 +172,7 @@ RSpec.describe Serega::SeregaAttribute do
         obj = nil
         ctx = {foo: "CTX"}
         value = lambda { |obj| obj }
-        attribute = attribute_class.new(name: :name, opts: {value: value, default: 42})
+        attribute = described_class.new(serializer_class, name: :name, opts: {value: value, default: 42})
         expect(attribute.value(obj, ctx)).to eq 42
       end
     end
@@ -182,20 +181,20 @@ RSpec.describe Serega::SeregaAttribute do
       it "returns the formatted value" do
         obj = double(balance: 1234)
         format = lambda { |cents, ctx| "#{cents / 100.0} #{ctx[:currency]}" }
-        attribute = attribute_class.new(name: :balance, opts: {format: format})
+        attribute = described_class.new(serializer_class, name: :balance, opts: {format: format})
         expect(attribute.value(obj, {currency: "EUR"})).to eq "12.34 EUR"
       end
     end
 
     it "works when attribute has name with `-` sign" do
       obj = double("-foo": "-bar")
-      attribute = attribute_class.new(name: :"-foo")
+      attribute = described_class.new(serializer_class, name: :"-foo")
       expect(attribute.value(obj, nil)).to eq "-bar"
     end
   end
 
   describe "#value_method" do
-    subject(:attribute) { attribute_class.new(name: name, opts: opts, location: "app/serializers/user_serializer.rb:3") }
+    subject(:attribute) { described_class.new(serializer_class, name: name, opts: opts, location: "app/serializers/user_serializer.rb:3") }
 
     let(:name) { :full_name }
     let(:opts) { {} }
@@ -267,7 +266,7 @@ RSpec.describe Serega::SeregaAttribute do
     end
 
     context "without a location" do
-      subject(:attribute) { attribute_class.new(name: name, opts: opts) }
+      subject(:attribute) { described_class.new(serializer_class, name: name, opts: opts) }
 
       it "defines the method with the attribute name as its file" do
         attribute
@@ -332,7 +331,7 @@ RSpec.describe Serega::SeregaAttribute do
   end
 
   describe "#value_code" do
-    subject(:code) { attribute_class.new(name: :name, opts: opts).value_code("source", constants_prefix) }
+    subject(:code) { described_class.new(serializer_class, name: :name, opts: opts).value_code("source", constants_prefix) }
 
     let(:opts) { {} }
     let(:constants_prefix) { "" }
@@ -425,34 +424,34 @@ RSpec.describe Serega::SeregaAttribute do
     end
 
     it "returns by default true when attribute is not hidden" do
-      expect(attribute_class.new(name: :name).visible?(**default)).to be true
+      expect(described_class.new(serializer_class, name: :name).visible?(**default)).to be true
     end
 
     it "returns by default false when attribute is hidden" do
-      expect(attribute_class.new(name: :name, opts: {hide: true}).visible?(**default)).to be false
+      expect(described_class.new(serializer_class, name: :name, opts: {hide: true}).visible?(**default)).to be false
     end
 
     it "returns false when attribute is hidden via :only parameter" do
-      expect(attribute_class.new(name: :name).visible?(**only(:other))).to be false
+      expect(described_class.new(serializer_class, name: :name).visible?(**only(:other))).to be false
     end
 
     it "returns true when attribute is shown via :only parameter" do
-      expect(attribute_class.new(name: :name, opts: {hide: true}).visible?(**only(:name))).to be true
+      expect(described_class.new(serializer_class, name: :name, opts: {hide: true}).visible?(**only(:name))).to be true
     end
 
     it "returns true when attribute is shown via :with parameter" do
-      expect(attribute_class.new(name: :name, opts: {hide: true}).visible?(**with(:name))).to be true
+      expect(described_class.new(serializer_class, name: :name, opts: {hide: true}).visible?(**with(:name))).to be true
     end
 
     it "returns false when attribute is hidden via :except parameter" do
-      expect(attribute_class.new(name: :name).visible?(**except(:name))).to be false
+      expect(described_class.new(serializer_class, name: :name).visible?(**except(:name))).to be false
     end
 
     it "skips :except parameter if it has nested keys" do
       args = except(:name)
       args[:except][:name] = {foo: {}}
 
-      expect(attribute_class.new(name: :name).visible?(**args)).to be true
+      expect(described_class.new(serializer_class, name: :name).visible?(**args)).to be true
     end
   end
 end
