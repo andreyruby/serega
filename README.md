@@ -106,6 +106,7 @@ end
 Serializations of preloaded ActiveRecord records to JSON strings, per second,
 more is better:
 
+<!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
 | **serega**               | 2,024,026 |    26,330 |                    2,612 |   5,151 |     3,775 |
@@ -115,6 +116,7 @@ more is better:
 | blueprinter              |   598,444 |     8,774 |                      903 |       — |         — |
 | active_model_serializers |    66,869 |     1,035 |                       79 |     117 |         — |
 | *hand-written Hash*      | 2,174,936 |    25,561 |                    2,421 |   4,822 |     3,416 |
+<!-- benchmarks:json:end -->
 
 Hashes, the details of each case and how to run them:
 [benchmarks/README.md](benchmarks/README.md).

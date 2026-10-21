@@ -6,4 +6,9 @@ namespace :benchmarks do
     # benchmarks/check.rb loads gemfiles/benchmarks.gemfile, thus it runs outside the current bundle
     Bundler.with_original_env { ruby "benchmarks/check.rb" }
   end
+
+  desc "Runs the benchmarks and updates the tables of README.md and benchmarks/README.md"
+  task :full do
+    Bundler.with_original_env { ruby "benchmarks/full.rb" }
+  end
 end

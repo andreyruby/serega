@@ -8,6 +8,7 @@ better.
 
 JSON strings:
 
+<!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
 | **serega**               | 2,024,026 |    26,330 |                    2,612 |   5,151 |     3,775 |
@@ -17,9 +18,11 @@ JSON strings:
 | blueprinter              |   598,444 |     8,774 |                      903 |       — |         — |
 | active_model_serializers |    66,869 |     1,035 |                       79 |     117 |         — |
 | *hand-written Hash*      | 2,174,936 |    25,561 |                    2,421 |   4,822 |     3,416 |
+<!-- benchmarks:json:end -->
 
 Hashes:
 
+<!-- benchmarks:hash -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
 | **serega**               | 3,284,688 |    37,763 |                    3,444 |   6,800 |     5,208 |
@@ -29,6 +32,7 @@ Hashes:
 | blueprinter              |   695,835 |     9,945 |                    1,012 |       — |         — |
 | active_model_serializers |    68,096 |     1,049 |                       81 |     119 |         — |
 | *hand-written Hash*      | 3,681,565 |    37,399 |                    3,168 |   6,197 |     4,716 |
+<!-- benchmarks:hash:end -->
 
 "—" means the gem has no runtime field selection.
 
@@ -89,6 +93,15 @@ serializes each case.
 BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle install
 ruby benchmarks/relations.rb         # single, collection, relations, only, except
 FAST=1 ruby benchmarks/relations.rb  # a short round
+```
+
+`rake benchmarks:full` (`full.rb`) runs every case, about 1.5 minutes, and
+writes the results to the tables above and to the README. Each gem measures
+for 1 second after a warmup of 0.5 seconds; `TIME=5` measures for 5 seconds:
+
+```sh
+bundle exec rake benchmarks:full
+TIME=5 bundle exec rake benchmarks:full
 ```
 
 `rake benchmarks:check` (`check.rb`) fails when Serega is more than 2% slower
