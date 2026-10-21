@@ -6,7 +6,6 @@ child serializer gets them.
 ```ruby
 class AppSerializer < Serega
   plugin :activerecord_preloads
-  plugin :string_modifiers
   plugin :root, root_one: :user, root_many: :users
 end
 ```
@@ -14,7 +13,6 @@ end
 | Plugin | Purpose |
 |---|---|
 | [`:activerecord_preloads`](#plugin-activerecord_preloads) | Preloads ActiveRecord associations |
-| [`:string_modifiers`](#plugin-string_modifiers) | Accepts fields as `"name,posts(title)"` |
 | [`:root`](#plugin-root) | Wraps results in a root key |
 | [`:metadata`](#plugin-metadata) | Adds metadata defined in the serializer |
 | [`:context_metadata`](#plugin-context_metadata) | Adds metadata given per serialization |
@@ -49,23 +47,6 @@ UserSerializer.to_h(users)
 The plugin registers a [`preload_with`](preloads.md#custom-preloading)
 handler. It preloads ActiveRecord objects only and raises `Serega::SeregaError`
 for other objects.
-
-## Plugin :string_modifiers
-
-Accepts `:only`, `:except` and `:with` as one String, with nested fields in
-parentheses. See [Selecting fields](selecting-fields.md#fields-from-a-request).
-
-```ruby
-class AppSerializer < Serega
-  plugin :string_modifiers
-end
-
-UserSerializer.to_h(bruce, only: "username,friends(first_name)")
-# => {username: "batman", friends: [{first_name: "Alfred"}]}
-
-UserSerializer.to_h(bruce, with: "friends", except: "friends(username)")
-UserSerializer.to_h(bruce, with: {friends: :email}) # other forms keep working
-```
 
 ## Plugin :root
 

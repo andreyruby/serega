@@ -35,7 +35,6 @@ fields use — in a few queries, with no N+1.
 ```ruby
 class AppSerializer < Serega
   plugin :activerecord_preloads   # preloads associations used by requested fields
-  plugin :string_modifiers        # accepts fields as "name,posts(title)"
   config.auto_preload = true
   config.hide_by_default = :auto  # fields that need extra queries are sent on request
 end
@@ -75,7 +74,6 @@ serializer inherits them.
 # app/serializers/app_serializer.rb
 class AppSerializer < Serega
   plugin :activerecord_preloads
-  plugin :string_modifiers
   config.auto_preload = true
 end
 
@@ -207,7 +205,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - [Presenter](docs/presenter.md) — write computed attributes as methods
 - [Prepare initial objects](docs/prepare-initial-objects.md) — serialize records by ids
 - [Configuration](docs/configuration.md) — all config options
-- [Plugins](docs/plugins.md) — `root`, `metadata`, `string_modifiers` and others
+- [Plugins](docs/plugins.md) — `root`, `metadata` and others
 
 ## Documentation
 

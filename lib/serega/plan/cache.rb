@@ -86,9 +86,9 @@ class Serega
           {only: parse_modifier(only), with: parse_modifier(with), except: parse_modifier(except)}
         end
 
-        # Patched in:
-        # - plugin :string_modifiers (parses string modifiers differently)
         def parse_modifier(value)
+          return SeregaUtils::ParseStringModifiers.parse(value) if value.is_a?(String)
+
           SeregaUtils::ToHash.call(value)
         end
 

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-load_plugin_code :string_modifiers
-
-RSpec.describe Serega::SeregaPlugins::StringModifiers::ParseStringModifiers do
+RSpec.describe Serega::SeregaUtils::ParseStringModifiers do
   def parse(str)
     described_class.parse(str)
   end

@@ -95,6 +95,19 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(user_serializer.new(only: "first_name").plan).to equal result1
     end
 
+    context "when the modifiers are a String" do
+      before { allow(Serega::SeregaUtils::ParseStringModifiers).to receive(:parse).and_call_original }
+
+      it "parses the String once" do
+        result1 = plan(only: "address(city)")
+        result2 = plan(only: "address(city)")
+
+        expect(result1).to satisfy_attribute_names(address: {city: nil})
+        expect(result2).to equal result1
+        expect(Serega::SeregaUtils::ParseStringModifiers).to have_received(:parse).once
+      end
+    end
+
     it "shares the cached plan between calls with and without validation" do
       result1 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: false)
       result2 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: true)

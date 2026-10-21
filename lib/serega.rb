@@ -45,6 +45,7 @@ require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
+require_relative "serega/utils/parse_string_modifiers"
 require_relative "serega/utils/ractor_local"
 require_relative "serega/utils/serialized_attribute_error"
 require_relative "serega/utils/to_hash"
@@ -207,16 +208,6 @@ class Serega
     #
     def formatters # :nodoc:
       @formatters
-    end
-
-    # Patched in:
-    # - plugin :string_modifiers (returns its own cache class)
-    #
-    # Class of the serialization plans cache
-    #
-    # @return [Class<SeregaPlan::Cache>] Plans cache class
-    def plan_cache_class # :nodoc:
-      SeregaPlan::Cache
     end
 
     #
@@ -612,7 +603,7 @@ class Serega
       attribute_normalizer_class.serializer_class = subclass
       subclass.const_set(:SeregaAttributeNormalizer, attribute_normalizer_class)
 
-      subclass.instance_variable_set(:@plan_cache, subclass.plan_cache_class.new(subclass))
+      subclass.instance_variable_set(:@plan_cache, SeregaPlan::Cache.new(subclass))
 
       check_attribute_params_class = Class.new(self::CheckAttributeParams)
       check_attribute_params_class.serializer_class = subclass

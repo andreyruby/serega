@@ -1,14 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaValidations::Initiate::CheckModifiers do
-  let(:base_serializer) do
-    serializer_class = Class.new(Serega)
-    serializer_class.plugin :string_modifiers
-    serializer_class
-  end
-
   let(:serializer) do
-    serializer_class = Class.new(base_serializer)
+    serializer_class = Class.new(Serega)
     serializer_class.attribute :foo_bar
     serializer_class.attribute :foo_bazz, serializer: serializer_class
     serializer_class
