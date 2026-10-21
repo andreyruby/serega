@@ -42,12 +42,13 @@ class Serega
                                | () { (untyped objects, context context) -> untyped } -> untyped
                                | () { (untyped objects, ctx: context) -> untyped } -> untyped
 
-    # Results are `untyped`: plugins change their shape
-    def call: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> untyped
+    # Results are `untyped`: plugins change their shape. Options that plugins
+    # add at load time, such as `root:`, are not in these signatures.
+    def call: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
     alias to_h call
-    def to_data: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> untyped
-    def to_struct: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> untyped
-    def to_json: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?, **untyped) -> String
+    def to_data: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
+    def to_struct: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
+    def to_json: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> String
 
     def make_shareable!: () -> self
   end
@@ -55,11 +56,11 @@ class Serega
   module InstanceMethods
     def initialize: (?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?) -> void
 
-    def call: (untyped object, ?context: context?, ?many: bool?, **untyped) -> untyped
+    def call: (untyped object, ?context: context?, ?many: bool?) -> untyped
     alias to_h call
-    def to_data: (untyped object, ?context: context?, ?many: bool?, **untyped) -> untyped
-    def to_struct: (untyped object, ?context: context?, ?many: bool?, **untyped) -> untyped
-    def to_json: (untyped object, ?context: context?, ?many: bool?, **untyped) -> String
+    def to_data: (untyped object, ?context: context?, ?many: bool?) -> untyped
+    def to_struct: (untyped object, ?context: context?, ?many: bool?) -> untyped
+    def to_json: (untyped object, ?context: context?, ?many: bool?) -> String
   end
 
   # Attribute of a serializer. Its methods are internal.
@@ -68,17 +69,22 @@ class Serega
 
   # Parent class of presenters. Its methods are internal.
   class SeregaPresenter
+    def initialize: (untyped object, ?context? ctx) -> void
   end
 
   class SeregaError < StandardError
   end
 
   class AttributeNotExist < SeregaError
+    def initialize: (?String? message, ?singleton(Serega)? serializer, ?Array[String]? attributes) -> void
+
     attr_reader serializer: singleton(Serega)?
     attr_reader attributes: Array[String]?
   end
 
   class DepthLimitError < SeregaError
+    def initialize: (?String? message, ?String? details) -> void
+
     attr_reader details: String?
   end
 
@@ -120,6 +126,8 @@ class Serega
     end
 
     class HashAccessConfig
+      def initialize: (Hash[Symbol, untyped] opts) -> void
+
       def default_mode: () -> (:symbol | :string)
       def default_mode=: (:symbol | :string value) -> (:symbol | :string)
 

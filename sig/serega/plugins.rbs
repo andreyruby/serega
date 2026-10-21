@@ -11,6 +11,8 @@ class Serega
       end
 
       class CamelCaseConfig
+        def initialize: (Hash[Symbol, untyped] opts) -> void
+
         def transform: () -> untyped
         def transform=: (untyped value) -> untyped
       end
@@ -22,6 +24,8 @@ class Serega
       end
 
       class ContextMetadataConfig
+        def initialize: (Hash[Symbol, untyped] opts, Array[Symbol] serialize_keys) -> void
+
         def key: () -> Symbol?
         def key=: (Symbol? new_key) -> Symbol?
       end
@@ -44,6 +48,8 @@ class Serega
       end
 
       class RootConfig
+        def initialize: (Hash[Symbol, untyped] opts) -> void
+
         def one: () -> key
         def one=: (key value) -> key
         def many: () -> key
