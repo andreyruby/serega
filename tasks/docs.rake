@@ -162,11 +162,11 @@ end
 
 require "rdoc/task"
 
-# `rake rdoc` writes the API documentation to doc/, `rake rdoc:coverage` fails
-# on undocumented public code
+# `rake rdoc` writes the documentation site to doc/: the README, the guides and
+# the API. `rake rdoc:coverage` fails on undocumented public code.
 RDoc::Task.new do |rdoc|
   gemspec = Gem::Specification.load("serega.gemspec")
   rdoc.rdoc_dir = "doc"
   rdoc.options.concat(gemspec.rdoc_options)
-  rdoc.rdoc_files.include(*gemspec.extra_rdoc_files, "lib/**/*.rb")
+  rdoc.rdoc_files.include(*gemspec.extra_rdoc_files, "CHEATSHEET.md", "docs/*.md", "lib/**/*.rb")
 end

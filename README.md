@@ -119,7 +119,7 @@ more is better:
 <!-- benchmarks:json:end -->
 
 Hashes, the details of each case and how to run them:
-[benchmarks/README.md](benchmarks/README.md).
+[benchmarks/README.md](https://github.com/andreyruby/serega/blob/master/benchmarks/README.md).
 
 ## Features
 
@@ -213,9 +213,9 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 
 - 📋 [Cheatsheet](CHEATSHEET.md) — every option on one page
 - 📚 [Guides](docs/README.md) — each feature in depth
-- 🔎 [API docs](https://rubydoc.info/gems/serega) — public classes and methods
-- 🔤 [Type signatures](sig/) — RBS of the public API, shipped with the gem
-- 📝 [Changelog](CHANGELOG.md)
+- 🔎 [Documentation site](https://andreyruby.github.io/serega/) — guides and API reference
+- 🔤 [Type signatures](https://github.com/andreyruby/serega/tree/master/sig) — RBS of the public API
+- 📝 [Changelog](https://github.com/andreyruby/serega/blob/master/CHANGELOG.md)
 
 ## Development
 
@@ -225,7 +225,7 @@ bundle exec rake  # tests and linter
 bin/console       # irb with serega loaded
 ```
 
-Releasing: [RELEASE.md](RELEASE.md).
+Releasing: [RELEASE.md](https://github.com/andreyruby/serega/blob/master/RELEASE.md).
 
 ## Contributing
 
