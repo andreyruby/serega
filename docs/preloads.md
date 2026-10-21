@@ -33,6 +33,13 @@ The `:preload` value is passed to the preload handler as is: a Symbol, Array,
 Hash, or any value your handler understands. `preload: false` and
 `preload: nil` disable preloading for the attribute.
 
+## ActiveRecord
+
+`plugin :activerecord_preloads` loads the preloads with
+`ActiveRecord::Associations::Preloader`. It preloads ActiveRecord objects only
+and raises `Serega::SeregaError` for other objects. Other objects need a
+[custom preload handler](#custom-preloading).
+
 ## Automatic preloads
 
 `config.auto_preload = true` adds preloads automatically:
@@ -86,8 +93,8 @@ UserSerializer.to_h(users, with: [:followers_count, {albums: :downloads_count}])
 
 ## Custom preloading
 
-The `:activerecord_preloads` plugin registers a preload handler. For another
-ORM or for plain Ruby objects, register your own with `preload_with`:
+`plugin :activerecord_preloads` registers a preload handler. For another ORM
+or for plain Ruby objects, register your own with `preload_with`:
 
 ```ruby
 class AppSerializer < Serega

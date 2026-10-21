@@ -30,7 +30,7 @@
   arguments: pass a Hash of options with `**`, with Symbol keys. Unknown options
   raise `ArgumentError`. See [Serializing](docs/serializing.md).
 - **BREAKING**: Plugin `:root`: `.to_data` returns a Hash with `Data` objects
-  under the root key. See [Plugin :root](docs/plugins.md#plugin-root).
+  under the root key. See [Root key](docs/root-and-metadata.md#root-key).
 - **BREAKING**: Moved the `:if`, `:unless`, `:if_value` and `:unless_value`
   attribute options from the `:if` plugin to core. Remove `plugin :if` from
   your serializers — loading it raises `Plugin 'if' does not exist`.
@@ -96,7 +96,7 @@
   `if: EmailPolicy.method(:visible?)`, being called without the context.
 - **BREAKING**: Fix `config.context_metadata.key=` rejecting the new key as a
   serialization option. The previous key raises.
-  See [Plugin :context_metadata](docs/plugins.md#plugin-context_metadata).
+  See [Metadata per serialization](docs/root-and-metadata.md#metadata-per-serialization).
 
 ## [0.42.0] - 2026-09-08
 

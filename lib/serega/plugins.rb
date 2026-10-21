@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class Serega
-  # Built-in plugins. Load them with Serega::ClassMethods#plugin.
+  # Built-in features, turned on with Serega::ClassMethods#plugin.
   #
-  # See [Plugins](https://github.com/andreyruby/serega/blob/master/docs/plugins.md).
+  # See [Guides](https://github.com/andreyruby/serega/blob/master/docs/README.md).
   module SeregaPlugins
     @plugins = {}
 

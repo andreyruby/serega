@@ -7,6 +7,8 @@ see the [Cheatsheet](../CHEATSHEET.md).
 
 - [Attributes](attributes.md) — define serializers, attributes and relations
 - [Serializing](serializing.md) — `to_h`, `to_struct`, `to_data`
+- [Root Key and Metadata](root-and-metadata.md) — wrap results in `{data: ...}`
+  and add metadata
 - [Selecting Fields](selecting-fields.md) — `:only`, `:except`, `:with`
 - [Context](context.md) — pass `current_user` and other request data
 - [Conditional Attributes](conditional-attributes.md) — `:if`, `:unless`,
@@ -28,6 +30,4 @@ see the [Cheatsheet](../CHEATSHEET.md).
 
 - [Configuration](configuration.md) — all config options
 - [Ractors](ractors.md) — serialize in parallel Ractors
-- [Plugins](plugins.md) — `activerecord_preloads`, `root`, `metadata` and
-  others
 - [Errors](errors.md) — errors Serega raises

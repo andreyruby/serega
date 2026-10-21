@@ -2,8 +2,8 @@
 
 class Serega
   module SeregaPlugins
-    # Plugin `:context_metadata`: adds metadata given per serialization with
-    # the `:meta` option. Load the `:root` plugin first.
+    # `plugin :context_metadata` adds metadata given per serialization with
+    # the `:meta` option. Load `plugin :root` first.
     #
     # ```ruby
     # plugin :root
@@ -13,7 +13,7 @@ class Serega
     # # => {data: {username: "batman"}, version: "1.0.1"}
     # ```
     #
-    # See [Plugin :context_metadata](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-context_metadata).
+    # See [Metadata per serialization](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#metadata-per-serialization).
     module ContextMetadata
       # Default context metadata option name
       DEFAULT_CONTEXT_METADATA_KEY = :meta # :nodoc:

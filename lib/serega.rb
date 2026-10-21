@@ -135,13 +135,14 @@ class Serega
     attr_reader :config
 
     #
-    # Loads a plugin by name, with its options. Subclasses get the plugin too.
+    # Turns on a built-in feature by name, with its options. Subclasses get it
+    # too.
     #
     # ```ruby
     # plugin :root, root_one: :user, root_many: :users
     # ```
     #
-    # See [Plugins](https://github.com/andreyruby/serega/blob/master/docs/plugins.md).
+    # See [Root Key and Metadata](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md).
     #
     def plugin(name, **opts)
       check_unlocked
