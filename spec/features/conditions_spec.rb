@@ -200,7 +200,7 @@ RSpec.describe Serega do
 
         it "returns objects of one Data class with nil for the skipped attributes" do
           expect(result.map(&:to_h)).to eq serialized_values
-          expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultBuilder.data_class_for(%i[email age posts])]
+          expect(result.map(&:class).uniq).to eq [user_serializer.data_class_for(%i[email age posts])]
         end
       end
 
@@ -209,7 +209,7 @@ RSpec.describe Serega do
 
         it "returns objects of one Struct class with nil for the skipped attributes" do
           expect(result.map(&:to_h)).to eq serialized_values
-          expect(result.map(&:class).uniq).to eq [user_serializer::SeregaResultBuilder.struct_class_for(%i[email age posts])]
+          expect(result.map(&:class).uniq).to eq [user_serializer.struct_class_for(%i[email age posts])]
         end
       end
     end

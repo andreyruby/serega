@@ -26,7 +26,8 @@ class Serega
     class Run
       class << self
         # Serializes the object(s) with the plan in a new run. A flat plan
-        # builds its serialized object(s) without a run.
+        # builds its serialized object(s) with its result builder, without a
+        # run, and one source without the sources Array.
         #
         # @param plan [SeregaPlan] Serialization plan
         # @param object [Object] Object(s) to serialize
@@ -35,18 +36,8 @@ class Serega
         # @param context [Hash] Serialization context
         #
         # @return [Hash, Struct, Data, Array, nil] Serialized object(s)
-        def call(plan, object, many:, mode:, context:)
-          return build_flat(plan, object, many, mode, context) if plan.flat?
-
-          new(mode, context).call(plan, object, many: many)
-        end
-
-        private
-
-        # Builds the root source(s) with the result builder of the plan, and
-        # returns the serialized root like `Run#call`. One source is built
-        # without the sources Array.
-        def build_flat(plan, object, many, mode, context)
+        def call(plan, object, many, mode, context)
+          return new(mode, context).call(plan, object, many: many) unless plan.flat?
           return if object.nil?
 
           builder = plan.result_builder(mode)

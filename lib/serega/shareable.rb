@@ -38,7 +38,6 @@ class Serega
         end
 
         share_constants(serializer_class::SeregaAttributeValues, reasons)
-        share_instance_variables(serializer_class::SeregaResultBuilder)
         reasons.first
       end
 
@@ -48,10 +47,6 @@ class Serega
         values_class.constants(false).each do |name|
           share(values_class.const_get(name, false), reasons) { |message| "#{values_class} can not be shared between Ractors: #{message}" }
         end
-      end
-
-      def share_instance_variables(builder_class)
-        builder_class.instance_variables.each { |name| Ractor.make_shareable(builder_class.instance_variable_get(name)) }
       end
 
       def share(value, reasons)

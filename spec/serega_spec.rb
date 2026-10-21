@@ -105,7 +105,7 @@ RSpec.describe Serega do
 
       %w[
         SeregaConfig SeregaAttribute SeregaAttributeNormalizer
-        SeregaPlan SeregaPlan::Cache SeregaPlanPoint SeregaResultBuilder SeregaBatchLoader SeregaSourceGroup
+        SeregaPlan SeregaPlan::Cache SeregaPlanPoint SeregaBatchLoader SeregaSourceGroup
         CheckAttributeParams CheckSerializeParams CheckBatchLoaderParams
       ].each do |const_name|
         expect(child.const_get(const_name).serializer_class).to eq(child), const_name
@@ -147,6 +147,52 @@ RSpec.describe Serega do
       bar = serializer_class.attribute :bar
 
       expect(serializer_class.attributes).to eq(foo: foo, bar: bar)
+    end
+  end
+
+  describe ".data_class_for" do
+    it "returns a Data class with the given members" do
+      data_class = serializer_class.data_class_for(%i[x y])
+
+      expect(data_class).to be < Data
+      expect(data_class.members).to eq %i[x y]
+    end
+
+    it "returns the same class for the same names" do
+      expect(serializer_class.data_class_for(%i[a b])).to equal serializer_class.data_class_for(%i[a b])
+    end
+
+    it "returns different classes for different names" do
+      expect(serializer_class.data_class_for(%i[a])).not_to equal serializer_class.data_class_for(%i[b])
+    end
+
+    it "keeps a separate cache for each serializer" do
+      other_class = Class.new(described_class)
+
+      expect(serializer_class.data_class_for(%i[x])).not_to equal other_class.data_class_for(%i[x])
+    end
+  end
+
+  describe ".struct_class_for" do
+    it "returns a Struct class with the given members" do
+      struct_class = serializer_class.struct_class_for(%i[x y])
+
+      expect(struct_class).to be < Struct
+      expect(struct_class.members).to eq %i[x y]
+    end
+
+    it "returns the same class for the same names" do
+      expect(serializer_class.struct_class_for(%i[a b])).to equal serializer_class.struct_class_for(%i[a b])
+    end
+
+    it "returns different classes for different names" do
+      expect(serializer_class.struct_class_for(%i[a])).not_to equal serializer_class.struct_class_for(%i[b])
+    end
+
+    it "keeps a separate cache for each serializer" do
+      other_class = Class.new(described_class)
+
+      expect(serializer_class.struct_class_for(%i[x])).not_to equal other_class.struct_class_for(%i[x])
     end
   end
 

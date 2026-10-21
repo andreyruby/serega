@@ -11,58 +11,8 @@ RSpec.describe Serega::SeregaResultBuilder do
   let(:plan) { serializer::SeregaPlan.new(nil, {}) }
   let(:mode) { :hash }
 
-  describe ".data_class_for" do
-    let(:described_class) { serializer::SeregaResultBuilder }
-
-    it "returns a Data class with the given members" do
-      data_class = described_class.data_class_for(%i[x y])
-
-      expect(data_class).to be < Data
-      expect(data_class.members).to eq %i[x y]
-    end
-
-    it "returns the same class for the same names" do
-      expect(described_class.data_class_for(%i[a b])).to equal described_class.data_class_for(%i[a b])
-    end
-
-    it "returns different classes for different names" do
-      expect(described_class.data_class_for(%i[a])).not_to equal described_class.data_class_for(%i[b])
-    end
-
-    it "keeps a separate cache for each serializer" do
-      other_class = Class.new(Serega)::SeregaResultBuilder
-
-      expect(described_class.data_class_for(%i[x])).not_to equal other_class.data_class_for(%i[x])
-    end
-  end
-
-  describe ".struct_class_for" do
-    let(:described_class) { serializer::SeregaResultBuilder }
-
-    it "returns a Struct class with the given members" do
-      struct_class = described_class.struct_class_for(%i[x y])
-
-      expect(struct_class).to be < Struct
-      expect(struct_class.members).to eq %i[x y]
-    end
-
-    it "returns the same class for the same names" do
-      expect(described_class.struct_class_for(%i[a b])).to equal described_class.struct_class_for(%i[a b])
-    end
-
-    it "returns different classes for different names" do
-      expect(described_class.struct_class_for(%i[a])).not_to equal described_class.struct_class_for(%i[b])
-    end
-
-    it "keeps a separate cache for each serializer" do
-      other_class = Class.new(Serega)::SeregaResultBuilder
-
-      expect(described_class.struct_class_for(%i[x])).not_to equal other_class.struct_class_for(%i[x])
-    end
-  end
-
-  describe ".new" do
-    subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
+  describe ".build" do
+    subject(:result_builder) { described_class.build(serializer, mode, plan.points) }
 
     let(:serializer) do
       attribute_name = name
@@ -73,7 +23,15 @@ RSpec.describe Serega::SeregaResultBuilder do
       end
     end
 
+    let(:name) { :author }
     let(:location) { serializer.attributes[name].location }
+
+    it "makes the builder as the instance of a new subclass" do
+      other_builder = described_class.build(serializer, mode, plan.points)
+
+      expect(result_builder.class.superclass).to equal described_class
+      expect(other_builder.class).not_to equal result_builder.class
+    end
 
     context "with an attribute named initialize in the :struct mode" do
       let(:name) { :initialize }
@@ -126,7 +84,7 @@ RSpec.describe Serega::SeregaResultBuilder do
   end
 
   describe "#call" do
-    subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
+    subject(:result_builder) { described_class.build(serializer, mode, plan.points) }
 
     let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
 
@@ -145,7 +103,7 @@ RSpec.describe Serega::SeregaResultBuilder do
       let(:mode) { :struct }
 
       it "builds a Struct per object" do
-        struct_class = serializer::SeregaResultBuilder.struct_class_for(%i[name email])
+        struct_class = serializer.struct_class_for(%i[name email])
 
         expect(result_builder.call([user], {}, nil, nil)).to eq [struct_class.new("Ann", "ann@example.com")]
       end
@@ -155,7 +113,7 @@ RSpec.describe Serega::SeregaResultBuilder do
       let(:mode) { :data }
 
       it "builds a Data object per object" do
-        data_class = serializer::SeregaResultBuilder.data_class_for(%i[name email])
+        data_class = serializer.data_class_for(%i[name email])
 
         expect(result_builder.call([user], {}, nil, nil)).to eq [data_class.new("Ann", "ann@example.com")]
       end
@@ -222,7 +180,7 @@ RSpec.describe Serega::SeregaResultBuilder do
   end
 
   describe "#call_one" do
-    subject(:result_builder) { serializer::SeregaResultBuilder.new(mode, plan.points) }
+    subject(:result_builder) { described_class.build(serializer, mode, plan.points) }
 
     let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
 
@@ -234,7 +192,7 @@ RSpec.describe Serega::SeregaResultBuilder do
       let(:mode) { :data }
 
       it "builds the Data object of the object" do
-        data_class = serializer::SeregaResultBuilder.data_class_for(%i[name email])
+        data_class = serializer.data_class_for(%i[name email])
 
         expect(result_builder.call_one(user, {})).to eq data_class.new("Ann", "ann@example.com")
       end

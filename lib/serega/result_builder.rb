@@ -11,58 +11,9 @@ class Serega
   #
   # @private
   class SeregaResultBuilder
-    @data_classes = {}
-    @struct_classes = {}
-
-    #
-    # SeregaResultBuilder class methods
-    #
-    # @private
-    module ClassMethods
+    class << self
       #
-      # Returns (and caches) the Data class for the given set of field names.
-      #
-      # @param point_names [Array<Symbol>] Attribute names for the Data members
-      # @return [Class] Subclass of Data
-      #
-      def data_class_for(point_names)
-        classes = @data_classes
-        classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :data_classes)) { {} } if classes.frozen?
-        classes[point_names] ||= Data.define(*point_names)
-      end
-
-      #
-      # Returns (and caches) the Struct class for the given set of field names.
-      #
-      # @param point_names [Array<Symbol>] Attribute names for the Struct members
-      # @return [Class] Subclass of Struct
-      #
-      def struct_class_for(point_names)
-        classes = @struct_classes
-        classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :struct_classes)) { {} } if classes.frozen?
-        classes[point_names] ||= Struct.new(*point_names)
-      end
-
-      private
-
-      def inherited(subclass)
-        super
-        subclass.instance_variable_set(:@data_classes, {})
-        subclass.instance_variable_set(:@struct_classes, {})
-      end
-    end
-
-    #
-    # SeregaResultBuilder instance methods
-    #
-    # @private
-    module InstanceMethods
-      # Serialization mode
-      # @return [Symbol] :hash, :data or :struct
-      attr_reader :mode
-
-      #
-      # Instantiates new result builder and generates its `#call` method:
+      # Makes a result builder and generates its methods:
       #
       #   call(sources, context, batches, relations) -> Array<Hash, Struct, Data>
       #
@@ -75,54 +26,70 @@ class Serega
       #
       #   call_one(source, context) -> Hash, Struct, Data
       #
-      # @param mode [Symbol] Serialization mode - :hash, :data or :struct
-      # @param points [Array<SeregaPlanPoint>] Serialized plan points
+      # The builder is the instance of a new subclass, as YJIT calls the
+      # methods of an object with a singleton class slower. The subclass gets
+      # the methods before the instance is made: YJIT ran `#call` of a builder
+      # made first slower.
       #
-      def initialize(mode, points)
-        @mode = mode
-        @points = points
-        @result_class = result_class
-        serializer_class = self.class.serializer_class
-        call_code = serializer_class::SeregaResultCode.new(mode, points).to_s
+      # @param (see #initialize)
+      #
+      # @return [SeregaResultBuilder] Result builder
+      #
+      def build(serializer_class, mode, points)
+        builder_class = Class.new(self)
         # The generated code reads the `:const`, `:default` and formatter values from its constants
-        singleton_class.const_set(:SeregaAttributeValues, serializer_class::SeregaAttributeValues)
-        singleton_class.class_eval(call_code, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
-      end
-
-      private
-
-      def result_class
-        return if mode == :hash
-
-        initialize_point = @points.find { |point| point.name == :initialize }
-        raise_member_error("Struct and Data can not have a member named initialize", initialize_point) if initialize_point
-
-        member_class(@points.map(&:name))
-      end
-
-      # Returns the Struct or Data class with the members. Raises a
-      # SeregaError for an attribute name that Ruby can not make a member.
-      def member_class(names)
-        (mode == :struct) ? self.class.struct_class_for(names) : self.class.data_class_for(names)
-      rescue ArgumentError, NameError => error
-        point = @points.find { |point| !member_name?(point.name) }
-        raise_member_error(error.message, point)
-      end
-
-      def member_name?(name)
-        (mode == :struct) ? Struct.new(name) : Data.define(name)
-        true
-      rescue ArgumentError, NameError
-        false
-      end
-
-      def raise_member_error(message, point)
-        SeregaUtils::SerializedAttributeError.call(SeregaError.new(message), point)
+        builder_class.const_set(:SeregaAttributeValues, serializer_class::SeregaAttributeValues)
+        builder_class.class_eval(SeregaResultCode.new(mode, points).to_s, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
+        builder_class.new(serializer_class, mode, points)
       end
     end
 
-    extend ClassMethods
-    include InstanceMethods
-    extend SeregaHelpers::SerializerClassHelper
+    # Serialization mode
+    # @return [Symbol] :hash, :data or :struct
+    attr_reader :mode
+
+    #
+    # Instantiates new result builder
+    #
+    # @param serializer_class [Class<Serega>] Serializer of the points
+    # @param mode [Symbol] Serialization mode - :hash, :data or :struct
+    # @param points [Array<SeregaPlanPoint>] Serialized plan points
+    #
+    def initialize(serializer_class, mode, points)
+      @mode = mode
+      @points = points
+      @result_class = result_class(serializer_class)
+    end
+
+    private
+
+    def result_class(serializer_class)
+      return if mode == :hash
+
+      initialize_point = @points.find { |point| point.name == :initialize }
+      raise_member_error("Struct and Data can not have a member named initialize", initialize_point) if initialize_point
+
+      member_class(serializer_class, @points.map(&:name))
+    end
+
+    # Returns the Struct or Data class with the members. Raises a
+    # SeregaError for an attribute name that Ruby can not make a member.
+    def member_class(serializer_class, names)
+      (mode == :struct) ? serializer_class.struct_class_for(names) : serializer_class.data_class_for(names)
+    rescue ArgumentError, NameError => error
+      point = @points.find { |point| !member_name?(point.name) }
+      raise_member_error(error.message, point)
+    end
+
+    def member_name?(name)
+      (mode == :struct) ? Struct.new(name) : Data.define(name)
+      true
+    rescue ArgumentError, NameError
+      false
+    end
+
+    def raise_member_error(message, point)
+      SeregaUtils::SerializedAttributeError.call(SeregaError.new(message), point)
+    end
   end
 end
