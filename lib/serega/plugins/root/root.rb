@@ -2,7 +2,7 @@
 
 class Serega
   module SeregaPlugins
-    # Plugin `:root`: wraps results in a root key, `:data` by default
+    # `plugin :root` wraps results in a root key, `:data` by default
     #
     # ```ruby
     # plugin :root                                     # {data: ...}
@@ -13,7 +13,7 @@ class Serega
     # UserSerializer.to_h(user, root: nil)   # => {username: "batman"}
     # ```
     #
-    # See [Plugin :root](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-root).
+    # See [Root key](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#root-key).
     module Root
       # @return [Symbol] Default response root key
       ROOT_DEFAULT = :data # :nodoc:

@@ -13,7 +13,7 @@ class Serega
   module ClassMethods
     attr_reader config: SeregaConfig
 
-    def plugin: (Symbol | Module name, **untyped opts) -> Module
+    def plugin: (Symbol name, **untyped opts) -> Module
 
     def attributes: () -> Hash[Symbol, SeregaAttribute]
 

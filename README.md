@@ -67,8 +67,8 @@ bundle add serega
 
 ## Quick start
 
-Define a base serializer with the plugins and config your app uses. Every
-serializer inherits them.
+Define a base serializer with the setup your app uses. Every serializer
+inherits it.
 
 ```ruby
 # app/serializers/app_serializer.rb
@@ -205,7 +205,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - [Presenter](docs/presenter.md) — write computed attributes as methods
 - [Prepare initial objects](docs/prepare-initial-objects.md) — serialize records by ids
 - [Configuration](docs/configuration.md) — all config options
-- [Plugins](docs/plugins.md) — `root`, `metadata` and others
+- [Root key and metadata](docs/root-and-metadata.md) — wrap results in `{data: ...}` and add metadata
 
 ## Documentation
 

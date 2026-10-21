@@ -68,7 +68,8 @@ A serialization plan lists the fields to serialize. Serega caches plans by the
 `"id,name"` are cached separately. The plan without these options is always
 cached.
 
-Plugins add their own options, see [Plugins](plugins.md).
+`config.root` and `config.context_metadata` are described in
+[Root Key and Metadata](root-and-metadata.md).
 
 [automatic-preloads]: preloads.md#automatic-preloads
 [block-serializers]: attributes.md#nested-serializers-defined-with-a-block

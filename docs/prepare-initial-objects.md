@@ -48,7 +48,7 @@ class UserSerializer < Serega
 end
 ```
 
-The [`:activerecord_preloads`](plugins.md#plugin-activerecord_preloads) plugin
+[`plugin :activerecord_preloads`](preloads.md#activerecord)
 preloads ActiveRecord objects only, and raises `Serega::SeregaError` for other
 objects. For read-only records, Structs or Hashes, use
 [batch loading](batch-loading.md).

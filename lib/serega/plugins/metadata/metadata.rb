@@ -2,9 +2,9 @@
 
 class Serega
   module SeregaPlugins
-    # Plugin `:metadata`: adds metadata defined with
-    # Serega::SeregaPlugins::Metadata::ClassMethods#meta_attribute. Load the
-    # `:root` plugin first.
+    # `plugin :metadata` adds metadata defined with
+    # Serega::SeregaPlugins::Metadata::ClassMethods#meta_attribute. Load
+    # `plugin :root` first.
     #
     # ```ruby
     # plugin :root
@@ -13,7 +13,7 @@ class Serega
     # meta_attribute :version, const: "1.2.3"
     # ```
     #
-    # See [Plugin :metadata](https://github.com/andreyruby/serega/blob/master/docs/plugins.md#plugin-metadata).
+    # See [Metadata](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#metadata).
     module Metadata
       # @return [Symbol] Plugin name
       def self.plugin_name # :nodoc:

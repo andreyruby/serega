@@ -169,6 +169,24 @@ attribute :posts, serializer: PostSerializer, many: true
 # => {posts: []} when user.posts is nil
 ```
 
+`plugin :explicit_many_option` requires `:many` on every relation, an
+attribute with `:serializer` or a block. A relation without `:many` raises
+`Serega::SeregaError`.
+
+```ruby
+class AppSerializer < Serega
+  plugin :explicit_many_option
+  config.base_serializer = self
+end
+
+class PostSerializer < AppSerializer
+  attribute :comments, serializer: CommentSerializer, many: true
+  attribute :author, many: false do
+    attribute :name
+  end
+end
+```
+
 ### `:preload`
 
 Names the associations to preload for the value, so the value is read without
