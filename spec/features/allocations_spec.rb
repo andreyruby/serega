@@ -86,6 +86,33 @@ RSpec.describe Serega, if: RUBY_ENGINE == "ruby" && RUBY_VERSION >= "4.0" do
     end
   end
 
+  context "with a formatted attribute" do
+    let(:serializer) do
+      Class.new(described_class) do
+        attribute :id, format: [:to_s]
+      end
+    end
+
+    it "allocates the serialized Hashes, the formatted values, the sources and the serialized Array" do
+      expect(serialize).to allocate_objects(T_HASH: 2, T_STRING: 2, T_ARRAY: 2)
+    end
+  end
+
+  context "with a relation to one object and a relation to many objects" do
+    let(:serializer) do
+      post_serializer = Class.new(described_class) { attribute :id }
+
+      Class.new(described_class) do
+        attribute :author, serializer: post_serializer, many: false, method: :itself
+        attribute :posts, serializer: post_serializer, many: true
+      end
+    end
+
+    it "allocates the run, its source groups, the relation values and the Arrays of the run" do
+      expect(serialize).to allocate_objects(T_OBJECT: 5, T_HASH: 8, T_ARRAY: 21)
+    end
+  end
+
   context "with a presenter" do
     let(:serializer) do
       Class.new(described_class) do
