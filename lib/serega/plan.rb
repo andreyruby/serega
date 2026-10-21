@@ -59,6 +59,8 @@ class Serega
         @flat = relation_points.empty? && preload_points.empty? && !@batch_points && !serializer_class.presenter
         @result_builders = {}
         @collection_classes = {}.compare_by_identity
+        direct = parent_plan_point.nil? && @flat && !serializer_class.prepare_initial_objects_signature
+        @direct_hash_builder = direct ? result_builder(:hash) : nil
       # :nocov:
       rescue *RACTOR_ISOLATION_ERRORS
         raise if serializer_class.shareable?
@@ -70,6 +72,11 @@ class Serega
       # Serialization points with preloads
       # @return [Array<SeregaPlanPoint>] points to run preloads for
       attr_reader :preload_points
+
+      # Hash result builder of a flat root plan whose serializer prepares no
+      # initial objects. `Serega#call` builds one source with it directly.
+      # @return [SeregaResultBuilder, nil] Result builder, or nil for other plans
+      attr_reader :direct_hash_builder
 
       # @return [Boolean] Whether any point uses batch loaders
       def batch_points?

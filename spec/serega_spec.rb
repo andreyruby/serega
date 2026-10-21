@@ -189,17 +189,37 @@ RSpec.describe Serega do
   end
 
   describe "#to_h" do
-    subject(:result) { serializer_class.new.to_h(user, context: context, many: false) }
+    subject(:result) { serializer_class.new.to_h(user, context: context, many: many) }
 
     let(:serializer_class) { Class.new(described_class) { attribute :name } }
     let(:user) { double(name: "Ann") }
     let(:context) { {current_user: "Ann"} }
+    let(:many) { nil }
 
     before { allow(Serega::SeregaValidations::CheckSerializeKeywords).to receive(:call) }
 
     it "checks the serialization options and serializes the object" do
       expect(result).to eq(name: "Ann")
-      expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with(context, false)
+      expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with(context, nil)
+    end
+
+    context "with one object" do
+      let(:many) { false }
+
+      it "serializes the object with the result builder of the plan" do
+        expect(result).to eq(name: "Ann")
+        expect(Serega::SeregaValidations::CheckSerializeKeywords).not_to have_received(:call)
+      end
+    end
+
+    context "with one object and a context that is not a Hash" do
+      let(:many) { false }
+      let(:context) { "Ann" }
+
+      it "checks the serialization options" do
+        result
+        expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with("Ann", false)
+      end
     end
   end
 end

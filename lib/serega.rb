@@ -700,6 +700,10 @@ class Serega
     # @return [Hash] Serialization result
     #
     def call(object, context: nil, many: nil)
+      if many.equal?(false) && (builder = @plan.direct_hash_builder) && !object.nil? && (context.nil? || context.is_a?(Hash))
+        return builder.call_one(object, context || FROZEN_EMPTY_HASH)
+      end
+
       serialize_to(:hash, object, context, many, FROZEN_EMPTY_HASH)
     end
 

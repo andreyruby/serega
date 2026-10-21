@@ -102,7 +102,7 @@ UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, conte
          └─ root_value(root_group)     one serialized object for SINGLE_SOURCE, or all of them
 ```
 
-A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and presenter. Its sources need no source groups, thus `Run.call` builds them with the result builder of the plan, without a run. One source is built with `#call_one`, without the sources Array. It returns the serialized root like `Run#call`.
+A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and presenter. Its sources need no source groups, thus `Run.call` builds them with the result builder of the plan, without a run. One source is built with `#call_one`, without the sources Array. It returns the serialized root like `Run#call`. A flat root plan of a serializer without `prepare_initial_objects` keeps its hash builder (`SeregaPlan#direct_hash_builder`), and `Serega#call` with `many: false` calls its `#call_one` directly, without `#serialize` and `Run.call`. The `:root` plugin, which the plugins that wrap `#serialize` need, replaces `#call`.
 
 `SeregaSourceGroup` (`lib/serega/source_group.rb`) holds all sources of one plan in one run.
 

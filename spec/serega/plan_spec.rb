@@ -230,6 +230,53 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "#direct_hash_builder" do
+    subject(:current_plan) { plan({}) }
+
+    let(:current_serializer) { Class.new(base_class) { attribute :name } }
+
+    it "returns the hash result builder" do
+      expect(current_plan.direct_hash_builder).to equal current_plan.result_builder(:hash)
+    end
+
+    context "with a relation" do
+      let(:current_serializer) do
+        child = b
+        Class.new(base_class) { attribute :posts, serializer: child }
+      end
+
+      it "returns nil" do
+        expect(current_plan.direct_hash_builder).to be_nil
+      end
+    end
+
+    context "with prepared initial objects" do
+      let(:current_serializer) do
+        Class.new(base_class) do
+          prepare_initial_objects { |objects| objects }
+          attribute :name
+        end
+      end
+
+      it "returns nil" do
+        expect(current_plan.direct_hash_builder).to be_nil
+      end
+    end
+
+    context "with a relation plan" do
+      subject(:current_plan) { plan({}).points.first.child_plan }
+
+      let(:current_serializer) do
+        child = Class.new(base_class) { attribute :title }
+        Class.new(base_class) { attribute :post, serializer: child }
+      end
+
+      it "returns nil" do
+        expect(current_plan.direct_hash_builder).to be_nil
+      end
+    end
+  end
+
   describe "#result_builder" do
     let(:current_plan) { plan(only: {a1: {}}) }
 
