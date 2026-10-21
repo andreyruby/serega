@@ -22,8 +22,7 @@ class Serega
       #
       # Modifiers parser
       #
-      # @private
-      class ParseStringModifiers
+      class ParseStringModifiers # :nodoc:
         COMMA = ","
         COMMA_CODEPOINT = COMMA.ord
         LPAREN = "("

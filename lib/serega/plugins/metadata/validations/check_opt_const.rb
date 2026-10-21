@@ -7,8 +7,7 @@ class Serega
         #
         # MetaAttribute `:const` option validator
         #
-        # @private
-        class CheckOptConst
+        class CheckOptConst # :nodoc:
           class << self
             #
             # Checks meta_attribute :const option

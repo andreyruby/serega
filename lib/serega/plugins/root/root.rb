@@ -51,11 +51,10 @@ class Serega
     #
     module Root
       # @return [Symbol] Default response root key
-      ROOT_DEFAULT = :data
+      ROOT_DEFAULT = :data # :nodoc:
 
       # @return [Symbol] Plugin name
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :root
       end
 
@@ -65,9 +64,7 @@ class Serega
       # @param opts [Hash] plugin options
       #
       # @return [void]
-      #
-      # @private
-      def self.before_load_plugin(serializer_class, **opts)
+      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
         allowed_keys = %i[root root_one root_many]
         opts.each_key do |key|
           next if allowed_keys.include?(key)
@@ -88,8 +85,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
@@ -103,8 +99,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.after_load_plugin(serializer_class, **opts)
+      def self.after_load_plugin(serializer_class, **opts) # :nodoc:
         config = serializer_class.config
         default = opts.fetch(:root, ROOT_DEFAULT)
         one = opts.fetch(:root_one, default)
@@ -127,30 +122,30 @@ class Serega
       #
       module ClassMethods
         # @see Serega::ClassMethods#call
-        def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+        def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_h(object, context: context, many: many, **opts)
         end
 
         # @see Serega::ClassMethods#to_data
-        def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+        def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_data(object, context: context, many: many, **opts)
         end
 
         # @see Serega::ClassMethods#to_struct
-        def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+        def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_struct(object, context: context, many: many, **opts)
         end
 
         # @see Serega::ClassMethods#to_json
-        def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts)
+        def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
           new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
             .to_json(object, context: context, many: many, **opts)
         end
 
-        alias_method :to_h, :call
+        alias_method :to_h, :call # :nodoc:
 
         #
         # Configures response root key
@@ -171,7 +166,7 @@ class Serega
 
       # Root config object
       class RootConfig
-        attr_reader :opts
+        attr_reader :opts # :nodoc:
 
         #
         # Initializes RootConfig object
@@ -182,7 +177,7 @@ class Serega
         #
         # @return [SeregaPlugins::Root::RootConfig] RootConfig object
         #
-        def initialize(opts)
+        def initialize(opts) # :nodoc:
           @opts = opts
         end
 
@@ -229,7 +224,7 @@ class Serega
         end
 
         # Builds the root config before freezing
-        def freeze
+        def freeze # :nodoc:
           root
           super
         end
@@ -256,8 +251,7 @@ class Serega
       #
       # @see Serega
       #
-      # @private
-      module InstanceMethods
+      module InstanceMethods # :nodoc:
         # @see Serega::InstanceMethods#call
         def call(object, context: nil, many: nil, **opts)
           serialize_to(:hash, object, context, many, checked_opts(opts))

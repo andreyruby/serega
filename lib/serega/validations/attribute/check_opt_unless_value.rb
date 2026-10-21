@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Validator for attribute :unless_value option
       #
-      # @private
-      class CheckOptUnlessValue
+      class CheckOptUnlessValue # :nodoc:
         class << self
           #
           # Checks attribute :unless_value option that must be [nil, Symbol, Proc, #call]

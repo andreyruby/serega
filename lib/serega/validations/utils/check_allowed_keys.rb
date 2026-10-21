@@ -1,18 +1,15 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Validations Utilities
     #
-    # @private
-    module Utils
+    module Utils # :nodoc:
       #
       # Utility to check all hash keys are allowed
       #
-      # @private
-      class CheckAllowedKeys
+      class CheckAllowedKeys # :nodoc:
         # Checks hash keys are allowed
         #
         # @param opts [Hash] Some options Hash

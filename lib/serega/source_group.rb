@@ -12,13 +12,11 @@ class Serega
   # - `#build` builds the serialized objects. It runs after the child groups
   #   are built, thus the relation values are ready.
   #
-  # @private
-  class SeregaSourceGroup
+  class SeregaSourceGroup # :nodoc:
     #
     # SeregaSourceGroup instance methods
     #
-    # @private
-    module InstanceMethods
+    module InstanceMethods # :nodoc:
       # @return [SeregaEngine::Run] Serialization run
       attr_reader :run
 

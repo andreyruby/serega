@@ -22,8 +22,7 @@ class Serega
     #
     module StringModifiers
       # @return [Symbol] Plugin name
-      # @private
-      def self.plugin_name
+      def self.plugin_name # :nodoc:
         :string_modifiers
       end
 
@@ -35,8 +34,7 @@ class Serega
       #
       # @return [void]
       #
-      # @private
-      def self.load_plugin(serializer_class, **_opts)
+      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         require_relative "parse_string_modifiers"
         serializer_class.extend(ClassMethods)
         serializer_class.instance_variable_set(:@plan_cache, PlanCache.new(serializer_class))
@@ -47,8 +45,7 @@ class Serega
       #
       # @see Serega
       #
-      # @private
-      module ClassMethods
+      module ClassMethods # :nodoc:
         # @return [Class<PlanCache>] Plans cache that parses string modifiers
         def plan_cache_class
           PlanCache
@@ -60,8 +57,7 @@ class Serega
       #
       # @see Serega::SeregaPlan::Cache
       #
-      # @private
-      class PlanCache < SeregaPlan::Cache
+      class PlanCache < SeregaPlan::Cache # :nodoc:
         private
 
         def parse_modifier(value)

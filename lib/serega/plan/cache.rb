@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  class SeregaPlan
+  class SeregaPlan # :nodoc:
     #
     # Serialization plans of one serializer, cached by modifiers.
     # Validates initiate options before building a plan.
     #
-    # @private
-    class Cache
+    class Cache # :nodoc:
       # Cached plan and whether its modifiers were validated
       CachedPlan = Struct.new(:plan, :validated)
       private_constant :CachedPlan
@@ -16,8 +14,7 @@ class Serega
       #
       # Cache instance methods
       #
-      # @private
-      module InstanceMethods
+      module InstanceMethods # :nodoc:
         #
         # Initializes empty plans cache of the serializer
         #

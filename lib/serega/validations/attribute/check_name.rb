@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Attribute `name` parameter validator
       #
-      # @private
-      class CheckName
+      class CheckName # :nodoc:
         # Regexp for valid attribute name
         FORMAT = /\A[\w~-]+\z/
 

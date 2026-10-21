@@ -4,8 +4,7 @@ class Serega
   #
   # Makes a serializer shareable between Ractors
   #
-  # @private
-  class SeregaShareable
+  class SeregaShareable # :nodoc:
     class << self
       #
       # Makes the serializer definitions shareable between Ractors, except the

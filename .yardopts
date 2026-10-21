@@ -1,7 +1,0 @@
---readme README.md
---title 'Serega API Documentation'
---charset utf-8
---markup markdown
---markup-provider redcarpet
---no-private
-lib/**/*.rb

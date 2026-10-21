@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaEngine
+  module SeregaEngine # :nodoc:
     #
     # Pulls of relation sources. A pull says what to take for one relation
     # source from the serialized objects of its child group:
@@ -12,8 +11,7 @@ class Serega
     # - SKIP for a relation skipped by its condition: nothing, the relation
     #   value is SKIP
     #
-    # @private
-    module Pulls
+    module Pulls # :nodoc:
       # Pull of one source that is not in a collection. Its relation value is
       # one serialized object, and not an Array.
       SINGLE_SOURCE = Object.new.freeze

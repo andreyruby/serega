@@ -12,9 +12,13 @@ class Serega
   #   Serega.new(only: 'FOO')
   #   # => Attribute 'FOO' not exists (Serega::AttributeNotExist)
   class AttributeNotExist < SeregaError
-    attr_reader :serializer, :attributes
+    # @return [Class<Serega>, nil] Serializer that has no such attributes
+    attr_reader :serializer
 
-    def initialize(message = nil, serializer = nil, attributes = nil)
+    # @return [Array<String>, nil] Unknown attributes, for example ["nickname", "friends(age)"]
+    attr_reader :attributes
+
+    def initialize(message = nil, serializer = nil, attributes = nil) # :nodoc:
       super(message)
       @serializer = serializer
       @attributes = attributes
@@ -31,7 +35,7 @@ class Serega
     # @return [String] Path of the plan that exceeds the limit
     attr_reader :details
 
-    def initialize(message = nil, details = nil)
+    def initialize(message = nil, details = nil) # :nodoc:
       super(message)
       @details = details
     end

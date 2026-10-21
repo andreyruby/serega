@@ -4,13 +4,11 @@ class Serega
   #
   # Utilities
   #
-  # @private
-  module SeregaUtils
+  module SeregaUtils # :nodoc:
     #
     # Utility to freeze nested hashes, arrays and strings
     #
-    # @private
-    class EnumDeepFreeze
+    class EnumDeepFreeze # :nodoc:
       class << self
         #
         # Freezes nested hashes and arrays, replaces strings with frozen copies

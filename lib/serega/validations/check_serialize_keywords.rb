@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Validator for the :context and :many serialization options
     #
-    # @private
-    class CheckSerializeKeywords
+    class CheckSerializeKeywords # :nodoc:
       class << self
         #
         # Checks the context is a Hash and many is a boolean, when given

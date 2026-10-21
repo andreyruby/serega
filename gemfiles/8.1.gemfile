@@ -12,7 +12,6 @@ gem "simplecov", "~> 0.22", require: false
 gem "rubocop-rake", "~> 0.6", require: false
 gem "rubocop-rspec", "~> 3.2", require: false
 gem "mdl", "~> 0.13", require: false # Markdown linter
-gem "yard", "~> 0.9", require: false # Generates and checks API documentation coverage
-gem "redcarpet", "~> 3.6", require: false # Markdown formatter used by YARD
+gem "rdoc", "~> 8.1", require: false # Generates and checks API documentation coverage
 
 gemspec name: "serega", path: "../"

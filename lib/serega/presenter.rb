@@ -33,8 +33,7 @@ class Serega
   #     end
   #   end
   #
-  # @private
-  class SeregaPresenter < SimpleDelegator
+  class SeregaPresenter < SimpleDelegator # :nodoc:
     # Method names of delegators defined with a compiled `def`
     PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
     private_constant :PLAIN_METHOD_NAME
@@ -43,8 +42,7 @@ class Serega
     # Delegator to the method of the wrapped object with the name it is
     # called by. Delegators with other names are its aliases.
     #
-    # @private
-    module CalleeDelegator
+    module CalleeDelegator # :nodoc:
       #
       # Calls the method of the wrapped object with the name of the alias
       #

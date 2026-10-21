@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaUtils
+  module SeregaUtils # :nodoc:
     #
     # Reraises an error, adding which attribute and serializer were being
     # serialized when it happened, and where the attribute is defined. Value
     # reads, preloads, batch loaders and attribute conditions use it.
     #
-    # @private
-    module SerializedAttributeError
+    module SerializedAttributeError # :nodoc:
       # File name of the generated code in backtraces
       GENERATED_CODE_FILE = "(serega generated code)"
 

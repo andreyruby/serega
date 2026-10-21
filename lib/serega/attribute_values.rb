@@ -17,8 +17,7 @@ class Serega
   # number: `read_first_name_2`. Thus attribute names do not clash with
   # methods of Object, and generated code calls the methods directly.
   #
-  # @private
-  class SeregaAttributeValues
+  class SeregaAttributeValues # :nodoc:
     # `:const` values by attribute name
     CONSTANTS = {}
 

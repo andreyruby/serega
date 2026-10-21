@@ -10,8 +10,7 @@ class Serega
   #
   #   def satisfy?(object, context) = (begin; object.active; rescue => error; ...; end)
   #
-  # @private
-  class SeregaConditions
+  class SeregaConditions # :nodoc:
     #
     # @param attribute [SeregaAttribute] Attribute with the conditions
     # @param conditions [Hash] Callable condition of each given option

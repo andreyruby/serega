@@ -4,13 +4,11 @@ class Serega
   #
   # Utilities
   #
-  # @private
-  module SeregaUtils
+  module SeregaUtils # :nodoc:
     #
     # Values stored in the current Ractor by key
     #
-    # @private
-    class RactorLocal
+    class RactorLocal # :nodoc:
       class << self
         #
         # Returns the key of the owner value with the name

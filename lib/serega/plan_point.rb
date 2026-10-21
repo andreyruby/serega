@@ -4,13 +4,11 @@ class Serega
   #
   # Combines attribute and nested attributes
   #
-  # @private
-  class SeregaPlanPoint
+  class SeregaPlanPoint # :nodoc:
     #
     # SeregaPlanPoint instance methods
     #
-    # @private
-    module InstanceMethods
+    module InstanceMethods # :nodoc:
       # Link to current plan this point belongs to
       # @return [SeregaAttribute] Current plan
       attr_reader :plan

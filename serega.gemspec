@@ -26,4 +26,6 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir["lib/**/*.rb"] << "VERSION" << "README.md" << "LICENSE.txt"
   spec.require_paths = ["lib"]
+  spec.extra_rdoc_files = ["README.md"]
+  spec.rdoc_options = ["--markup", "markdown", "--main", "README.md", "--title", "Serega"]
 end

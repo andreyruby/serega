@@ -7,8 +7,7 @@ class Serega
         #
         # Validator for meta_attribute block parameter
         #
-        # @private
-        class CheckBlock
+        class CheckBlock # :nodoc:
           class << self
             #
             # Checks block provided with attribute

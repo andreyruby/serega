@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Attribute `:base_serializer` option validator
       #
-      # @private
-      class CheckOptBaseSerializer
+      class CheckOptBaseSerializer # :nodoc:
         class << self
           #
           # Checks attribute :base_serializer option. It specifies the parent

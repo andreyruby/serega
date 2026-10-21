@@ -1,19 +1,16 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
+  module SeregaValidations # :nodoc:
     #
     # Validations of the serialization options other than :context and
     # :many. CheckSerializeKeywords checks :context and :many.
     #
-    # @private
-    class CheckSerializeParams
+    class CheckSerializeParams # :nodoc:
       #
       # Validations of serialization options instance methods
       #
-      # @private
-      module InstanceMethods
+      module InstanceMethods # :nodoc:
         attr_reader :opts
 
         #

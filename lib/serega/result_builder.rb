@@ -9,8 +9,7 @@ class Serega
   # SeregaResultCode. `#call` builds the serialized objects of a source group
   # in one loop.
   #
-  # @private
-  class SeregaResultBuilder
+  class SeregaResultBuilder # :nodoc:
     class << self
       #
       # Makes a result builder and generates its methods:

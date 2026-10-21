@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Attribute `:delegate` option validator
       #
-      # @private
-      class CheckOptDelegate
+      class CheckOptDelegate # :nodoc:
         class << self
           #
           # Checks attribute :delegate option

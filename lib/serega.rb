@@ -7,28 +7,23 @@ require_relative "serega/version"
 class Serega
   # Frozen hash
   # @return [Hash] frozen hash
-  # @private
-  FROZEN_EMPTY_HASH = {}.freeze
+  FROZEN_EMPTY_HASH = {}.freeze # :nodoc:
 
   # Frozen array
   # @return [Array] frozen array
-  # @private
-  FROZEN_EMPTY_ARRAY = [].freeze
+  FROZEN_EMPTY_ARRAY = [].freeze # :nodoc:
 
   # Locks serializers one at a time
-  # @private
-  LOCK_MUTEX = Mutex.new
+  LOCK_MUTEX = Mutex.new # :nodoc:
 
   # Errors raised when another Ractor reads a value that is not shareable,
   # empty on a Ruby without Ractors
-  # @private
   # :nocov:
-  RACTOR_ISOLATION_ERRORS = (defined?(Ractor) ? [Ractor::IsolationError] : []).freeze
+  RACTOR_ISOLATION_ERRORS = (defined?(Ractor) ? [Ractor::IsolationError] : []).freeze # :nodoc:
   # :nocov:
 
   # Path prefix of the Serega source files
-  # @private
-  LIB_PATH = File.expand_path("serega", __dir__).freeze
+  LIB_PATH = File.expand_path("serega", __dir__).freeze # :nodoc:
 end
 
 require_relative "serega/errors"
@@ -155,8 +150,7 @@ class Serega
     #
     # @return [Boolean] Is plugin used
     #
-    # @private
-    def plugin_used?(name)
+    def plugin_used?(name) # :nodoc:
       plugin_name =
         case name
         when Module then name.respond_to?(:plugin_name) ? name.plugin_name : name
@@ -167,11 +161,10 @@ class Serega
     end
 
     #
-    # Lists attributes
+    # Attributes by name, hidden and inherited ones too
     #
-    # @return [Hash] attributes list
+    # @return [Hash] Attributes by name
     #
-    # @private
     def attributes
       @attributes
     end
@@ -181,8 +174,7 @@ class Serega
     #
     # @return [Hash] batch loaders list
     #
-    # @private
-    def batch_loaders
+    def batch_loaders # :nodoc:
       @batch_loaders
     end
 
@@ -191,8 +183,7 @@ class Serega
     #
     # @return [Hash<Symbol, SeregaFormatter>] Formatters by name
     #
-    # @private
-    def formatters
+    def formatters # :nodoc:
       @formatters
     end
 
@@ -202,9 +193,7 @@ class Serega
     # Class of the serialization plans cache
     #
     # @return [Class<SeregaPlan::Cache>] Plans cache class
-    #
-    # @private
-    def plan_cache_class
+    def plan_cache_class # :nodoc:
       SeregaPlan::Cache
     end
 
@@ -213,8 +202,7 @@ class Serega
     #
     # @return [SeregaPlan::Cache, SeregaPlan::PerRactorCache] Serialization plans cache
     #
-    # @private
-    def plan_cache
+    def plan_cache # :nodoc:
       @plan_cache
     # :nocov:
     rescue *RACTOR_ISOLATION_ERRORS
@@ -229,8 +217,7 @@ class Serega
     #
     # @return [Array<Proc>] presenter blocks list
     #
-    # @private
-    def presenter_blocks
+    def presenter_blocks # :nodoc:
       @presenter_blocks
     end
 
@@ -241,8 +228,7 @@ class Serega
     # @param point_names [Array<Symbol>] Attribute names for the Data members
     # @return [Class] Subclass of Data
     #
-    # @private
-    def data_class_for(point_names)
+    def data_class_for(point_names) # :nodoc:
       classes = @data_classes
       classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :data_classes)) { {} } if classes.frozen?
       classes[point_names] ||= Data.define(*point_names)
@@ -255,8 +241,7 @@ class Serega
     # @param point_names [Array<Symbol>] Attribute names for the Struct members
     # @return [Class] Subclass of Struct
     #
-    # @private
-    def struct_class_for(point_names)
+    def struct_class_for(point_names) # :nodoc:
       classes = @struct_classes
       classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :struct_classes)) { {} } if classes.frozen?
       classes[point_names] ||= Struct.new(*point_names)
@@ -473,8 +458,7 @@ class Serega
     #
     # @return [String, nil] Handler signature
     #
-    # @private
-    attr_reader :prepare_initial_objects_signature
+    attr_reader :prepare_initial_objects_signature # :nodoc:
 
     # Patched in:
     # - plugin :root (takes the options of plugins)
@@ -551,8 +535,7 @@ class Serega
     #
     # @return [void]
     #
-    # @private
-    def lock
+    def lock # :nodoc:
       return if @locked
 
       LOCK_MUTEX.synchronize do
@@ -595,7 +578,7 @@ class Serega
     #
     # @return [Boolean] whether the serializer is shareable
     #
-    def shareable?
+    def shareable? # :nodoc:
       @shareable
     end
 
@@ -701,8 +684,7 @@ class Serega
     # This plan can be traversed to find serialized attributes and nested attributes.
     #
     # @return [Serega::SeregaPlan] Serialization plan
-    # @private
-    attr_reader :plan
+    attr_reader :plan # :nodoc:
 
     # Patched in:
     # - plugin :root (takes the options of plugins)

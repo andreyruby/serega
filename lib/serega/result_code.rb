@@ -35,8 +35,7 @@ class Serega
   #     serialized
   #   end
   #
-  # @private
-  class SeregaResultCode
+  class SeregaResultCode # :nodoc:
     # Method names called directly in generated code
     PLAIN_METHOD_NAME = /\A[a-z_][a-zA-Z0-9_]*[?!]?\z/
 

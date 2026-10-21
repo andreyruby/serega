@@ -4,13 +4,11 @@ class Serega
   #
   # Attribute value resolvers
   #
-  # @private
-  module AttributeValueResolvers
+  module AttributeValueResolvers # :nodoc:
     #
     # Value resolver class for attributes with :const option
     #
-    # @private
-    class Const
+    class Const # :nodoc:
       def initialize(const_value)
         @const_value = const_value
       end

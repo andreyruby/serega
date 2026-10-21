@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 class Serega
-  # @private
-  module SeregaValidations
-    # @private
-    module Attribute
+  module SeregaValidations # :nodoc:
+    module Attribute # :nodoc:
       #
       # Validator for attribute :format option
       #
-      # @private
-      class CheckOptFormat
+      class CheckOptFormat # :nodoc:
         class << self
           #
           # Checks attribute :format option is the name of an added formatter
