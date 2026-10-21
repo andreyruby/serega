@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **BREAKING**: Moved the depth limit from the `:depth_limit` plugin to core:
+  set `config.depth_limit = 10` in place of `plugin :depth_limit, limit: 10`.
+  See [Depth limit](docs/configuration.md#depth-limit).
 - Serializers that end with `make_shareable!` serialize in other Ractors.
   See [Ractors](docs/ractors.md).
 - **BREAKING**: Raise the minimum supported Ruby version to 3.3. Ruby 3.2 has

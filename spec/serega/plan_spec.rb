@@ -100,6 +100,63 @@ RSpec.describe Serega::SeregaPlan do
         d: {d1: nil, d2: nil}
       )
     end
+
+    context "with cyclic relations" do
+      let(:current_serializer) { post_serializer }
+      let(:post_depth_limit) { 2 }
+      let(:comment_depth_limit) { nil }
+      let(:with) { {comments: {post: {}}} }
+
+      let(:post_serializer) do
+        depth_limit = post_depth_limit
+        comments = -> { comment_serializer }
+        Class.new(base_class) do
+          config.depth_limit = depth_limit
+          attribute :title
+          attribute :comments, serializer: comments, many: true, hide: true
+        end
+      end
+
+      let(:comment_serializer) do
+        depth_limit = comment_depth_limit
+        post = -> { post_serializer }
+        Class.new(base_class) do
+          config.depth_limit = depth_limit
+          attribute :text
+          attribute :post, serializer: post, many: false, hide: true
+        end
+      end
+
+      it "raises DepthLimitError with the path deeper than the root serializer limit" do
+        expect { plan(with: with) }.to raise_error(Serega::DepthLimitError, "Depth limit was exceeded") do |error|
+          expect(error.details).to eq "#{post_serializer} (depth limit: 2) -> comments -> post"
+        end
+      end
+
+      context "when the plan depth equals the limit" do
+        let(:with) { {comments: {}} }
+
+        it "returns the plan" do
+          expect(plan(with: with)).to satisfy_attribute_names(title: nil, comments: {text: nil})
+        end
+      end
+
+      context "when only a relation serializer allows the depth" do
+        let(:comment_depth_limit) { 5 }
+
+        it "raises DepthLimitError" do
+          expect { plan(with: with) }.to raise_error(Serega::DepthLimitError, "Depth limit was exceeded")
+        end
+      end
+
+      context "without a depth limit" do
+        let(:post_depth_limit) { nil }
+
+        it "returns the plan" do
+          expect(plan(with: with)).to satisfy_attribute_names(title: nil, comments: {text: nil, post: {title: nil}})
+        end
+      end
+    end
   end
 
   describe "#preload_points" do

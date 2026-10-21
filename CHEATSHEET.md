@@ -22,7 +22,6 @@
 - [Plugin `:activerecord_preloads`](#plugin-activerecord_preloads)
 - [Plugin `:string_modifiers`](#plugin-string_modifiers)
 - [Plugin `:camel_case`](#plugin-camel_case)
-- [Plugin `:depth_limit`](#plugin-depth_limit)
 - [Plugin `:explicit_many_option`](#plugin-explicit_many_option)
 - [Plugin `:root` / `:metadata` / `:context_metadata`](#plugin-root--metadata--context_metadata)
 - [Errors](#errors)
@@ -666,6 +665,24 @@ end
 
 Default `true` — names must match `[a-zA-Z0-9_-~]`.
 
+### `config.depth_limit` — deepest nesting of fields
+
+```ruby
+class CommentSerializer < Serega
+  config.depth_limit = 2
+  attribute :text
+  attribute :replies, serializer: -> { CommentSerializer }, many: true, hide: true
+end
+
+CommentSerializer.new(with: :replies)              # depth 2
+CommentSerializer.new(with: { replies: :replies })
+# => raises Serega::DepthLimitError (#details has the path)
+```
+
+Default `nil` — no limit. The root serializer's limit applies. Checked at
+`.new` — instantiate before business logic to fail fast on malicious `?with=`
+queries.
+
 ### `config.max_cached_plans_per_serializer_count` — plan cache
 
 Caches prepared serialization plans by `:only` / `:except` / `:with` signature
@@ -754,23 +771,6 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', fu
 
 ⚠️ Modifiers must use camelCase. Doesn't touch `:root` / `:metadata` keys.
 Custom transform: `plugin :camel_case, transform: ->(name) { name.camelize }`.
-
----
-
-## Plugin `:depth_limit`
-
-```ruby
-class CommentSerializer < Serega
-  plugin :depth_limit, limit: 2
-  attribute :replies, serializer: -> { CommentSerializer }
-end
-
-CommentSerializer.new(with: { replies: { replies: { replies: :replies } } })
-# => raises Serega::DepthLimitError (#details has breach info)
-```
-
-Per-serializer override: `config.depth_limit.limit = 5`. Checked at `.new` —
-instantiate before business logic to fail fast on malicious `?with=` queries.
 
 ---
 
@@ -871,7 +871,7 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 |--------------------------------|------|
 | `Serega::SeregaError` | base class for everything |
 | `Serega::AttributeNotExist` | unknown attr in [Field Selection][field-selection] — `#serializer`, `#attributes` |
-| `Serega::DepthLimitError` | [Plugin `:depth_limit`][plugin-depth_limit] breach — `#details` |
+| `Serega::DepthLimitError` | [`config.depth_limit`][depth-limit] breach — `#details` |
 
 [attributes]: #attribute-options
 [field-selection]: #field-selection--only-except-with
@@ -883,5 +883,5 @@ ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
 [configuration]: #configuration
 [plugin-activerecord_preloads]: #plugin-activerecord_preloads
 [presenter]: #presenter
-[plugin-depth_limit]: #plugin-depth_limit
+[depth-limit]: #configdepth_limit--deepest-nesting-of-fields
 [plugin-explicit_many_option]: #plugin-explicit_many_option

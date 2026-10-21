@@ -4,7 +4,7 @@
 |---|---|
 | `Serega::SeregaError` | Invalid definitions, options or changes to locked serializers. Base class of other errors |
 | `Serega::AttributeNotExist` | `:only`, `:except` or `:with` lists an unknown field |
-| `Serega::DepthLimitError` | Fields nest deeper than the [`:depth_limit`][depth_limit] plugin allows |
+| `Serega::DepthLimitError` | Fields nest deeper than [`config.depth_limit`][depth_limit] allows |
 
 `Serega::AttributeNotExist#serializer` returns the serializer and `#attributes`
 returns the unknown fields. See [Selecting fields](selecting-fields.md#unknown-fields).
@@ -31,4 +31,4 @@ app/serializers/user_serializer.rb:5:in 'attribute :city of UserSerializer'
 Errors raised by [conditions](conditional-attributes.md#errors) name the
 condition too.
 
-[depth_limit]: plugins.md#plugin-depth_limit
+[depth_limit]: configuration.md#depth-limit

@@ -54,6 +54,28 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#depth_limit" do
+    it "returns default value" do
+      expect(config.depth_limit).to be_nil
+    end
+  end
+
+  describe "#depth_limit=" do
+    it "validates value is a positive Integer or nil" do
+      expect { config.depth_limit = 1 }.not_to raise_error
+      expect { config.depth_limit = nil }.not_to raise_error
+      expect { config.depth_limit = 0 }
+        .to raise_error Serega::SeregaError, "Must have positive Integer or nil value, 0 provided"
+      expect { config.depth_limit = "1" }
+        .to raise_error Serega::SeregaError, "Must have positive Integer or nil value, \"1\" provided"
+    end
+
+    it "sets depth_limit option" do
+      config.depth_limit = 5
+      expect(config.depth_limit).to eq 5
+    end
+  end
+
   describe "#hide_by_default" do
     it "returns default value" do
       expect(config.hide_by_default).to be false
@@ -242,6 +264,7 @@ RSpec.describe Serega::SeregaConfig do
         check_initiate_params
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
+        depth_limit
         auto_preload
         auto_preload_excluded_methods
         hide_by_default
