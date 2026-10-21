@@ -18,7 +18,7 @@ RSpec.describe Serega::SeregaEngine::Run do
   let(:plan) { user_serializer::SeregaPlan.new(nil, {}) }
 
   describe ".call" do
-    subject(:result) { described_class.call(plan, object, many: many, mode: mode, context: context) }
+    subject(:result) { described_class.call(plan, object, many, mode, context) }
 
     let(:post) { double(title: "Hello") }
     let(:user) { double(name: "Ann", posts: [post]) }
@@ -88,7 +88,7 @@ RSpec.describe Serega::SeregaEngine::Run do
       let(:mode) { :struct }
 
       it "serializes the object to a Struct" do
-        post_struct_class = post_serializer::SeregaResultBuilder.struct_class_for(%i[title])
+        post_struct_class = post_serializer.struct_class_for(%i[title])
 
         expect(result.to_h).to eq(name: "Ann", posts: [post_struct_class.new("Hello")])
       end

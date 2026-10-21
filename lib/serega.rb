@@ -98,6 +98,8 @@ class Serega
   @formatters = {}
   @presenter_class = nil
   @presenter_blocks = []
+  @data_classes = {}
+  @struct_classes = {}
 
   # Validates `Serializer.attribute` params
   check_attribute_params_class = Class.new(SeregaValidations::CheckAttributeParams)
@@ -116,10 +118,6 @@ class Serega
 
   # Batch loaders of Serega validate params with Serega::CheckBatchLoaderParams
   SeregaBatchLoader.serializer_class = self
-
-  # Result builders of Serega generate code with Serega::SeregaResultCode
-  SeregaResultBuilder.serializer_class = self
-  SeregaResultCode.serializer_class = self
 
   #
   # Serializers class methods
@@ -229,6 +227,34 @@ class Serega
     # @private
     def presenter_blocks
       @presenter_blocks
+    end
+
+    #
+    # Returns (and caches) the Data class of the serialized objects with the
+    # given members
+    #
+    # @param point_names [Array<Symbol>] Attribute names for the Data members
+    # @return [Class] Subclass of Data
+    #
+    # @private
+    def data_class_for(point_names)
+      classes = @data_classes
+      classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :data_classes)) { {} } if classes.frozen?
+      classes[point_names] ||= Data.define(*point_names)
+    end
+
+    #
+    # Returns (and caches) the Struct class of the serialized objects with
+    # the given members
+    #
+    # @param point_names [Array<Symbol>] Attribute names for the Struct members
+    # @return [Class] Subclass of Struct
+    #
+    # @private
+    def struct_class_for(point_names)
+      classes = @struct_classes
+      classes = SeregaUtils::RactorLocal.fetch(SeregaUtils::RactorLocal.key(self, :struct_classes)) { {} } if classes.frozen?
+      classes[point_names] ||= Struct.new(*point_names)
     end
 
     #
@@ -443,9 +469,7 @@ class Serega
     # @return [String, nil] Handler signature
     #
     # @private
-    def prepare_initial_objects_signature
-      @prepare_initial_objects_signature
-    end
+    attr_reader :prepare_initial_objects_signature
 
     # Patched in:
     # - plugin :root (takes the options of plugins)
@@ -573,6 +597,8 @@ class Serega
       subclass.instance_variable_set(:@formatters, formatters.dup)
       subclass.instance_variable_set(:@presenter_class, nil)
       subclass.instance_variable_set(:@presenter_blocks, [])
+      subclass.instance_variable_set(:@data_classes, {})
+      subclass.instance_variable_set(:@struct_classes, {})
       subclass.instance_variable_set(:@preload_with, nil)
       subclass.instance_variable_set(:@prepare_initial_objects, nil)
       subclass.instance_variable_set(:@prepare_initial_objects_signature, nil)
@@ -593,14 +619,6 @@ class Serega
       plan_class = Class.new(self::SeregaPlan)
       plan_class.serializer_class = subclass
       subclass.const_set(:SeregaPlan, plan_class)
-
-      result_builder_class = Class.new(self::SeregaResultBuilder)
-      result_builder_class.serializer_class = subclass
-      subclass.const_set(:SeregaResultBuilder, result_builder_class)
-
-      result_code_class = Class.new(self::SeregaResultCode)
-      result_code_class.serializer_class = subclass
-      subclass.const_set(:SeregaResultCode, result_code_class)
 
       plan_point_class = Class.new(self::SeregaPlanPoint)
       plan_point_class.serializer_class = subclass
@@ -749,14 +767,13 @@ class Serega
     def serialize_to(mode, object, context, many, opts)
       SeregaValidations::CheckSerializeKeywords.call(context, many)
       context ||= FROZEN_EMPTY_HASH
-      object = prepare_objects(object, context)
-      many = SeregaUtils::CollectionDetector.call(object, plan.collection_classes) if many.nil?
+      object = prepare_objects(object, context) if self.class.prepare_initial_objects_signature
+      many = SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
       serialize(object, opts, context, many, mode)
     end
 
     def prepare_objects(objects, context)
       handler = self.class.prepare_initial_objects
-      return objects unless handler
 
       case self.class.prepare_initial_objects_signature
       when "1" then handler.call(objects)
@@ -770,7 +787,7 @@ class Serega
     # - plugin :context_metadata (adds context metadata to final result)
     # - plugin :metadata (adds metadata to final result)
     def serialize(object, _opts, context, many, mode)
-      SeregaEngine::Run.call(plan, object, many: many, mode: mode, context: context)
+      SeregaEngine::Run.call(@plan, object, many, mode, context)
     end
   end
 

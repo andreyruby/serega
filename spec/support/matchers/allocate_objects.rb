@@ -19,7 +19,7 @@ RSpec::Matchers.define :allocate_objects do |expected|
     ObjectSpace.count_objects(before)
     yield
     ObjectSpace.count_objects(after)
-    after.filter_map { |type, count| [type, count - before[type]] if type.start_with?("T_") && count != before[type] }.to_h
+    after.filter_map { |type, count| [type, count - before.fetch(type, 0)] if type.start_with?("T_") && count != before[type] }.to_h
   ensure
     GC.enable
   end
