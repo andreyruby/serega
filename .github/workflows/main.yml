@@ -42,6 +42,28 @@ jobs:
           bundle exec yard stats --list-undoc | tee yard_stats.txt
           grep -q "100.00% documented" yard_stats.txt
 
+  benchmarks:
+    runs-on: ubuntu-24.04
+    name: Benchmarks
+    env:
+      BUNDLE_GEMFILE: gemfiles/8.1.gemfile
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v6
+
+      # https://github.com/ruby/setup-ruby
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: Install benchmark gems
+        run: BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle install
+
+      - name: Check benchmarks
+        run: bundle exec rake benchmarks:check
+
   build:
     runs-on: ubuntu-24.04
     name: Ruby ${{ matrix.ruby }} (AR ${{ matrix.activerecord }})

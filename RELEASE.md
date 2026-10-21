@@ -17,7 +17,9 @@ Steps to release a new version:
    BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/8.1.gemfile bundle update && \
+   BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle update && \
    bundle exec rspec && \
+   bundle exec rake benchmarks:check && \
    bundle exec rubocop -A && \
    codespell --skip="./sig,./doc,./coverage"
    ```
@@ -67,6 +69,7 @@ Steps to release a new version:
 ## Release Checklist
 
 - [ ] All tests pass
+- [ ] Benchmarks pass
 - [ ] Documentation is 100% complete
 - [ ] CHANGELOG.md updated
 - [ ] Version follows semantic versioning
