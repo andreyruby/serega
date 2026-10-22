@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **BREAKING**: `plugin :activerecord_preloads` requires ActiveRecord 7.0 or later.
+  CI tests ActiveRecord 8.0 and 8.1. See [ActiveRecord](docs/preloads.md#activerecord).
 - **BREAKING**: `:if_value` and `:unless_value` raise on an attribute with a block,
   as with `:serializer`. See [Conditional attributes](docs/conditional-attributes.md).
 - **BREAKING**: `plugin` takes only the names of the built-in plugins: `:root`,
