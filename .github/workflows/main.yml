@@ -99,7 +99,7 @@ jobs:
           - ruby: "3.4"
             activerecord: "8.1"
           - ruby: "3.3"
-            activerecord: "8.0"
+            activerecord: "8.1"
           - ruby: "truffleruby-40.0.0"
             activerecord: "8.1"
 
