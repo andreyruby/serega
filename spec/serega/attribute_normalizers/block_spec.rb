@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::AttributeNormalizers::BlockSerializer do
+RSpec.describe Serega::AttributeNormalizers::Block do
   subject(:nested) { described_class.call(serializer_class, :author, block, base_option) }
 
   let(:base_serializer) { Class.new(Serega) }

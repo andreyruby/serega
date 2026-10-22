@@ -14,7 +14,7 @@ class Serega
     # `CurrentSerializer.<attribute_name>` so error messages and debugging
     # output point back to the defining attribute.
     #
-    class BlockSerializer # :nodoc:
+    class Block # :nodoc:
       class << self
         # Builds the nested serializer of the attribute block. `base_serializer`
         # is the :base_serializer attribute option.

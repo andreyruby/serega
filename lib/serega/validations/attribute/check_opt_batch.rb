@@ -13,7 +13,7 @@ class Serega
             return unless opts.key?(:batch)
 
             check_type(opts)
-            batch = AttributeNormalizers::BatchOption.new(opts[:batch], name)
+            batch = AttributeNormalizers::Batch.new(opts[:batch], name)
             check_loaders_exist(serializer_class, batch)
             check_usage_with_other_params(opts, batch)
           end
