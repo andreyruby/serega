@@ -30,17 +30,10 @@ class Serega
 
       # Associations loader for prepared records
       class Loader # :nodoc:
-        # :nocov: We can check only one version of activerecord
-
         # Preloads associations to records
         def self.call(records, associations)
-          if ActiveRecord::VERSION::MAJOR >= 7
-            ActiveRecord::Associations::Preloader.new(records: records, associations: associations).call
-          else
-            ActiveRecord::Associations::Preloader.new.preload(records, associations)
-          end
+          ActiveRecord::Associations::Preloader.new(records: records, associations: associations).call
         end
-        # :nocov:
       end
 
       # Preloader adapter for ActiveRecord object
