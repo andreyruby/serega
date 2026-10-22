@@ -21,7 +21,7 @@ class Serega
 
         # Initializes new meta attribute
         def initialize(serializer_class, path:, opts:, block:)
-          check(serializer_class.config, path, opts, block)
+          CheckParams.call(path, opts, block, serializer_class.config.check_attribute_name)
 
           @name = path.join(".").to_sym
           @path = SeregaUtils::EnumDeepDup.call(path)
@@ -53,12 +53,6 @@ class Serega
           return proc { const } if const
 
           value || block
-        end
-
-        def check(config, path, opts, block)
-          CheckPath.call(path) if config.check_attribute_name
-          CheckOpts.call(opts, block, config.metadata.attribute_keys)
-          CheckBlock.call(block) if block
         end
       end
     end

@@ -25,31 +25,14 @@ RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute do
     end
 
     before do
-      allow(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckPath).to receive(:call)
-      allow(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckOpts).to receive(:call)
-      allow(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckBlock).to receive(:call)
+      allow(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckParams).to receive(:call)
     end
 
     it "validates path, opts, block" do
       validate
-      expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckPath)
-        .to have_received(:call).with(path)
 
-      expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckOpts)
-        .to have_received(:call).with(opts, block, %i[const hide_nil hide_empty value])
-
-      expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckBlock)
-        .to have_received(:call).with(block)
-    end
-
-    context "when block is nil" do
-      let(:block) { nil }
-      let(:opts) { {const: 1} }
-
-      it "skips validating block" do
-        validate
-        expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckBlock).not_to have_received(:call)
-      end
+      expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckParams)
+        .to have_received(:call).with(path, opts, block, true)
     end
 
     context "when :check_attribute_name config option is false" do
@@ -57,7 +40,9 @@ RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute do
 
       it "skips validating path" do
         validate
-        expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckPath).not_to have_received(:call)
+
+        expect(Serega::SeregaPlugins::Metadata::MetaAttribute::CheckParams)
+          .to have_received(:call).with(path, opts, block, false)
       end
     end
   end
