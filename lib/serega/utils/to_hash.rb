@@ -22,9 +22,9 @@ class Serega
           case value
           when Array then array_to_hash(value)
           when Hash then hash_to_hash(value)
-          when NilClass, FalseClass, TrueClass then nil_to_hash(value)
-          when String then string_to_hash(value)
-          when Symbol then symbol_to_hash(value)
+          when NilClass, FalseClass, TrueClass then FROZEN_EMPTY_HASH
+          when String then {value.to_sym => FROZEN_EMPTY_HASH}
+          when Symbol then {value => FROZEN_EMPTY_HASH}
           else raise SeregaError, "Can't convert #{value.class} class object to hash"
           end
         end
@@ -53,18 +53,6 @@ class Serega
             res[key.to_sym] = call(value)
           end
           res
-        end
-
-        def nil_to_hash(_value)
-          FROZEN_EMPTY_HASH
-        end
-
-        def string_to_hash(value)
-          {value.to_sym => FROZEN_EMPTY_HASH}
-        end
-
-        def symbol_to_hash(value)
-          {value => FROZEN_EMPTY_HASH}
         end
       end
     end
