@@ -14,8 +14,6 @@ Steps to release a new version:
    pip3 install codespell && \
    gem update --system && \
    bundle update && bundle update --bundler && \
-   BUNDLE_GEMFILE=gemfiles/7.2.gemfile bundle update && \
-   BUNDLE_GEMFILE=gemfiles/8.0.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/8.1.gemfile bundle update && \
    BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle update && \
    bundle exec rspec && \

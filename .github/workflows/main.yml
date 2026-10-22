@@ -6,6 +6,12 @@ on:
     branches: [master]
   pull_request:
 
+# A newer push to a pull request cancels its running checks. Each master
+# push gets its own group, thus master runs are never cancelled or queued.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-24.04
@@ -14,7 +20,7 @@ jobs:
       BUNDLE_GEMFILE: gemfiles/8.1.gemfile
     steps:
       # https://github.com/actions/checkout
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # https://github.com/ruby/setup-ruby
       - name: Set up Ruby
@@ -24,7 +30,7 @@ jobs:
           bundler-cache: true
 
       - name: Install codespell
-        run: pipx install codespell==2.3.0
+        run: pipx install codespell==2.4.3
 
       - name: Check spelling
         run: codespell --skip="./sig,./doc,./coverage,./vendor"
@@ -54,7 +60,7 @@ jobs:
       BUNDLE_GEMFILE: gemfiles/8.1.gemfile
     steps:
       # https://github.com/actions/checkout
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # https://github.com/ruby/setup-ruby
       - name: Set up Ruby
@@ -83,16 +89,18 @@ jobs:
           #   activerecord: "8.1"
           #   experimental: true
           #   bundle_force_ruby_platform: "1"
+          # Ruby 4.1 is in preview until its December release; a failure does not fail CI
+          - ruby: "4.1.0-preview1"
+            activerecord: "8.1"
+            experimental: true
           - ruby: "4.0"
             activerecord: "8.1"
             coverage: true
           - ruby: "3.4"
             activerecord: "8.1"
           - ruby: "3.3"
-            activerecord: "8.0"
-          - ruby: "3.3"
-            activerecord: "7.2"
-          - ruby: "truffleruby-33.0.1"
+            activerecord: "8.1"
+          - ruby: "truffleruby-40.0.0"
             activerecord: "8.1"
 
     env:
@@ -102,7 +110,7 @@ jobs:
 
     steps:
       # https://github.com/actions/checkout
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # https://github.com/ruby/setup-ruby
       - name: Set up Ruby ${{ matrix.ruby }} (AR ${{ matrix.activerecord }})
