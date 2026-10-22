@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **BREAKING**: `plugin` takes only the names of the built-in plugins: `:root`,
+  `:metadata`, `:context_metadata` and `:activerecord_preloads`. Custom plugin
+  modules are not supported. See [Root key and metadata](docs/root-and-metadata.md).
 - **BREAKING**: Moved the `:explicit_many_option` plugin to core: set
   `config.require_many = true` in place of `plugin :explicit_many_option`.
   See [`:many`](docs/attributes.md#many).
@@ -36,7 +39,7 @@
   under the root key. See [Root key](docs/root-and-metadata.md#root-key).
 - **BREAKING**: Moved the `:if`, `:unless`, `:if_value` and `:unless_value`
   attribute options from the `:if` plugin to core. Remove `plugin :if` from
-  your serializers — loading it raises `Plugin 'if' does not exist`.
+  your serializers — loading it raises `Plugin :if does not exist`.
   See [Conditional Attributes](docs/conditional-attributes.md).
 - **BREAKING**: Conditional attributes: `.to_data` returns `nil` for skipped
   attributes. See [Conditional Attributes](docs/conditional-attributes.md).
