@@ -10,7 +10,7 @@ class UserSerializer < Serega
   attribute :full_name, method: :name, hash_access: true # record[:name]
 end
 
-UserSerializer.to_h({name: "Bruce", "email" => "bruce@wayne.com"})
+UserSerializer.to_h({:name => "Bruce", "email" => "bruce@wayne.com"})
 # => {name: "Bruce", email: "bruce@wayne.com", full_name: "Bruce"}
 ```
 
