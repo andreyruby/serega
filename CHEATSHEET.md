@@ -34,7 +34,7 @@ class UserSerializer < Serega
   attribute :email
 end
 
-user = OpenStruct.new(name: 'Felonious Gru', email: 'gru@example.com')
+user = OpenStruct.new(name: "Felonious Gru", email: "gru@example.com")
 UserSerializer.to_h(user)
 # => {name: "Felonious Gru", email: "gru@example.com"}
 ```
@@ -52,7 +52,7 @@ class UserSerializer < Serega
   attribute :first_name
 end
 
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'))
+UserSerializer.to_h(OpenStruct.new(first_name: "Felonious"))
 # => {first_name: "Felonious"}
 ```
 
@@ -63,7 +63,7 @@ class UserSerializer < Serega
   attribute :name, method: :full_name
 end
 
-UserSerializer.to_h(OpenStruct.new(full_name: 'Felonious Gru'))
+UserSerializer.to_h(OpenStruct.new(full_name: "Felonious Gru"))
 # => {name: "Felonious Gru"}
 ```
 
@@ -97,8 +97,8 @@ class UserSerializer < Serega
   attribute :quote, value: proc { |user, ctx| "#{user.first_name}: #{ctx[:line]}" }
 end
 
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'),
-                    context: { line: 'Light bulb!' })
+UserSerializer.to_h(OpenStruct.new(first_name: "Felonious"),
+  context: {line: "Light bulb!"})
 # => {quote: "Felonious: Light bulb!"}
 ```
 
@@ -106,13 +106,13 @@ UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious'),
 
 ```ruby
 class UserSerializer < Serega
-  attribute :city, delegate: { to: :address, allow_nil: true }
+  attribute :city, delegate: {to: :address, allow_nil: true}
 end
 
 UserSerializer.to_h(OpenStruct.new(address: nil))
 # => {city: nil}
 
-UserSerializer.to_h(OpenStruct.new(address: OpenStruct.new(city: 'Suburbia')))
+UserSerializer.to_h(OpenStruct.new(address: OpenStruct.new(city: "Suburbia")))
 # => {city: "Suburbia"}
 ```
 
@@ -123,7 +123,7 @@ UserSerializer.to_h(OpenStruct.new(address: OpenStruct.new(city: 'Suburbia')))
 
 ```ruby
 class UserSerializer < Serega
-  attribute :role, const: 'admin'
+  attribute :role, const: "admin"
 end
 
 UserSerializer.to_h(OpenStruct.new)
@@ -134,13 +134,13 @@ UserSerializer.to_h(OpenStruct.new)
 
 ```ruby
 class UserSerializer < Serega
-  attribute :nickname, default: 'anonymous'
+  attribute :nickname, default: "anonymous"
 end
 
 UserSerializer.to_h(OpenStruct.new(nickname: nil))
 # => {nickname: "anonymous"}
 
-UserSerializer.to_h(OpenStruct.new(nickname: 'Vector'))
+UserSerializer.to_h(OpenStruct.new(nickname: "Vector"))
 # => {nickname: "Vector"}
 ```
 
@@ -152,10 +152,10 @@ class UserSerializer < Serega
   attribute :phone, hide: true
 end
 
-UserSerializer.to_h(OpenStruct.new(email: 'gru@example.com', phone: '555-1234'))
+UserSerializer.to_h(OpenStruct.new(email: "gru@example.com", phone: "555-1234"))
 # => {email: "gru@example.com"}
 
-UserSerializer.to_h(OpenStruct.new(email: 'gru@example.com', phone: '555-1234'), with: :phone)
+UserSerializer.to_h(OpenStruct.new(email: "gru@example.com", phone: "555-1234"), with: :phone)
 # => {email: "gru@example.com", phone: "555-1234"}
 ```
 
@@ -169,7 +169,7 @@ UserSerializer.to_h(OpenStruct.new(email: 'gru@example.com', phone: '555-1234'),
 class UserSerializer < Serega
   attribute :name
 end
-user = OpenStruct.new(name: 'Felonious Gru')
+user = OpenStruct.new(name: "Felonious Gru")
 
 UserSerializer.to_h(user) # => {name: "Felonious Gru"}
 UserSerializer.to_h([user]) # auto array detection => [{name: "Felonious Gru"}]
@@ -192,7 +192,7 @@ class UserSerializer < Serega
   attribute :email
   attribute :phone, hide: true
 end
-user = OpenStruct.new(name: 'Felonious', email: 'gru@example.com', phone: '555-1234')
+user = OpenStruct.new(name: "Felonious", email: "gru@example.com", phone: "555-1234")
 
 UserSerializer.to_h(user, only: [:name]) # => {name: "Felonious"}
 UserSerializer.to_h(user, except: [:email]) # => {name: "Felonious"}
@@ -201,8 +201,8 @@ UserSerializer.to_h(user, with: [:phone]) # => {name: "Felonious", email: "gru@e
 
 ```ruby
 # Nested
-UserSerializer.to_h(user, only: [:name, { posts: [:title] }])
-UserSerializer.to_h(user, only: 'name,posts(title)') # one String, e.g. from GET ?fields=...
+UserSerializer.to_h(user, only: [:name, {posts: [:title]}])
+UserSerializer.to_h(user, only: "name,posts(title)") # one String, e.g. from GET ?fields=...
 ```
 
 ```ruby
@@ -230,10 +230,10 @@ UserSerializer.to_h(user, only: [:address], check_initiate_params: false)
 class UserSerializer < Serega
   attribute :email, value: proc { |user, ctx| user.email if ctx[:current_user] == user }
 end
-user = OpenStruct.new(email: 'gru@example.com')
+user = OpenStruct.new(email: "gru@example.com")
 
-UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@example.com"}
-UserSerializer.to_h(user, context: { current_user: nil }) # => {email: nil}
+UserSerializer.to_h(user, context: {current_user: user}) # => {email: "gru@example.com"}
+UserSerializer.to_h(user, context: {current_user: nil}) # => {email: nil}
 ```
 
 Inside presenter methods context is accessed via `__ctx__` (see [Presenter][presenter]).
@@ -255,10 +255,10 @@ class UserSerializer < Serega
   attribute :nickname, unless_value: :empty?
 end
 
-user = OpenStruct.new(email: 'gru@example.com', nickname: '')
+user = OpenStruct.new(email: "gru@example.com", nickname: "")
 
-UserSerializer.to_h(user, context: { current_user: nil }) # => {}
-UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@example.com"}
+UserSerializer.to_h(user, context: {current_user: nil}) # => {}
+UserSerializer.to_h(user, context: {current_user: user}) # => {email: "gru@example.com"}
 ```
 
 Symbol short form: `if: :active?` → calls `object.active?`.
@@ -275,8 +275,8 @@ For unconditional hiding, prefer `hide: true` — see
 ```ruby
 class AppSerializer < Serega
   formatter :iso8601, [:iso8601, 3], allow_nil: true # value&.iso8601(3)
-  formatter :yes_no, ->(value) { value ? 'yes' : 'no' }
-  formatter(:money) { |value, ctx| "$#{value / (10 ** ctx[:digits])}" }
+  formatter :yes_no, ->(value) { value ? "yes" : "no" }
+  formatter(:money) { |value, ctx| "$#{value / (10**ctx[:digits])}" }
 end
 
 class UserSerializer < AppSerializer
@@ -287,7 +287,7 @@ class UserSerializer < AppSerializer
 end
 
 UserSerializer.to_h(OpenStruct.new(balance: 100_000, active: true, role: :admin, score: 87),
-                    context: { digits: 2 })
+  context: {digits: 2})
 # => {balance: "$1000", active: "yes", role: "admin", score: "87%"}
 ```
 
@@ -305,15 +305,15 @@ class PostSerializer < Serega
   attribute :comments, serializer: CommentSerializer
 end
 
-post = OpenStruct.new(title: 'How to Steal the Moon',
-                      comments: [OpenStruct.new(body: 'Great post!')])
+post = OpenStruct.new(title: "How to Steal the Moon",
+  comments: [OpenStruct.new(body: "Great post!")])
 PostSerializer.to_h(post)
 # => {title: "How to Steal the Moon", comments: [{body: "Great post!"}]}
 ```
 
 ```ruby
 # Cyclic references / lazy
-attribute :comments, serializer: 'CommentSerializer'
+attribute :comments, serializer: "CommentSerializer"
 attribute :comments, serializer: -> { CommentSerializer }
 attribute :comments, serializer: CommentSerializer, many: true # force collection
 ```
@@ -349,11 +349,11 @@ Other forms:
 
 ```ruby
 attribute :comments_count, batch: :comments_count # named loader by name (same as batch: true above)
-attribute :comments_count, batch: { use: :comments_count, id: :uuid } # hash form, only for sub-options
-attribute :comments_count, batch: { use: ->(users) { ... } } # inline loader
+attribute :comments_count, batch: {use: :comments_count, id: :uuid} # hash form, only for sub-options
+attribute :comments_count, batch: {use: ->(users) { Comment.where(user: users).group(:user_id).count }} # inline loader
 
 # Multiple loaders — note the keyword is `batches:` (plural)
-attribute :total_likes, batch: { use: [:fb_likes, :tw_likes] },
+attribute :total_likes, batch: {use: [:fb_likes, :tw_likes]},
   value: proc { |user, batches:| batches[:fb_likes][user.id] + batches[:tw_likes][user.id] }
 ```
 
@@ -427,12 +427,12 @@ name), it doubles as a **discriminator** — give attributes different `:preload
 values and branch on `preloads` in the handler:
 
 ```ruby
-attribute :owner,  serializer: UserSerializer, preload: :owner
+attribute :owner, serializer: UserSerializer, preload: :owner
 attribute :author, serializer: UserSerializer, preload: :author
 
 preload_with do |objects, preloads|
   case preloads
-  when :owner  then load_owners(objects)
+  when :owner then load_owners(objects)
   when :author then load_authors(objects)
   else MyORM.preload(objects, preloads)
   end
@@ -455,7 +455,7 @@ class UserSerializer < Serega
   attribute :role, hash_access: :string  # record["role"]
 end
 
-UserSerializer.to_h({name: "Kate", "role" => "admin"})
+UserSerializer.to_h({:name => "Kate", "role" => "admin"})
 # => {name: "Kate", role: "admin"}
 ```
 
@@ -570,7 +570,7 @@ into a collection.
 ```ruby
 class UserSerializer < Serega
   config.auto_preload = true
-  attribute :city, delegate: { to: :address, method: :city }
+  attribute :city, delegate: {to: :address, method: :city}
 end
 # `:address` is preloaded automatically (from the :delegate option)
 ```
@@ -580,8 +580,8 @@ just one:
 
 ```ruby
 class UserSerializer < Serega
-  config.auto_preload = { has_serializer_option: true, has_delegate_option: false }
-  attribute :city,  delegate:   { to: :address, method: :city }   # no auto-preload
+  config.auto_preload = {has_serializer_option: true, has_delegate_option: false}
+  attribute :city, delegate: {to: :address, method: :city}   # no auto-preload
   attribute :posts, serializer: PostSerializer                     # auto-preloaded
 end
 ```
@@ -610,7 +610,7 @@ See [Field Selection][field-selection].
 ```ruby
 class UserSerializer < Serega
   config.delegate_default_allow_nil = true
-  attribute :city, delegate: { to: :address }
+  attribute :city, delegate: {to: :address}
 end
 UserSerializer.to_h(OpenStruct.new(address: nil))   # => {city: nil}
 ```
@@ -625,7 +625,7 @@ class UserSerializer < Serega
   batch :likes, ->(users) { users.to_h { |u| [u.uuid, 99] } }
   attribute :likes, batch: true   # uses :uuid instead of :id
 end
-UserSerializer.to_h([OpenStruct.new(uuid: 'abc')])   # => [{likes: 99}]
+UserSerializer.to_h([OpenStruct.new(uuid: "abc")])   # => [{likes: 99}]
 ```
 
 Default `:id`. See [Batch Loading][batch-loading].
@@ -682,7 +682,7 @@ class CommentSerializer < Serega
 end
 
 CommentSerializer.new(with: :replies)              # depth 2
-CommentSerializer.new(with: { replies: :replies })
+CommentSerializer.new(with: {replies: :replies})
 # => raises Serega::DepthLimitError (#details has the path)
 ```
 
@@ -712,13 +712,13 @@ class UserSerializer < Serega
     end
 
     def role
-      id == __ctx__[:current_user_id] ? :self : :other # context via __ctx__
+      (id == __ctx__[:current_user_id]) ? :self : :other # context via __ctx__
     end
   end
 end
 
-UserSerializer.to_h(OpenStruct.new(first_name: 'Felonious', last_name: 'Gru', id: 1),
-                    context: { current_user_id: 1 })
+UserSerializer.to_h(OpenStruct.new(first_name: "Felonious", last_name: "Gru", id: 1),
+  context: {current_user_id: 1})
 # => {full_name: "Felonious Gru", role: :self}
 ```
 
@@ -792,7 +792,7 @@ config.root.many = nil
 class UserSerializer < Serega
   plugin :root
   plugin :metadata
-  meta_attribute(:version, const: '1.2.3')
+  meta_attribute(:version, const: "1.2.3")
 end
 
 UserSerializer.to_h(nil)
@@ -805,17 +805,17 @@ class UserSerializer < Serega
   plugin :context_metadata # default key :meta — merges into top level
 end
 
-UserSerializer.to_h(nil, meta: { page: 1 })
+UserSerializer.to_h(nil, meta: {page: 1})
 # => {data: nil, page: 1}
 ```
 
 Combined (root_one/root_many + metadata + context_metadata):
 
 ```ruby
-ResponseSerializer.to_h(user, meta: { page: 1 })
+ResponseSerializer.to_h(user, meta: {page: 1})
 # => {user: {first_name: "Felonious"}, show: "Despicable Me", page: 1}
 
-ResponseSerializer.to_h([walter, lucy], meta: { page: 1 })
+ResponseSerializer.to_h([walter, lucy], meta: {page: 1})
 # => {users: [{first_name: "Felonious"}, {first_name: "Lucy"}], show: "Despicable Me", page: 1}
 ```
 
