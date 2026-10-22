@@ -66,10 +66,6 @@ class Serega
             if use_id && value_added
               raise SeregaError, "Option `batch.id` should not be used when :value option provided directly"
             end
-
-            raise SeregaError, "Option :batch can not be used together with option :method" if opts.key?(:method)
-            raise SeregaError, "Option :batch can not be used together with option :const" if opts.key?(:const)
-            raise SeregaError, "Option :batch can not be used together with option :delegate" if opts.key?(:delegate)
           end
         end
       end

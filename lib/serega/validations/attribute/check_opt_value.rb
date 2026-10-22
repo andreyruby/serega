@@ -12,17 +12,10 @@ class Serega
           def call(opts)
             return unless opts.key?(:value)
 
-            check_usage_with_other_params(opts)
-
             check_value(opts[:value])
           end
 
           private
-
-          def check_usage_with_other_params(opts)
-            raise SeregaError, "Option :value can not be used together with option :method" if opts.key?(:method)
-            raise SeregaError, "Option :value can not be used together with option :const" if opts.key?(:const)
-          end
 
           def check_value(value)
             check_value_type(value)

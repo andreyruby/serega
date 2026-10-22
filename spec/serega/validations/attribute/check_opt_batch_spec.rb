@@ -158,21 +158,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptBatch do
   end
 
   context "with other options" do
-    it "prohibits to use with :method opt" do
-      opts.merge!(batch: :test_loader, method: :method)
-      expect { check }.to raise_error Serega::SeregaError, "Option :batch can not be used together with option :method"
-    end
-
-    it "prohibits to use with :const opt" do
-      opts.merge!(batch: :test_loader, const: 1)
-      expect { check }.to raise_error Serega::SeregaError, "Option :batch can not be used together with option :const"
-    end
-
-    it "prohibits to use with :delegate opt" do
-      opts.merge!(batch: :test_loader, delegate: {to: :foo})
-      expect { check }.to raise_error Serega::SeregaError, "Option :batch can not be used together with option :delegate"
-    end
-
     it "prohibits to use :id with :value option" do
       opts.merge!(batch: {use: :test_loader, id: :id}, value: proc {})
       expect { check }.to raise_error Serega::SeregaError, "Option `batch.id` should not be used when :value option provided directly"

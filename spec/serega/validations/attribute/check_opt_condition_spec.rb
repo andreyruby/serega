@@ -106,14 +106,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptCondition do
     end
   end
 
-  context "with the :serializer option" do
-    let(:opts) { {if: :present?, serializer: "PostSerializer"} }
-
-    it "does not raise" do
-      expect { check }.not_to raise_error
-    end
-  end
-
   context "with the :if_value option" do
     let(:name) { :if_value }
 
@@ -130,25 +122,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptCondition do
           - (value, context, :ctx)
         ERR
       end
-    end
-
-    context "with the :serializer option" do
-      let(:opts) { {if_value: :present?, serializer: "PostSerializer"} }
-
-      it "raises an error" do
-        expect { check }
-          .to raise_error Serega::SeregaError, "Option :if_value can not be used together with option :serializer"
-      end
-    end
-  end
-
-  context "with the :unless_value option and the :serializer option" do
-    let(:name) { :unless_value }
-    let(:opts) { {unless_value: :present?, serializer: "PostSerializer"} }
-
-    it "raises an error" do
-      expect { check }
-        .to raise_error Serega::SeregaError, "Option :unless_value can not be used together with option :serializer"
     end
   end
 end

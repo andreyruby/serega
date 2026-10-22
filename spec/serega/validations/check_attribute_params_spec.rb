@@ -15,7 +15,6 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     allow(Serega::SeregaValidations::Attribute::CheckName).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptBaseSerializer).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptCondition).to receive(:call)
-    allow(Serega::SeregaValidations::Attribute::CheckOptConst).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptHide).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptBatch).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptMethod).to receive(:call)
@@ -28,7 +27,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     validate
 
     expect(Serega::SeregaValidations::Utils::CheckAllowedKeys)
-      .to have_received(:call).with(opts, serializer.config.attribute_keys, :attribute)
+      .to have_received(:call).with(opts, described_class::ATTRIBUTE_KEYS, :attribute)
   end
 
   it "checks each option value" do
@@ -41,7 +40,6 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     expect(Serega::SeregaValidations::Attribute::CheckOptCondition).to have_received(:call).with(opts, :unless)
     expect(Serega::SeregaValidations::Attribute::CheckOptCondition).to have_received(:call).with(opts, :if_value)
     expect(Serega::SeregaValidations::Attribute::CheckOptCondition).to have_received(:call).with(opts, :unless_value)
-    expect(Serega::SeregaValidations::Attribute::CheckOptConst).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptHide).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, name, opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts)
@@ -57,6 +55,23 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
       validate
 
       expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block, true)
+    end
+  end
+
+  context "with options that can't be given together" do
+    let(:opts) { {method: :name, const: 1} }
+
+    it "raises an error that names the option listed first in the conflicts" do
+      expect { validate }.to raise_error Serega::SeregaError, "Option :const can not be used together with option :method"
+    end
+  end
+
+  context "with a value condition and the :serializer option" do
+    let(:opts) { {serializer: "PostSerializer", unless_value: :blank?} }
+
+    it "raises an error" do
+      expect { validate }
+        .to raise_error Serega::SeregaError, "Option :unless_value can not be used together with option :serializer"
     end
   end
 
