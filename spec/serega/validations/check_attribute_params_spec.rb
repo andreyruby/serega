@@ -44,7 +44,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, name, opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block, false)
-    expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts, block)
+    expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptValue).to have_received(:call).with(opts)
   end
 
@@ -62,16 +62,26 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     let(:opts) { {method: :name, const: 1} }
 
     it "raises an error that names the option listed first in the conflicts" do
-      expect { validate }.to raise_error Serega::SeregaError, "Option :const can not be used together with option :method"
+      expect { validate }.to raise_error Serega::SeregaError, "Option :method can not be used together with option :const"
     end
   end
 
   context "with a value condition and the :serializer option" do
     let(:opts) { {serializer: "PostSerializer", unless_value: :blank?} }
+    let(:block) { nil }
 
     it "raises an error" do
       expect { validate }
-        .to raise_error Serega::SeregaError, "Option :unless_value can not be used together with option :serializer"
+        .to raise_error Serega::SeregaError, "Option :serializer can not be used together with option :unless_value"
+    end
+  end
+
+  context "with a value condition and a block" do
+    let(:opts) { {if_value: :present?} }
+    let(:block) { proc { attribute :title } }
+
+    it "raises an error" do
+      expect { validate }.to raise_error Serega::SeregaError, "Option :if_value can not be used together with block"
     end
   end
 

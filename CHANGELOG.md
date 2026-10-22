@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **BREAKING**: `:if_value` and `:unless_value` raise on an attribute with a block,
+  as with `:serializer`. See [Conditional attributes](docs/conditional-attributes.md).
 - **BREAKING**: `plugin` takes only the names of the built-in plugins: `:root`,
   `:metadata`, `:context_metadata` and `:activerecord_preloads`. Custom plugin
   modules are not supported. See [Root key and metadata](docs/root-and-metadata.md).

@@ -263,7 +263,7 @@ UserSerializer.to_h(user, context: { current_user: user }) # => {email: "gru@exa
 
 Symbol short form: `if: :active?` → calls `object.active?`.
 
-⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` — use `if`/`unless` there.
+⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` or a block — use `if`/`unless` there.
 
 For unconditional hiding, prefer `hide: true` — see
 [Attribute Options][attributes] and [Field Selection][field-selection].

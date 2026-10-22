@@ -9,10 +9,8 @@ class Serega
       class CheckOptSerializer # :nodoc:
         class << self
           # Checks attribute :serializer option
-          def call(opts, block = nil)
+          def call(opts)
             return unless opts.key?(:serializer)
-
-            raise SeregaError, "Option :serializer can not be used together with block" if block
 
             value = opts[:serializer]
             return if valid_serializer?(value)

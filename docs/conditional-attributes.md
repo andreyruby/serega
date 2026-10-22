@@ -40,8 +40,8 @@ checked after.
 `:unless` is checked only when `:if` passes, and `:unless_value` only when
 `:if_value` passes.
 
-`:if_value` and `:unless_value` can not be used with `:serializer`. Use `:if`
-and `:unless` for relations.
+`:if_value` and `:unless_value` can not be used with `:serializer` or a block.
+Use `:if` and `:unless` for relations.
 
 ## Skipped attributes in results
 
