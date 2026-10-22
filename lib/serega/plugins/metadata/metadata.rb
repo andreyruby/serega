@@ -22,53 +22,11 @@ class Serega
         end
 
         require_relative "meta_attribute"
-        require_relative "validations/check_block"
-        require_relative "validations/check_opt_const"
-        require_relative "validations/check_opt_hide_nil"
-        require_relative "validations/check_opt_hide_empty"
-        require_relative "validations/check_opt_value"
-        require_relative "validations/check_opts"
-        require_relative "validations/check_path"
+        require_relative "check_params"
 
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
-        serializer_class::SeregaConfig.include(ConfigInstanceMethods)
         serializer_class.instance_variable_set(:@meta_attributes, {})
-        serializer_class.config.opts[:metadata] = {attribute_keys: %i[const hide_nil hide_empty value]}
-      end
-
-      #
-      # Config for `metadata` plugin
-      #
-      class MetadataConfig # :nodoc:
-        # Metadata options
-        attr_reader :opts # :nodoc:
-
-        # Initializes context_metadata config object
-        def initialize(opts) # :nodoc:
-          @opts = opts
-        end
-
-        #
-        # Returns allowed metadata attribute keys
-        #
-        def attribute_keys # :nodoc:
-          opts.fetch(:attribute_keys)
-        end
-      end
-
-      # Config class additional/patched instance methods
-      module ConfigInstanceMethods # :nodoc:
-        # Metadata config
-        def metadata
-          @plugin_configs[:metadata] ||= MetadataConfig.new(opts.fetch(:metadata))
-        end
-
-        # Builds the metadata config before freezing
-        def freeze # :nodoc:
-          metadata
-          super
-        end
       end
 
       # Class methods the plugin adds to serializers
