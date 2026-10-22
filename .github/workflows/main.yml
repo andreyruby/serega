@@ -6,6 +6,12 @@ on:
     branches: [master]
   pull_request:
 
+# A newer push to a pull request cancels its running checks. Each master
+# push gets its own group, thus master runs are never cancelled or queued.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-24.04
