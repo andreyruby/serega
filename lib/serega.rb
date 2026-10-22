@@ -39,6 +39,7 @@ end
 
 require_relative "serega/errors"
 require_relative "serega/utils/collection_detector"
+require_relative "serega/utils/deep_merge"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
