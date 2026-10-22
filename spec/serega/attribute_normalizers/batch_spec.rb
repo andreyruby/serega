@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::AttributeNormalizers::BatchOption do
+RSpec.describe Serega::AttributeNormalizers::Batch do
   subject(:option) { described_class.new(batch, :likes_count) }
 
   let(:batch) { true }

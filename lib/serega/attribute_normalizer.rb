@@ -160,7 +160,7 @@ class Serega
       block = init_block
       return init_opts[:serializer] unless block
 
-      AttributeNormalizers::BlockSerializer.call(@serializer_class, name, block, init_opts[:base_serializer])
+      AttributeNormalizers::Block.call(@serializer_class, name, block, init_opts[:base_serializer])
     end
 
     def prepare_method_name
@@ -199,7 +199,7 @@ class Serega
       return @batch_option if instance_variable_defined?(:@batch_option)
 
       batch = init_opts[:batch]
-      @batch_option = batch && AttributeNormalizers::BatchOption.new(batch, name)
+      @batch_option = batch && AttributeNormalizers::Batch.new(batch, name)
     end
 
     def prepare_default

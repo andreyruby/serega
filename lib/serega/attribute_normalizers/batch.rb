@@ -10,7 +10,7 @@ class Serega
     # `true`, a loader name, a callable or a Hash with `:use` and `:id`; `true`
     # and a Hash without `:use` use the loader named after the attribute.
     #
-    class BatchOption # :nodoc:
+    class Batch # :nodoc:
       # Name of the attribute with the option
       attr_reader :attribute_name
 

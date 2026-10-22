@@ -175,7 +175,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       let(:nested) { Class.new(Serega) }
 
       before do
-        allow(Serega::AttributeNormalizers::BlockSerializer).to receive(:call).and_return(nested)
+        allow(Serega::AttributeNormalizers::Block).to receive(:call).and_return(nested)
       end
 
       it "builds the nested serializer from the block" do
@@ -183,7 +183,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
 
         expect(normalizer.serializer).to be nested
 
-        expect(Serega::AttributeNormalizers::BlockSerializer)
+        expect(Serega::AttributeNormalizers::Block)
           .to have_received(:call).with(serializer_class, :author, block, base_serializer)
       end
     end
