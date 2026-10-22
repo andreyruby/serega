@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# Serega::SeregaPlugins.find_plugin(:metadata)
 load_plugin_code(:root, :metadata)
 
 RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute::CheckBlock do

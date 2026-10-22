@@ -131,32 +131,16 @@ class Serega
       check_unlocked
       raise SeregaError, "This plugin is already loaded" if plugin_used?(name)
 
-      plugin = SeregaPlugins.find_plugin(name)
-
-      # We split loading of plugin to three parts - before_load, load, after_load:
-      #
-      # - **before_load_plugin** usually used to check requirements and to load additional plugins
-      # - **load_plugin** usually used to include plugin modules
-      # - **after_load_plugin** usually used to add config options
-      plugin.before_load_plugin(self, **opts) if plugin.respond_to?(:before_load_plugin)
-      plugin.load_plugin(self, **opts) if plugin.respond_to?(:load_plugin)
-      plugin.after_load_plugin(self, **opts) if plugin.respond_to?(:after_load_plugin)
-
-      # Store attached plugins, so we can check it is loaded later
-      config.plugins << (plugin.respond_to?(:plugin_name) ? plugin.plugin_name : plugin)
+      plugin = SeregaPlugins.find(name)
+      plugin.apply(self, **opts)
+      config.plugins << name
 
       plugin
     end
 
     # Checks plugin is used
     def plugin_used?(name) # :nodoc:
-      plugin_name =
-        case name
-        when Module then name.respond_to?(:plugin_name) ? name.plugin_name : name
-        else name
-        end
-
-      config.plugins.include?(plugin_name)
+      config.plugins.include?(name)
     end
 
     #

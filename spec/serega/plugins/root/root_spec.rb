@@ -51,12 +51,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
     it "raises error if plugin defined with unknown option" do
       serializer = Class.new(Serega)
       expect { serializer.plugin(:root, foo: :bar) }
-        .to raise_error Serega::SeregaError, <<~MESSAGE.strip
-          Plugin :root does not accept the :foo option. Allowed options:
-            - :root [String, Symbol, nil] Specifies common root keyword used when serializing one or multiple objects
-            - :root_one [String, Symbol, nil] Specifies root keyword used when serializing one object
-            - :root_many [String, Symbol, nil] Specifies root keyword used when serializing multiple objects
-        MESSAGE
+        .to raise_error Serega::SeregaError, "Invalid plugin :root option :foo. Allowed options are: :root, :root_many, :root_one"
     end
   end
 
