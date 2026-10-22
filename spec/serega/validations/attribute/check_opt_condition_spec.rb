@@ -1,23 +1,24 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaValidations::Attribute::CheckOptIf do
-  subject(:check) { described_class.call(opts) }
+RSpec.describe Serega::SeregaValidations::Attribute::CheckOptCondition do
+  subject(:check) { described_class.call(opts, name) }
 
-  let(:opts) { {if: condition} }
+  let(:name) { :if }
+  let(:opts) { {name => condition} }
   let(:must_be_callable) { "Invalid attribute option :if. It must be a Symbol, a Proc or respond to :call" }
 
   let(:signature_error) do
     <<~ERR.strip
       Invalid attribute option :if parameters, valid parameters signatures:
-      - ()                     # no parameters
-      - (object)               # one positional parameter
-      - (object, context)      # two positional parameters
-      - (object, :ctx)         # one positional parameter and :ctx keyword
-      - (object, context, :ctx) # two positional parameters and :ctx keyword
+      - ()
+      - (object)
+      - (object, context)
+      - (object, :ctx)
+      - (object, context, :ctx)
     ERR
   end
 
-  context "without the :if option" do
+  context "without the option" do
     let(:opts) { {} }
 
     it "does not raise" do
@@ -102,6 +103,52 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptIf do
 
     it "raises an error" do
       expect { check }.to raise_error Serega::SeregaError, signature_error
+    end
+  end
+
+  context "with the :serializer option" do
+    let(:opts) { {if: :present?, serializer: "PostSerializer"} }
+
+    it "does not raise" do
+      expect { check }.not_to raise_error
+    end
+  end
+
+  context "with the :if_value option" do
+    let(:name) { :if_value }
+
+    context "with a condition with another keyword" do
+      let(:condition) { ->(value, user:) {} }
+
+      it "raises an error that names the value parameter" do
+        expect { check }.to raise_error Serega::SeregaError, <<~ERR.strip
+          Invalid attribute option :if_value parameters, valid parameters signatures:
+          - ()
+          - (value)
+          - (value, context)
+          - (value, :ctx)
+          - (value, context, :ctx)
+        ERR
+      end
+    end
+
+    context "with the :serializer option" do
+      let(:opts) { {if_value: :present?, serializer: "PostSerializer"} }
+
+      it "raises an error" do
+        expect { check }
+          .to raise_error Serega::SeregaError, "Option :if_value can not be used together with option :serializer"
+      end
+    end
+  end
+
+  context "with the :unless_value option and the :serializer option" do
+    let(:name) { :unless_value }
+    let(:opts) { {unless_value: :present?, serializer: "PostSerializer"} }
+
+    it "raises an error" do
+      expect { check }
+        .to raise_error Serega::SeregaError, "Option :unless_value can not be used together with option :serializer"
     end
   end
 end
