@@ -130,7 +130,7 @@ class Serega
             metadata = meta_attribute_value(object, context, meta_attribute)
             next unless metadata
 
-            deep_merge_metadata(hash, metadata)
+            SeregaUtils::DeepMerge.call(hash, metadata)
           rescue => error
             raise error.exception(<<~MESSAGE.strip)
               #{error.message}
@@ -146,16 +146,6 @@ class Serega
           # Example: path [:foo, :bar] and value :bazz give { foo: { bar: :bazz } }
           meta_attribute.path.reverse_each { |key| value = {key => value} }
           value
-        end
-
-        def deep_merge_metadata(hash, metadata)
-          hash.merge!(metadata) { |_key, this_val, other_val| merge_metadata_values(this_val, other_val) }
-        end
-
-        def merge_metadata_values(this_val, other_val)
-          return other_val unless this_val.is_a?(Hash) && other_val.is_a?(Hash)
-
-          this_val.merge(other_val) { |_key, this_nested, other_nested| merge_metadata_values(this_nested, other_nested) }
         end
       end
     end
