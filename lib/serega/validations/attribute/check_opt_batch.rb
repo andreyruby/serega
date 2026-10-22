@@ -12,61 +12,46 @@ class Serega
           def call(serializer_class, name, opts)
             return unless opts.key?(:batch)
 
-            check_opt_batch(opts, serializer_class, name)
-            check_usage_with_other_params(opts)
+            check_type(opts)
+            batch = SeregaAttributeNormalizer.batch_option(opts[:batch], name)
+            check_loaders_exist(serializer_class, batch[:use])
+            check_usage_with_other_params(opts, batch)
           end
 
           private
 
-          def check_opt_batch(opts, serializer_class, name)
-            batch_opts = opts[:batch]
-            return check_loader_exists?(serializer_class, name) if batch_opts == true
-            return if batch_opts.respond_to?(:call)
+          # `true`, a loader name, a callable or a Hash with :use and :id
+          def check_type(opts)
+            batch = opts[:batch]
+            return if batch == true || batch.is_a?(Symbol) || batch.is_a?(String) || batch.respond_to?(:call)
 
-            if batch_opts.is_a?(Symbol) || batch_opts.is_a?(String)
-              check_loader_exists?(serializer_class, batch_opts)
-            else
-              Utils::CheckOptIsHash.call(opts, :batch)
-              check_opt_batch_use(serializer_class, name, batch_opts)
-              check_opt_batch_id(batch_opts)
-              check_opt_batch_extra_opts(batch_opts)
-            end
+            Utils::CheckOptIsHash.call(opts, :batch)
+            Utils::CheckAllowedKeys.call(batch, %i[use id], :batch)
+            check_id(batch)
           end
 
-          # A Hash without :use uses the loader named after the attribute
-          def check_opt_batch_use(serializer_class, name, batch_opts)
-            batch_loader_name = batch_opts.fetch(:use, name)
-            return if batch_loader_name.respond_to?(:call)
+          def check_id(batch)
+            return unless batch.key?(:id)
 
-            check_loader_exists?(serializer_class, batch_loader_name)
-          end
-
-          def check_opt_batch_id(batch_opts)
-            return unless batch_opts.key?(:id)
-
-            id_method_name = batch_opts[:id]
+            id_method_name = batch[:id]
             return if id_method_name.is_a?(Symbol) || id_method_name.is_a?(String)
 
             raise SeregaError, "Invalid batch option `:id` value, it can be a Symbol or a String"
           end
 
-          def check_loader_exists?(serializer_class, value)
-            values = Array(value)
-            values.each do |batch_loader_name|
+          def check_loaders_exist(serializer_class, use)
+            return if use.respond_to?(:call)
+
+            Array(use).each do |batch_loader_name|
               next if serializer_class.batch_loaders.key?(batch_loader_name.to_sym)
 
               raise SeregaError, "Batch loader with name `#{batch_loader_name.inspect}` is not defined"
             end
           end
 
-          def check_opt_batch_extra_opts(batch_opts)
-            Utils::CheckAllowedKeys.call(batch_opts, %i[use id], :batch)
-          end
-
-          def check_usage_with_other_params(opts)
-            batch = opts[:batch]
-            use_id = batch.is_a?(Hash) && batch.key?(:id)
-            use_multiple = batch.is_a?(Hash) && (Array(batch[:use]).size > 1)
+          def check_usage_with_other_params(opts, batch)
+            use_id = !batch[:id].nil?
+            use_multiple = Array(batch[:use]).size > 1
             value_added = opts.key?(:value)
 
             if use_multiple && use_id

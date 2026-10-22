@@ -371,6 +371,40 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
+  describe ".batch_option" do
+    subject(:batch_option) { described_class.batch_option(batch, :likes_count) }
+
+    let(:batch) { true }
+
+    it "uses the loader named after the attribute" do
+      expect(batch_option).to eq(use: :likes_count, id: nil)
+    end
+
+    context "with a loader name" do
+      let(:batch) { :likes }
+
+      it "uses the named loader" do
+        expect(batch_option).to eq(use: :likes, id: nil)
+      end
+    end
+
+    context "with a Hash with only :id" do
+      let(:batch) { {id: :uuid} }
+
+      it "uses the loader named after the attribute and the given id" do
+        expect(batch_option).to eq(use: :likes_count, id: :uuid)
+      end
+    end
+
+    context "with a Hash with :use" do
+      let(:batch) { {use: %i[likes views]} }
+
+      it "uses the given loaders" do
+        expect(batch_option).to eq(use: %i[likes views], id: nil)
+      end
+    end
+  end
+
   describe "prepare_batch_loaders" do
     def batch_loaders(name:, opts:)
       described_class.new(serializer_class, name: name, opts: opts).send(:prepare_batch_loaders)

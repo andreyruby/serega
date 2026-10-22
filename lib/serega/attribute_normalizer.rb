@@ -5,6 +5,16 @@ class Serega
   # Prepares provided attribute options
   #
   class SeregaAttributeNormalizer # :nodoc:
+    class << self
+      # The :batch option as `{use:, id:}`. `true` and a Hash without :use use
+      # the loader named after the attribute. `id` is `nil` when not given.
+      def batch_option(batch, name)
+        batch = {use: batch} unless batch.is_a?(Hash)
+        use = batch.fetch(:use, true)
+        {use: (use == true) ? name : use, id: batch[:id]}
+      end
+    end
+
     # Attribute initial params
     attr_reader :init_name, :init_opts, :init_block
 
@@ -248,7 +258,7 @@ class Serega
       batch = batch_option
       return unless batch
 
-      AttributeValueResolvers::Batch.new(batch_loaders.first, batch[:id])
+      AttributeValueResolvers::Batch.new(batch_loaders.first, batch[:id] || config.batch_id_option)
     end
 
     # Batch loader names whose loaded data this attribute's value needs. An
@@ -261,21 +271,12 @@ class Serega
       use.respond_to?(:call) ? [name] : Array(use).map(&:to_sym)
     end
 
-    # The :batch option as `{use:, id:}`. `true` and a Hash without :use use
-    # the loader named after the attribute.
+    # The :batch option as `{use:, id:}`, see .batch_option
     def batch_option
       return @batch_option if instance_variable_defined?(:@batch_option)
 
-      @batch_option = prepare_batch_option
-    end
-
-    def prepare_batch_option
       batch = init_opts[:batch]
-      return unless batch
-
-      batch = {use: batch} unless batch.is_a?(Hash)
-      use = batch.fetch(:use, true)
-      {use: (use == true) ? name : use, id: batch[:id] || config.batch_id_option}
+      @batch_option = batch && self.class.batch_option(batch, name)
     end
 
     def prepare_default
