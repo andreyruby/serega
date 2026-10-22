@@ -5,10 +5,7 @@ require "logger"
 require "active_record"
 
 pool = ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
-
-# :nocov:
-conn = (ActiveRecord.version >= Gem::Version.new("7.1.0")) ? pool.lease_connection : pool.connection
-# :nocov:
+conn = pool.lease_connection
 
 conn.create_table(:users) do |t|
   t.string :first_name
