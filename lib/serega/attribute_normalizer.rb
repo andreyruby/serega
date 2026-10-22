@@ -5,16 +5,6 @@ class Serega
   # Prepares provided attribute options
   #
   class SeregaAttributeNormalizer # :nodoc:
-    class << self
-      # The :batch option as `{use:, id:}`. `true` and a Hash without :use use
-      # the loader named after the attribute. `id` is `nil` when not given.
-      def batch_option(batch, name)
-        batch = {use: batch} unless batch.is_a?(Hash)
-        use = batch.fetch(:use, true)
-        {use: (use == true) ? name : use, id: batch[:id]}
-      end
-    end
-
     # Attribute initial params
     attr_reader :init_name, :init_opts, :init_block
 
@@ -93,10 +83,10 @@ class Serega
     # Batch loader given directly as the :batch option. It is named after the
     # attribute and belongs to the attribute only.
     def inline_batch_loader
-      use = batch_option&.fetch(:use)
-      return unless use.respond_to?(:call)
+      batch = batch_option
+      return unless batch&.inline?
 
-      SeregaBatchLoader.new(name: name, block: use)
+      SeregaBatchLoader.new(name: name, block: batch.use)
     end
 
     # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
@@ -258,7 +248,7 @@ class Serega
       batch = batch_option
       return unless batch
 
-      AttributeValueResolvers::Batch.new(batch_loaders.first, batch[:id] || config.batch_id_option)
+      AttributeValueResolvers::Batch.new(batch_loaders.first, batch.id || config.batch_id_option)
     end
 
     # Batch loader names whose loaded data this attribute's value needs. An
@@ -267,16 +257,15 @@ class Serega
       batch = batch_option
       return FROZEN_EMPTY_ARRAY unless batch
 
-      use = batch[:use]
-      use.respond_to?(:call) ? [name] : Array(use).map(&:to_sym)
+      batch.loader_names
     end
 
-    # The :batch option as `{use:, id:}`, see .batch_option
+    # The parsed :batch option, `nil` without it
     def batch_option
       return @batch_option if instance_variable_defined?(:@batch_option)
 
       batch = init_opts[:batch]
-      @batch_option = batch && self.class.batch_option(batch, name)
+      @batch_option = batch && AttributeNormalizers::BatchOption.new(batch, name)
     end
 
     def prepare_default

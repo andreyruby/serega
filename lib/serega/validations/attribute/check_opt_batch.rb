@@ -13,8 +13,8 @@ class Serega
             return unless opts.key?(:batch)
 
             check_type(opts)
-            batch = SeregaAttributeNormalizer.batch_option(opts[:batch], name)
-            check_loaders_exist(serializer_class, batch[:use])
+            batch = AttributeNormalizers::BatchOption.new(opts[:batch], name)
+            check_loaders_exist(serializer_class, batch)
             check_usage_with_other_params(opts, batch)
           end
 
@@ -39,10 +39,11 @@ class Serega
             raise SeregaError, "Invalid batch option `:id` value, it can be a Symbol or a String"
           end
 
-          def check_loaders_exist(serializer_class, use)
-            return if use.respond_to?(:call)
+          # Checks the names as given, thus the error shows a String name as a String
+          def check_loaders_exist(serializer_class, batch)
+            return if batch.inline?
 
-            Array(use).each do |batch_loader_name|
+            Array(batch.use).each do |batch_loader_name|
               next if serializer_class.batch_loaders.key?(batch_loader_name.to_sym)
 
               raise SeregaError, "Batch loader with name `#{batch_loader_name.inspect}` is not defined"
@@ -50,8 +51,8 @@ class Serega
           end
 
           def check_usage_with_other_params(opts, batch)
-            use_id = !batch[:id].nil?
-            use_multiple = Array(batch[:use]).size > 1
+            use_id = !batch.id.nil?
+            use_multiple = Array(batch.use).size > 1
             value_added = opts.key?(:value)
 
             if use_multiple && use_id
