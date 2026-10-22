@@ -101,15 +101,6 @@ require_relative "serega/plan/cache"
 require_relative "serega/plugins"
 
 class Serega
-  @config = SeregaConfig.new
-  @attributes = {}
-  @batch_loaders = {}
-  @formatters = {}
-  @presenter_class = nil
-  @presenter_blocks = []
-  @data_classes = {}
-  @struct_classes = {}
-
   #
   # Class methods of serializers: they define attributes and serialize
   #
@@ -327,11 +318,7 @@ class Serega
       return @preload_with if value.nil? && block.nil?
 
       check_unlocked
-      raise SeregaError, "preload_with accepts a single callable or a block, not both" if value && block
-
-      handler = value || block
-      raise SeregaError, "preload_with value must be a Proc or respond to #call" if !handler.is_a?(Proc) && !handler.respond_to?(:call)
-
+      handler = checked_handler(:preload_with, value, block)
       signature = SeregaUtils::MethodSignature.call(handler, pos_limit: 2)
       raise SeregaError, "preload_with handler must accept two positional arguments: (objects, preloads)" unless signature == "2"
 
@@ -357,11 +344,7 @@ class Serega
       return @prepare_initial_objects if value.nil? && block.nil?
 
       check_unlocked
-      raise SeregaError, "prepare_initial_objects accepts a single callable or a block, not both" if value && block
-
-      handler = value || block
-      raise SeregaError, "prepare_initial_objects value must be a Proc or respond to #call" if !handler.is_a?(Proc) && !handler.respond_to?(:call)
-
+      handler = checked_handler(:prepare_initial_objects, value, block)
       signature = SeregaUtils::MethodSignature.call(handler, pos_limit: 2, keyword_args: [:ctx])
       raise SeregaError, prepare_initial_objects_signature_error unless %w[1 2 1_ctx].include?(signature)
 
@@ -510,24 +493,8 @@ class Serega
     # - plugin :metadata (copies meta_attributes to subclasses)
     def inherited(subclass)
       subclass.const_set(:SeregaConfig, Class.new(self::SeregaConfig))
-      subclass.instance_variable_set(:@config, subclass::SeregaConfig.new(config.opts))
-      subclass.instance_variable_set(:@attributes, {})
-      subclass.instance_variable_set(:@batch_loaders, {})
-      subclass.instance_variable_set(:@formatters, formatters.dup)
-      subclass.instance_variable_set(:@presenter_class, nil)
-      subclass.instance_variable_set(:@presenter_blocks, [])
-      subclass.instance_variable_set(:@data_classes, {})
-      subclass.instance_variable_set(:@struct_classes, {})
-      subclass.instance_variable_set(:@preload_with, nil)
-      subclass.instance_variable_set(:@prepare_initial_objects, nil)
-      subclass.instance_variable_set(:@prepare_initial_objects_signature, nil)
-      subclass.instance_variable_set(:@locked, false)
-      subclass.instance_variable_set(:@shareable, false)
-      subclass.instance_variable_set(:@unshareable_reason, nil)
-
       subclass.const_set(:SeregaAttributeValues, Class.new(self::SeregaAttributeValues))
-
-      subclass.instance_variable_set(:@plan_cache, SeregaPlan::Cache.new(subclass))
+      subclass.send(:initialize_definition, subclass::SeregaConfig.new(config.opts), formatters.dup)
 
       # Assign same batch loaders before the attributes that use them
       batch_loaders.each_value do |loader|
@@ -552,6 +519,37 @@ class Serega
       end
 
       super
+    end
+
+    # Starts the definition of a serializer class with its config and the
+    # formatters it inherits. Serega and each subclass set the same instance
+    # variables in the same order.
+    def initialize_definition(config, formatters)
+      @config = config
+      @attributes = {}
+      @batch_loaders = {}
+      @formatters = formatters
+      @presenter_class = nil
+      @presenter_blocks = []
+      @data_classes = {}
+      @struct_classes = {}
+      @preload_with = nil
+      @prepare_initial_objects = nil
+      @prepare_initial_objects_signature = nil
+      @locked = false
+      @shareable = false
+      @unshareable_reason = nil
+      @plan_cache = SeregaPlan::Cache.new(self)
+    end
+
+    # The handler given to `method_name` as a value or a block
+    def checked_handler(method_name, value, block)
+      raise SeregaError, "#{method_name} accepts a single callable or a block, not both" if value && block
+
+      handler = value || block
+      raise SeregaError, "#{method_name} value must be a Proc or respond to #call" unless handler.respond_to?(:call)
+
+      handler
     end
 
     def prepare_initial_objects_signature_error
@@ -678,4 +676,6 @@ class Serega
 
   extend ClassMethods
   include InstanceMethods
+
+  initialize_definition(SeregaConfig.new, {})
 end
