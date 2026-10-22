@@ -110,7 +110,7 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       before { serializer_class.config.hide_by_default = :auto }
 
       it "hides attribute with :preload" do
-        expect(described_class.new(serializer_class, opts: {preload: :foo}).hide).to be true
+        expect(described_class.new(serializer_class, name: :foo, opts: {preload: :foo}).hide).to be true
       end
 
       it "hides attribute with :batch" do
@@ -118,11 +118,11 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       end
 
       it "does not hide plain attribute" do
-        expect(described_class.new(serializer_class, opts: {}).hide).to be_nil
+        expect(described_class.new(serializer_class, name: :foo, opts: {}).hide).to be_nil
       end
 
       it "does not hide attribute with :preload when preloads resolve to nil" do
-        expect(described_class.new(serializer_class, opts: {preload: false}).hide).to be_nil
+        expect(described_class.new(serializer_class, name: :foo, opts: {preload: false}).hide).to be_nil
       end
 
       it "hides attribute with empty :batch use list (batch key present)" do
@@ -169,126 +169,22 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       expect(norm.serializer).to be_nil
     end
 
-    context "with block" do
+    context "with a block" do
+      let(:block) { proc { attribute :name } }
       let(:base_serializer) { Class.new(Serega) }
+      let(:nested) { Class.new(Serega) }
 
-      before { serializer_class.config.base_serializer = base_serializer }
-
-      def nested_serializer_for(block, opts: {})
-        described_class.new(serializer_class, name: :author, opts: opts, block: block).serializer
+      before do
+        allow(Serega::AttributeNormalizers::BlockSerializer).to receive(:call).and_return(nested)
       end
 
-      it "builds an anonymous nested serializer inherited from config.base_serializer" do
-        nested = nested_serializer_for(proc { attribute :name })
+      it "builds the nested serializer from the block" do
+        normalizer = described_class.new(serializer_class, name: :author, opts: {base_serializer: base_serializer}, block: block)
 
-        expect(nested).to be < base_serializer
-        expect(nested.attributes.keys).to eq [:name]
-      end
+        expect(normalizer.serializer).to be nested
 
-      it "prefers the :base_serializer attribute option over config" do
-        other_base = Class.new(Serega)
-        nested = nested_serializer_for(proc { attribute :name }, opts: {base_serializer: other_base})
-
-        expect(nested).to be < other_base
-      end
-
-      it "raises when no base serializer is chosen" do
-        plain_serializer = Class.new(Serega)
-        plain_normalizer = described_class.new(plain_serializer, name: :author, opts: {}, block: proc { attribute :name })
-
-        expect { plain_normalizer.serializer }.to raise_error Serega::SeregaError,
-          "Attribute block requires a base serializer for the nested serializer." \
-          " Provide the `base_serializer: <SerializerClass>` attribute option" \
-          " or set `config.base_serializer = <SerializerClass>`"
-      end
-
-      it "does not inherit from the current serializer and takes none of its attributes" do
-        serializer_class.attribute :id
-        nested = nested_serializer_for(proc { attribute :name })
-
-        expect(nested).not_to be < serializer_class
-        expect(nested.attributes.keys).to eq [:name]
-      end
-
-      it "raises an explaining error when the block defines no attributes" do
-        expect { nested_serializer_for(proc {}) }
-          .to raise_error Serega::SeregaError, Serega::SeregaValidations::Attribute::CheckBlock::ERROR_MESSAGE
-      end
-
-      it "allows a base serializer with its own block attributes when not cyclic" do
-        base_serializer.config.base_serializer = Class.new(Serega)
-        base_serializer.attribute(:meta, method: :itself) { attribute :version }
-
-        nested = nested_serializer_for(proc { attribute :name })
-
-        expect(nested.attributes.keys).to eq %i[meta name]
-      end
-
-      it "raises when the base serializer transitively contains the block attribute being built" do
-        cyclic_base = Class.new(Serega)
-        cyclic_base.config.base_serializer = cyclic_base
-        cyclic_base.attribute(:meta, method: :itself) { attribute :version }
-
-        expect { Class.new(cyclic_base) }.to raise_error Serega::SeregaError,
-          "Can not define a nested serializer for attribute :meta —" \
-          " its base serializer #{cyclic_base.inspect} (transitively)" \
-          " contains this same block attribute (cyclic definition)"
-      end
-
-      it "raises when the cycle goes through another base serializer" do
-        first_base = Class.new(Serega)
-        second_base = Class.new(Serega)
-        first_base.config.base_serializer = second_base
-        second_base.config.base_serializer = first_base
-
-        # each definition completes — the other base has no block attributes yet
-        first_base.attribute(:meta, method: :itself) { attribute :version }
-        second_base.attribute(:info, method: :itself) { attribute :details }
-
-        # copying :meta builds its nested serializer from second_base, which
-        # copies :info, whose nested serializer is built from first_base,
-        # which copies :meta again — the cycle closes
-        expect { Class.new(first_base) }.to raise_error Serega::SeregaError,
-          "Can not define a nested serializer for attribute :meta —" \
-          " its base serializer #{second_base.inspect} (transitively)" \
-          " contains this same block attribute (cyclic definition)"
-      end
-
-      it "labels the nested serializer with current serializer and attribute names" do
-        nested = nested_serializer_for(proc { attribute :name })
-
-        expect(nested.inspect).to eq "#{serializer_class.inspect}.<author>"
-        expect(nested.to_s).to eq "#{serializer_class.inspect}.<author>"
-      end
-
-      it "inherits base serializer plugins" do
-        base_serializer.plugin :root
-        nested = nested_serializer_for(proc { attribute :name })
-
-        expect(nested.plugin_used?(:root)).to be true
-      end
-
-      it "inherits base serializer config without sharing it" do
-        base_serializer.config.auto_preload = {has_serializer_option: true}
-        nested = nested_serializer_for(proc { attribute :name })
-
-        expect(nested.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
-
-        nested.config.auto_preload = false
-        expect(base_serializer.config.auto_preload).to eq(has_delegate_option: false, has_serializer_option: true)
-      end
-
-      it "inherits base serializer attributes, batch loaders and preload handler" do
-        handler = proc { |objects, preloads| [objects, preloads] }
-        base_serializer.attribute :id
-        base_serializer.batch(:stats, proc { |objects| {} })
-        base_serializer.preload_with(handler)
-
-        nested = nested_serializer_for(proc { attribute :name })
-
-        expect(nested.attributes.keys).to eq %i[id name]
-        expect(nested.batch_loaders.keys).to eq [:stats]
-        expect(nested.preload_with).to equal handler
+        expect(Serega::AttributeNormalizers::BlockSerializer)
+          .to have_received(:call).with(serializer_class, :author, block, base_serializer)
       end
     end
   end
@@ -333,41 +229,22 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
       expect(resolver.call).to be const
     end
 
-    it "returns resolver generated by :delegate option when nil is not allowed" do
-      object = double(foo: double(name: "DELEGATED_NAME"))
-      delegate = {to: :foo}
-      resolver = described_class.new(serializer_class, name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
-      expect(resolver).to be_a(Serega::AttributeValueResolvers::Delegate)
-      expect(resolver.call(object)).to eq "DELEGATED_NAME"
-    end
+    context "with the :delegate option" do
+      let(:delegate) { {to: :profile} }
+      let(:resolver) { proc {} }
 
-    it "returns resolver generated by :delegate option that uses :method option" do
-      object = double(foo: double(bar: "DELEGATED_NAME"))
-      delegate = {to: :foo, method: :bar}
-      resolver = described_class.new(serializer_class, opts: {delegate: delegate}).send(:prepare_value_block)
-      expect(resolver).to be_a(Serega::AttributeValueResolvers::Delegate)
-      expect(resolver.call(object)).to eq "DELEGATED_NAME"
-    end
+      before do
+        allow(Serega::AttributeNormalizers::Delegate).to receive(:call).and_return(resolver)
+      end
 
-    it "does not raise error when :delegating object is nil and nil is allowed" do
-      object1 = double(foo: nil)
-      object2 = double(foo: double(name: "NAME"))
-      delegate = {to: :foo, allow_nil: true}
-      resolver = described_class.new(serializer_class, name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
-      expect(resolver).to be_a(Serega::AttributeValueResolvers::DelegateAllowNil)
-      expect(resolver.call(object1)).to be_nil
-      expect(resolver.call(object2)).to eq "NAME"
-    end
+      it "returns the resolver built from the option" do
+        normalizer = described_class.new(serializer_class, name: :name, opts: {delegate: delegate})
 
-    it "does not raise error when :delegating object is nil and nil is allowed through config" do
-      object1 = double(foo: nil)
-      object2 = double(foo: double(name: "NAME"))
-      delegate = {to: :foo}
-      serializer_class.config.delegate_default_allow_nil = true
-      resolver = described_class.new(serializer_class, name: :name, opts: {delegate: delegate}).send(:prepare_value_block)
-      expect(resolver).to be_a(Serega::AttributeValueResolvers::DelegateAllowNil)
-      expect(resolver.call(object1)).to be_nil
-      expect(resolver.call(object2)).to eq "NAME"
+        expect(normalizer.send(:prepare_value_block)).to be resolver
+
+        expect(Serega::AttributeNormalizers::Delegate)
+          .to have_received(:call).with(delegate, :name, serializer_class.config)
+      end
     end
   end
 
@@ -504,110 +381,21 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
-  describe "preloads functionality" do
-    let(:initials) { {name: :foo, opts: opts, block: nil} }
-    let(:opts) { {} }
-    let(:norm) { described_class.new(serializer_class, **initials) }
+  describe "#preloads" do
+    let(:block) { proc { attribute :title } }
+    let(:opts) { {method: :articles} }
 
-    describe "#preloads" do
-      it "returns nil for regular attributes" do
-        expect(norm.preloads).to be_nil
-      end
+    before do
+      allow(Serega::AttributeNormalizers::Preloads).to receive(:call).and_return(:articles)
+    end
 
-      it "returns nil when provided nil" do
-        opts[:preload] = nil
-        expect(norm.preloads).to be_nil
-      end
+    it "finds the preloads from the attribute options" do
+      normalizer = described_class.new(serializer_class, name: :posts, opts: opts, block: block)
 
-      it "returns provided empty hash as-is" do
-        opts[:preload] = {}
-        expect(norm.preloads).to eq({})
-      end
+      expect(normalizer.preloads).to eq :articles
 
-      it "returns provided empty array as-is" do
-        opts[:preload] = []
-        expect(norm.preloads).to eq([])
-      end
-
-      it "returns provided preloads as-is" do
-        opts[:preload] = :bar
-        expect(norm.preloads).to eq(:bar)
-        expect(norm.preloads).to equal norm.preloads
-      end
-
-      it "returns provided nested preloads as-is" do
-        opts[:preload] = {bar: [:baz, {bat: :qux}]}
-        expect(norm.preloads).to eq({bar: [:baz, {bat: :qux}]})
-      end
-
-      it "returns automatically found preloads when serializer provided" do
-        serializer_class.config.auto_preload = {has_serializer_option: true}
-        opts[:serializer] = "bar"
-        expect(norm.preloads).to eq(:foo)
-      end
-
-      it "returns automatically found preloads when serializer provided and method name provided" do
-        serializer_class.config.auto_preload = {has_serializer_option: true}
-        opts[:serializer] = "bar"
-        opts[:method] = "other"
-        expect(norm.preloads).to eq(:other)
-      end
-
-      it "returns no auto preloads when serializer and batch provided" do
-        serializer_class.config.auto_preload = {has_serializer_option: true}
-        opts[:serializer] = "bar"
-        opts[:batch] = :batch
-        expect(norm.preloads).to be_nil
-      end
-
-      it "returns no preloads for attributes with serializer by default" do
-        opts[:serializer] = "bar"
-        expect(norm.preloads).to be_nil
-      end
-
-      it "returns automatically found preloads when :delegate option provided" do
-        serializer_class.config.auto_preload = {has_delegate_option: true}
-        opts[:delegate] = {to: :bar}
-        expect(norm.preloads).to eq(:bar)
-      end
-
-      it "returns no preloads for attributes with :delegate option by default" do
-        opts[:delegate] = {to: :bar}
-        expect(norm.preloads).to be_nil
-      end
-
-      it "skips auto preloads for excluded methods of attributes with serializer" do
-        serializer_class.config.auto_preload = {has_serializer_option: true}
-        opts[:serializer] = "bar"
-        opts[:method] = :itself
-        expect(norm.preloads).to be_nil
-      end
-
-      it "skips auto preloads for excluded methods of attributes with :delegate option" do
-        serializer_class.config.auto_preload = {has_delegate_option: true}
-        opts[:delegate] = {to: :itself}
-        expect(norm.preloads).to be_nil
-      end
-
-      it "skips auto preloads for custom auto_preload_excluded_methods" do
-        serializer_class.config.auto_preload = {has_serializer_option: true}
-        serializer_class.config.auto_preload_excluded_methods = %i[current_object]
-        opts[:serializer] = "bar"
-        opts[:method] = :current_object
-        expect(norm.preloads).to be_nil
-      end
-
-      it "skips auto preloads for excluded methods provided as String" do
-        serializer_class.config.auto_preload = true
-        opts[:delegate] = {to: "itself"}
-        expect(norm.preloads).to be_nil
-      end
-
-      it "returns no auto preloads for attributes with only :method option" do
-        serializer_class.config.auto_preload = true
-        opts[:method] = :profile
-        expect(norm.preloads).to be_nil
-      end
+      expect(Serega::AttributeNormalizers::Preloads)
+        .to have_received(:call).with(opts, block, :articles, serializer_class.config)
     end
   end
 end
