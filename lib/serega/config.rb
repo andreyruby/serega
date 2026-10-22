@@ -91,8 +91,7 @@ class Serega
 
       # Sets #check_initiate_params
       def check_initiate_params=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:check_initiate_params] = value
+        opts[:check_initiate_params] = checked_boolean(value)
       end
 
       # Default `allow_nil:` of the `:delegate` attribute option. `false` by
@@ -103,8 +102,7 @@ class Serega
 
       # Sets #delegate_default_allow_nil
       def delegate_default_allow_nil=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:delegate_default_allow_nil] = value
+        opts[:delegate_default_allow_nil] = checked_boolean(value)
       end
 
       # Methods that #auto_preload never preloads, as they return the object
@@ -224,8 +222,7 @@ class Serega
 
       # Sets #check_attribute_name
       def check_attribute_name=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:check_attribute_name] = value
+        opts[:check_attribute_name] = checked_boolean(value)
       end
 
       # Whether every relation, an attribute with `:serializer` or a block,
@@ -236,8 +233,7 @@ class Serega
 
       # Sets #require_many
       def require_many=(value)
-        raise SeregaError, "Must have boolean value, #{value.inspect} provided" if (value != true) && (value != false)
-        opts[:require_many] = value
+        opts[:require_many] = checked_boolean(value)
       end
 
       # Method that returns the id of an object for batch loaders, `:id` by
@@ -250,6 +246,14 @@ class Serega
       def batch_id_option=(value)
         raise SeregaError, "Must have Symbol value, #{value.inspect} provided" unless value.is_a?(Symbol)
         opts[:batch_id_option] = value
+      end
+
+      private
+
+      def checked_boolean(value)
+        raise SeregaError, "Must have boolean value, #{value.inspect} provided" unless value == true || value == false
+
+        value
       end
     end
 
