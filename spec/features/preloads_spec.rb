@@ -90,7 +90,7 @@ RSpec.describe Serega do
       it "validates preload option cannot be used with const" do
         expect {
           serializer_class.attribute :name, preload: :profile, const: "value"
-        }.to raise_error Serega::SeregaError, "Option :preload can not be used together with option :const"
+        }.to raise_error Serega::SeregaError, "Option :const can not be used together with option :preload"
       end
 
       it "validates preload option value can not be `true`" do

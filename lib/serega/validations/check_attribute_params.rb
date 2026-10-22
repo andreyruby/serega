@@ -15,16 +15,21 @@ class Serega
         base_serializer hash_access if unless if_value unless_value
       ].freeze
 
-      # Options that can't be given together. Each pair is listed once, under
-      # the option that the error names first.
+      # Options that can't be given together, `block` for the attribute
+      # block. Each option lists every option it conflicts with, and the error
+      # names the option that comes first here. :hash_access with :delegate is
+      # left to CheckOptHashAccess, which points to the delegate sub-options.
       CONFLICTS = {
-        if_value: %i[serializer],
-        unless_value: %i[serializer],
-        const: %i[method value batch],
-        delegate: %i[method const value batch],
-        hash_access: %i[const value batch],
-        method: %i[value batch],
-        preload: %i[const]
+        method: %i[value const delegate batch],
+        value: %i[method const delegate hash_access],
+        const: %i[method value delegate batch hash_access preload],
+        delegate: %i[method value const batch],
+        batch: %i[method const delegate hash_access],
+        hash_access: %i[value const batch],
+        preload: %i[const],
+        serializer: %i[block if_value unless_value],
+        if_value: %i[serializer block],
+        unless_value: %i[serializer block]
       }.freeze
 
       # Validated attribute name
@@ -75,7 +80,7 @@ class Serega
         Attribute::CheckOptMethod.call(opts)
         Attribute::CheckOptMany.call(opts, block, require_many)
         Attribute::CheckOptPreload.call(opts)
-        Attribute::CheckOptSerializer.call(opts, block)
+        Attribute::CheckOptSerializer.call(opts)
         Attribute::CheckOptValue.call(opts)
         Attribute::CheckOptBatch.call(@serializer_class, name, opts)
       end
@@ -88,9 +93,15 @@ class Serega
         CONFLICTS.each do |option, others|
           next unless opts.key?(option)
 
-          other = others.find { |key| opts.key?(key) }
-          raise SeregaError, "Option #{option.inspect} can not be used together with option #{other.inspect}" if other
+          other = others.find { |key| (key == :block) ? block : opts.key?(key) }
+          raise SeregaError, conflict_message(option, other) if other
         end
+      end
+
+      def conflict_message(option, other)
+        return "Option #{option.inspect} can not be used together with block" if other == :block
+
+        "Option #{option.inspect} can not be used together with option #{other.inspect}"
       end
 
       def check_attribute_name
