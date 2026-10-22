@@ -19,8 +19,8 @@ RSpec.describe Serega do
       expect(child.__send__(:opts)).not_to equal parent.__send__(:opts)
 
       # Check child config does not overwrite parent config values
-      child.attribute_keys << :foo
-      expect(parent.attribute_keys).not_to include :foo
+      child.serialize_keys << :foo
+      expect(parent.serialize_keys).not_to include :foo
 
       # Check child config does not adds new keys to parent config
       child.__send__(:opts)[:foo] = 123

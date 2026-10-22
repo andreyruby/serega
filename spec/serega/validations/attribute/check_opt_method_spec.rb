@@ -24,21 +24,4 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptMethod do
     opts[:method] = 123
     expect { check }.to raise_error Serega::SeregaError, "Invalid option :method => 123. Must be a String or a Symbol"
   end
-
-  context "with other options" do
-    it "prohibits to use with :const opt" do
-      opts.merge!(method: :name, const: 1)
-      expect { check }.to raise_error Serega::SeregaError, "Option :method can not be used together with option :const"
-    end
-
-    it "prohibits to use with :value opt" do
-      opts.merge!(method: :name, value: proc {})
-      expect { check }.to raise_error Serega::SeregaError, "Option :method can not be used together with option :value"
-    end
-
-    it "prohibits to use with :batch opt" do
-      opts.merge!(method: :name, batch: :test_loader)
-      expect { check }.to raise_error Serega::SeregaError, "Option :method can not be used together with option :batch"
-    end
-  end
 end

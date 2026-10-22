@@ -16,21 +16,15 @@ class Serega
 
         class << self
           # Checks the condition option `name`: a Symbol, a Proc or an object
-          # that responds to :call. The conditions on the value can't be used
-          # together with the :serializer option.
+          # that responds to :call
           def call(opts, name)
             return unless opts.key?(name)
 
-            value_condition = VALUE_OPTIONS.include?(name)
-            check_usage_with_serializer(opts, name) if value_condition
-            check_type(opts[name], name, value_condition ? "value" : "object")
+            parameter = VALUE_OPTIONS.include?(name) ? "value" : "object"
+            check_type(opts[name], name, parameter)
           end
 
           private
-
-          def check_usage_with_serializer(opts, name)
-            raise SeregaError, "Option #{name.inspect} can not be used together with option :serializer" if opts.key?(:serializer)
-          end
 
           def check_type(condition, name, parameter)
             return if condition.is_a?(Symbol)

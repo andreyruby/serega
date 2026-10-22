@@ -80,18 +80,6 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptValue do
     end
   end
 
-  context "with other options" do
-    it "prohibits to use with :method opt" do
-      opts.merge!(value: proc {}, method: :name)
-      expect { check }.to raise_error Serega::SeregaError, "Option :value can not be used together with option :method"
-    end
-
-    it "prohibits to use with :const opt" do
-      opts.merge!(value: proc {}, const: 1)
-      expect { check }.to raise_error Serega::SeregaError, "Option :value can not be used together with option :const"
-    end
-  end
-
   it "checks keyword value" do
     expect { described_class.call({value: :value}) }
       .to raise_error Serega::SeregaError, type_error

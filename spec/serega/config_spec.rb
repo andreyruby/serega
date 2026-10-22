@@ -254,7 +254,6 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.__send__(:opts).keys).to match_array %i[
         plugins
         serialize_keys
-        attribute_keys
         check_attribute_name
         require_many
         check_initiate_params
@@ -271,27 +270,6 @@ RSpec.describe Serega::SeregaConfig do
 
       expect(config.plugins).to eq []
       expect(config.serialize_keys).to match_array(%i[context many])
-      expect(config.attribute_keys).to match_array(
-        %i[
-          method
-          value
-          serializer
-          many
-          hide
-          const
-          delegate
-          default
-          format
-          preload
-          batch
-          base_serializer
-          hash_access
-          if
-          unless
-          if_value
-          unless_value
-        ]
-      )
       expect(config.check_attribute_name).to be true
       expect(config.require_many).to be false
       expect(config.check_initiate_params).to be true

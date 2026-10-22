@@ -20,25 +20,6 @@ class Serega
     #
     DEFAULTS = { # :nodoc:
       plugins: [],
-      attribute_keys: %i[
-        method
-        value
-        serializer
-        many
-        hide
-        const
-        delegate
-        default
-        format
-        preload
-        batch
-        base_serializer
-        hash_access
-        if
-        unless
-        if_value
-        unless_value
-      ].freeze,
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
       require_many: false,
@@ -71,11 +52,6 @@ class Serega
       # Shows used plugins
       def plugins # :nodoc:
         opts.fetch(:plugins)
-      end
-
-      # Returns options names allowed in `Serega.attribute` method
-      def attribute_keys # :nodoc:
-        opts.fetch(:attribute_keys)
       end
 
       # Returns options names allowed in `call, to_h` methods
