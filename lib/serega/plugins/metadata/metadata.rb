@@ -15,24 +15,11 @@ class Serega
     #
     # See [Metadata](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#metadata).
     module Metadata
-      # Plugin name
-      def self.plugin_name # :nodoc:
-        :metadata
-      end
-
-      # Checks requirements and loads additional plugins
-      def self.before_load_plugin(serializer_class, **_opts) # :nodoc:
+      # Adds the plugin to the serializer
+      def self.apply(serializer_class, **_opts) # :nodoc:
         unless serializer_class.plugin_used?(:root)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded after the :root plugin. Please load the :root plugin first"
+          raise SeregaError, "Plugin :metadata must be loaded after the :root plugin. Please load the :root plugin first"
         end
-      end
-
-      # Applies plugin code to specific serializer
-      def self.load_plugin(serializer_class, **_opts) # :nodoc:
-        serializer_class.extend(ClassMethods)
-        serializer_class.include(InstanceMethods)
-        serializer_class::SeregaConfig.include(ConfigInstanceMethods)
-        serializer_class.instance_variable_set(:@meta_attributes, {})
 
         require_relative "meta_attribute"
         require_relative "validations/check_block"
@@ -42,10 +29,11 @@ class Serega
         require_relative "validations/check_opt_value"
         require_relative "validations/check_opts"
         require_relative "validations/check_path"
-      end
 
-      # Adds config options and runs other callbacks after plugin was loaded
-      def self.after_load_plugin(serializer_class, **_opts) # :nodoc:
+        serializer_class.extend(ClassMethods)
+        serializer_class.include(InstanceMethods)
+        serializer_class::SeregaConfig.include(ConfigInstanceMethods)
+        serializer_class.instance_variable_set(:@meta_attributes, {})
         serializer_class.config.opts[:metadata] = {attribute_keys: %i[const hide_nil hide_empty value]}
       end
 
@@ -171,7 +159,5 @@ class Serega
         end
       end
     end
-
-    register_plugin(Metadata.plugin_name, Metadata)
   end
 end

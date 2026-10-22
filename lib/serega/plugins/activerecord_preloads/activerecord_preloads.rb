@@ -14,31 +14,18 @@ class Serega
     #
     # See [ActiveRecord preloads](https://github.com/andreyruby/serega/blob/master/docs/preloads.md#activerecord).
     module ActiverecordPreloads
-      # Plugin name
-      def self.plugin_name # :nodoc:
-        :activerecord_preloads
-      end
-
-      # Checks requirements to load plugin
-      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
-        opts.each_key do |key|
-          raise SeregaError, "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. No options are allowed"
+      # Adds the plugin to the serializer
+      def self.apply(serializer_class, **opts) # :nodoc:
+        unless opts.empty?
+          raise SeregaError, "Plugin :activerecord_preloads does not accept the #{opts.keys.first.inspect} option. No options are allowed"
         end
-      end
 
-      # Applies plugin code to specific serializer
-      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         require_relative "lib/preloader"
-      end
 
-      # Registers the ActiveRecord preload handler
-      def self.after_load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.preload_with do |objects, preloads|
           Preloader.preload(objects, preloads)
         end
       end
     end
-
-    register_plugin(ActiverecordPreloads.plugin_name, ActiverecordPreloads)
   end
 end

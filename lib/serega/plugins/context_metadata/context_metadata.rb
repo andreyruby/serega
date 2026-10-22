@@ -18,35 +18,17 @@ class Serega
       # Default context metadata option name
       DEFAULT_CONTEXT_METADATA_KEY = :meta # :nodoc:
 
-      # Plugin name
-      def self.plugin_name # :nodoc:
-        :context_metadata
-      end
-
-      # Checks requirements and loads additional plugins
-      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
-        allowed_keys = %i[context_metadata_key]
-        opts.each_key do |key|
-          next if allowed_keys.include?(key)
-
-          raise SeregaError,
-            "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. Allowed options:\n" \
-            "  - :context_metadata_key [Symbol] - The key name that must be used to add metadata. Default is :meta."
-        end
+      # Adds the plugin to the serializer
+      def self.apply(serializer_class, **opts) # :nodoc:
+        SeregaValidations::Utils::CheckAllowedKeys.call(opts, %i[context_metadata_key], "plugin :context_metadata")
 
         unless serializer_class.plugin_used?(:root)
-          raise SeregaError, "Plugin #{plugin_name.inspect} must be loaded after the :root plugin. Please load the :root plugin first"
+          raise SeregaError, "Plugin :context_metadata must be loaded after the :root plugin. Please load the :root plugin first"
         end
-      end
 
-      # Applies plugin code to specific serializer
-      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
-      end
 
-      # Adds config options and runs other callbacks after plugin was loaded
-      def self.after_load_plugin(serializer_class, **opts) # :nodoc:
         config = serializer_class.config
         meta_key = opts[:context_metadata_key] || DEFAULT_CONTEXT_METADATA_KEY
         config.opts[:context_metadata] = {key: meta_key}
@@ -132,7 +114,5 @@ class Serega
         end
       end
     end
-
-    register_plugin(ContextMetadata.plugin_name, ContextMetadata)
   end
 end

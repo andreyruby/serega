@@ -5,36 +5,21 @@ class Serega
   #
   # See [Guides](https://github.com/andreyruby/serega/blob/master/docs/README.md).
   module SeregaPlugins
-    @plugins = {}
+    # Plugin module names, by plugin name
+    MODULES = { # :nodoc:
+      root: :Root,
+      metadata: :Metadata,
+      context_metadata: :ContextMetadata,
+      activerecord_preloads: :ActiverecordPreloads
+    }.freeze
 
     class << self
-      # Registers given plugin to be able to load it using symbol name.
-      #
-      #   SeregaPlugins.register_plugin(:plugin_name, PluginModule)
-      def register_plugin(name, mod) # :nodoc:
-        @plugins[name] = mod
-      end
-
-      # Loads plugin code and returns plugin core module. Raises SeregaError
-      # when the plugin does not exist.
-      #
-      #   SeregaPlugins.find_plugin(:root) # => SeregaPlugins::Root
-      #   SeregaPlugins.find_plugin(Root) # => Root
-      def find_plugin(name) # :nodoc:
-        return name if name.is_a?(Module)
-        return @plugins[name] if @plugins.key?(name)
-
-        require_plugin(name)
-
-        @plugins[name] || raise(SeregaError, "Plugin '#{name}' did not register itself correctly")
-      end
-
-      private
-
-      def require_plugin(name)
-        require "serega/plugins/#{name}/#{name}"
-      rescue LoadError
-        raise SeregaError, "Plugin '#{name}' does not exist"
+      # Loads the code of the plugin and returns its module. Raises
+      # SeregaError when the plugin does not exist.
+      def find(name) # :nodoc:
+        module_name = MODULES.fetch(name) { raise SeregaError, "Plugin #{name.inspect} does not exist" }
+        require_relative "plugins/#{name}/#{name}"
+        const_get(module_name)
       end
     end
   end

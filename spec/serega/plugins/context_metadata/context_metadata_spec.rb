@@ -24,10 +24,8 @@ RSpec.describe Serega::SeregaPlugins::ContextMetadata do
     it "raises error if plugin defined with unknown option" do
       serializer = Class.new(Serega)
       expect { serializer.plugin(:context_metadata, foo: :bar) }
-        .to raise_error Serega::SeregaError, <<~MESSAGE.strip
-          Plugin :context_metadata does not accept the :foo option. Allowed options:
-            - :context_metadata_key [Symbol] - The key name that must be used to add metadata. Default is :meta.
-        MESSAGE
+        .to raise_error Serega::SeregaError,
+          "Invalid plugin :context_metadata option :foo. Allowed options are: :context_metadata_key"
     end
   end
 

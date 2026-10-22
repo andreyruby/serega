@@ -18,34 +18,14 @@ class Serega
       # Default response root key
       ROOT_DEFAULT = :data # :nodoc:
 
-      # Plugin name
-      def self.plugin_name # :nodoc:
-        :root
-      end
+      # Adds the plugin to the serializer
+      def self.apply(serializer_class, **opts) # :nodoc:
+        SeregaValidations::Utils::CheckAllowedKeys.call(opts, %i[root root_one root_many], "plugin :root")
 
-      # Checks requirements to load plugin
-      def self.before_load_plugin(serializer_class, **opts) # :nodoc:
-        allowed_keys = %i[root root_one root_many]
-        opts.each_key do |key|
-          next if allowed_keys.include?(key)
-
-          raise SeregaError,
-            "Plugin #{plugin_name.inspect} does not accept the #{key.inspect} option. Allowed options:\n" \
-            "  - :root [String, Symbol, nil] Specifies common root keyword used when serializing one or multiple objects\n" \
-            "  - :root_one [String, Symbol, nil] Specifies root keyword used when serializing one object\n" \
-            "  - :root_many [String, Symbol, nil] Specifies root keyword used when serializing multiple objects" \
-        end
-      end
-
-      # Applies plugin code to specific serializer
-      def self.load_plugin(serializer_class, **_opts) # :nodoc:
         serializer_class.extend(ClassMethods)
         serializer_class.include(InstanceMethods)
         serializer_class::SeregaConfig.include(ConfigInstanceMethods)
-      end
 
-      # Adds config options and runs other callbacks after plugin was loaded
-      def self.after_load_plugin(serializer_class, **opts) # :nodoc:
         config = serializer_class.config
         default = opts.fetch(:root, ROOT_DEFAULT)
         one = opts.fetch(:root_one, default)
@@ -195,7 +175,5 @@ class Serega
         end
       end
     end
-
-    register_plugin(Root.plugin_name, Root)
   end
 end
