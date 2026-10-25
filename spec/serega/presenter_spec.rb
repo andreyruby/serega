@@ -362,6 +362,45 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
+  describe ".define_delegators" do
+    let(:presenter_class) do
+      Class.new(described_class) do
+        def full_name = "#{first_name} #{last_name}"
+      end
+    end
+
+    let(:user) { Struct.new(:first_name, :last_name, :full_name).new("Bruce", "Wayne", "Batman") }
+
+    before { presenter_class.define_delegators(%i[first_name full_name __ctx__]) }
+
+    it "defines delegators for methods the presenter class does not define" do
+      expect(presenter_class::Delegators.instance_methods(false)).to eq [:first_name]
+    end
+
+    it "keeps the presenter methods" do
+      expect(presenter_class.new(user).full_name).to eq "Bruce Wayne"
+    end
+  end
+
+  describe "locking the serializer" do
+    let(:serializer) do
+      Class.new(Serega) do
+        attribute :first_name
+        attribute :full_name
+
+        presenter do
+          def full_name = "#{first_name} #{last_name}"
+        end
+      end
+    end
+
+    it "defines delegators for the attribute methods of the object" do
+      serializer.lock
+
+      expect(serializer.presenter::Delegators.instance_methods(false)).to eq [:first_name]
+    end
+  end
+
   describe ".presenter" do
     it "defines presenter methods evaluated inside the SeregaPresenter class" do
       serializer.attribute :full_name

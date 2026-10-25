@@ -195,6 +195,32 @@ RSpec.describe Serega::SeregaAttribute do
     end
   end
 
+  describe "#object_method" do
+    subject(:object_method) { described_class.new(serializer_class, name: :full_name, opts: opts).object_method }
+
+    let(:opts) { {} }
+
+    it "returns the attribute name" do
+      expect(object_method).to eq :full_name
+    end
+
+    context "with the :method option" do
+      let(:opts) { {method: :name} }
+
+      it "returns the method name" do
+        expect(object_method).to eq :name
+      end
+    end
+
+    context "with the :value option" do
+      let(:opts) { {value: ->(user) { user.name }} }
+
+      it "returns nil" do
+        expect(object_method).to be_nil
+      end
+    end
+  end
+
   describe "#value_method" do
     subject(:attribute) { described_class.new(serializer_class, name: name, opts: opts, location: "app/serializers/user_serializer.rb:3") }
 

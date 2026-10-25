@@ -13,6 +13,9 @@ class Serega
         @keyword = keyword
       end
 
+      # Name of the method the value comes from
+      attr_reader :keyword
+
       # Calls the keyword method on the object
       def call(object)
         object.public_send(@keyword)
