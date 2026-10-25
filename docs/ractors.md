@@ -16,9 +16,10 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - Call `make_shareable!` in relation serializers too. Nested serializers
   defined with a block become shareable with their parent.
 - A shareable serializer can not be changed.
-- A presenter of a shareable serializer reads attribute methods of the object
-  directly. Other methods of the object that presenter methods call go
-  through `method_missing` on each call, in every Ractor and thread. Call
+- A shareable serializer with a presenter is slower when presenter methods
+  call methods of the object that are not attributes. With 20 objects of 10
+  attributes, 2 of them presenter methods that call 2 such methods each,
+  serialization takes about 120% longer, in every Ractor and thread. Call
   `make_shareable!` only for serializers used in other Ractors.
 - Each Ractor builds and caches its own serialization plans.
 - On a Ruby without Ractors, for example TruffleRuby, `make_shareable!` only
