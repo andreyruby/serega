@@ -50,7 +50,7 @@ jobs:
       - name: Validate type signatures
         run: bundle exec rbs -I sig validate
 
-      - name: Check lib against the type signatures
+      - name: Steep
         run: bundle exec steep check
 
   benchmarks:
@@ -84,11 +84,11 @@ jobs:
       matrix:
         include:
           # https://github.com/ruby/setup-ruby
-          # ruby head is disabled until bundler fixes Pathname::SEPARATOR_PAT (made private in 4.1.dev)
-          # - ruby: "head"
-          #   activerecord: "8.1"
-          #   experimental: true
-          #   bundle_force_ruby_platform: "1"
+          # A failure on Ruby head does not fail CI
+          - ruby: "head"
+            activerecord: "8.1"
+            experimental: true
+            bundle_force_ruby_platform: "1"
           # Ruby 4.1 is in preview until its December release; a failure does not fail CI
           - ruby: "4.1.0-preview1"
             activerecord: "8.1"
