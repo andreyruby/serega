@@ -401,6 +401,34 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
+  describe "making the serializer shareable" do
+    let(:serializer) do
+      Class.new(Serega) do
+        attribute :first_name
+        attribute :full_name
+
+        presenter do
+          def full_name = "#{first_name} #{last_name}"
+        end
+
+        make_shareable!
+      end
+    end
+
+    let(:user) { Struct.new(:first_name, :last_name).new("Bruce", "Wayne") }
+
+    it "freezes the delegators defined on lock" do
+      expect(serializer.presenter::Delegators).to be_frozen
+      expect(serializer.presenter::Delegators.instance_methods(false)).to eq [:first_name]
+    end
+
+    it "delegates other methods through method_missing" do
+      expect(serializer.to_h(user)).to eq(first_name: "Bruce", full_name: "Bruce Wayne")
+
+      expect(serializer.presenter::Delegators.instance_methods(false)).to eq [:first_name]
+    end
+  end
+
   describe ".presenter" do
     it "defines presenter methods evaluated inside the SeregaPresenter class" do
       serializer.attribute :full_name

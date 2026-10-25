@@ -16,6 +16,10 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - Call `make_shareable!` in relation serializers too. Nested serializers
   defined with a block become shareable with their parent.
 - A shareable serializer can not be changed.
+- A presenter of a shareable serializer reads attribute methods of the object
+  directly. Other methods of the object that presenter methods call go
+  through `method_missing` on each call, in every Ractor and thread. Call
+  `make_shareable!` only for serializers used in other Ractors.
 - Each Ractor builds and caches its own serialization plans.
 - On a Ruby without Ractors, for example TruffleRuby, `make_shareable!` only
   locks the serializer.
