@@ -195,7 +195,7 @@ class Serega
       @inline_batch_loader = normalizer.inline_batch_loader
       @formatter = normalizer.formatter
       conditions = normalizer.conditions
-      @conditions = conditions && SeregaConditions.new(self, conditions)
+      @conditions = conditions && SeregaConditions.build(self, conditions)
     end
   end
 end
