@@ -240,7 +240,7 @@ class Serega
     #
     def batch(name, value = nil, &block)
       check_unlocked
-      raise SeregaError, "Batch loader must be defined with a callable value or block" if (value && block) || (!value && !block)
+      raise SeregaError, "Batch loader must be defined with a callable value or block" if !value == !block
 
       batch_loader = SeregaBatchLoader.new(name: name, block: value || block)
       batch_loaders[batch_loader.name] = batch_loader
@@ -266,7 +266,7 @@ class Serega
     def formatter(name, value = nil, allow_nil: false, &block)
       check_unlocked
       raise SeregaError, "Formatter name must be a Symbol" unless name.is_a?(Symbol)
-      raise SeregaError, "Formatter must be defined with a value or a block" if (value && block) || (!value && !block)
+      raise SeregaError, "Formatter must be defined with a value or a block" if !value == !block
       raise SeregaError, "Invalid option :allow_nil => #{allow_nil.inspect}. Must have a boolean value" unless allow_nil == true || allow_nil == false
 
       value ||= block
