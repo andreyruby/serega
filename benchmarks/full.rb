@@ -3,9 +3,11 @@
 # Runs every benchmark case, and writes the serializations per second of each
 # gem to the tables of README.md and benchmarks/README.md, the lines between
 # `<!-- benchmarks:json -->` or `<!-- benchmarks:hash -->` and their `:end`
-# comment. Run it with `rake benchmarks:full`.
+# comment, then redraws the chart of the JSON table. Run it with
+# `rake benchmarks:full`.
 
 require_relative "support"
+require_relative "chart"
 
 module BenchmarkTables
   # Cases in the order of the table columns
@@ -92,3 +94,4 @@ module BenchmarkTables
 end
 
 BenchmarkTables.call
+BenchmarkChart.call

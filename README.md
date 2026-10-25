@@ -1,13 +1,8 @@
 # Serega
 
-<!-- TODO: logo (SVG, light and dark variants)
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
-    <img src="assets/logo.svg" alt="Serega" width="240">
-  </picture>
-</p>
--->
+![Serega][logo]
+
+[logo]: https://raw.githubusercontent.com/andreyruby/serega/master/assets/logo.svg
 
 **Serialize exactly what was asked. Load exactly what is needed.**
 
@@ -103,6 +98,10 @@ end
 
 Serializations of preloaded ActiveRecord records to JSON strings, per second,
 more is better:
+
+![JSON serializations per second, as a share of a hand-written Hash][benchmarks-chart]
+
+[benchmarks-chart]: https://raw.githubusercontent.com/andreyruby/serega/master/assets/benchmarks.svg
 
 <!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |

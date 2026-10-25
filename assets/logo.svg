@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+<title id="title">Serega</title>
+<style>
+.brace { fill: none; stroke: #2a78d6; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.field { stroke: #0b0b0b; stroke-width: 9; stroke-linecap: round; }
+.skipped { stroke: #c3c2b7; }
+@media (prefers-color-scheme: dark) {
+  .brace { stroke: #3987e5; }
+  .field { stroke: #f0efec; }
+  .skipped { stroke: #4a4a46; }
+}
+</style>
+<path class="brace" d="M38 16C27 16 25 22 25 32V48C25 55 21 60 13 60C21 60 25 65 25 72V88C25 98 27 104 38 104"/>
+<path class="brace" d="M82 16C93 16 95 22 95 32V48C95 55 99 60 107 60C99 60 95 65 95 72V88C95 98 93 104 82 104"/>
+<line class="field" x1="45" y1="42" x2="75" y2="42"/>
+<line class="field skipped" x1="45" y1="60" x2="68" y2="60"/>
+<line class="field" x1="45" y1="78" x2="71" y2="78"/>
+</svg>

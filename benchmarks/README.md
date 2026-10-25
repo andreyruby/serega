@@ -97,8 +97,10 @@ FAST=1 ruby benchmarks/relations.rb  # a short round
 ```
 
 `rake benchmarks:full` (`full.rb`) runs every case, about 1.5 minutes, and
-writes the results to the tables above and to the README. Each gem measures
-for 1 second after a warmup of 0.5 seconds; `TIME=5` measures for 5 seconds:
+writes the results to the tables above and to the README. Then `chart.rb`
+draws `assets/benchmarks.svg` from the JSON table of the README;
+`ruby benchmarks/chart.rb` redraws it alone. Each gem measures for 1 second
+after a warmup of 0.5 seconds; `TIME=5` measures for 5 seconds:
 
 ```sh
 bundle exec rake benchmarks:full
