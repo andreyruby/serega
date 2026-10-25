@@ -76,6 +76,14 @@ class Serega
       end
     end
 
+    # Defines delegators for the method names that the presenter class does
+    # not define itself, thus presenter methods stay in front of them
+    def self.define_delegators(names)
+      names.each do |name|
+        define_delegator(name) unless method_defined?(name) || private_method_defined?(name)
+      end
+    end
+
     def initialize(object, ctx = nil)
       super(object)
       @__ctx__ = ctx

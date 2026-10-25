@@ -440,6 +440,7 @@ class Serega
         next if @locked
 
         SeregaUtils::EnumDeepFreeze.call(config.opts)
+        define_presenter_delegators if @presenter_class
         @locked = true
       end
     end
@@ -483,6 +484,14 @@ class Serega
     end
 
     private
+
+    # Defines the presenter delegators of the attributes that read a method of
+    # the object. Later reads skip method_missing, also in other Ractors,
+    # which can not define methods in classes of the main Ractor.
+    def define_presenter_delegators
+      object_methods = attributes.each_value.filter_map(&:object_method)
+      @presenter_class.define_delegators(object_methods)
+    end
 
     def check_unlocked
       raise SeregaError, "#{self} can not be changed after it was made shareable" if @shareable

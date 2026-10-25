@@ -57,6 +57,12 @@ class Serega
       @value_method = define_value_method(serializer_class)
     end
 
+    # Method of the serialized object that gives the value, `nil` for a value
+    # from :value, :const, :delegate, :hash_access or :batch
+    def object_method
+      @value_block.keyword if @value_block.is_a?(AttributeValueResolvers::Keyword)
+    end
+
     # Name of the SeregaAttributeValues method that reads the value
     attr_reader :value_method
 
