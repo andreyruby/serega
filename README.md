@@ -234,5 +234,5 @@ Bug reports, pull requests and ideas are welcome!
 The gem is available as open source under the terms of the
 [MIT License](https://opensource.org/licenses/MIT).
 
-[build-badge]: https://github.com/aglushkov/serega/actions/workflows/main.yml/badge.svg?event=push
-[build]: https://github.com/aglushkov/serega/actions/workflows/main.yml
+[build-badge]: https://github.com/andreyruby/serega/actions/workflows/main.yml/badge.svg?event=push
+[build]: https://github.com/andreyruby/serega/actions/workflows/main.yml
