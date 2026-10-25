@@ -4,7 +4,8 @@
 #   expect { serializer.to_h(user) }.to allocate_objects(T_HASH: 1, T_ARRAY: 2)
 #
 # The block and the count run once before the count, thus lazily built code
-# and caches are ready.
+# and caches are ready. A full GC runs before the count: a lazy sweep left
+# from an earlier GC frees slots while the block runs and changes the count.
 RSpec::Matchers.define :allocate_objects do |expected|
   supports_block_expectations
 
@@ -15,6 +16,7 @@ RSpec::Matchers.define :allocate_objects do |expected|
   def count_allocations
     before = {}
     after = {}
+    GC.start
     GC.disable
     ObjectSpace.count_objects(before)
     yield
