@@ -465,6 +465,9 @@ class Serega
       return self if @shareable
 
       lock
+      # The presenter keeps the delegators defined on lock, as other Ractors
+      # can not define methods in it
+      @presenter_class::Delegators.freeze if @presenter_class
       attributes.each_value { |attribute| attribute.serializer.make_shareable! if attribute.initials[:block] }
       @shareable = true
       # :nocov:
