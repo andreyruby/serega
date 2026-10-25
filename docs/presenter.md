@@ -44,6 +44,15 @@ Objects are wrapped only when the serializer has presenter methods. Then
 `:value` callables and batch loaders receive the wrapped objects, and preload
 handlers receive the original objects.
 
+## Speed
+
+Presenter methods are slower than `:value` options: each object is wrapped,
+and each attribute is read through the wrapper. 20 objects with 10
+attributes, 2 of them computed, serialize in 11.7 µs with presenter methods and
+in 6.3 µs with `:value` options, about twice as fast. The difference is a few
+microseconds, thus it matters little in a request that takes milliseconds. A
+[shareable](ractors.md) serializer makes presenter methods slower still.
+
 ## Inheritance
 
 `presenter` blocks add up. A child serializer gets its parent's presenter

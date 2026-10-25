@@ -19,8 +19,11 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - A shareable serializer with a presenter is slower when presenter methods
   call methods of the object that are not attributes. With 20 objects of 10
   attributes, 2 of them presenter methods that call 2 such methods each,
-  serialization takes about 120% longer, in every Ractor and thread. Call
-  `make_shareable!` only for serializers used in other Ractors.
+  serialization takes 25.5 µs instead of 11.7 µs, in every Ractor and thread.
+  The same attributes with `:value` options take 6.3 µs, 4 times less, with or
+  without `make_shareable!`. These are microseconds, thus they matter little
+  in a request that takes milliseconds. Prefer `:value` options in serializers
+  used in other Ractors, and call `make_shareable!` only for those.
 - Each Ractor builds and caches its own serialization plans.
 - On a Ruby without Ractors, for example TruffleRuby, `make_shareable!` only
   locks the serializer.
