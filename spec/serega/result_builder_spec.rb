@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::SeregaResultBuilder do
+  subject(:result_builder) { described_class.new(serializer, mode, plan.points) }
+
   let(:serializer) do
     Class.new(Serega) do
       attribute :name
@@ -11,9 +13,7 @@ RSpec.describe Serega::SeregaResultBuilder do
   let(:plan) { Serega::SeregaPlan.new(serializer, nil, {}) }
   let(:mode) { :hash }
 
-  describe ".build" do
-    subject(:result_builder) { described_class.build(serializer, mode, plan.points) }
-
+  describe ".new" do
     let(:serializer) do
       attribute_name = name
       Class.new(Serega) do
@@ -26,11 +26,10 @@ RSpec.describe Serega::SeregaResultBuilder do
     let(:name) { :author }
     let(:location) { serializer.attributes[name].location }
 
-    it "makes the builder as the instance of a new subclass" do
-      other_builder = described_class.build(serializer, mode, plan.points)
-
-      expect(result_builder.class.superclass).to equal described_class
-      expect(other_builder.class).not_to equal result_builder.class
+    it "defines #call and #call_one on the builder, not on its class" do
+      expect(result_builder.singleton_methods).to include(:call, :call_one)
+      expect(described_class.method_defined?(:call)).to be false
+      expect(described_class.method_defined?(:call_one)).to be false
     end
 
     context "with an attribute named initialize in the :struct mode" do
@@ -84,8 +83,6 @@ RSpec.describe Serega::SeregaResultBuilder do
   end
 
   describe "#call" do
-    subject(:result_builder) { described_class.build(serializer, mode, plan.points) }
-
     let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
 
     it "is generated code with a file name without a source" do
@@ -180,8 +177,6 @@ RSpec.describe Serega::SeregaResultBuilder do
   end
 
   describe "#call_one" do
-    subject(:result_builder) { described_class.build(serializer, mode, plan.points) }
-
     let(:user) { Struct.new(:name, :email).new("Ann", "ann@example.com") }
 
     it "builds the Hash of the object" do
