@@ -108,6 +108,18 @@ RSpec.describe Serega::SeregaPlan::Cache do
       end
     end
 
+    context "when the cached modifiers have the hash of other modifiers" do
+      let(:array_with_hash_zero) { Class.new(Array) { def hash = 0 } }
+      let(:cached_only) { array_with_hash_zero[:first_name] }
+      let(:other_only) { array_with_hash_zero[:last_name] }
+
+      before { plan(only: cached_only) }
+
+      it "builds the plan of the other modifiers" do
+        expect(plan(only: other_only)).to satisfy_attribute_names(last_name: nil)
+      end
+    end
+
     it "shares the cached plan between calls with and without validation" do
       result1 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: false)
       result2 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: true)

@@ -185,35 +185,46 @@ RSpec.describe Serega do
   end
 
   describe "#to_h" do
-    subject(:result) { serializer_class.new.to_h(user, context: context, many: many) }
+    subject(:result) { serializer_class.new.to_h(object, context: context, many: many) }
 
     let(:serializer_class) { Class.new(described_class) { attribute :name } }
     let(:user) { double(name: "Ann") }
+    let(:object) { user }
     let(:context) { {current_user: "Ann"} }
     let(:many) { nil }
 
     before { allow(Serega::SeregaValidations::CheckSerializeKeywords).to receive(:call) }
 
-    it "checks the serialization options and serializes the object" do
+    it "serializes one object without checking the options" do
       expect(result).to eq(name: "Ann")
-      expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with(context, nil)
+      expect(Serega::SeregaValidations::CheckSerializeKeywords).not_to have_received(:call)
     end
 
-    context "with one object" do
+    context "with many: false" do
       let(:many) { false }
 
-      it "serializes the object with the result builder of the plan" do
+      it "serializes one object without checking the options" do
         expect(result).to eq(name: "Ann")
         expect(Serega::SeregaValidations::CheckSerializeKeywords).not_to have_received(:call)
       end
     end
 
-    context "with one object and a context that is not a Hash" do
+    context "with a list" do
+      let(:object) { [user] }
+
+      it "checks the options and serializes the list" do
+        expect(result).to eq([{name: "Ann"}])
+        expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with(context, true)
+      end
+    end
+
+    context "with many: false and a context that is not a Hash" do
       let(:many) { false }
       let(:context) { "Ann" }
 
-      it "checks the serialization options" do
+      it "checks the options" do
         result
+
         expect(Serega::SeregaValidations::CheckSerializeKeywords).to have_received(:call).with("Ann", false)
       end
     end
