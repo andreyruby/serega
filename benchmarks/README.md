@@ -105,11 +105,8 @@ bundle exec rake benchmarks:full
 TIME=5 bundle exec rake benchmarks:full
 ```
 
-`rake benchmarks:check` (`check.rb`) fails when Serega is more than 2% slower
-than the fastest other gem of a case, or slower than the hand-written Hash:
-more than 10% slower in the single and collection cases, slower at all in the
-relations, `only:` and `except:` cases. It measures each case for 0.5
-seconds, and a case that fails for 1.5 seconds more, and prints a table of the
+`rake benchmarks:check` (`check.rb`) measures Serega, the fastest other gem and
+the hand-written Hash of each case for 0.5 seconds, and prints a table of the
 times. CI runs it on the latest Ruby:
 
 ```sh
