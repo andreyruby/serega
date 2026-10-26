@@ -10,41 +10,28 @@ class Serega
   # in one loop.
   #
   class SeregaResultBuilder # :nodoc:
-    class << self
-      # Makes a result builder and generates its methods:
-      #
-      #   call(sources, context, batches, relations) -> Array<Hash, Struct, Data>
-      #
-      # - `batches` holds the loaded batches per point, or nil.
-      # - `relations` holds the relation values of all sources per relation
-      #   point, or nil.
-      #
-      # Points without relations and batch loaders get a `#call_one` method
-      # too, which builds the serialized object of one source:
-      #
-      #   call_one(source, context) -> Hash, Struct, Data
-      #
-      # The builder is the instance of a new subclass, as YJIT calls the
-      # methods of an object with a singleton class slower. The subclass gets
-      # the methods before the instance is made: YJIT ran `#call` of a builder
-      # made first slower.
-      def build(serializer_class, mode, points)
-        builder_class = Class.new(self)
-        # The generated code reads the `:const`, `:default` and formatter values from its constants
-        builder_class.const_set(:SeregaAttributeValues, serializer_class::SeregaAttributeValues)
-        builder_class.class_eval(SeregaResultCode.new(mode, points).to_s, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
-        builder_class.new(serializer_class, mode, points)
-      end
-    end
-
     # Serialization mode
     attr_reader :mode
 
-    # Instantiates new result builder
+    # Makes a result builder and generates its methods:
+    #
+    #   call(sources, context, batches, relations) -> Array<Hash, Struct, Data>
+    #
+    # - `batches` holds the loaded batches per point, or nil.
+    # - `relations` holds the relation values of all sources per relation
+    #   point, or nil.
+    #
+    # Points without relations and batch loaders get a `#call_one` method
+    # too, which builds the serialized object of one source:
+    #
+    #   call_one(source, context) -> Hash, Struct, Data
     def initialize(serializer_class, mode, points)
       @mode = mode
       @points = points
       @result_class = result_class(serializer_class)
+      # The generated code reads the `:const`, `:default` and formatter values from its constants
+      singleton_class.const_set(:SeregaAttributeValues, serializer_class::SeregaAttributeValues)
+      singleton_class.class_eval(SeregaResultCode.new(mode, points).to_s, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
     end
 
     private

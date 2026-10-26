@@ -58,15 +58,14 @@ class Serega
     end
 
     # A flat plan has no relations, preloads, batch loaders and presenter.
-    # Its sources need no source groups. YJIT reads an attr_reader without
-    # a method call, and the alias keeps it.
-    attr_reader :flat
-    alias_method :flat?, :flat
-    private :flat
+    # Its sources need no source groups.
+    def flat?
+      @flat
+    end
 
     # Result builder of this plan in the serialization mode
     def result_builder(mode)
-      @result_builders[mode] ||= SeregaResultBuilder.build(serializer_class, mode, points)
+      @result_builders[mode] ||= SeregaResultBuilder.new(serializer_class, mode, points)
     end
 
     private

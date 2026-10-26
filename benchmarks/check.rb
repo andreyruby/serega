@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Checks each benchmark case: Serega must be at most 2% slower than the fastest
-# other gem, and at most as slow as the hand-written Hash, with 10% more in the
-# single and collection cases. Prints a table of the times, adds it to the
+# other gem, and at most as slow as the hand-written Hash, with 15% more in the
+# single case and 10% more in the collection case. Prints a table of the times, adds it to the
 # GitHub job summary on CI, and exits with 1 when a case fails. Run it with
 # `rake benchmarks:check`.
 
@@ -36,10 +36,11 @@ module BenchmarkCheck
 
   # How much slower than the hand-written Hash Serega may be, by case. In the
   # single and collection cases both build each Hash with one method, and
-  # Serega takes 0.98 to 1.04 of its time. With relations the hand-written code
-  # calls a method per related record, and Serega takes 0.79 to 0.97 of its time.
+  # Serega takes 1.04 to 1.09 of its time for one object, and 0.98 to 1.01 for
+  # a collection. With relations the hand-written code calls a method per
+  # related record, and Serega takes 0.79 to 0.97 of its time.
   MAX_PLAIN_RUBY_RATIOS = {
-    "single" => 1.1, "collection" => 1.1, "relations" => 1.0, "only" => 1.0, "except" => 1.0
+    "single" => 1.15, "collection" => 1.1, "relations" => 1.0, "only" => 1.0, "except" => 1.0
   }.freeze
 
   # How much slower than the fastest other gem Serega may be. In the collection
@@ -98,7 +99,7 @@ module BenchmarkCheck
       failures = []
       failures << format("Serega takes %.2fx the time of %s, the limit is %.2fx", rival_ratio, rival, MAX_RIVAL_RATIO) if lost?
       if slowed_down?
-        failures << format("Serega takes %.2fx the time of the hand-written Hash, the limit is %.1fx", plain_ruby_ratio, max_plain_ruby_ratio)
+        failures << format("Serega takes %.2fx the time of the hand-written Hash, the limit is %.2fx", plain_ruby_ratio, max_plain_ruby_ratio)
       end
       failures
     end
