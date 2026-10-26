@@ -7,8 +7,9 @@ class Serega
     # Validates initiate options before building a plan.
     #
     class Cache # :nodoc:
-      # Cached plan and whether its modifiers were validated
-      CachedPlan = Struct.new(:plan, :validated)
+      # Cached plan, whether its modifiers were validated, and the modifiers
+      # as provided
+      CachedPlan = Struct.new(:plan, :validated, :only, :with, :except)
       private_constant :CachedPlan
 
       # Initializes empty plans cache of the serializer
@@ -37,15 +38,23 @@ class Serega
         @default_plan ||= SeregaPlan.new(@serializer_class, nil, FROZEN_EMPTY_HASH)
       end
 
+      # Keeps plans by the hash of the hash values of the modifiers, and
+      # compares each modifier with the cached one: an Array of the modifiers
+      # as the key hashes and compares nested arrays inside a recursion guard.
+      # Modifiers with the hash of other cached modifiers replace them.
       def cached_plan(only, with, except, max_size, check_initiate_params)
-        key = [only, with, except]
+        key = [only.hash, with.hash, except.hash].hash # rubocop:disable Security/CompoundHash -- `[only, with, except].hash` hashes nested arrays inside a recursion guard
         cached = @plans[key]
-        return reuse(cached, only, with, except, check_initiate_params) if cached
+        return reuse(cached, only, with, except, check_initiate_params) if cached && same_modifiers?(cached, only, with, except)
 
         plan = build(only, with, except, check_initiate_params)
-        @plans[frozen_copy(key)] = CachedPlan.new(plan, check_initiate_params)
+        @plans[key] = CachedPlan.new(plan, check_initiate_params, *frozen_copy([only, with, except]))
         @plans.shift if @plans.length > max_size
         plan
+      end
+
+      def same_modifiers?(cached, only, with, except)
+        only.eql?(cached.only) && with.eql?(cached.with) && except.eql?(cached.except)
       end
 
       def reuse(cached, only, with, except, check_initiate_params)
@@ -75,8 +84,8 @@ class Serega
         SeregaUtils::ToHash.call(value)
       end
 
-      def frozen_copy(key)
-        SeregaUtils::EnumDeepFreeze.call(SeregaUtils::EnumDeepDup.call(key))
+      def frozen_copy(modifiers)
+        SeregaUtils::EnumDeepFreeze.call(SeregaUtils::EnumDeepDup.call(modifiers))
       end
 
       def validate(modifiers)

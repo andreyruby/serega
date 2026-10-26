@@ -611,8 +611,9 @@ class Serega
     # ```
     #
     def call(object, context: nil, many: nil)
-      if many.equal?(false) && (builder = @plan.direct_hash_builder) && !object.nil? && (context.nil? || context.is_a?(Hash))
-        return builder.call_one(object, context || FROZEN_EMPTY_HASH)
+      if !many && (builder = @plan.direct_hash_builder) && !object.nil? && (context.nil? || context.is_a?(Hash))
+        many = SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
+        return builder.call_one(object, context || FROZEN_EMPTY_HASH) unless many
       end
 
       serialize_to(:hash, object, context, many, FROZEN_EMPTY_HASH)
