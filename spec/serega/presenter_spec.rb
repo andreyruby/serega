@@ -422,9 +422,11 @@ RSpec.describe Serega::SeregaPresenter do
       expect(serializer.presenter::Delegators.instance_methods(false)).to eq [:first_name]
     end
 
-    it "delegates other methods through method_missing" do
+    it "defines delegators of other methods in the presenter subclass of the Ractor" do
       expect(serializer.to_h(user)).to eq(first_name: "Bruce", full_name: "Bruce Wayne")
 
+      expect(serializer.local_presenter.superclass).to be serializer.presenter
+      expect(serializer.local_presenter::Delegators.instance_methods(false)).to eq [:last_name]
       expect(serializer.presenter::Delegators.instance_methods(false)).to eq [:first_name]
     end
   end

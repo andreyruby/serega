@@ -39,7 +39,7 @@ class Serega
       @run = run
       @plan = plan
       @context = run.context
-      presenter = plan.serializer_class.presenter
+      presenter = plan.serializer_class.local_presenter
       @sources = presenter ? sources.map { |source| presenter.new(source, @context) } : sources
       @pulls = pulls
       @child_groups = nil
