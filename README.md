@@ -107,13 +107,13 @@ more is better:
 <!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 2,261,852 |    27,196 |                    2,749 |   6,110 |     4,255 |
-| oj_serializers           |   795,018 |    21,736 |                    2,207 |       — |         — |
-| panko_serializer         |   593,879 |    17,403 |                    1,703 |   3,828 |     2,594 |
-| alba                     |   856,323 |    14,441 |                    1,248 |       — |         — |
-| blueprinter              |   653,782 |     8,827 |                      877 |       — |         — |
-| active_model_serializers |    70,057 |     1,058 |                       79 |     122 |         — |
-| *hand-written Hash*      | 2,350,489 |    27,118 |                    2,564 |   5,656 |     3,878 |
+| **Serega**               | 1,164,656 |    14,066 |                    1,427 |   2,924 |     1,955 |
+| oj_serializers           |   387,440 |    11,530 |                    1,058 |       — |         — |
+| panko_serializer         |   406,907 |    14,384 |                    1,185 |   2,787 |     1,922 |
+| alba                     |   337,815 |     5,054 |                      475 |       — |         — |
+| blueprinter              |   273,517 |     3,368 |                      360 |       — |         — |
+| active_model_serializers |    37,767 |       668 |                       52 |      78 |         — |
+| *hand-written Hash*      | 1,257,325 |    14,337 |                    1,327 |   2,813 |     1,935 |
 <!-- benchmarks:json:end -->
 
 Hashes, the details of each case and how to run them:

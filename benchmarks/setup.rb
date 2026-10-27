@@ -4,8 +4,6 @@
 # hand-written Hashes and one serializer per gem. The gems come from
 # gemfiles/benchmarks.gemfile.
 
-RubyVM::YJIT.enable if defined?(RubyVM::YJIT.enable)
-
 require "active_record"
 require "json"
 
