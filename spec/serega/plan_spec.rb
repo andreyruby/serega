@@ -279,7 +279,7 @@ RSpec.describe Serega::SeregaPlan do
       expect(presenter).to be current_serializer.presenter
     end
 
-    context "when the serializer is shareable" do
+    context "when the serializer is shareable", if: defined?(Ractor) do
       let(:current_serializer) do
         Class.new(base_class) do
           presenter { def name = "Ann" }

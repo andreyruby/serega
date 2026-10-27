@@ -401,7 +401,7 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
-  describe "making the serializer shareable" do
+  describe "making the serializer shareable", if: defined?(Ractor) do
     let(:serializer) do
       Class.new(Serega) do
         attribute :first_name
