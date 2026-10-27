@@ -152,8 +152,12 @@ RSpec.describe Serega do
         end
       end
 
-      it "delegates to the wrapped object" do
-        expect(run_in_ractor(number_serializer) { |serializer| serializer.to_h(1) }).to eq(next_number: 2)
+      it "delegates to the wrapped object with delegators of the Ractor" do
+        result, delegators = run_in_ractor(number_serializer) { |serializer| [serializer.to_h(1), serializer.local_presenter::Delegators.instance_methods(false)] }
+
+        expect(result).to eq(next_number: 2)
+        expect(delegators).to eq [:+]
+        expect(number_serializer.presenter::Delegators.instance_methods(false)).to be_empty
       end
     end
 

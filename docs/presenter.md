@@ -50,8 +50,7 @@ Presenter methods are slower than `:value` options: each object is wrapped,
 and each attribute is read through the wrapper. 20 objects with 10
 attributes, 2 of them computed, serialize in 11.7 µs with presenter methods and
 in 6.3 µs with `:value` options, about twice as fast. The difference is a few
-microseconds, thus it matters little in a request that takes milliseconds. A
-[shareable](ractors.md) serializer makes presenter methods slower still.
+microseconds, thus it matters little in a request that takes milliseconds.
 
 ## Inheritance
 

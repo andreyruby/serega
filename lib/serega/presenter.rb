@@ -98,12 +98,10 @@ class Serega
     #
     # Creates delegator method for public methods of the wrapped object after
     # first #method_missing hit to improve performance of following serializations.
-    # A shareable serializer freezes its delegators, thus its presenter
-    # delegates through method_missing each time.
     #
     def method_missing(name, ...) # rubocop:disable Style/MissingRespondToMissing -- base SimpleDelegator class has this method
       result = super
-      self.class.define_delegator(name) if !self.class::Delegators.frozen? && __getobj__.respond_to?(name)
+      self.class.define_delegator(name) if __getobj__.respond_to?(name)
       result
     end
   end

@@ -172,6 +172,17 @@ class Serega
       # :nocov:
     end
 
+    # Returns the presenter class that wraps objects in the current Ractor,
+    # `nil` without presenter methods. A shareable serializer gives each
+    # Ractor its own subclass of the presenter, which defines delegators
+    # in its own `Delegators` module.
+    def local_presenter # :nodoc:
+      key = @presenter_key
+      return @presenter_class unless key
+
+      SeregaUtils::RactorLocal.fetch(key) { Class.new(@presenter_class) }
+    end
+
     # Lists blocks given to `presenter`, in definition order
     def presenter_blocks # :nodoc:
       @presenter_blocks
@@ -465,15 +476,18 @@ class Serega
       return self if @shareable
 
       lock
-      # The presenter keeps the delegators defined on lock, as other Ractors
-      # can not define methods in it
-      @presenter_class::Delegators.freeze if @presenter_class
       attributes.each_value { |attribute| attribute.serializer.make_shareable! if attribute.initials[:block] }
       @shareable = true
       # :nocov:
       if defined?(Ractor)
         require_relative "serega/shareable"
         require_relative "serega/plan/per_ractor_cache"
+        # Other Ractors can not define methods in the presenter, thus each
+        # Ractor wraps objects in its own subclass of it
+        if @presenter_class
+          @presenter_class::Delegators.freeze
+          @presenter_key = SeregaUtils::RactorLocal.key(self, :presenter)
+        end
         @unshareable_reason = SeregaShareable.call(self)
         @plan_cache = SeregaPlan::PerRactorCache.new(self) unless @unshareable_reason
       end
@@ -543,6 +557,7 @@ class Serega
       @formatters = formatters
       @presenter_class = nil
       @presenter_blocks = []
+      @presenter_key = nil
       @data_classes = {}
       @struct_classes = {}
       @preload_with = nil
