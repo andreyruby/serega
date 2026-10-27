@@ -265,6 +265,36 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "#presenter" do
+    subject(:presenter) { plan({}).presenter }
+
+    let(:current_serializer) do
+      Class.new(base_class) do
+        presenter { def name = "Ann" }
+        attribute :name
+      end
+    end
+
+    it "returns the presenter of the serializer" do
+      expect(presenter).to be current_serializer.presenter
+    end
+
+    context "when the serializer is shareable" do
+      let(:current_serializer) do
+        Class.new(base_class) do
+          presenter { def name = "Ann" }
+          attribute :name
+          make_shareable!
+        end
+      end
+
+      it "returns the presenter subclass of the Ractor" do
+        expect(presenter).to be current_serializer.local_presenter
+        expect(presenter.superclass).to be current_serializer.presenter
+      end
+    end
+  end
+
   describe "#direct_hash_builder" do
     subject(:current_plan) { plan({}) }
 

@@ -21,6 +21,10 @@ class Serega
     # Whether the root objects of a class are collections
     attr_reader :collection_classes
 
+    # Presenter class that wraps the sources in the Ractor of the plan, `nil`
+    # without presenter methods
+    attr_reader :presenter
+
     # Instantiate new serialization plan. Raises DepthLimitError when the plan
     # nests deeper than the depth limit of the root serializer.
     def initialize(serializer_class, parent_plan_point, modifiers)
@@ -28,11 +32,12 @@ class Serega
       serializer_class.lock
       @serializer_class = serializer_class
       @parent_plan_point = parent_plan_point
+      @presenter = serializer_class.local_presenter
       @points = attributes_points(modifiers)
       @relation_points = points.select(&:child_plan).freeze
       @preload_points = points.select(&:preloads).freeze
       @batch_points = points.any? { |point| !point.batch_loaders.empty? }
-      @flat = relation_points.empty? && preload_points.empty? && !@batch_points && !serializer_class.presenter
+      @flat = relation_points.empty? && preload_points.empty? && !@batch_points && !@presenter
       @result_builders = {}
       @collection_classes = {}.compare_by_identity
       direct = parent_plan_point.nil? && @flat && !serializer_class.prepare_initial_objects_signature
