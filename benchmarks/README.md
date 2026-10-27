@@ -11,13 +11,13 @@ JSON strings:
 <!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 2,261,852 |    27,196 |                    2,749 |   6,110 |     4,255 |
-| oj_serializers           |   795,018 |    21,736 |                    2,207 |       — |         — |
-| panko_serializer         |   593,879 |    17,403 |                    1,703 |   3,828 |     2,594 |
-| alba                     |   856,323 |    14,441 |                    1,248 |       — |         — |
-| blueprinter              |   653,782 |     8,827 |                      877 |       — |         — |
-| active_model_serializers |    70,057 |     1,058 |                       79 |     122 |         — |
-| *hand-written Hash*      | 2,350,489 |    27,118 |                    2,564 |   5,656 |     3,878 |
+| **Serega**               | 1,164,656 |    14,066 |                    1,427 |   2,924 |     1,955 |
+| oj_serializers           |   387,440 |    11,530 |                    1,058 |       — |         — |
+| panko_serializer         |   406,907 |    14,384 |                    1,185 |   2,787 |     1,922 |
+| alba                     |   337,815 |     5,054 |                      475 |       — |         — |
+| blueprinter              |   273,517 |     3,368 |                      360 |       — |         — |
+| active_model_serializers |    37,767 |       668 |                       52 |      78 |         — |
+| *hand-written Hash*      | 1,257,325 |    14,337 |                    1,327 |   2,813 |     1,935 |
 <!-- benchmarks:json:end -->
 
 Hashes:
@@ -25,13 +25,13 @@ Hashes:
 <!-- benchmarks:hash -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 3,485,435 |    40,994 |                    3,817 |   8,773 |     6,254 |
-| oj_serializers           | 3,395,891 |    38,786 |                    3,360 |       — |         — |
-| panko_serializer         |   825,353 |    13,794 |                    1,352 |   2,647 |     1,857 |
-| alba                     | 1,190,736 |    16,804 |                    1,430 |       — |         — |
-| blueprinter              |   753,478 |     9,997 |                      966 |       — |         — |
-| active_model_serializers |    74,193 |     1,087 |                       82 |     123 |         — |
-| *hand-written Hash*      | 3,817,769 |    41,005 |                    3,504 |   7,710 |     5,475 |
+| **Serega**               | 1,543,685 |    17,037 |                    1,657 |   3,385 |     2,328 |
+| oj_serializers           | 1,445,839 |    16,313 |                    1,377 |       — |         — |
+| panko_serializer         |   502,677 |     9,269 |                      856 |   1,731 |     1,179 |
+| alba                     |   421,311 |     5,346 |                      503 |       — |         — |
+| blueprinter              |   302,706 |     3,625 |                      377 |       — |         — |
+| active_model_serializers |    40,633 |       677 |                       53 |      79 |         — |
+| *hand-written Hash*      | 1,699,859 |    17,119 |                    1,535 |   3,266 |     2,221 |
 <!-- benchmarks:hash:end -->
 
 "—" means the gem has no runtime field selection.
@@ -82,7 +82,7 @@ first value that differs.
 
 ## Environment
 
-Apple M4, Ruby 4.0.7 with YJIT, alba 4.0.1, blueprinter 1.3.0,
+Apple M4, Ruby 4.0.7 without a JIT, alba 4.0.1, blueprinter 1.3.0,
 panko_serializer 0.8.5, active_model_serializers 0.10.16, oj_serializers
 3.0.2, activerecord 8.1.4. The gems come from
 `gemfiles/benchmarks.gemfile`, and `cases.rb` defines how each gem
@@ -94,6 +94,14 @@ serializes each case.
 BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle install
 ruby benchmarks/relations.rb         # single, collection, relations, only, except
 FAST=1 ruby benchmarks/relations.rb  # a short round
+```
+
+The scripts and the rake tasks run without a JIT. `RUBY_YJIT_ENABLE=1` runs
+them with YJIT:
+
+```sh
+RUBY_YJIT_ENABLE=1 ruby benchmarks/relations.rb
+RUBY_YJIT_ENABLE=1 bundle exec rake benchmarks:check
 ```
 
 `rake benchmarks:full` (`full.rb`) runs every case, about 1.5 minutes, and

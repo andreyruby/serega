@@ -11,11 +11,11 @@ require_relative "support"
 module BenchmarkCheck
   # The fastest other gem by case and format, see README.md
   RIVALS = {
-    ["single", :json] => "alba",
+    ["single", :json] => "oj_serializers",
     ["single", :hash] => "oj_serializers",
-    ["collection", :json] => "oj_serializers",
+    ["collection", :json] => "panko_serializer",
     ["collection", :hash] => "oj_serializers",
-    ["relations", :json] => "oj_serializers",
+    ["relations", :json] => "panko_serializer",
     ["relations", :hash] => "oj_serializers",
     ["only", :json] => "panko_serializer",
     ["only", :hash] => "panko_serializer",
@@ -36,15 +36,15 @@ module BenchmarkCheck
 
   # How much slower than the hand-written Hash Serega may be, by case. In the
   # single and collection cases both build each Hash with one method, and
-  # Serega takes 1.04 to 1.09 of its time for one object, and 0.98 to 1.01 for
+  # Serega takes 1.07 to 1.15 of its time for one object, and 1.00 to 1.03 for
   # a collection. With relations the hand-written code calls a method per
-  # related record, and Serega takes 0.79 to 0.97 of its time.
+  # related record, and Serega takes 0.92 to 0.98 of its time.
   MAX_PLAIN_RUBY_RATIOS = {
     "single" => 1.15, "collection" => 1.1, "relations" => 1.0, "only" => 1.0, "except" => 1.0
   }.freeze
 
   # How much slower than the fastest other gem Serega may be. In the collection
-  # Hash case Serega, the other gem and the hand-written Hash take the same
+  # cases Serega, the other gem and the hand-written Hash take about the same
   # time, and each wins some runs.
   MAX_RIVAL_RATIO = 1.02
 
