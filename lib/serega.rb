@@ -608,6 +608,7 @@ class Serega
       modifiers = !(only.nil? && with.nil? && except.nil?)
       check_initiate_params = config.check_initiate_params if modifiers && check_initiate_params.nil?
       @plan = self.class.plan_cache.fetch(only, with, except, check_initiate_params: modifiers && check_initiate_params)
+      @direct_hash_builder = @plan.direct_hash_builder
     end
 
     # Plan for serialization.
@@ -626,9 +627,10 @@ class Serega
     # ```
     #
     def call(object, context: nil, many: nil)
-      if !many && (builder = @plan.direct_hash_builder) && !object.nil? && (context.nil? || context.is_a?(Hash))
+      builder = @direct_hash_builder
+      if builder && object && !many && (context.nil? || context.is_a?(Hash))
         many = SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
-        return builder.call_one(object, context || FROZEN_EMPTY_HASH) unless many
+        return builder.call_one(object, context.nil? ? FROZEN_EMPTY_HASH : context) unless many
       end
 
       serialize_to(:hash, object, context, many, FROZEN_EMPTY_HASH)
