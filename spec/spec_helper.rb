@@ -34,6 +34,11 @@ def load_plugin_code(*names)
   names.each { |name| serializer_class.plugin(name) }
 end
 
+# The plan of the serializer without modifiers
+def default_plan(serializer_class)
+  Serega::SeregaPlan.new(Serega::SeregaPlan::Selection.new(serializer_class, {}))
+end
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"

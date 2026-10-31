@@ -10,7 +10,7 @@ RSpec.describe Serega::SeregaResultBuilder do
     end
   end
 
-  let(:plan) { Serega::SeregaPlan.new(serializer, nil, {}) }
+  let(:plan) { default_plan(serializer) }
   let(:mode) { :hash }
 
   describe ".new" do

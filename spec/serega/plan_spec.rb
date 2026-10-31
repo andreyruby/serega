@@ -42,8 +42,8 @@ RSpec.describe Serega::SeregaPlan do
 
   let(:current_serializer) { a }
 
-  def plan(opts)
-    Serega::SeregaPlan.new(current_serializer, nil, opts)
+  def plan(modifiers)
+    described_class.new(Serega::SeregaPlan::Selection.new(current_serializer, modifiers))
   end
 
   def satisfy_attribute_names(names)
@@ -59,80 +59,15 @@ RSpec.describe Serega::SeregaPlan do
   end
 
   describe "#initialize" do
-    it "returns plan with all not hidden attributes by default" do
-      result = plan({})
+    it "makes the points and the child plans of the selected attributes" do
+      result = plan(with: {c: {c3: {}}})
 
       expect(result).to satisfy_attribute_names(
         a1: nil,
         a2: nil,
-        d: {d1: nil, d2: nil}
-      )
-    end
-
-    it "returns only attributes from :only option" do
-      result = plan(only: {a2: {}, d: {d1: {}}}, except: {}, with: {})
-
-      expect(result).to satisfy_attribute_names(
-        a2: nil,
-        d: {d1: nil}
-      )
-    end
-
-    it "returns all not hidden attributes except provided in :except option" do
-      result = plan(only: {}, except: {a2: {}, d: {d1: {}}}, with: {})
-
-      expect(result).to satisfy_attribute_names(
-        a1: nil,
-        d: {d2: nil}
-      )
-    end
-
-    it "returns all not hidden attributes and attributes defined in :with option" do
-      result = plan(only: {}, except: {}, with: {a3: {}, b: {}, c: {c3: {}}})
-
-      expect(result).to satisfy_attribute_names(
-        a1: nil,
-        a2: nil,
-        a3: nil,
-        b: {b1: nil, b2: nil},
         c: {c1: nil, c2: nil, c3: nil},
         d: {d1: nil, d2: nil}
       )
-    end
-
-    context "when :only names nested fields only" do
-      subject(:result) { plan(only: {d: {d1: {}}}, except: except, with: with) }
-
-      let(:except) { {} }
-      let(:with) { {} }
-
-      it "returns the named relation only" do
-        expect(result).to satisfy_attribute_names(d: {d1: nil})
-      end
-
-      context "when :except hides an attribute of the level" do
-        let(:except) { {a2: {}} }
-
-        it "returns the other not hidden attributes and the named relation" do
-          expect(result).to satisfy_attribute_names(a1: nil, d: {d1: nil})
-        end
-      end
-
-      context "when :except hides nested fields only" do
-        let(:except) { {d: {d2: {}}} }
-
-        it "returns the named relation only" do
-          expect(result).to satisfy_attribute_names(d: {d1: nil})
-        end
-      end
-
-      context "when :with adds an attribute of the level" do
-        let(:with) { {a3: {}} }
-
-        it "returns the not hidden attributes, the added attribute and the named relation" do
-          expect(result).to satisfy_attribute_names(a1: nil, a2: nil, a3: nil, d: {d1: nil})
-        end
-      end
     end
 
     context "with cyclic relations" do

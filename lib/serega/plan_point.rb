@@ -21,23 +21,19 @@ class Serega
     # with a child plan
     attr_reader :collection_classes
 
-    # Initializes plan point
-    def initialize(plan, attribute, modifiers = nil)
+    # Initializes plan point. A point with a child selection gets a child
+    # plan of the relation serializer.
+    def initialize(plan, attribute, child_selection = nil)
       @plan = plan
       @attribute = attribute
       @name = attribute.name
-      @child_plan = serializer ? SeregaPlan.new(serializer, self, modifiers || FROZEN_EMPTY_HASH) : nil
+      @child_plan = child_selection ? SeregaPlan.new(child_selection, self) : nil
       @collection_classes = @child_plan ? {}.compare_by_identity : nil
     end
 
     # Attribute `many` option
     def many
       attribute.many
-    end
-
-    # Attribute `serializer` option
-    def serializer
-      attribute.serializer
     end
 
     # Attribute `batch_loaders`

@@ -35,7 +35,7 @@ class Serega
       private
 
       def default_plan
-        @default_plan ||= SeregaPlan.new(@serializer_class, nil, FROZEN_EMPTY_HASH)
+        @default_plan ||= SeregaPlan.new(Selection.new(@serializer_class, FROZEN_EMPTY_HASH))
       end
 
       # Keeps plans by the hash of the hash values of the modifiers, and
@@ -71,7 +71,7 @@ class Serega
         return default_plan if modifiers[:only].empty? && modifiers[:with].empty? && modifiers[:except].empty?
 
         validate(modifiers) if check_initiate_params
-        SeregaPlan.new(@serializer_class, nil, modifiers)
+        SeregaPlan.new(Selection.new(@serializer_class, modifiers))
       end
 
       def parse_modifiers(only, with, except)
