@@ -26,9 +26,10 @@ class Serega
     attr_reader :presenter
 
     # Instantiate new serialization plan of the selected attributes of the
-    # selection's serializer. A child plan gets the point of its parent plan.
-    # Raises DepthLimitError when the plan nests deeper than the depth limit
-    # of the root serializer.
+    # selection's serializer, with the result builder class of the
+    # selection. A child plan gets the point of its parent plan. Raises
+    # DepthLimitError when the plan nests deeper than the depth limit of the
+    # root serializer.
     def initialize(selection, parent_plan_point = nil)
       check_depth_limit(parent_plan_point) if parent_plan_point
       serializer_class = selection.serializer_class
@@ -36,6 +37,7 @@ class Serega
       @serializer_class = serializer_class
       @parent_plan_point = parent_plan_point
       @presenter = serializer_class.local_presenter
+      @builder_class = selection.builder_class
       @points = selected_points(selection)
       @relation_points = points.select(&:child_plan).freeze
       @preload_points = points.select(&:preloads).freeze
@@ -43,7 +45,7 @@ class Serega
       @flat = relation_points.empty? && preload_points.empty? && !@batch_points && !@presenter
       @result_builders = {}
       @collection_classes = {}.compare_by_identity
-      direct = parent_plan_point.nil? && @flat && !serializer_class.prepare_initial_objects_signature
+      direct = parent_plan_point.nil? && @flat && !serializer_class.prepare_initial_objects_signature && @builder_class.equal?(SeregaResultBuilder)
       @direct_hash_builder = direct ? result_builder(:hash) : nil
     # :nocov:
     rescue *RACTOR_ISOLATION_ERRORS
@@ -57,7 +59,8 @@ class Serega
     attr_reader :preload_points
 
     # Hash result builder of a flat root plan whose serializer prepares no
-    # initial objects. `Serega#call` builds one source with it directly.
+    # initial objects and whose builder class is SeregaResultBuilder.
+    # `Serega#call` builds one source with it directly.
     attr_reader :direct_hash_builder
 
     # Whether any point uses batch loaders
@@ -71,9 +74,10 @@ class Serega
       @flat
     end
 
-    # Result builder of this plan in the serialization mode
+    # Result builder of this plan in the serialization mode, made with the
+    # builder class of the selection
     def result_builder(mode)
-      @result_builders[mode] ||= SeregaResultBuilder.new(serializer_class, mode, points)
+      @result_builders[mode] ||= @builder_class.new(serializer_class, mode, points)
     end
 
     private

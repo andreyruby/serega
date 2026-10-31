@@ -146,6 +146,12 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
   end
 
+  describe "#builder_class" do
+    it "returns SeregaResultBuilder" do
+      expect(selection.builder_class).to be Serega::SeregaResultBuilder
+    end
+  end
+
   describe "#preloads" do
     subject(:preloads) { selection.preloads(attribute) }
 

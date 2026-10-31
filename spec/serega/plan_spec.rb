@@ -252,6 +252,19 @@ RSpec.describe Serega::SeregaPlan do
       expect(current_plan.direct_hash_builder).to equal current_plan.result_builder(:hash)
     end
 
+    context "when the selection gives another builder class" do
+      subject(:current_plan) { described_class.new(selection) }
+
+      let(:selection) do
+        selection_class = Class.new(Serega::SeregaPlan::Selection) { def builder_class = Class.new(Serega::SeregaResultBuilder) }
+        selection_class.new(current_serializer, {})
+      end
+
+      it "returns nil" do
+        expect(current_plan.direct_hash_builder).to be_nil
+      end
+    end
+
     context "with a relation" do
       let(:current_serializer) do
         child = b
@@ -305,6 +318,27 @@ RSpec.describe Serega::SeregaPlan do
 
     it "returns separate result builders for different modes" do
       expect(current_plan.result_builder(:hash)).not_to equal current_plan.result_builder(:struct)
+    end
+
+    context "when the selection gives another builder class" do
+      let(:current_plan) { described_class.new(selection) }
+      let(:builder_class) { Class.new(Serega::SeregaResultBuilder) }
+
+      let(:selection) do
+        selection_builder_class = builder_class
+        selection_class = Class.new(Serega::SeregaPlan::Selection) { define_method(:builder_class) { selection_builder_class } }
+        selection_class.new(current_serializer, {only: {a1: {}, d: {}}})
+      end
+
+      it "returns the result builder of the builder class" do
+        expect(current_plan.result_builder(:hash)).to be_a(builder_class)
+      end
+
+      it "returns the result builder of its own selection in a child plan" do
+        child_plan = current_plan.points.find(&:child_plan).child_plan
+
+        expect(child_plan.result_builder(:hash)).to be_an_instance_of(Serega::SeregaResultBuilder)
+      end
     end
   end
 end
