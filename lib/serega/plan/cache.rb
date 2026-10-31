@@ -15,6 +15,14 @@ class Serega
         def same_params?(param1, param2, param3)
           param1.eql?(self.param1) && param2.eql?(self.param2) && param3.eql?(self.param3)
         end
+
+        # Validates the cached parameters with the planner, once
+        def validate(planner, serializer_class)
+          return if validated
+
+          planner.validate(serializer_class, planner.parse(param1, param2, param3))
+          self.validated = true
+        end
       end
       private_constant :CachedPlan
 
@@ -37,11 +45,15 @@ class Serega
       # The plan without parameters is always cached; plans with parameters
       # are cached by parameters as provided when
       # `max_cached_plans_per_serializer_count` is positive. Parameters are
-      # parsed and validated when a plan is built.
-      def fetch(param1 = nil, param2 = nil, param3 = nil, check_initiate_params: false)
+      # parsed when a plan is built, and validated when
+      # `check_initiate_params` is true, or nil with
+      # `config.check_initiate_params` on.
+      def fetch(param1 = nil, param2 = nil, param3 = nil, check_initiate_params: nil)
         return default_plan if param1.nil? && param2.nil? && param3.nil?
 
-        max_size = @serializer_class.config.max_cached_plans_per_serializer_count
+        config = @serializer_class.config
+        check_initiate_params = config.check_initiate_params if check_initiate_params.nil?
+        max_size = config.max_cached_plans_per_serializer_count
         return build(param1, param2, param3, check_initiate_params) if max_size.zero?
 
         cached_plan(param1, param2, param3, max_size, check_initiate_params)
@@ -62,21 +74,15 @@ class Serega
       def cached_plan(param1, param2, param3, max_size, check_initiate_params)
         key = [param1.hash, param2.hash, param3.hash].hash # rubocop:disable Security/CompoundHash -- `[param1, param2, param3].hash` hashes nested arrays inside a recursion guard
         cached = @plans[key]
-        return reuse(cached, param1, param2, param3, check_initiate_params) if cached&.same_params?(param1, param2, param3)
+        if cached&.same_params?(param1, param2, param3)
+          cached.validate(@planner, @serializer_class) if check_initiate_params
+          return cached.plan
+        end
 
         plan = build(param1, param2, param3, check_initiate_params)
         @plans[key] = CachedPlan.new(plan, check_initiate_params, *frozen_copy([param1, param2, param3]))
         @plans.shift if @plans.length > max_size
         plan
-      end
-
-      def reuse(cached, param1, param2, param3, check_initiate_params)
-        if check_initiate_params && !cached.validated
-          @planner.validate(@serializer_class, @planner.parse(param1, param2, param3))
-          cached.validated = true
-        end
-
-        cached.plan
       end
 
       def build(param1, param2, param3, check_initiate_params)
