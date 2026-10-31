@@ -25,15 +25,18 @@ class Serega
     # without presenter methods
     attr_reader :presenter
 
-    # Instantiate new serialization plan. Raises DepthLimitError when the plan
-    # nests deeper than the depth limit of the root serializer.
-    def initialize(serializer_class, parent_plan_point, modifiers)
+    # Instantiate new serialization plan of the selected attributes of the
+    # selection's serializer. A child plan gets the point of its parent plan.
+    # Raises DepthLimitError when the plan nests deeper than the depth limit
+    # of the root serializer.
+    def initialize(selection, parent_plan_point = nil)
       check_depth_limit(parent_plan_point) if parent_plan_point
+      serializer_class = selection.serializer_class
       serializer_class.lock
       @serializer_class = serializer_class
       @parent_plan_point = parent_plan_point
       @presenter = serializer_class.local_presenter
-      @points = attributes_points(modifiers)
+      @points = selected_points(selection)
       @relation_points = points.select(&:child_plan).freeze
       @preload_points = points.select(&:preloads).freeze
       @batch_points = points.any? { |point| !point.batch_loaders.empty? }
@@ -93,37 +96,14 @@ class Serega
       raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{names.join(" -> ")}")
     end
 
-    def attributes_points(modifiers)
-      only = modifiers[:only] || FROZEN_EMPTY_HASH
-      except = modifiers[:except] || FROZEN_EMPTY_HASH
-      with = modifiers[:with] || FROZEN_EMPTY_HASH
-      only_limits = only_limits?(only, except, with)
-      points = []
-
-      serializer_class.attributes.each_value do |attribute|
-        next unless attribute.visible?(only, except, with, only_limits)
-
-        child_fields =
-          if attribute.relation?
-            name = attribute.name
-            {only: only[name], with: with[name], except: except[name]}
-          end
-
-        point = SeregaPlanPoint.new(self, attribute, child_fields)
-        points << point.freeze
+    # Makes a point of each selected attribute, with the child selection of
+    # the attribute for its child plan
+    def selected_points(selection)
+      points = selection.attributes.map do |attribute|
+        SeregaPlanPoint.new(self, attribute, selection.child(attribute)).freeze
       end
 
       points.freeze
-    end
-
-    # `only` hides the fields it does not name when it names a field of
-    # this level without nested fields, or when `except` hides no field and
-    # `with` adds no field of this level
-    def only_limits?(only, except, with)
-      return false if only.empty?
-      return true if only.each_value.any?(&:empty?)
-
-      with.empty? && except.each_value.none?(&:empty?)
     end
   end
 end

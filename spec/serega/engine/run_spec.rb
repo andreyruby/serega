@@ -15,7 +15,7 @@ RSpec.describe Serega::SeregaEngine::Run do
     end
   end
 
-  let(:plan) { Serega::SeregaPlan.new(user_serializer, nil, {}) }
+  let(:plan) { default_plan(user_serializer) }
 
   describe ".call" do
     subject(:result) { described_class.call(plan, object, many, mode, context) }
@@ -33,7 +33,7 @@ RSpec.describe Serega::SeregaEngine::Run do
     end
 
     context "with a flat plan" do
-      let(:plan) { Serega::SeregaPlan.new(post_serializer, nil, {}) }
+      let(:plan) { default_plan(post_serializer) }
       let(:object) { post }
 
       it "serializes the object without a run" do
