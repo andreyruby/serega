@@ -101,7 +101,7 @@ them with YJIT:
 
 ```sh
 RUBY_YJIT_ENABLE=1 ruby benchmarks/relations.rb
-RUBY_YJIT_ENABLE=1 bundle exec rake benchmarks:check
+RUBY_YJIT_ENABLE=1 bundle exec rake benchmarks:full
 ```
 
 `rake benchmarks:full` (`full.rb`) runs every case, about 1.5 minutes, and
@@ -113,9 +113,13 @@ bundle exec rake benchmarks:full
 TIME=5 bundle exec rake benchmarks:full
 ```
 
-`rake benchmarks:check` (`check.rb`) measures Serega, the fastest other gem and
-the hand-written Hash of each case for 0.5 seconds, and prints a table of the
-times. CI runs it on the latest Ruby:
+`rake benchmarks:check` (`check.rb`) counts the instructions and the allocated
+objects of one call of Serega, the fastest other gem and the hand-written Hash
+of each case, and prints a table of the counts. Valgrind's callgrind counts the
+instructions, thus the counts are the same between runs and on a busy machine,
+and CI fails on a change of Serega and not on noise. It needs Linux with
+Valgrind and its headers (the `valgrind` package on Debian and Ubuntu), thus on
+macOS it runs in a Linux container. CI runs it on the latest Ruby:
 
 ```sh
 bundle exec rake benchmarks:check

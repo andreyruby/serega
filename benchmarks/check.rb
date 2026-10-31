@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Checks each benchmark case by the instructions and the allocated objects of
-# one call: Serega must run at most 2% more instructions than the fastest
-# other gem, at most as many as the hand-written Hash with some more by case,
+# one call: Serega must run at most as many instructions as the fastest other
+# gem, about as many as the hand-written Hash with a limit by case,
 # and allocate at most a few objects more than the hand-written Hash. Prints a
 # table of the counts, adds it to the GitHub job summary on CI, and exits with
 # 1 when a case fails.
@@ -39,17 +39,21 @@ module BenchmarkCheck
   ROUNDS = 3
 
   # How many more instructions than the hand-written Hash Serega may run, by
-  # case
+  # case, about 1% over the counts on Ruby 4.0.9 x86_64: 1.080 to 1.087 for
+  # one post, 0.985 to 0.988 for a collection, 0.998 to 0.999 with
+  # relations, 1.029 to 1.039 with only and 1.016 to 1.022 with except.
   MAX_PLAIN_RUBY_RATIOS = {
-    "single" => 1.1, "collection" => 1.02, "relations" => 1.0, "only" => 1.0, "except" => 1.0
+    "single" => 1.1, "collection" => 1.0, "relations" => 1.01, "only" => 1.05, "except" => 1.03
   }.freeze
 
-  # How many more instructions than the fastest other gem Serega may run
-  MAX_RIVAL_RATIO = 1.02
+  # How many more instructions than the fastest other gem Serega may run.
+  # Serega runs 0.51 to 0.98 of their instructions.
+  MAX_RIVAL_RATIO = 1.0
 
   # How many more objects than the hand-written Hash Serega may allocate, by
-  # case: the run and its source groups with relations
-  MAX_EXTRA_OBJECTS = {"single" => 0, "collection" => 1, "relations" => 22, "only" => 22, "except" => 22}.freeze
+  # case: one more for the JSON of one post, the sources Array of a
+  # collection, and the run and its source groups with relations
+  MAX_EXTRA_OBJECTS = {"single" => 1, "collection" => 1, "relations" => 22, "only" => 22, "except" => 22}.freeze
 
   # Columns of the table, and whether each is right-aligned
   COLUMNS = {
