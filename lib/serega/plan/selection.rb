@@ -5,7 +5,8 @@ class Serega
     #
     # The attributes a plan serializes, selected with the parsed `only`,
     # `with` and `except` modifiers. A plan reads the selected attributes,
-    # and the selection of each child plan from `#child`.
+    # the selection of each child plan from `#child`, and the preloads of
+    # each point from `#preloads`.
     #
     class Selection # :nodoc:
       # Serializer of the selected attributes
@@ -45,6 +46,12 @@ class Serega
 
         name = attribute.name
         Selection.new(attribute.serializer, {only: @only[name], with: @with[name], except: @except[name]})
+      end
+
+      # Returns the preloads of the point of a selected attribute: the
+      # preloads of the attribute
+      def preloads(attribute)
+        attribute.preloads
       end
 
       private

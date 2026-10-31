@@ -15,6 +15,9 @@ class Serega
       # Attribute `name`
       attr_reader :name
 
+      # Preloads of the point, given by the selection
+      attr_reader :preloads
+
       # Shows child plan if exists
       attr_reader :child_plan
 
@@ -23,11 +26,12 @@ class Serega
       attr_reader :collection_classes
 
       # Initializes plan point. A point with a child selection gets a child
-      # plan of the relation serializer.
-      def initialize(plan, attribute, child_selection = nil)
+      # plan of it.
+      def initialize(plan, attribute, preloads, child_selection)
         @plan = plan
         @attribute = attribute
         @name = attribute.name
+        @preloads = preloads
         @child_plan = child_selection ? SeregaPlan.new(child_selection, self) : nil
         @collection_classes = @child_plan ? {}.compare_by_identity : nil
       end
@@ -40,11 +44,6 @@ class Serega
       # Attribute `batch_loaders`
       def batch_loaders
         attribute.batch_loaders
-      end
-
-      # Attribute `preloads`
-      def preloads
-        attribute.preloads
       end
 
       # Attribute `conditional?`

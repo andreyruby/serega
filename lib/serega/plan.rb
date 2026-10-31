@@ -96,11 +96,11 @@ class Serega
       raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{names.join(" -> ")}")
     end
 
-    # Makes a point of each selected attribute, with the child selection of
-    # the attribute for its child plan
+    # Makes a point of each selected attribute, with the preloads and child
+    # selection the selection gives it
     def selected_points(selection)
       points = selection.attributes.map do |attribute|
-        Point.new(self, attribute, selection.child(attribute)).freeze
+        Point.new(self, attribute, selection.preloads(attribute), selection.child(attribute)).freeze
       end
 
       points.freeze

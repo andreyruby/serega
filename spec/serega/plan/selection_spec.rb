@@ -145,4 +145,14 @@ RSpec.describe Serega::SeregaPlan::Selection do
       end
     end
   end
+
+  describe "#preloads" do
+    subject(:preloads) { selection.preloads(attribute) }
+
+    let(:attribute) { Class.new(base_class) { attribute :posts, preload: :posts, value: proc { [] } }.attributes[:posts] }
+
+    it "returns the preloads of the attribute" do
+      expect(preloads).to eq :posts
+    end
+  end
 end
