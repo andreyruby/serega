@@ -85,7 +85,7 @@ class Serega
 
         def add_metadata(object, context, hash)
           self.class.meta_attributes.each_value do |meta_attribute|
-            metadata = meta_attribute_value(object, context, meta_attribute)
+            metadata = meta_attribute.nested_value(object, context)
             next unless metadata
 
             SeregaUtils::DeepMerge.call(hash, metadata)
@@ -95,15 +95,6 @@ class Serega
               (when serializing meta_attribute #{meta_attribute.path.inspect} in #{self.class})
             MESSAGE
           end
-        end
-
-        def meta_attribute_value(object, context, meta_attribute)
-          value = meta_attribute.value(object, context)
-          return if meta_attribute.hide?(value)
-
-          # Example: path [:foo, :bar] and value :bazz give { foo: { bar: :bazz } }
-          meta_attribute.path.reverse_each { |key| value = {key => value} }
-          value
         end
       end
     end

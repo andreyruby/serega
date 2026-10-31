@@ -167,6 +167,9 @@ class Serega
           result
         end
 
+        # Root key of the serialization, nil without a root. Read by the
+        # plugins :metadata and :context_metadata, which add their data only
+        # under a root.
         def build_root(opts, many)
           return opts[:root] if opts.key?(:root)
 
