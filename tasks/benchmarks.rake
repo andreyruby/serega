@@ -7,7 +7,7 @@ namespace :benchmarks do
     Bundler.with_original_env { ruby "benchmarks/check.rb" }
   end
 
-  desc "Runs the benchmarks and updates the tables of README.md and benchmarks/README.md"
+  desc "Runs the benchmarks and updates the tables of benchmarks/README.md"
   task :full do
     Bundler.with_original_env { ruby "benchmarks/full.rb" }
   end

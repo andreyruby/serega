@@ -101,23 +101,9 @@ end
 
 ## Benchmarks
 
-Serializations of preloaded ActiveRecord records to JSON strings, per second,
-more is better:
-
-<!-- benchmarks:json -->
-| Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
-|--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 1,164,656 |    14,066 |                    1,427 |   2,924 |     1,955 |
-| oj_serializers           |   387,440 |    11,530 |                    1,058 |       — |         — |
-| panko_serializer         |   406,907 |    14,384 |                    1,185 |   2,787 |     1,922 |
-| alba                     |   337,815 |     5,054 |                      475 |       — |         — |
-| blueprinter              |   273,517 |     3,368 |                      360 |       — |         — |
-| active_model_serializers |    37,767 |       668 |                       52 |      78 |         — |
-| *hand-written Hash*      | 1,257,325 |    14,337 |                    1,327 |   2,813 |     1,935 |
-<!-- benchmarks:json:end -->
-
-Hashes, the details of each case and how to run them:
-[benchmarks/README.md](https://github.com/andreyruby/serega/blob/master/benchmarks/README.md).
+Serega is on par with the fastest Ruby serializers in speed and allocations,
+and in some cases beats them. Results, the details of each case and how to run
+them: [benchmarks/README.md](https://github.com/andreyruby/serega/blob/master/benchmarks/README.md).
 
 ## Features
 
