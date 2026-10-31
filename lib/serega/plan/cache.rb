@@ -3,93 +3,92 @@
 class Serega
   class SeregaPlan # :nodoc:
     #
-    # Serialization plans of one serializer, cached by modifiers.
-    # Validates initiate options before building a plan.
+    # Serialization plans of one serializer, cached by up to three
+    # parameters, such as the `only`, `with` and `except` modifiers. The
+    # planner parses and validates the parameters and builds the plans.
     #
     class Cache # :nodoc:
-      # Cached plan, whether its modifiers were validated, and the modifiers
-      # as provided
-      CachedPlan = Struct.new(:plan, :validated, :only, :with, :except)
+      # Cached plan, whether its parameters were validated, and the
+      # parameters as provided
+      CachedPlan = Struct.new(:plan, :validated, :param1, :param2, :param3) do
+        # Whether the given parameters equal the cached ones
+        def same_params?(param1, param2, param3)
+          param1.eql?(self.param1) && param2.eql?(self.param2) && param3.eql?(self.param3)
+        end
+      end
       private_constant :CachedPlan
 
-      # Initializes empty plans cache of the serializer
-      def initialize(serializer_class)
+      # Initializes empty plans cache of the serializer with the planner of
+      # its parameters
+      def initialize(serializer_class, planner)
         @serializer_class = serializer_class
+        @planner = planner
         @default_plan = nil
         @plans = {}
       end
 
-      # Returns serialization plan for provided modifiers.
-      # The plan without modifiers is always cached; plans with modifiers are
-      # cached by modifiers as provided when `max_cached_plans_per_serializer_count`
-      # is positive. Modifiers are parsed and validated when a plan is built.
-      def fetch(only, with, except, check_initiate_params: false)
-        return default_plan if only.nil? && with.nil? && except.nil?
+      # Returns serialization plan for provided parameters. The planner gives
+      # them their meaning, for example `only`, `with` and `except`; a planner
+      # with fewer parameters leaves the last ones out. They are separate
+      # arguments, not an Array: an Array, a splat or a Struct allocates on
+      # every `Serega.new`, which adds 13 to 36 ns to a cached `Serega.new`
+      # of about 114 ns.
+      #
+      # The plan without parameters is always cached; plans with parameters
+      # are cached by parameters as provided when
+      # `max_cached_plans_per_serializer_count` is positive. Parameters are
+      # parsed and validated when a plan is built.
+      def fetch(param1 = nil, param2 = nil, param3 = nil, check_initiate_params: false)
+        return default_plan if param1.nil? && param2.nil? && param3.nil?
 
         max_size = @serializer_class.config.max_cached_plans_per_serializer_count
-        return build(only, with, except, check_initiate_params) if max_size.zero?
+        return build(param1, param2, param3, check_initiate_params) if max_size.zero?
 
-        cached_plan(only, with, except, max_size, check_initiate_params)
+        cached_plan(param1, param2, param3, max_size, check_initiate_params)
       end
 
       private
 
+      # The plan without parameters, built by the planner from no parameters
       def default_plan
-        @default_plan ||= SeregaPlan.new(Selection.new(@serializer_class, FROZEN_EMPTY_HASH))
+        @default_plan ||= @planner.plan(@serializer_class, @planner.parse)
       end
 
-      # Keeps plans by the hash of the hash values of the modifiers, and
-      # compares each modifier with the cached one: an Array of the modifiers
-      # as the key hashes and compares nested arrays inside a recursion guard.
-      # Modifiers with the hash of other cached modifiers replace them.
-      def cached_plan(only, with, except, max_size, check_initiate_params)
-        key = [only.hash, with.hash, except.hash].hash # rubocop:disable Security/CompoundHash -- `[only, with, except].hash` hashes nested arrays inside a recursion guard
+      # Keeps plans by the hash of the hash values of the parameters, and
+      # compares each parameter with the cached one: an Array of the
+      # parameters as the key hashes and compares nested arrays inside a
+      # recursion guard. Parameters with the hash of other cached parameters
+      # replace them.
+      def cached_plan(param1, param2, param3, max_size, check_initiate_params)
+        key = [param1.hash, param2.hash, param3.hash].hash # rubocop:disable Security/CompoundHash -- `[param1, param2, param3].hash` hashes nested arrays inside a recursion guard
         cached = @plans[key]
-        return reuse(cached, only, with, except, check_initiate_params) if cached && same_modifiers?(cached, only, with, except)
+        return reuse(cached, param1, param2, param3, check_initiate_params) if cached&.same_params?(param1, param2, param3)
 
-        plan = build(only, with, except, check_initiate_params)
-        @plans[key] = CachedPlan.new(plan, check_initiate_params, *frozen_copy([only, with, except]))
+        plan = build(param1, param2, param3, check_initiate_params)
+        @plans[key] = CachedPlan.new(plan, check_initiate_params, *frozen_copy([param1, param2, param3]))
         @plans.shift if @plans.length > max_size
         plan
       end
 
-      def same_modifiers?(cached, only, with, except)
-        only.eql?(cached.only) && with.eql?(cached.with) && except.eql?(cached.except)
-      end
-
-      def reuse(cached, only, with, except, check_initiate_params)
+      def reuse(cached, param1, param2, param3, check_initiate_params)
         if check_initiate_params && !cached.validated
-          validate(parse_modifiers(only, with, except))
+          @planner.validate(@serializer_class, @planner.parse(param1, param2, param3))
           cached.validated = true
         end
 
         cached.plan
       end
 
-      def build(only, with, except, check_initiate_params)
-        modifiers = parse_modifiers(only, with, except)
-        return default_plan if modifiers[:only].empty? && modifiers[:with].empty? && modifiers[:except].empty?
+      def build(param1, param2, param3, check_initiate_params)
+        params = @planner.parse(param1, param2, param3)
+        return default_plan if @planner.empty?(params)
 
-        validate(modifiers) if check_initiate_params
-        SeregaPlan.new(Selection.new(@serializer_class, modifiers))
+        @planner.validate(@serializer_class, params) if check_initiate_params
+        @planner.plan(@serializer_class, params)
       end
 
-      def parse_modifiers(only, with, except)
-        {only: parse_modifier(only), with: parse_modifier(with), except: parse_modifier(except)}
-      end
-
-      def parse_modifier(value)
-        return SeregaUtils::ParseStringModifiers.parse(value) if value.is_a?(String)
-
-        SeregaUtils::ToHash.call(value)
-      end
-
-      def frozen_copy(modifiers)
-        SeregaUtils::EnumDeepFreeze.call(SeregaUtils::EnumDeepDup.call(modifiers))
-      end
-
-      def validate(modifiers)
-        SeregaValidations::Initiate::CheckModifiers.new.call(@serializer_class, modifiers[:only], modifiers[:with], modifiers[:except])
+      def frozen_copy(params)
+        SeregaUtils::EnumDeepFreeze.call(SeregaUtils::EnumDeepDup.call(params))
       end
     end
   end

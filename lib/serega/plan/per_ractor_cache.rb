@@ -7,16 +7,19 @@ class Serega
     # Ractor apart
     #
     class PerRactorCache # :nodoc:
-      def initialize(serializer_class)
+      # Keeps the plans of the serializer with the planner in a Cache per
+      # Ractor, under a key of the serializer and the planner
+      def initialize(serializer_class, planner)
         @serializer_class = serializer_class
-        @key = SeregaUtils::RactorLocal.key(serializer_class, :plan_cache)
+        @planner = planner
+        @key = SeregaUtils::RactorLocal.key(serializer_class, "plan_cache_#{planner.object_id}")
         freeze
       end
 
       # Returns serialization plan from the plans cache of the current Ractor
-      def fetch(only, with, except, check_initiate_params: false)
-        plan_cache = SeregaUtils::RactorLocal.fetch(@key) { SeregaPlan::Cache.new(@serializer_class) }
-        plan_cache.fetch(only, with, except, check_initiate_params: check_initiate_params)
+      def fetch(param1 = nil, param2 = nil, param3 = nil, check_initiate_params: false)
+        plan_cache = SeregaUtils::RactorLocal.fetch(@key) { SeregaPlan::Cache.new(@serializer_class, @planner) }
+        plan_cache.fetch(param1, param2, param3, check_initiate_params: check_initiate_params)
       end
     end
   end
