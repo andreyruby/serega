@@ -76,14 +76,10 @@ class Serega
       !@serializer.nil?
     end
 
-    # Shows specified serializer class. A frozen attribute resolves its
-    # String or Proc serializer on each call.
+    # Serializer class of the :serializer option or the block, nil without
+    # a relation
     def serializer
-      serializer = @serializer
-      return serializer if (serializer.is_a?(Class) && (serializer < Serega)) || !serializer
-
-      serializer = serializer.is_a?(String) ? Object.const_get(serializer, false) : serializer.call
-      frozen? ? serializer : (@serializer = serializer)
+      @serializer&.resolve
     end
 
     # Finds attribute value
@@ -183,7 +179,8 @@ class Serega
       @value_block = normalizer.value_block
       @value_block_signature = normalizer.value_block_signature
       @hide = normalizer.hide
-      @serializer = normalizer.serializer
+      serializer = normalizer.serializer
+      @serializer = serializer && SerializerReference.new(serializer)
       @preloads = normalizer.preloads
       @batch_loaders = normalizer.batch_loaders
       @inline_batch_loader = normalizer.inline_batch_loader

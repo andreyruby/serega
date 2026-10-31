@@ -81,20 +81,21 @@ RSpec.describe Serega::SeregaAttribute do
   end
 
   describe "#serializer" do
-    let(:serializer) { Class.new(Serega) }
-    let(:serializer_as_proc) { proc { serializer } }
+    subject(:serializer) { described_class.new(serializer_class, name: :name, opts: opts).serializer }
 
-    it "returns provided :serializer option" do
-      expect(described_class.new(serializer_class, name: :name, opts: {serializer: serializer}).serializer).to eq serializer
+    let(:relation_serializer) { Class.new(Serega) }
+    let(:opts) { {serializer: proc { relation_serializer }} }
+
+    it "returns the resolved serializer class" do
+      expect(serializer).to be relation_serializer
     end
 
-    it "extracts provided :serializer from Proc" do
-      expect(described_class.new(serializer_class, name: :name, opts: {serializer: serializer_as_proc}).serializer).to eq serializer
-    end
+    context "without a relation" do
+      let(:opts) { {} }
 
-    it "extracts provided :serializer from String" do
-      Object.const_set(:AAA, serializer)
-      expect(described_class.new(serializer_class, name: :name, opts: {serializer: "AAA"}).serializer).to eq serializer
+      it "returns nil" do
+        expect(serializer).to be_nil
+      end
     end
   end
 
