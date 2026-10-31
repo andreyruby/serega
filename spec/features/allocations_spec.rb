@@ -82,7 +82,7 @@ RSpec.describe Serega, if: RUBY_ENGINE == "ruby" && RUBY_VERSION >= "4.0" do
     end
 
     it "allocates the run, its source groups, the relation values and the Arrays of the run" do
-      expect(serialize).to allocate_objects(T_OBJECT: 4, T_HASH: 6, T_ARRAY: 14)
+      expect(serialize).to allocate_objects(T_OBJECT: 4, T_HASH: 5, T_ARRAY: 12)
     end
   end
 
@@ -109,7 +109,7 @@ RSpec.describe Serega, if: RUBY_ENGINE == "ruby" && RUBY_VERSION >= "4.0" do
     end
 
     it "allocates the run, its source groups, the relation values and the Arrays of the run" do
-      expect(serialize).to allocate_objects(T_OBJECT: 5, T_HASH: 8, T_ARRAY: 21)
+      expect(serialize).to allocate_objects(T_OBJECT: 5, T_HASH: 7, T_ARRAY: 17)
     end
   end
 

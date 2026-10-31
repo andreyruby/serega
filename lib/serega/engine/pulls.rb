@@ -18,22 +18,18 @@ class Serega
 
       module_function
 
-      # Collects the sources of the relation sources, and the pull of each
-      # relation source
-      def collect(relation_sources, many, known_classes)
-        sources = []
-        pulls = relation_sources.map { |relation_source| append(sources, relation_source, many, known_classes) }
-        [sources, pulls]
+      # Appends the sources of the relation sources to sources, and returns
+      # the pull of each relation source
+      def collect(sources, relation_sources, many, known_classes)
+        relation_sources.map { |relation_source| append(sources, relation_source, many, known_classes) }
       end
 
       # Collects like `.collect`, and keeps SKIP of a skipped relation source
       # as its pull
-      def collect_conditional(relation_sources, many, known_classes)
-        sources = []
-        pulls = relation_sources.map do |relation_source|
+      def collect_conditional(sources, relation_sources, many, known_classes)
+        relation_sources.map do |relation_source|
           SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many, known_classes)
         end
-        [sources, pulls]
       end
 
       # Appends the source(s) of one relation source to sources, and returns

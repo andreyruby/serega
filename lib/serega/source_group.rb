@@ -48,38 +48,55 @@ class Serega
       @attribute_values = nil
     end
 
-    # Runs the preloads, and makes one child group per relation point.
+    # Runs the preloads, and makes one child group per relation point, in the
+    # order of the relation points.
     def discover
       run_preloads
 
       relation_points = plan.relation_points
       return FROZEN_EMPTY_ARRAY if relation_points.empty?
 
-      @child_groups = relation_points.to_h { |point| [point, child_group(point)] }
-      @child_groups.values
+      @child_groups = relation_points.map { |point| child_group(point) }
     end
 
     # Builds the serialized objects.
     def build
       batches = plan.points.map { |point| batches_for(point) } if plan.batch_points?
-      relations = @child_groups&.transform_values do |child_group|
-        SeregaEngine::Pulls.take!(child_group.serialized, child_group.pulls)
-      end
       @serialized = plan.result_builder(run.mode).call(@sources, @context, batches, relations)
     end
 
     private
 
+    # Relation values of each relation point, taken from its built child
+    # group, or nil without relation points
+    def relations
+      child_groups = @child_groups
+      return unless child_groups
+
+      relation_points = plan.relation_points
+      relations = {}
+      index = 0
+
+      while index < relation_points.size
+        child_group = child_groups[index]
+        relations[relation_points[index]] = SeregaEngine::Pulls.take!(child_group.serialized, child_group.pulls)
+        index += 1
+      end
+
+      relations
+    end
+
     # Reads the relation sources of the point, and makes their child group
     def child_group(point)
       batches = batches_for(point)
-      child_sources, pulls =
+      child_sources = []
+      pulls =
         if point.conditional?
           relation_sources = read_conditional_relation_sources(point, batches)
-          SeregaEngine::Pulls.collect_conditional(relation_sources, point.many, point.collection_classes)
+          SeregaEngine::Pulls.collect_conditional(child_sources, relation_sources, point.many, point.collection_classes)
         else
           relation_sources = read_relation_sources(point, batches)
-          SeregaEngine::Pulls.collect(relation_sources, point.many, point.collection_classes)
+          SeregaEngine::Pulls.collect(child_sources, relation_sources, point.many, point.collection_classes)
         end
       run.new_source_group(point.child_plan, child_sources, pulls)
     end
