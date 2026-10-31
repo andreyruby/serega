@@ -36,6 +36,14 @@ class Serega
         @collection_classes = @child_plan ? {}.compare_by_identity : nil
       end
 
+      # Attribute names from the root plan down to this point
+      def path
+        names = [name]
+        point = self
+        names.unshift(point.name) while (point = point.plan.parent_plan_point)
+        names
+      end
+
       # Attribute `many` option
       def many
         attribute.many

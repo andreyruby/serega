@@ -128,6 +128,25 @@ RSpec.describe Serega::SeregaPlan do
     end
   end
 
+  describe "#root_plan" do
+    let(:post_serializer) { Class.new(Serega) { attribute :title } }
+
+    let(:user_serializer) do
+      child = post_serializer
+      Class.new(Serega) { attribute :posts, serializer: child }
+    end
+
+    let(:root_plan) { default_plan(user_serializer) }
+
+    it "returns the plan itself for a root plan" do
+      expect(root_plan.root_plan).to be root_plan
+    end
+
+    it "returns the root plan for a child plan" do
+      expect(root_plan.points.first.child_plan.root_plan).to be root_plan
+    end
+  end
+
   describe "#preload_points" do
     subject(:preload_points) { described_class.new(selection).preload_points }
 

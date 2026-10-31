@@ -74,6 +74,16 @@ class Serega
       @flat
     end
 
+    # Plan that starts the serialization: this plan, or the root plan of
+    # its parent point
+    def root_plan
+      plan = self
+      while (point = plan.parent_plan_point)
+        plan = point.plan
+      end
+      plan
+    end
+
     # Result builder of this plan in the serialization mode, made with the
     # builder class of the selection
     def result_builder(mode)
@@ -82,22 +92,16 @@ class Serega
 
     private
 
+    # A child plan is one level deeper than the path of its parent point
     def check_depth_limit(parent_plan_point)
-      depth = 2
-      root_plan = parent_plan_point.plan
-      while (point = root_plan.parent_plan_point)
-        depth += 1
-        root_plan = point.plan
-      end
-
-      root_serializer = root_plan.serializer_class
+      root_serializer = parent_plan_point.plan.root_plan.serializer_class
       limit = root_serializer.config.depth_limit
-      return if limit.nil? || depth <= limit
+      return unless limit
 
-      names = [parent_plan_point.name]
-      point = parent_plan_point
-      names.unshift(point.name) while (point = point.plan.parent_plan_point)
-      raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{names.join(" -> ")}")
+      path = parent_plan_point.path
+      return if path.size + 1 <= limit
+
+      raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{path.join(" -> ")}")
     end
 
     # Makes a point of each selected attribute, with the preloads and child
