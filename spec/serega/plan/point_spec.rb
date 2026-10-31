@@ -35,6 +35,28 @@ RSpec.describe Serega::SeregaPlan::Point do
     end
   end
 
+  describe "#path" do
+    subject(:path) { comment_point.path }
+
+    let(:comment_serializer) { Class.new(base) { attribute :text } }
+
+    let(:post_serializer) do
+      child = comment_serializer
+      Class.new(base) { attribute :comments, serializer: child }
+    end
+
+    let(:user_serializer) do
+      child = post_serializer
+      Class.new(base) { attribute :posts, serializer: child }
+    end
+
+    let(:comment_point) { point_for(user_serializer, :posts).child_plan.points.first }
+
+    it "returns the attribute names from the root plan down to the point" do
+      expect(path).to eq %i[posts comments]
+    end
+  end
+
   describe "#conditional?" do
     subject(:conditional) { point_for(serializer, :email).conditional? }
 
