@@ -84,7 +84,7 @@ UserSerializer.to_h(object, only:, with:, except:, check_initiate_params:, conte
          │        └─ for each relation point
          │           ├─ batches_for(point)                         once per group
          │           ├─ relation_sources = read_relation_sources(point, batches)   e.g. user.posts of each user
-         │           ├─ child_sources, pulls = SeregaEngine::Pulls.collect(relation_sources, point.many)
+         │           ├─ pulls = SeregaEngine::Pulls.collect(child_sources, relation_sources, point.many)
          │           └─ child_group = run.new_source_group(point.child_plan, child_sources, pulls)
          │
          ├─ build(source_groups)                                 from the last group up
@@ -113,7 +113,7 @@ A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and p
 
 ### Pulls
 
-`SeregaEngine::Pulls` (`lib/serega/engine/pulls.rb`) handles the pulls. `.collect(relation_sources, many, known_classes)` takes the relation source of each source of the parent group. It returns the sources of all relation sources, in order, and the pull of each relation source. `.append(sources, relation_source, many, known_classes)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
+`SeregaEngine::Pulls` (`lib/serega/engine/pulls.rb`) handles the pulls. `.collect(sources, relation_sources, many, known_classes)` takes the relation source of each source of the parent group. It appends the sources of all relation sources, in order, to the given sources Array, and returns the pull of each relation source. `.append(sources, relation_source, many, known_classes)` does this for one relation source. A pull says what `.take!` takes for it from the serialized objects:
 
 | relation source | pull | relation value |
 |---|---|---|
