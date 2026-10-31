@@ -158,6 +158,58 @@ RSpec.describe Serega::SeregaPlan::Cache do
     end
   end
 
+  context "with another planner" do
+    subject(:cache) { described_class.new(user_serializer, planner) }
+
+    let(:planner) { class_double(Serega::SeregaPlan::ModifiersPlanner) }
+    let(:params) { {include: "posts"} }
+    let(:no_params) { {include: nil} }
+    let(:params_plan) { default_plan(user_serializer) }
+    let(:no_params_plan) { default_plan(user_serializer) }
+    let(:empty) { false }
+
+    before do
+      allow(planner).to receive(:parse).with("posts", nil, nil).and_return(params)
+      allow(planner).to receive(:parse).with(no_args).and_return(no_params)
+      allow(planner).to receive(:empty?).and_return(empty)
+      allow(planner).to receive(:plan).with(user_serializer, params).and_return(params_plan)
+      allow(planner).to receive(:plan).with(user_serializer, no_params).and_return(no_params_plan)
+      allow(planner).to receive(:validate)
+    end
+
+    it "builds the plan of the parameters with the planner" do
+      expect(cache.fetch("posts", check_initiate_params: true)).to be params_plan
+
+      expect(planner).to have_received(:parse).with("posts", nil, nil)
+      expect(planner).to have_received(:empty?).with(params)
+      expect(planner).to have_received(:validate).with(user_serializer, params)
+      expect(planner).to have_received(:plan).with(user_serializer, params)
+      expect(planner).not_to have_received(:parse).with(no_args)
+      expect(planner).not_to have_received(:plan).with(user_serializer, no_params)
+    end
+
+    context "without parameters" do
+      it "returns the plan the planner builds from no parameters" do
+        expect(cache.fetch).to be no_params_plan
+
+        expect(planner).to have_received(:parse).with(no_args)
+        expect(planner).to have_received(:plan).with(user_serializer, no_params)
+        expect(planner).not_to have_received(:empty?)
+      end
+    end
+
+    context "when the planner finds the parameters empty" do
+      let(:empty) { true }
+
+      it "returns the plan the planner builds from no parameters" do
+        expect(cache.fetch("posts", check_initiate_params: true)).to be no_params_plan
+
+        expect(planner).not_to have_received(:validate)
+        expect(planner).not_to have_received(:plan).with(user_serializer, params)
+      end
+    end
+  end
+
   context "with room for two cached plans" do
     let(:max_cached_plans_count) { 2 }
 

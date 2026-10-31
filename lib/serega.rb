@@ -98,6 +98,7 @@ require_relative "serega/plan/point"
 require_relative "serega/plan/selection"
 require_relative "serega/result_code"
 require_relative "serega/result_builder"
+require_relative "serega/plan/modifiers_planner"
 require_relative "serega/plan/cache"
 require_relative "serega/plugins"
 
@@ -490,7 +491,7 @@ class Serega
           @presenter_key = SeregaUtils::RactorLocal.key(self, :presenter)
         end
         @unshareable_reason = SeregaShareable.call(self)
-        @plan_cache = SeregaPlan::PerRactorCache.new(self) unless @unshareable_reason
+        @plan_cache = SeregaPlan::PerRactorCache.new(self, SeregaPlan::ModifiersPlanner) unless @unshareable_reason
       end
       # :nocov:
       self
@@ -567,7 +568,7 @@ class Serega
       @locked = false
       @shareable = false
       @unshareable_reason = nil
-      @plan_cache = SeregaPlan::Cache.new(self)
+      @plan_cache = SeregaPlan::Cache.new(self, SeregaPlan::ModifiersPlanner)
     end
 
     # The handler given to `method_name` as a value or a block
