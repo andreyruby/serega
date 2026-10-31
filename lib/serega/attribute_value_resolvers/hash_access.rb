@@ -42,7 +42,7 @@ class Serega
 
       # Ruby code that reads the key, the same way as #call
       def code(source_variable)
-        key = @key.is_a?(String) ? "#{@key.inspect}.freeze" : @key.inspect
+        key = SeregaUtils::RubyLiteral.code(@key)
         return "#{source_variable}[#{key}]" if @allow_missing_key
 
         "#{source_variable}.fetch(#{key}) { (found = #{source_variable}[#{key}]).nil? ? #{source_variable}.fetch(#{key}) : found }"

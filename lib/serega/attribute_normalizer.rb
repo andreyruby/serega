@@ -106,7 +106,7 @@ class Serega
       format = init_opts[:format]
       return unless format
 
-      format.is_a?(Symbol) ? @serializer_class.formatters.fetch(format) : SeregaFormatter.new(format)
+      format.is_a?(Symbol) ? @serializer_class.formatters.fetch(format) : SeregaFormatters.build(format)
     end
 
     private
