@@ -70,6 +70,30 @@ RSpec.describe Serega::SeregaPlan::Selection do
       end
     end
 
+    context "when :only names a hidden attribute" do
+      let(:modifiers) { {only: {a3: {}}, except: {}, with: {}} }
+
+      it "selects the named attribute" do
+        expect(names).to eq(a3: nil)
+      end
+    end
+
+    context "when :only limits the level and :with names a hidden attribute" do
+      let(:modifiers) { {only: {a1: {}}, except: {}, with: {a3: {}}} }
+
+      it "selects the attributes that :only and :with name" do
+        expect(names).to eq(a1: nil, a3: nil)
+      end
+    end
+
+    context "when :except names the attribute that :only and :with name" do
+      let(:modifiers) { {only: {a1: {}}, except: {a1: {}}, with: {a1: {}}} }
+
+      it "selects no attributes" do
+        expect(names).to eq({})
+      end
+    end
+
     context "with :except" do
       let(:modifiers) { {only: {}, except: {a2: {}, d: {d1: {}}}, with: {}} }
 
