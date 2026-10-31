@@ -100,7 +100,7 @@ class Serega
     # the attribute for its child plan
     def selected_points(selection)
       points = selection.attributes.map do |attribute|
-        SeregaPlanPoint.new(self, attribute, selection.child(attribute)).freeze
+        Point.new(self, attribute, selection.child(attribute)).freeze
       end
 
       points.freeze
