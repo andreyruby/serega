@@ -20,6 +20,7 @@ AllCops:
     - coverage/**/*
     - doc/**/*
     - pkg/**/*
+    - tmp/**/*
     - vendor/bundle/**/*
     - CHANGELOG.md # past entries hold code fragments
 
