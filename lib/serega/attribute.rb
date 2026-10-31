@@ -131,15 +131,6 @@ class Serega
       @formatter.code(code, "#{constants_prefix}FORMATTERS[#{name.inspect}]", "#{constants_prefix}FORMATTER_ARGS[#{name.inspect}]")
     end
 
-    # Checks if attribute must be added to serialized response
-    def visible?(only, except, with, only_limits)
-      return false if except.member?(name) && except[name].empty?
-      return true if only.member?(name) || with.member?(name)
-      return false if only_limits
-
-      !hide
-    end
-
     # Defines the methods of the code on the owner, at the file and line of
     # the attribute, thus their backtraces point to the attribute
     def define_methods(owner, code)

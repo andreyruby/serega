@@ -20,20 +20,17 @@ class Serega
         @only = modifiers[:only] || FROZEN_EMPTY_HASH
         @with = modifiers[:with] || FROZEN_EMPTY_HASH
         @except = modifiers[:except] || FROZEN_EMPTY_HASH
+        @only_limits = only_limits?
       end
 
       # Returns the selected attributes, in definition order. Reads the
       # attributes on each call: the plan calls it once, after it locks the
       # serializer.
       def attributes
-        only = @only
-        with = @with
-        except = @except
-        only_limits = only_limits?
         attributes = []
 
         serializer_class.attributes.each_value do |attribute|
-          attributes << attribute if attribute.visible?(only, except, with, only_limits)
+          attributes << attribute if visible?(attribute)
         end
 
         attributes.freeze
@@ -61,6 +58,18 @@ class Serega
       end
 
       private
+
+      # `except` without nested fields hides the attribute, `only` and `with`
+      # show it, `only` hides the other attributes when it limits this
+      # level, and the :hide option decides the rest
+      def visible?(attribute)
+        name = attribute.name
+        return false if @except.member?(name) && @except[name].empty?
+        return true if @only.member?(name) || @with.member?(name)
+        return false if @only_limits
+
+        !attribute.hide
+      end
 
       # `only` hides the fields it does not name when it names a field of
       # this level without nested fields, or when `except` hides no field and
