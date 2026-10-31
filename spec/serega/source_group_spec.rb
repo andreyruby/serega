@@ -252,4 +252,25 @@ RSpec.describe Serega::SeregaSourceGroup do
       end
     end
   end
+
+  describe "#root_value" do
+    subject(:root_value) do
+      source_group.build
+      source_group.root_value
+    end
+
+    it "returns all serialized objects" do
+      expect(root_value).to eq [{name: "Ann"}, {name: "Bob"}]
+    end
+
+    context "with a single source pull" do
+      subject(:source_group) { described_class.new(run, plan, [user1], pulls) }
+
+      let(:pulls) { [Serega::SeregaEngine::Pulls::SINGLE_SOURCE] }
+
+      it "returns the serialized object" do
+        expect(root_value).to eq(name: "Ann")
+      end
+    end
+  end
 end

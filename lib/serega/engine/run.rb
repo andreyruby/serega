@@ -59,7 +59,7 @@ class Serega
         root_group = root_source_group(plan, object, many)
         source_groups = discover(root_group)
         build(source_groups)
-        root_value(root_group)
+        root_group.root_value
       end
 
       # Makes a source group of the plan.
@@ -95,13 +95,6 @@ class Serega
       # before its parent group
       def build(source_groups)
         source_groups.reverse_each(&:build)
-      end
-
-      # Returns the serialized root: one serialized object for SINGLE_SOURCE,
-      # or all serialized objects of the root group
-      def root_value(root_group)
-        serialized = root_group.serialized
-        Pulls::SINGLE_SOURCE.equal?(root_group.pulls[0]) ? serialized[0] : serialized
       end
     end
   end

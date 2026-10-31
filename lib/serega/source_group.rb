@@ -65,6 +65,13 @@ class Serega
       @serialized = plan.result_builder(run.mode).call(@sources, @context, batches, relations)
     end
 
+    # Serialized value of a root group, after #build: one serialized object
+    # for a SINGLE_SOURCE pull, or all serialized objects
+    def root_value
+      serialized = @serialized
+      SeregaEngine::Pulls::SINGLE_SOURCE.equal?(@pulls[0]) ? serialized[0] : serialized
+    end
+
     private
 
     # Relation values of each relation point, taken from its built child
