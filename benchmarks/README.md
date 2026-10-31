@@ -11,13 +11,13 @@ JSON strings:
 <!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 1,158,900 |    14,283 |                    1,413 |   2,962 |     2,025 |
-| oj_serializers           |   566,311 |    11,340 |                    1,049 |       — |         — |
-| panko_serializer         |   442,202 |    13,999 |                    1,206 |   2,731 |     1,947 |
-| alba                     |   336,431 |     4,997 |                      468 |       — |         — |
-| blueprinter              |   273,875 |     3,513 |                      355 |       — |         — |
-| active_model_serializers |    40,121 |       682 |                       52 |      80 |         — |
-| *hand-written Hash*      | 1,264,942 |    14,445 |                    1,310 |   2,847 |     1,941 |
+| **Serega**               | 1,086,086 |    13,520 |                    1,326 |   2,618 |     1,867 |
+| oj_serializers           |   523,537 |    10,604 |                      991 |       — |         — |
+| panko_serializer         |   402,686 |    12,531 |                    1,067 |   2,534 |     1,719 |
+| alba                     |   294,210 |     4,367 |                      412 |       — |         — |
+| blueprinter              |   241,254 |     3,062 |                      307 |       — |         — |
+| active_model_serializers |    35,403 |       582 |                       45 |      68 |         — |
+| *hand-written Hash*      | 1,215,868 |    13,496 |                    1,255 |   2,611 |     1,803 |
 <!-- benchmarks:json:end -->
 
 Hashes:
@@ -25,13 +25,13 @@ Hashes:
 <!-- benchmarks:hash -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 1,543,319 |    17,237 |                    1,641 |   3,380 |     2,348 |
-| oj_serializers           | 1,472,280 |    16,576 |                    1,380 |       — |         — |
-| panko_serializer         |   500,690 |     9,113 |                      837 |   1,723 |     1,167 |
-| alba                     |   421,133 |     5,317 |                      488 |       — |         — |
-| blueprinter              |   305,159 |     3,677 |                      368 |       — |         — |
-| active_model_serializers |    40,155 |       695 |                       53 |      78 |         — |
-| *hand-written Hash*      | 1,732,097 |    17,453 |                    1,510 |   3,293 |     2,198 |
+| **Serega**               | 1,449,634 |    16,343 |                    1,528 |   2,935 |     2,138 |
+| oj_serializers           | 1,360,727 |    15,101 |                    1,303 |       — |         — |
+| panko_serializer         |   441,079 |     8,197 |                      737 |   1,506 |     1,038 |
+| alba                     |   364,151 |     4,614 |                      429 |       — |         — |
+| blueprinter              |   265,708 |     3,199 |                      313 |       — |         — |
+| active_model_serializers |    37,074 |       605 |                       46 |      69 |         — |
+| *hand-written Hash*      | 1,645,499 |    16,280 |                    1,449 |   2,908 |     2,074 |
 <!-- benchmarks:hash:end -->
 
 "—" means the gem has no runtime field selection.
@@ -82,11 +82,11 @@ first value that differs.
 
 ## Environment
 
-Apple M4, Ruby 4.0.7 without a JIT, alba 4.0.1, blueprinter 1.3.0,
-panko_serializer 0.8.5, active_model_serializers 0.10.16, oj_serializers
-3.0.2, activerecord 8.1.4. The gems come from
-`gemfiles/benchmarks.gemfile`, and `cases.rb` defines how each gem
-serializes each case.
+Docker on an Apple M4 (`benchmarks/Dockerfile`: Debian, Ruby 4.0.7 without a
+JIT, 2 GB of memory), alba 4.0.1, blueprinter 1.3.0, panko_serializer 0.8.5,
+active_model_serializers 0.10.16, oj_serializers 3.0.2, activerecord 8.1.4.
+The gems come from `gemfiles/benchmarks.gemfile`, and `cases.rb` defines how
+each gem serializes each case.
 
 ## Running
 
@@ -113,14 +113,26 @@ bundle exec rake benchmarks:full
 TIME=5 bundle exec rake benchmarks:full
 ```
 
+The tables above come from `rake benchmarks:docker:full`, which runs
+`benchmarks:full` in the image of `benchmarks/Dockerfile`: the same Ruby,
+gems and memory limit on any machine. Two rounds differ by about 1% for Serega
+and by 2.5% for most other cells. The rounds measure time, thus the numbers
+still depend on the host CPU:
+
+```sh
+bundle exec rake benchmarks:docker:full
+```
+
 `rake benchmarks:check` (`check.rb`) counts the instructions and the allocated
 objects of one call of Serega, the fastest other gem and the hand-written Hash
 of each case, and prints a table of the counts. Valgrind's callgrind counts the
 instructions, thus the counts are the same between runs and on a busy machine,
 and CI fails on a change of Serega and not on noise. It needs Linux with
 Valgrind and its headers (the `valgrind` package on Debian and Ubuntu), thus on
-macOS it runs in a Linux container. CI runs it on the latest Ruby:
+macOS `rake benchmarks:docker:check` runs it in the image. CI runs it on the
+latest Ruby:
 
 ```sh
 bundle exec rake benchmarks:check
+bundle exec rake benchmarks:docker:check
 ```
