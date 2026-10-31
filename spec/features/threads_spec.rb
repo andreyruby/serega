@@ -50,7 +50,8 @@ RSpec.describe Serega do
       first = Thread.new { user_serializer.to_h(user) }
       locking.pop
       second = Thread.new { user_serializer.to_h(user) }
-      Thread.pass until second.status == "sleep"
+      # Other code, such as the debug gem, can put a new thread to sleep before it reaches the mutex
+      Thread.pass until second.status == "sleep" && second.backtrace_locations.any? { |location| location.base_label == "lock" }
       2.times { release << true }
 
       expect([first.value, second.value]).to all eq(name: "Ann")
