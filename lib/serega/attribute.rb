@@ -140,6 +140,13 @@ class Serega
       !hide
     end
 
+    # Defines the methods of the code on the owner, at the file and line of
+    # the attribute, thus their backtraces point to the attribute
+    def define_methods(owner, code)
+      file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
+      owner.class_eval(code, file, line.to_i)
+    end
+
     private
 
     # Defines the SeregaAttributeValues method that reads the value of a
@@ -155,10 +162,8 @@ class Serega
       values_class::FORMATTERS[name] = @formatter.callable if @formatter&.callable
       values_class::FORMATTER_ARGS[name] = @formatter.args if @formatter&.args
 
-      file, _, line = location ? location.rpartition(":") : ["(attribute #{name})", nil, "1"]
       method_name = value_method_name(values_class)
-      method_code = "def #{method_name}(source) = #{code}"
-      values_class.class_eval(method_code, file, line.to_i)
+      define_methods(values_class, "def #{method_name}(source) = #{code}")
       method_name
     end
 

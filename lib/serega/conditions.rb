@@ -14,12 +14,9 @@ class Serega
     def initialize(attribute, conditions)
       @attribute = attribute
       @conditions = conditions
-      location = attribute.location
-      file, _, line = location ? location.rpartition(":") : ["(attribute #{attribute.name})", nil, "1"]
       satisfy_code = "def satisfy?(object, context) = #{check_code(:if, :unless)}"
       satisfy_value_code = "def satisfy_value?(object, context) = #{check_code(:if_value, :unless_value)}"
-      singleton_class.class_eval(satisfy_code, file, line.to_i)
-      singleton_class.class_eval(satisfy_value_code, file, line.to_i)
+      attribute.define_methods(singleton_class, "#{satisfy_code}; #{satisfy_value_code}")
     end
 
     private
