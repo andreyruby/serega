@@ -7,12 +7,14 @@ class Serega
     #
     class Preloads # :nodoc:
       class << self
-        # Preloads of the attribute with options `opts` and block `block`.
+        # Preloads of the attribute with options `opts`. `relation` is true
+        # for an attribute with a nested serializer: the :serializer option
+        # or a block.
         #
         # The value is passed through as provided (Symbol, Array, Hash, or any
         # custom value an ORM understands) — it is the data handed to the
         # serializer's `preload_with` handler.
-        def call(opts, block, method_name, config)
+        def call(opts, relation, method_name, config)
           # Explicit preload option (false or nil disables preloading)
           return opts[:preload] || nil if opts.key?(:preload)
 
@@ -22,8 +24,7 @@ class Serega
           end
 
           # Auto-preload the nested serializer's association
-          # (a block defines a nested serializer, same as the :serializer option)
-          if config.auto_preload.fetch(:has_serializer_option) && (opts[:serializer] || block) && !opts.key?(:batch)
+          if config.auto_preload.fetch(:has_serializer_option) && relation && !opts.key?(:batch)
             return auto_preload_value(method_name, config)
           end
 

@@ -382,20 +382,19 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
   end
 
   describe "#preloads" do
-    let(:block) { proc { attribute :title } }
-    let(:opts) { {method: :articles} }
+    let(:opts) { {method: :articles, serializer: Class.new(Serega)} }
 
     before do
       allow(Serega::AttributeNormalizers::Preloads).to receive(:call).and_return(:articles)
     end
 
     it "finds the preloads from the attribute options" do
-      normalizer = described_class.new(serializer_class, name: :posts, opts: opts, block: block)
+      normalizer = described_class.new(serializer_class, name: :posts, opts: opts)
 
       expect(normalizer.preloads).to eq :articles
 
       expect(Serega::AttributeNormalizers::Preloads)
-        .to have_received(:call).with(opts, block, :articles, serializer_class.config)
+        .to have_received(:call).with(opts, true, :articles, serializer_class.config)
     end
   end
 end

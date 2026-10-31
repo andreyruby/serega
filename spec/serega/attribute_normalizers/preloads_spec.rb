@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe Serega::AttributeNormalizers::Preloads do
-  subject(:preloads) { described_class.call(opts, block, method_name, serializer_class.config) }
+  subject(:preloads) { described_class.call(opts, relation, method_name, serializer_class.config) }
 
   let(:serializer_class) { Class.new(Serega) }
   let(:opts) { {} }
-  let(:block) { nil }
+  let(:relation) { false }
   let(:method_name) { :author }
 
   it "returns nil" do
@@ -37,8 +37,8 @@ RSpec.describe Serega::AttributeNormalizers::Preloads do
     end
   end
 
-  context "with the :serializer option" do
-    let(:opts) { {serializer: "AuthorSerializer"} }
+  context "with a relation" do
+    let(:relation) { true }
 
     it "returns nil" do
       expect(preloads).to be_nil
@@ -56,32 +56,25 @@ RSpec.describe Serega::AttributeNormalizers::Preloads do
   context "when auto preload has the serializer option" do
     let(:serializer_class) { Class.new(Serega) { config.auto_preload = {has_serializer_option: true} } }
 
-    context "with the :serializer option" do
-      let(:opts) { {serializer: "AuthorSerializer"} }
+    context "with a relation" do
+      let(:relation) { true }
 
       it "returns the method name" do
         expect(preloads).to eq :author
       end
     end
 
-    context "with a block" do
-      let(:block) { proc { attribute :name } }
-
-      it "returns the method name" do
-        expect(preloads).to eq :author
-      end
-    end
-
-    context "with the :serializer and :batch options" do
-      let(:opts) { {serializer: "AuthorSerializer", batch: :authors} }
+    context "with a relation and the :batch option" do
+      let(:relation) { true }
+      let(:opts) { {batch: :authors} }
 
       it "returns nil" do
         expect(preloads).to be_nil
       end
     end
 
-    context "with the :serializer option and an excluded method" do
-      let(:opts) { {serializer: "AuthorSerializer"} }
+    context "with a relation and an excluded method" do
+      let(:relation) { true }
       let(:method_name) { :itself }
 
       it "returns nil" do
