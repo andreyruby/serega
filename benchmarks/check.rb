@@ -1,12 +1,18 @@
 # frozen_string_literal: true
 
-# Checks each benchmark case: Serega must be at most 2% slower than the fastest
-# other gem, and at most as slow as the hand-written Hash, with 30% more in the
-# single case and 10% more in the collection case. Prints a table of the times, adds it to the
-# GitHub job summary on CI, and exits with 1 when a case fails. Run it with
-# `rake benchmarks:check`.
+# Checks each benchmark case by the instructions and the allocated objects of
+# one call: Serega must run at most 2% more instructions than the fastest
+# other gem, at most as many as the hand-written Hash with some more by case,
+# and allocate at most a few objects more than the hand-written Hash. Prints a
+# table of the counts, adds it to the GitHub job summary on CI, and exits with
+# 1 when a case fails.
+#
+# Valgrind's callgrind counts the instructions, thus the counts are the same
+# on a busy machine and between runs. Run it with `rake benchmarks:check`,
+# which builds benchmarks/callgrind.c and runs this script under callgrind.
 
 require_relative "support"
+require "fiddle"
 
 module BenchmarkCheck
   # The fastest other gem by case and format, see README.md
@@ -23,42 +29,44 @@ module BenchmarkCheck
     ["except", :hash] => "panko_serializer"
   }.freeze
 
-  # Rounds of each serializer per case, with alternating serializers
-  ROUNDS = 15
+  # Calls of each serializer per round, by case. One post takes few
+  # instructions, thus more calls keep the cost of the client requests out of
+  # the count.
+  CALLS = {"single" => 100, "collection" => 5, "relations" => 5, "only" => 5, "except" => 5}.freeze
 
-  # Time of the batches of a case, in seconds. Shorter rounds spread the close
-  # cases by several percent.
-  CASE_TIME = 0.5
+  # Rounds of each serializer per case. The median drops a round that
+  # differs, such as the first round of one post.
+  ROUNDS = 3
 
-  # Calls of each serializer before the rounds at least, as YJIT compiles a
-  # method after 30 calls, and Serega calls some methods once per serialization
-  WARMUP_CALLS = 50
-
-  # How much slower than the hand-written Hash Serega may be, by case. In the
-  # single and collection cases both build each Hash with one method, and
-  # Serega takes 1.06 to 1.15 of its time for one object (1.25 on a CI
-  # runner, as it adds about 0.4 µs to a call of 2 µs), and 1.00 to 1.03 for
-  # a collection. With relations the hand-written code calls a method per
-  # related record, and Serega takes 0.92 to 0.98 of its time.
+  # How many more instructions than the hand-written Hash Serega may run, by
+  # case
   MAX_PLAIN_RUBY_RATIOS = {
-    "single" => 1.3, "collection" => 1.1, "relations" => 1.0, "only" => 1.0, "except" => 1.0
+    "single" => 1.1, "collection" => 1.02, "relations" => 1.0, "only" => 1.0, "except" => 1.0
   }.freeze
 
-  # How much slower than the fastest other gem Serega may be. In the collection
-  # cases Serega, the other gem and the hand-written Hash take about the same
-  # time, and each wins some runs.
+  # How many more instructions than the fastest other gem Serega may run
   MAX_RIVAL_RATIO = 1.02
+
+  # How many more objects than the hand-written Hash Serega may allocate, by
+  # case: the run and its source groups with relations
+  MAX_EXTRA_OBJECTS = {"single" => 0, "collection" => 1, "relations" => 22, "only" => 22, "except" => 22}.freeze
 
   # Columns of the table, and whether each is right-aligned
   COLUMNS = {
-    "Case" => false, "Rival" => false, "Serega" => true, "Rival time" => true, "Hand-written" => true,
-    "Serega/Rival" => true, "Serega/Hand-written" => true, "Result" => false
+    "Case" => false, "Rival" => false, "Serega" => true, "Rival instructions" => true, "Hand-written" => true,
+    "Serega/Rival" => true, "Serega/Hand-written" => true, "Objects" => true, "Result" => false
   }.freeze
 
-  # Measured times of one case, in seconds
-  Result = Struct.new(:name, :output_format, :rival, :serega_time, :rival_time, :plain_ruby_time) do
+  # Instructions and allocated objects of one call of a case
+  Result = Struct.new(
+    :name, :output_format, :rival, :serega, :rival_instructions, :plain_ruby, :serega_objects, :plain_ruby_objects
+  ) do
     def max_plain_ruby_ratio
       MAX_PLAIN_RUBY_RATIOS.fetch(name)
+    end
+
+    def max_extra_objects
+      MAX_EXTRA_OBJECTS.fetch(name)
     end
 
     def label
@@ -66,11 +74,15 @@ module BenchmarkCheck
     end
 
     def rival_ratio
-      serega_time / rival_time
+      serega / rival_instructions
     end
 
     def plain_ruby_ratio
-      serega_time / plain_ruby_time
+      serega / plain_ruby
+    end
+
+    def extra_objects
+      serega_objects - plain_ruby_objects
     end
 
     def lost?
@@ -81,8 +93,12 @@ module BenchmarkCheck
       plain_ruby_ratio > max_plain_ruby_ratio
     end
 
+    def over_allocated?
+      extra_objects > max_extra_objects
+    end
+
     def passed?
-      !lost? && !slowed_down?
+      !lost? && !slowed_down? && !over_allocated?
     end
 
     # Short reasons for the Result column
@@ -92,17 +108,65 @@ module BenchmarkCheck
       reasons = []
       reasons << "lost to #{rival}" if lost?
       reasons << "over #{max_plain_ruby_ratio}x the hand-written" if slowed_down?
+      reasons << "over #{max_extra_objects} more objects" if over_allocated?
       "FAILED: #{reasons.join(", ")}"
     end
 
     # @return [Array<String>] Why the case fails, empty when it passes
     def failures
       failures = []
-      failures << format("Serega takes %.2fx the time of %s, the limit is %.2fx", rival_ratio, rival, MAX_RIVAL_RATIO) if lost?
+      if lost?
+        failures << format("Serega runs %.3fx the instructions of %s, the limit is %.2fx", rival_ratio, rival, MAX_RIVAL_RATIO)
+      end
       if slowed_down?
-        failures << format("Serega takes %.2fx the time of the hand-written Hash, the limit is %.2fx", plain_ruby_ratio, max_plain_ruby_ratio)
+        failures << format(
+          "Serega runs %.3fx the instructions of the hand-written Hash, the limit is %.2fx", plain_ruby_ratio, max_plain_ruby_ratio
+        )
+      end
+      if over_allocated?
+        failures << "Serega allocates #{extra_objects} more objects than the hand-written Hash, the limit is #{max_extra_objects}"
       end
       failures
+    end
+  end
+
+  # Counts the instructions of a block with the client requests of
+  # benchmarks/callgrind.c, which `rake benchmarks:check` builds. Callgrind
+  # writes the count of each block to a new dump file next to its out file.
+  module Callgrind
+    class << self
+      # @return [Boolean] Whether the script runs under Valgrind
+      def available?
+        return false unless File.exist?(library_path)
+
+        functions.fetch(:on_valgrind).call.positive?
+      end
+
+      # @return [Integer] The instructions of the block
+      def count
+        functions.fetch(:start).call
+        yield
+        functions.fetch(:stop).call
+        @dumps = (@dumps || 0) + 1
+        File.read("#{ENV.fetch("CALLGRIND_OUT_FILE")}.#{@dumps}")[/^(?:totals|summary): (\d+)/, 1].to_i
+      end
+
+      private
+
+      def library_path
+        ENV.fetch("CALLGRIND_LIBRARY", "")
+      end
+
+      def functions
+        @functions ||= begin
+          library = Fiddle.dlopen(library_path)
+          {
+            on_valgrind: Fiddle::Function.new(library["serega_on_valgrind"], [], Fiddle::TYPE_INT),
+            start: Fiddle::Function.new(library["serega_start"], [], Fiddle::TYPE_VOID),
+            stop: Fiddle::Function.new(library["serega_stop"], [], Fiddle::TYPE_VOID)
+          }
+        end
+      end
     end
   end
 
@@ -114,6 +178,8 @@ module BenchmarkCheck
     #
     # @return [Boolean] Whether Serega passed every case
     def call
+      abort "benchmarks/check.rb counts instructions under Valgrind, run it with `rake benchmarks:check`" unless Callgrind.available?
+
       results = RIVALS.map { |(name, format), rival| check(name, format, rival) }
       rows = rows(results)
       failed = results.reject(&:passed?)
@@ -127,63 +193,52 @@ module BenchmarkCheck
 
     private
 
-    # Measures one case. A busy machine can slow one measurement, thus a case
-    # that fails is measured again for longer.
     def check(name, format, rival)
       reports = BenchmarkCases.public_send(name).fetch(format)
       BenchmarkCases.check(format, reports)
-      serializers = reports.values_at("serega", rival, "plain ruby")
+      serega, rival_serializer, plain_ruby = reports.values_at("serega", rival, "plain ruby")
+      calls = CALLS.fetch(name)
 
-      result = Result.new(name, format, rival, *median_call_times(serializers, CASE_TIME))
-      result = Result.new(name, format, rival, *median_call_times(serializers, CASE_TIME * 3)) unless result.passed?
-      result
+      Result.new(
+        name, format, rival,
+        instructions(serega, calls), instructions(rival_serializer, calls), instructions(plain_ruby, calls),
+        objects(serega), objects(plain_ruby)
+      )
     end
 
-    # Median time of one call of each serializer, in seconds. Each serializer
-    # measures one batch before the rounds, to size its batches.
-    def median_call_times(serializers, case_time)
-      batch_time = case_time / (ROUNDS + 1) / serializers.size
-      batch_sizes = serializers.map { |serializer| batch_size(serializer, batch_time) }
-      times = serializers.map { [] }
+    # Median instructions of one call. GC runs before each round and not
+    # during it, as the allocated objects stand for its cost.
+    def instructions(serializer, calls)
+      serializer.call
 
-      ROUNDS.times do |round|
-        # Alternate which serializer goes first
-        order = round.even? ? serializers.each_index : serializers.each_index.reverse_each
-        order.each do |index|
-          serializer = serializers[index]
-          calls = batch_sizes[index]
-          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          calls.times { serializer.call }
-          times[index] << (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) / calls
-        end
+      counts = Array.new(ROUNDS) do
+        GC.start
+        GC.disable
+        Callgrind.count { calls.times { serializer.call } }.fdiv(calls)
+      ensure
+        GC.enable
       end
 
-      times.map { |serializer_times| serializer_times.sort[ROUNDS / 2] }
+      counts.sort[ROUNDS / 2]
     end
 
-    # Calls the serializer for the batch time, and the warmup calls at least,
-    # and returns the number of calls in the batch time
-    def batch_size(serializer, batch_time)
-      WARMUP_CALLS.times { serializer.call }
-
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      calls = 0
-
-      loop do
-        serializer.call
-        calls += 1
-        break if Process.clock_gettime(Process::CLOCK_MONOTONIC) - started >= batch_time
-      end
-
-      calls
+    # Objects allocated by one call
+    def objects(serializer)
+      GC.disable
+      before = GC.stat(:total_allocated_objects)
+      serializer.call
+      GC.stat(:total_allocated_objects) - before
+    ensure
+      GC.enable
     end
 
     def rows(results)
       results.map do |result|
         [
           result.label, result.rival,
-          duration(result.serega_time), duration(result.rival_time), duration(result.plain_ruby_time),
-          ratio(result.rival_ratio), ratio(result.plain_ruby_ratio), result.result
+          instructions_count(result.serega), instructions_count(result.rival_instructions), instructions_count(result.plain_ruby),
+          ratio(result.rival_ratio), ratio(result.plain_ruby_ratio),
+          "#{number(result.serega_objects)} / #{number(result.plain_ruby_objects)}", result.result
         ]
       end
     end
@@ -218,15 +273,18 @@ module BenchmarkCheck
       lines.join("\n")
     end
 
-    def duration(seconds)
-      if seconds < 1e-6 then "#{(seconds * 1e9).round} ns"
-      elsif seconds < 1e-3 then "#{(seconds * 1e6).round(1)} µs"
-      else "#{(seconds * 1e3).round(2)} ms"
-      end
+    # Instructions in thousands or millions, like 18.1k or 13.61M
+    def instructions_count(value)
+      (value < 1e6) ? "#{(value / 1e3).round(1)}k" : "#{(value / 1e6).round(2)}M"
+    end
+
+    # Whole number with thousands separators, like 2,523
+    def number(value)
+      value.to_s.reverse.scan(/\d{1,3}/).join(",").reverse
     end
 
     def ratio(value)
-      format("%.2f", value)
+      format("%.3f", value)
     end
   end
 end

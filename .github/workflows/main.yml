@@ -72,6 +72,10 @@ jobs:
       - name: Install benchmark gems
         run: BUNDLE_GEMFILE=gemfiles/benchmarks.gemfile bundle install
 
+      # rake benchmarks:check counts instructions with callgrind
+      - name: Install Valgrind
+        run: sudo apt-get install -y -qq valgrind
+
       - name: Check benchmarks
         run: bundle exec rake benchmarks:check
 

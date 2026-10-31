@@ -9,6 +9,9 @@ gem "sqlite3", "2.10.1"
 
 gem "benchmark-ips", "2.15.1"
 
+# Calls the Valgrind client requests of benchmarks/callgrind.c in `rake benchmarks:check`
+gem "fiddle", "1.1.8"
+
 # The gems serega is compared with
 gem "active_model_serializers", "0.10.16"
 gem "alba", "4.0.1"
