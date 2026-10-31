@@ -214,7 +214,8 @@ class Serega
     end
 
     def prepare_preloads
-      AttributeNormalizers::Preloads.call(init_opts, init_block, method_name, config)
+      relation = !serializer.nil?
+      AttributeNormalizers::Preloads.call(init_opts, relation, method_name, config)
     end
   end
 end
