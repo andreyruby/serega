@@ -139,4 +139,25 @@ RSpec.describe Serega::SeregaPlugins::Metadata::MetaAttribute do
       end
     end
   end
+
+  describe "#nested_value" do
+    subject(:nested_value) { attr.nested_value("OBJ", "CTX") }
+
+    let(:attr) { described_class.new(serializer, path: %i[meta paging], opts: opts, block: block) }
+    let(:opts) { {} }
+    let(:block) { ->(obj, ctx) { [obj, ctx] } }
+
+    it "returns the value nested under the path" do
+      expect(nested_value).to eq(meta: {paging: ["OBJ", "CTX"]})
+    end
+
+    context "with a hidden value" do
+      let(:opts) { {hide_nil: true} }
+      let(:block) { proc {} }
+
+      it "returns nil" do
+        expect(nested_value).to be_nil
+      end
+    end
+  end
 end

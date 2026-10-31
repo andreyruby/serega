@@ -27,6 +27,8 @@ class Serega
           @path = SeregaUtils::EnumDeepDup.call(path)
           @opts = SeregaUtils::EnumDeepDup.call(opts)
           @block = block
+          @hide_nil = opts[:hide_nil] == true
+          @hide_empty = opts[:hide_empty] == true
           @normalized_block = normalize_block(opts[:value], opts[:const], block)
           @normalized_block_signature =
             SeregaUtils::MethodSignature.call(@normalized_block, pos_limit: 2, keyword_args: [])
@@ -41,8 +43,22 @@ class Serega
           end
         end
 
+        # Whether the value is hidden: `hide_nil` hides nil, `hide_empty`
+        # hides nil and empty values
         def hide?(value)
-          (!!opts[:hide_nil] && value.nil?) || (!!opts[:hide_empty] && (value.nil? || (value.respond_to?(:empty?) && value.empty?)))
+          return @hide_nil || @hide_empty if value.nil?
+
+          @hide_empty && value.respond_to?(:empty?) && value.empty?
+        end
+
+        # Value nested under the path, for example `{foo: {bar: value}}` for
+        # the path `[:foo, :bar]`, or nil for a hidden value
+        def nested_value(object, context)
+          value = value(object, context)
+          return if hide?(value)
+
+          path.reverse_each { |key| value = {key => value} }
+          value
         end
 
         private
