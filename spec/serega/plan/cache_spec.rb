@@ -11,9 +11,11 @@ RSpec.describe Serega::SeregaPlan::Cache do
   let(:user_serializer) do
     address = address_serializer
     max_cached_plans = max_cached_plans_count
+    check_initiate_params = check_initiate_params_config
 
     Class.new(Serega) do
       config.max_cached_plans_per_serializer_count = max_cached_plans
+      config.check_initiate_params = check_initiate_params
 
       attribute :first_name
       attribute :last_name
@@ -22,9 +24,11 @@ RSpec.describe Serega::SeregaPlan::Cache do
   end
 
   let(:max_cached_plans_count) { 0 }
+  let(:check_initiate_params_config) { true }
 
+  # Plan of the modifiers, without validation
   def plan(modifiers)
-    user_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except])
+    user_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except], check_initiate_params: false)
   end
 
   def satisfy_attribute_names(names)
@@ -186,6 +190,24 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(planner).to have_received(:plan).with(user_serializer, params)
       expect(planner).not_to have_received(:parse).with(no_args)
       expect(planner).not_to have_received(:plan).with(user_serializer, no_params)
+    end
+
+    context "without check_initiate_params" do
+      it "validates the parameters" do
+        cache.fetch("posts")
+
+        expect(planner).to have_received(:validate).with(user_serializer, params)
+      end
+
+      context "when config.check_initiate_params is false" do
+        let(:check_initiate_params_config) { false }
+
+        it "does not validate the parameters" do
+          cache.fetch("posts")
+
+          expect(planner).not_to have_received(:validate)
+        end
+      end
     end
 
     context "without parameters" do

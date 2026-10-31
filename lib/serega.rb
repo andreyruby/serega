@@ -617,9 +617,7 @@ class Serega
     # ```
     #
     def initialize(only: nil, with: nil, except: nil, check_initiate_params: nil)
-      modifiers = !(only.nil? && with.nil? && except.nil?)
-      check_initiate_params = config.check_initiate_params if modifiers && check_initiate_params.nil?
-      @plan = self.class.plan_cache.fetch(only, with, except, check_initiate_params: modifiers && check_initiate_params)
+      @plan = self.class.plan_cache.fetch(only, with, except, check_initiate_params: check_initiate_params)
       @direct_hash_builder = @plan.direct_hash_builder
     end
 
@@ -684,10 +682,6 @@ class Serega
     end
 
     private
-
-    def config
-      self.class.config
-    end
 
     # Serializes the object with the serialization options. `opts` holds the
     # options other than :context and :many.
