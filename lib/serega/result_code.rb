@@ -44,7 +44,9 @@ class Serega
 
     def initialize(mode, points)
       @mode = mode
-      @points = points
+      @point_codes = points.each_with_index.map do |point, index|
+        point.child_plan ? RelationPointCode.new(point, index) : AttributePointCode.new(point, index)
+      end
     end
 
     # Returns the code of the `#call` method, and of the `#call_one`
@@ -59,7 +61,7 @@ class Serega
       variables = variables_code.join("\n  ")
       values = values_code
       code = call_code(variables, values)
-      return code unless @points.none? { |point| point.child_plan || !point.batch_loaders.empty? }
+      return code unless @point_codes.all?(&:call_one?)
 
       "#{code}\n#{call_one_code(variables, values)}"
     end
@@ -97,71 +99,15 @@ class Serega
     # Code that sets the local variables of a method: only the variables
     # that the code of the points reads
     def variables_code
-      point_variables = @points.each_with_index.flat_map { |point, index| point_variables_code(point, index) }
+      point_variables = @point_codes.flat_map(&:variables)
       return point_variables if mode == :hash
 
       ["result_class = @result_class", *point_variables]
     end
 
-    def point_variables_code(point, index)
-      return ["relation_values_#{index} = relations[@points[#{index}]]"] if point.child_plan
-
-      variables = []
-      variables << "attribute_#{index} = @points[#{index}].attribute" unless point.attribute.value_method
-      variables << "batches_#{index} = batches[#{index}]" unless point.batch_loaders.empty?
-      variables << "conditions_#{index} = @points[#{index}].attribute.conditions" if point.conditional?
-      variables
-    end
-
     # Code that reads all values of the source, one entry per point
     def values_code
-      @points.each_with_index.map { |point, index| assign_value_code(point, index) }
-    end
-
-    # Code that assigns the value of the point to `value_N`. A conditional
-    # attribute gets SKIP when it fails its conditions. A conditional
-    # relation value is SKIP already.
-    def assign_value_code(point, index)
-      return "value_#{index} = #{read_value_code(point, index)}" if point.child_plan
-
-      read_code = rescued_read_code(point, index)
-      return "value_#{index} =\n#{read_code.gsub(/^/, "  ")}" unless point.conditional?
-
-      <<~RUBY.chomp
-        value_#{index} =
-          if conditions_#{index}.satisfy?(source, context)
-            value_#{index} =
-        #{read_code.gsub(/^/, "      ")}
-            conditions_#{index}.satisfy_value?(value_#{index}, context) ? value_#{index} : Serega::SeregaEngine::SKIP
-          else
-            Serega::SeregaEngine::SKIP
-          end
-      RUBY
-    end
-
-    # Code that reads the value of the point. An error raised there gets
-    # the attribute name. Only the rescue reads the point.
-    def rescued_read_code(point, index)
-      <<~RUBY.chomp
-        begin
-          #{read_value_code(point, index)}
-        rescue => error
-          Serega::SeregaUtils::SerializedAttributeError.call(error, @points[#{index}])
-        end
-      RUBY
-    end
-
-    # Code that reads the value of the point. A plain attribute reads its
-    # `:const`, `:default` and formatter values from the constants of
-    # SeregaAttributeValues.
-    def read_value_code(point, index)
-      return "relation_values_#{index}[source_index]" if point.child_plan
-
-      attribute = point.attribute
-      return attribute.value_code("source", "SeregaAttributeValues::") if attribute.value_method
-      return "attribute_#{index}.value(source, context)" if point.batch_loaders.empty?
-
-      "attribute_#{index}.value(source, context, batches: batches_#{index})"
+      @point_codes.map(&:assign_value)
     end
 
     # Code that builds the serialized object of the source. `assign` is the
@@ -169,16 +115,8 @@ class Serega
     def build_serialized_code(assign)
       return build_serialized_hash_code(assign) if mode == :hash
 
-      arguments = @points.each_index.map { |index| argument_code(index) }
+      arguments = @point_codes.map(&:argument)
       ["#{assign}result_class.new(#{arguments.join(", ")})"]
-    end
-
-    # Code of the Struct or Data argument with the value of the point, nil
-    # for a skipped value
-    def argument_code(index)
-      return "value_#{index}" unless @points[index].conditional?
-
-      "(Serega::SeregaEngine::SKIP.equal?(value_#{index}) ? nil : value_#{index})"
     end
 
     # Code that builds the serialized Hash of the source, after `assign`.
@@ -186,20 +124,14 @@ class Serega
     # the code adds the other values one by one, thus the Hash keys keep the
     # order of the points.
     def build_serialized_hash_code(assign)
-      literal_size = @points.index(&:conditional?) || @points.size
-      pairs = @points.first(literal_size).each_with_index.map { |point, index| "#{point.name.inspect} => value_#{index}" }
+      size = @point_codes.size
+      literal_size = @point_codes.index(&:conditional?) || size
+      pairs = @point_codes.first(literal_size).map(&:hash_pair)
       literal = "{#{pairs.join(", ")}}"
-      return ["#{assign}#{literal}"] if literal_size == @points.size
+      return ["#{assign}#{literal}"] if literal_size == size
 
-      assigns = @points.each_with_index.drop(literal_size).map { |point, index| hash_assign_code(point, index) }
+      assigns = @point_codes.drop(literal_size).map(&:hash_assign)
       ["serialized_hash = #{literal}", *assigns, "#{assign}serialized_hash"]
-    end
-
-    # Code that adds the value of the point to the serialized Hash. It adds
-    # no key for a skipped value.
-    def hash_assign_code(point, index)
-      code = "serialized_hash[#{point.name.inspect}] = value_#{index}"
-      point.conditional? ? "#{code} unless Serega::SeregaEngine::SKIP.equal?(value_#{index})" : code
     end
   end
 end
