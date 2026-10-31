@@ -13,7 +13,7 @@ namespace :benchmarks do
     valgrind = "valgrind --tool=callgrind --quiet --instr-atstart=no --collect-atstart=no --callgrind-out-file=#{out_file}"
     env = {"CALLGRIND_LIBRARY" => library, "CALLGRIND_OUT_FILE" => out_file}
     # benchmarks/check.rb loads gemfiles/benchmarks.gemfile, thus it runs outside the current bundle
-    Bundler.with_original_env { sh env, "#{valgrind} #{RUBY} benchmarks/check.rb" }
+    Bundler.with_original_env { sh env, "#{valgrind} #{FileUtils::RUBY} benchmarks/check.rb" }
   end
 
   desc "Runs the benchmarks and updates the tables of benchmarks/README.md"
