@@ -1,0 +1,7 @@
+# benchmarks/Dockerfile copies only what installs the benchmark gems
+*
+!VERSION
+!serega.gemspec
+!lib/serega/version.rb
+!gemfiles/benchmarks.gemfile
+!gemfiles/benchmarks.gemfile.lock

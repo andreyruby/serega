@@ -20,4 +20,25 @@ namespace :benchmarks do
   task :full do
     Bundler.with_original_env { ruby "benchmarks/full.rb" }
   end
+
+  namespace :docker do
+    # Runs a benchmarks task in the image of benchmarks/Dockerfile, with 2 GB
+    # of memory. The image has no main bundle, thus its rake loads only this
+    # file. TIME, FAST and RUBY_YJIT_ENABLE pass through.
+    run = lambda do |name|
+      sh "docker build --quiet --file benchmarks/Dockerfile --tag serega-benchmarks ."
+
+      env = %w[TIME FAST RUBY_YJIT_ENABLE].select { |variable| ENV.key?(variable) }.flat_map { |variable| ["--env", variable] }
+      tty = $stdout.tty? ? ["--tty"] : []
+      root = File.expand_path("..", __dir__)
+      sh "docker", "run", "--rm", *tty, "--memory=2g", *env, "--volume", "#{root}:/serega",
+        "serega-benchmarks", "rake", "--require", "bundler", "--rakefile", "tasks/benchmarks.rake", "benchmarks:#{name}"
+    end
+
+    desc "Runs benchmarks:full in Docker, and updates the tables of benchmarks/README.md"
+    task(:full) { run.call("full") }
+
+    desc "Runs benchmarks:check in Docker, where Valgrind runs on any host"
+    task(:check) { run.call("check") }
+  end
 end
