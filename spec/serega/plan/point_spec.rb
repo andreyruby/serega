@@ -7,15 +7,31 @@ RSpec.describe Serega::SeregaPlan::Point do
     default_plan(serializer).points.find { |point| point.name == name }
   end
 
-  describe "#preloads" do
-    it "returns the attribute's declared preloads" do
-      serializer = Class.new(base) { attribute :author, preload: :author }
-      expect(point_for(serializer, :author).preloads).to eq :author
+  describe "#initialize" do
+    subject(:point) { described_class.new(plan, attribute, :author, child_selection) }
+
+    let(:plan) { default_plan(serializer) }
+    let(:serializer) { Class.new(base) { attribute :author } }
+    let(:attribute) { serializer.attributes[:author] }
+    let(:child_serializer) { Class.new(base) }
+    let(:child_selection) { Serega::SeregaPlan::Selection.new(child_serializer, {}) }
+
+    it "keeps the preloads" do
+      expect(point.preloads).to eq :author
     end
 
-    it "is nil when the attribute declares no preloads" do
-      serializer = Class.new(base) { attribute :name }
-      expect(point_for(serializer, :name).preloads).to be_nil
+    it "makes the child plan of the child selection" do
+      expect(point.child_plan).to have_attributes(serializer_class: child_serializer, parent_plan_point: point)
+      expect(point.collection_classes).to eq({})
+    end
+
+    context "without a child selection" do
+      let(:child_selection) { nil }
+
+      it "has no child plan and no collection classes" do
+        expect(point.child_plan).to be_nil
+        expect(point.collection_classes).to be_nil
+      end
     end
   end
 

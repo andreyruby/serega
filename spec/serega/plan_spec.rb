@@ -129,7 +129,9 @@ RSpec.describe Serega::SeregaPlan do
   end
 
   describe "#preload_points" do
-    subject(:preload_points) { plan({}).preload_points }
+    subject(:preload_points) { described_class.new(selection).preload_points }
+
+    let(:selection) { Serega::SeregaPlan::Selection.new(current_serializer, {}) }
 
     let(:current_serializer) do
       Class.new(base_class) do
@@ -140,6 +142,17 @@ RSpec.describe Serega::SeregaPlan do
 
     it "returns the points with preloads" do
       expect(preload_points.map(&:name)).to eq [:posts]
+    end
+
+    context "when the selection gives a point no preloads" do
+      let(:selection) do
+        selection_class = Class.new(Serega::SeregaPlan::Selection) { def preloads(_attribute) = nil }
+        selection_class.new(current_serializer, {})
+      end
+
+      it "returns no points" do
+        expect(preload_points).to be_empty
+      end
     end
   end
 
