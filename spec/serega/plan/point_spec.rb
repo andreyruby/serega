@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaPlanPoint do
+RSpec.describe Serega::SeregaPlan::Point do
   let(:base) { Class.new(Serega) }
 
   def point_for(serializer, name)

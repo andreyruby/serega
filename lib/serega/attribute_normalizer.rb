@@ -141,9 +141,9 @@ class Serega
     # data on demand — those declared with `:preload` or an explicit `:batch`.
     #
     # This is intentionally narrower than a "goes through the batch mechanism"
-    # check (`SeregaPlanPoint#batch?`): a plain relation (`serializer:` without
-    # `:preload`) is batch-processed too, but it only serializes an already-loaded
-    # nested object, so it stays visible by default.
+    # check: a plain relation (`serializer:` without `:preload`) is
+    # batch-processed too, but it only serializes an already-loaded nested
+    # object, so it stays visible by default.
     def preload_or_batch?
       !!(preloads || init_opts.key?(:batch))
     end
