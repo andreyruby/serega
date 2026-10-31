@@ -8,7 +8,7 @@ class Serega
     #
     # Value resolver class for attributes with :const option
     #
-    class Const # :nodoc:
+    class Const < Base # :nodoc:
       def initialize(const_value)
         @const_value = const_value
       end
@@ -16,6 +16,11 @@ class Serega
       # Returns the constant value
       def call
         @const_value
+      end
+
+      # The value is the `:const` option
+      def const?
+        true
       end
     end
   end

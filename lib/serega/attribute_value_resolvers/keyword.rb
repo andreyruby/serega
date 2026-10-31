@@ -8,13 +8,15 @@ class Serega
     #
     # Value resolver class for attributes with :keyword option
     #
-    class Keyword # :nodoc:
+    class Keyword < Base # :nodoc:
       def initialize(keyword)
         @keyword = keyword
       end
 
-      # Name of the method the value comes from
-      attr_reader :keyword
+      # Method of the object that gives the value: the keyword
+      def object_method
+        @keyword
+      end
 
       # Calls the keyword method on the object
       def call(object)

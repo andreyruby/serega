@@ -9,7 +9,7 @@ class Serega
     # Value resolver of attributes with the :batch option and without the
     # :value option. Reads the value of the object from the loaded batch.
     #
-    class Batch # :nodoc:
+    class Batch < Base # :nodoc:
       def initialize(loader_name, id_method)
         @loader_name = loader_name
         @id_method = id_method

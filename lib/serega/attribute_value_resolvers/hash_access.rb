@@ -24,7 +24,7 @@ class Serega
     #
     # Value resolver for attributes with the :hash_access option
     #
-    class HashAccessKeyword # :nodoc:
+    class HashAccessKeyword < Base # :nodoc:
       def initialize(name, mode, allow_missing_key)
         @key = (mode == :symbol) ? name.to_sym : name.to_s
         @allow_missing_key = allow_missing_key
@@ -52,7 +52,7 @@ class Serega
     #
     # Value resolver for attributes with :hash_access and :delegate (without :allow_nil) options
     #
-    class HashAccessDelegate # :nodoc:
+    class HashAccessDelegate < Base # :nodoc:
       def initialize(to_step, final_step)
         @to_step = to_step
         @final_step = final_step
@@ -76,7 +76,7 @@ class Serega
     #
     # Value resolver for attributes with :hash_access and :delegate (with :allow_nil) options
     #
-    class HashAccessDelegateAllowNil # :nodoc:
+    class HashAccessDelegateAllowNil < Base # :nodoc:
       def initialize(to_step, final_step)
         @to_step = to_step
         @final_step = final_step

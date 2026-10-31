@@ -60,7 +60,7 @@ class Serega
     # Method of the serialized object that gives the value, `nil` for a value
     # from :value, :const, :delegate, :hash_access or :batch
     def object_method
-      @value_block.keyword if @value_block.is_a?(AttributeValueResolvers::Keyword)
+      @value_block.object_method if resolver?
     end
 
     # Name of the SeregaAttributeValues method that reads the value
@@ -111,18 +111,10 @@ class Serega
     # `:default` values and formatters come from the `CONSTANTS`,
     # `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` of SeregaAttributeValues.
     def value_code(source_variable, constants_prefix = "")
-      code =
-        case @value_block
-        when AttributeValueResolvers::Keyword,
-             AttributeValueResolvers::Delegate,
-             AttributeValueResolvers::DelegateAllowNil,
-             AttributeValueResolvers::HashAccessKeyword,
-             AttributeValueResolvers::HashAccessDelegate,
-             AttributeValueResolvers::HashAccessDelegateAllowNil
-          @value_block.code(source_variable)
-        when AttributeValueResolvers::Const
-          "#{constants_prefix}CONSTANTS[#{name.inspect}]"
-        end
+      return unless resolver?
+
+      resolver = @value_block
+      code = resolver.const? ? "#{constants_prefix}CONSTANTS[#{name.inspect}]" : resolver.code(source_variable)
       return unless code
 
       code = "(value = #{code}).nil? ? #{constants_prefix}DEFAULTS[#{name.inspect}] : value" unless @default.nil?
@@ -140,6 +132,12 @@ class Serega
 
     private
 
+    # Whether the value comes from a resolver that Serega built from the
+    # options, and not from a `:value` callable of the user
+    def resolver?
+      @value_block.is_a?(AttributeValueResolvers::Base)
+    end
+
     # Defines the SeregaAttributeValues method that reads the value of a
     # source directly, for example `read_full_name`. The method has the
     # file and line of the attribute.
@@ -148,7 +146,7 @@ class Serega
       return unless code
 
       values_class = serializer_class::SeregaAttributeValues
-      values_class::CONSTANTS[name] = @value_block.call if @value_block.is_a?(AttributeValueResolvers::Const)
+      values_class::CONSTANTS[name] = @value_block.call if @value_block.const?
       values_class::DEFAULTS[name] = @default unless @default.nil?
       values_class::FORMATTERS[name] = @formatter.callable if @formatter&.callable
       values_class::FORMATTER_ARGS[name] = @formatter.args if @formatter&.args
