@@ -45,6 +45,7 @@ require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
 require_relative "serega/utils/parse_string_modifiers"
 require_relative "serega/utils/ractor_local"
+require_relative "serega/utils/ruby_literal"
 require_relative "serega/utils/serialized_attribute_error"
 require_relative "serega/utils/to_hash"
 require_relative "serega/attribute_value_resolvers/batch"
@@ -54,7 +55,9 @@ require_relative "serega/attribute_value_resolvers/hash_access"
 require_relative "serega/attribute_value_resolvers/keyword"
 require_relative "serega/attribute_values"
 require_relative "serega/conditions"
-require_relative "serega/formatter"
+require_relative "serega/formatters"
+require_relative "serega/formatters/callable"
+require_relative "serega/formatters/method"
 require_relative "serega/attribute"
 require_relative "serega/attribute_normalizers/batch"
 require_relative "serega/attribute_normalizers/block"
@@ -284,7 +287,7 @@ class Serega
 
       value ||= block
       SeregaValidations::CheckFormatter.call(name, value)
-      formatters[name] = SeregaFormatter.new({use: value, allow_nil: allow_nil})
+      formatters[name] = SeregaFormatters.build({use: value, allow_nil: allow_nil})
     end
 
     #
