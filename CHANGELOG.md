@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [0.43.0] - 2026-10-31
+## [0.50.0] - 2026-10-31
 
 - **BREAKING**: `plugin :activerecord_preloads` requires ActiveRecord 8.0 or later.
   See [ActiveRecord](docs/preloads.md#activerecord).
