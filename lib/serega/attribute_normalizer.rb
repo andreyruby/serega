@@ -89,15 +89,11 @@ class Serega
       SeregaBatchLoader.new(name: name, block: batch.use)
     end
 
-    # Callable :if, :unless, :if_value and :unless_value conditions. A Symbol
-    # condition calls the method of this name.
+    # The :if, :unless, :if_value and :unless_value conditions, nil without
+    # conditions
     def conditions
       conditions = init_opts.slice(:if, :unless, :if_value, :unless_value)
-      return if conditions.empty?
-
-      conditions.transform_values do |condition|
-        condition.is_a?(Symbol) ? AttributeValueResolvers::Keyword.new(condition) : condition
-      end
+      conditions unless conditions.empty?
     end
 
     # Formatter of the :format option. A Symbol option is the name of a

@@ -11,9 +11,13 @@ class Serega
   #   def satisfy?(object, context) = (begin; object.active; rescue => error; ...; end)
   #
   class SeregaConditions # :nodoc:
+    # Makes the conditions of the attribute. A Symbol condition calls the
+    # method of this name.
     def initialize(attribute, conditions)
       @attribute = attribute
-      @conditions = conditions
+      @conditions = conditions.transform_values do |condition|
+        condition.is_a?(Symbol) ? AttributeValueResolvers::Keyword.new(condition) : condition
+      end
       satisfy_code = "def satisfy?(object, context) = #{check_code(:if, :unless)}"
       satisfy_value_code = "def satisfy_value?(object, context) = #{check_code(:if_value, :unless_value)}"
       attribute.define_methods(singleton_class, "#{satisfy_code}; #{satisfy_value_code}")
