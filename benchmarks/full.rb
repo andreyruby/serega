@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Runs every benchmark case, and writes the serializations per second of each
-# gem to the tables of README.md and benchmarks/README.md, the lines between
+# gem to the tables of benchmarks/README.md, the lines between
 # `<!-- benchmarks:json -->` or `<!-- benchmarks:hash -->` and their `:end`
 # comment. Run it with `rake benchmarks:full`.
 
@@ -26,7 +26,7 @@ module BenchmarkTables
 
   # Files with a table, by format
   FILES = {
-    json: [File.expand_path("../README.md", __dir__), File.expand_path("README.md", __dir__)],
+    json: [File.expand_path("README.md", __dir__)],
     hash: [File.expand_path("README.md", __dir__)]
   }.freeze
 
