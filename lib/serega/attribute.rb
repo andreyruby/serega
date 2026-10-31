@@ -53,7 +53,20 @@ class Serega
       )
 
       normalizer = SeregaAttributeNormalizer.new(serializer_class, initials)
-      set_normalized_vars(normalizer)
+      @name = normalizer.name
+      @many = normalizer.many
+      @default = normalizer.default
+      @value_block = normalizer.value_block
+      @value_block_signature = normalizer.value_block_signature
+      @hide = normalizer.hide
+      serializer = normalizer.serializer
+      @serializer = serializer && SerializerReference.new(serializer)
+      @preloads = normalizer.preloads
+      @batch_loaders = normalizer.batch_loaders
+      @inline_batch_loader = normalizer.inline_batch_loader
+      @formatter = normalizer.formatter
+      conditions = normalizer.conditions
+      @conditions = conditions && SeregaConditions.new(self, conditions)
       @value_method = define_value_method(serializer_class)
     end
 
@@ -170,23 +183,6 @@ class Serega
         method_name = :"#{base}_#{number}#{mark}"
       end
       method_names[name] = method_name
-    end
-
-    def set_normalized_vars(normalizer)
-      @name = normalizer.name
-      @many = normalizer.many
-      @default = normalizer.default
-      @value_block = normalizer.value_block
-      @value_block_signature = normalizer.value_block_signature
-      @hide = normalizer.hide
-      serializer = normalizer.serializer
-      @serializer = serializer && SerializerReference.new(serializer)
-      @preloads = normalizer.preloads
-      @batch_loaders = normalizer.batch_loaders
-      @inline_batch_loader = normalizer.inline_batch_loader
-      @formatter = normalizer.formatter
-      conditions = normalizer.conditions
-      @conditions = conditions && SeregaConditions.new(self, conditions)
     end
   end
 end
