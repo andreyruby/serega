@@ -86,7 +86,9 @@ class Serega
       relations
     end
 
-    # Reads the relation sources of the point, and makes their child group
+    # Reads the relation sources of the point, and makes their child group.
+    # A relation without conditions reads and collects its sources without
+    # the condition and SKIP checks per source.
     def child_group(point)
       batches = batches_for(point)
       child_sources = []

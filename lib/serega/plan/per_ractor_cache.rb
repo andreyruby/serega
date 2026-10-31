@@ -16,7 +16,9 @@ class Serega
         freeze
       end
 
-      # Returns serialization plan from the plans cache of the current Ractor
+      # Returns serialization plan from the plans cache of the current Ractor.
+      # Takes the parameters one by one like Cache#fetch: a splat allocates
+      # an Array on every `Serega.new`.
       def fetch(param1 = nil, param2 = nil, param3 = nil, check_initiate_params: false)
         plan_cache = SeregaUtils::RactorLocal.fetch(@key) { SeregaPlan::Cache.new(@serializer_class, @planner) }
         plan_cache.fetch(param1, param2, param3, check_initiate_params: check_initiate_params)
