@@ -19,5 +19,11 @@ RSpec.describe Serega::AttributeValueResolvers do
         expect(resolver.call).to equal const_value
       end
     end
+
+    describe "#const?" do
+      it "returns true" do
+        expect(described_class.new(const_value).const?).to be true
+      end
+    end
   end
 end

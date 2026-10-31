@@ -18,7 +18,7 @@ class Serega
     #
     # Value resolver class for attributes with :delegate (with :allow_nil) option
     #
-    class DelegateAllowNil # :nodoc:
+    class DelegateAllowNil < Base # :nodoc:
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to
         @method_name = method_name
@@ -40,7 +40,7 @@ class Serega
     #
     # Value resolver class for attributes with :delegate (without :allow_nil) option
     #
-    class Delegate # :nodoc:
+    class Delegate < Base # :nodoc:
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to
         @method_name = method_name
