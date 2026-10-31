@@ -66,6 +66,8 @@ class Serega
 
     private
 
+    # A `while` loop fills an Array made with the size of the sources: no
+    # block call and no Array growth per source.
     def call_code(variables, values)
       <<~RUBY
         def call(sources, context, batches, relations)

@@ -18,10 +18,10 @@ require_relative "serega/version"
 #
 # See the [guides](https://github.com/andreyruby/serega/blob/master/docs/README.md).
 class Serega
-  # Frozen hash
+  # Frozen empty Hash, a shared default in place of a new `{}` per call
   FROZEN_EMPTY_HASH = {}.freeze # :nodoc:
 
-  # Frozen array
+  # Frozen empty Array, a shared default in place of a new `[]` per call
   FROZEN_EMPTY_ARRAY = [].freeze # :nodoc:
 
   # Locks serializers one at a time
@@ -392,6 +392,8 @@ class Serega
     # See [Serializing](https://github.com/andreyruby/serega/blob/master/docs/serializing.md).
     #
     def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
+      # The serialization methods list each keyword instead of taking
+      # `**opts`: a `**opts` Hash allocates on every call, even when empty.
       new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
         .to_h(object, context: context, many: many)
     end
@@ -629,6 +631,8 @@ class Serega
     # ```
     #
     def call(object, context: nil, many: nil)
+      # One Hash source of a flat plan skips #serialize_to and the run: 73 ns
+      # and 1 object instead of 136 ns and 3 objects (Ruby 4.0, YJIT).
       builder = @direct_hash_builder
       if builder && object && !many && (context.nil? || context.is_a?(Hash))
         many = SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?

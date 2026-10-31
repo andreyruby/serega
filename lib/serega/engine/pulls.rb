@@ -25,7 +25,8 @@ class Serega
       end
 
       # Collects like `.collect`, and keeps SKIP of a skipped relation source
-      # as its pull
+      # as its pull. A separate method keeps the SKIP check out of the loop
+      # of relations without conditions.
       def collect_conditional(sources, relation_sources, many, known_classes)
         relation_sources.map do |relation_source|
           SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many, known_classes)
