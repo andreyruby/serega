@@ -19,6 +19,19 @@ class Serega
       def call(obj, batches:)
         batches.fetch(@loader_name)[obj.public_send(@id_method)]
       end
+
+      # Ruby code that reads the value of the source from the loaded batch
+      # of the loader, which `batch_variable` holds
+      def batch_code(source_variable, batch_variable)
+        id_method = @id_method
+        id_code =
+          if SeregaResultCode::PLAIN_METHOD_NAME.match?(id_method)
+            "#{source_variable}.#{id_method}"
+          else
+            "#{source_variable}.public_send(#{id_method.inspect})"
+          end
+        "#{batch_variable}[#{id_code}]"
+      end
     end
   end
 end

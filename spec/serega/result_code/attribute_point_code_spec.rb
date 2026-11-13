@@ -38,12 +38,24 @@ RSpec.describe Serega::SeregaResultCode::AttributePointCode do
         end
       end
 
-      it "returns the code that reads the attribute, the batches and the conditions" do
+      it "returns the code that reads the loaded batch and the conditions" do
         expect(variables).to eq [
-          "attribute_1 = @points[1].attribute",
-          "batches_1 = batches[1]",
+          "batch_1 = batches[1].fetch(:ratings)",
           "conditions_1 = @points[1].attribute.conditions"
         ]
+      end
+    end
+
+    context "with a batch attribute and a formatter that reads the context" do
+      let(:serializer) do
+        Class.new(Serega) do
+          batch :ratings, proc { |users| users.to_h { |user| [user.id, 5] } }
+          attribute :rating, batch: :ratings, format: proc { |rating, ctx| ctx[rating] }
+        end
+      end
+
+      it "returns the code that reads the attribute and the batches" do
+        expect(variables).to eq ["attribute_1 = @points[1].attribute", "batches_1 = batches[1]"]
       end
     end
   end
@@ -98,6 +110,19 @@ RSpec.describe Serega::SeregaResultCode::AttributePointCode do
         Class.new(Serega) do
           batch :ratings, proc { |users| users.to_h { |user| [user.id, 5] } }
           attribute :rating, batch: :ratings
+        end
+      end
+
+      it "returns the code that reads the value from the loaded batch" do
+        expect(code).to include "batch_1[source.id]"
+      end
+    end
+
+    context "with a batch attribute and a formatter that reads the context" do
+      let(:serializer) do
+        Class.new(Serega) do
+          batch :ratings, proc { |users| users.to_h { |user| [user.id, 5] } }
+          attribute :rating, batch: :ratings, format: proc { |rating, ctx| ctx[rating] }
         end
       end
 

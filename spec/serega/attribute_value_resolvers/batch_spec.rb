@@ -49,4 +49,20 @@ RSpec.describe Serega::AttributeValueResolvers::Batch do
       end
     end
   end
+
+  describe "#batch_code" do
+    subject(:code) { described_class.new(loader_name, id_method).batch_code("source", "batch") }
+
+    it "returns the code that reads the value by the id of the source" do
+      expect(code).to eq "batch[source.id]"
+    end
+
+    context "with an id method that is not a plain method name" do
+      let(:id_method) { :"user-id" }
+
+      it "returns the code that sends the id method" do
+        expect(code).to eq 'batch[source.public_send(:"user-id")]'
+      end
+    end
+  end
 end
