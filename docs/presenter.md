@@ -40,14 +40,18 @@ Presenter methods run on a `SimpleDelegator` that wraps the serialized object:
 - `__getobj__` returns the object;
 - `__ctx__` returns the [context](context.md).
 
-Objects are wrapped only when the serializer has presenter methods. Then
-`:value` callables and batch loaders receive the wrapped objects, and preload
-handlers receive the original objects.
+Objects are wrapped only when a serialized attribute needs the wrapper: it
+reads a presenter method, or it has a `:value` callable, a batch loader or a
+callable `:if` or `:unless` condition. Then these callables and batch loaders
+receive the wrapped objects, and preload handlers receive the original
+objects. With `attribute :email` added above, `only: [:email]` wraps nothing.
 
 ## Speed
 
 Presenter methods are slower than `:value` options: each object is wrapped,
-and each attribute is read through the wrapper. 20 objects with 10
+and each attribute is read through the wrapper. Fields selected without
+presenter methods skip the wrapper, thus they serialize as fast as without a
+presenter. 20 objects with 10
 attributes, 2 of them computed, serialize in 11.7 µs with presenter methods and
 in 6.3 µs with `:value` options, about twice as fast. The difference is a few
 microseconds, thus it matters little in a request that takes milliseconds.

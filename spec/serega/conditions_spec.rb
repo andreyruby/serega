@@ -199,4 +199,30 @@ RSpec.describe Serega::SeregaConditions do
       end
     end
   end
+
+  describe "#source_methods" do
+    subject(:source_methods) { conditions.source_methods }
+
+    let(:attribute_opts) { {if: :active, unless: :admin} }
+
+    it "returns the methods of the :if and :unless conditions" do
+      expect(source_methods).to eq %i[active admin]
+    end
+
+    context "with value conditions only" do
+      let(:attribute_opts) { {if_value: :present?} }
+
+      it "returns no methods" do
+        expect(source_methods).to eq []
+      end
+    end
+
+    context "with a callable :if condition" do
+      let(:attribute_opts) { {if: ->(user) { user.active }, unless: :admin} }
+
+      it "returns nil" do
+        expect(source_methods).to be_nil
+      end
+    end
+  end
 end

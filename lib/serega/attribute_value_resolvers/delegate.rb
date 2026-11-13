@@ -24,6 +24,11 @@ class Serega
         @method_name = method_name
       end
 
+      # Methods that the value read calls on the source: the delegate target
+      def source_methods
+        [@delegate_to]
+      end
+
       # Delegates method call to another object with safe navigation
       def call(object)
         object.public_send(@delegate_to)&.public_send(@method_name)
@@ -44,6 +49,11 @@ class Serega
       def initialize(delegate_to, method_name)
         @delegate_to = delegate_to
         @method_name = method_name
+      end
+
+      # Methods that the value read calls on the source: the delegate target
+      def source_methods
+        [@delegate_to]
       end
 
       # Delegates method call to another object

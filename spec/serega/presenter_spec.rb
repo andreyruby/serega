@@ -3,7 +3,7 @@
 RSpec.describe Serega::SeregaPresenter do
   let(:serializer) { Class.new(Serega) }
 
-  # Any presenter method makes the serializer wrap objects in the presenter
+  # Gives the serializer a presenter class with a method that no attribute reads
   def add_presenter(serializer_class)
     serializer_class.presenter { define_method(:unused) {} }
   end
@@ -290,6 +290,40 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
+  describe "skipping wrapping for attributes without presenter methods" do
+    subject(:serialize) { serializer.to_h(user, only: only) }
+
+    let(:serializer) do
+      Class.new(Serega) do
+        attribute :first_name
+        attribute :full_name
+
+        presenter do
+          def full_name = "#{first_name} Wayne"
+        end
+      end
+    end
+
+    let(:user) { Struct.new(:first_name).new("Bruce") }
+    let(:only) { :first_name }
+
+    before { allow(serializer.presenter).to receive(:new).and_call_original }
+
+    it "does not wrap the object" do
+      expect(serialize).to eq(first_name: "Bruce")
+      expect(serializer.presenter).not_to have_received(:new)
+    end
+
+    context "when a selected attribute reads a presenter method" do
+      let(:only) { %i[first_name full_name] }
+
+      it "wraps the object" do
+        expect(serialize).to eq(first_name: "Bruce", full_name: "Bruce Wayne")
+        expect(serializer.presenter).to have_received(:new).once
+      end
+    end
+  end
+
   describe "unwrapping objects before preloads" do
     subject(:serialize) { serializer.to_h(["raw object"]) }
 
@@ -379,6 +413,32 @@ RSpec.describe Serega::SeregaPresenter do
 
     it "keeps the presenter methods" do
       expect(presenter_class.new(user).full_name).to eq "Bruce Wayne"
+    end
+  end
+
+  describe ".presents?" do
+    let(:presenter_class) do
+      Class.new(described_class) do
+        def full_name = "#{first_name} #{last_name}"
+      end
+    end
+
+    before { presenter_class.define_delegators(%i[first_name]) }
+
+    it "returns true for a presenter method" do
+      expect(presenter_class.presents?(:full_name)).to be true
+    end
+
+    it "returns true for a method of SimpleDelegator" do
+      expect(presenter_class.presents?(:itself)).to be true
+    end
+
+    it "returns false for a delegator" do
+      expect(presenter_class.presents?(:first_name)).to be false
+    end
+
+    it "returns false for an undefined method" do
+      expect(presenter_class.presents?(:last_name)).to be false
     end
   end
 

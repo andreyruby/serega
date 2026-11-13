@@ -222,6 +222,75 @@ RSpec.describe Serega::SeregaAttribute do
     end
   end
 
+  describe "#source_methods" do
+    subject(:source_methods) { described_class.new(serializer_class, name: :full_name, opts: opts).source_methods }
+
+    let(:opts) { {} }
+
+    it "returns the method that reads the value" do
+      expect(source_methods).to eq [:full_name]
+    end
+
+    context "with the :value option" do
+      let(:opts) { {value: ->(user) { user.name }} }
+
+      it "returns nil" do
+        expect(source_methods).to be_nil
+      end
+    end
+
+    context "with a Symbol :if condition" do
+      let(:opts) { {if: :active?} }
+
+      it "returns the methods of the value and of the condition" do
+        expect(source_methods).to eq %i[full_name active?]
+      end
+    end
+
+    context "with a callable :if condition" do
+      let(:opts) { {if: ->(user) { user.active? }} }
+
+      it "returns nil" do
+        expect(source_methods).to be_nil
+      end
+    end
+  end
+
+  describe "#reads_presenter?" do
+    subject(:reads_presenter) { attribute.reads_presenter? }
+
+    let(:attribute) { described_class.new(serializer_class, name: name) }
+    let(:name) { :full_name }
+
+    let(:presenter_class) do
+      Class.new(Serega::SeregaPresenter) do
+        def full_name = "#{first_name} #{last_name}"
+      end
+    end
+
+    it "returns false" do
+      expect(reads_presenter).to be false
+    end
+
+    context "when the attribute calls a presenter method" do
+      before { attribute.check_presenter(presenter_class) }
+
+      it "returns true" do
+        expect(reads_presenter).to be true
+      end
+    end
+
+    context "when the attribute calls no presenter method" do
+      let(:name) { :first_name }
+
+      before { attribute.check_presenter(presenter_class) }
+
+      it "returns false" do
+        expect(reads_presenter).to be false
+      end
+    end
+  end
+
   describe "#value_method" do
     subject(:attribute) { described_class.new(serializer_class, name: name, opts: opts, location: "app/serializers/user_serializer.rb:3") }
 

@@ -16,6 +16,11 @@ class Serega
       def code(_source_variable)
       end
 
+      # Methods that the value read calls on the source, nil when the
+      # source reaches other code
+      def source_methods
+      end
+
       # Method of the object that gives the value, nil when no method of
       # the object gives it
       def object_method

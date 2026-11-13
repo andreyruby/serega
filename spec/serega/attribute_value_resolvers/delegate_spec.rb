@@ -57,6 +57,12 @@ RSpec.describe Serega::AttributeValueResolvers do
       end
     end
 
+    describe "#source_methods" do
+      it "returns the delegate target" do
+        expect(described_class.new(delegate_to, method_name).source_methods).to eq [:profile]
+      end
+    end
+
     describe "#code" do
       subject(:code) { described_class.new(delegate_to, method_name).code("source") }
 
@@ -114,6 +120,12 @@ RSpec.describe Serega::AttributeValueResolvers do
         it "raises NoMethodError" do
           expect { resolver.call(object) }.to raise_error(NoMethodError)
         end
+      end
+    end
+
+    describe "#source_methods" do
+      it "returns the delegate target" do
+        expect(described_class.new(delegate_to, method_name).source_methods).to eq [:profile]
       end
     end
 

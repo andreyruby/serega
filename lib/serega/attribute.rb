@@ -68,6 +68,7 @@ class Serega
       conditions = normalizer.conditions
       @conditions = conditions && SeregaConditions.new(self, conditions)
       @value_method = define_value_method(serializer_class)
+      @reads_presenter = false
     end
 
     # Method of the serialized object that gives the value, `nil` for a value
@@ -78,6 +79,34 @@ class Serega
 
     # Name of the SeregaAttributeValues method that reads the value
     attr_reader :value_method
+
+    # Methods that reading the value and checking the :if and :unless
+    # conditions call on the object, nil when a callable or a batch loader
+    # gets the object
+    def source_methods
+      return unless resolver?
+
+      methods = @value_block.source_methods
+      return methods unless methods && @conditions
+
+      condition_methods = @conditions.source_methods
+      condition_methods && (methods + condition_methods)
+    end
+
+    # Notes whether the attribute reads the object through the presenter: it
+    # calls a presenter method, or it gives the object to a callable or a
+    # batch loader. The serializer calls it when it is locked, because
+    # presenter methods can be added after the attribute.
+    def check_presenter(presenter_class)
+      methods = source_methods
+      @reads_presenter = methods.nil? || methods.any? { |name| presenter_class.presents?(name) }
+    end
+
+    # Whether the attribute reads the object through the presenter, known
+    # after the serializer is locked
+    def reads_presenter?
+      @reads_presenter
+    end
 
     # Whether the attribute has an :if, :unless, :if_value or :unless_value condition
     def conditional?
