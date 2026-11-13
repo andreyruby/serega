@@ -93,8 +93,8 @@ GEM
     oj_serializers (3.0.2)
       oj (>= 3.14.0)
     ostruct (0.6.3)
-    panko_serializer (0.8.5)
-      activesupport
+    panko_serializer (1.0.1)
+      activesupport (>= 7.2)
       oj (> 3.11.0, < 4.0.0)
     prism (1.9.0)
     racc (1.8.1)
@@ -145,7 +145,7 @@ DEPENDENCIES
   fiddle (= 1.1.8)
   oj (= 3.17.7)
   oj_serializers (= 3.0.2)
-  panko_serializer (= 0.8.5)
+  panko_serializer (= 1.0.1)
   serega!
   sqlite3 (= 2.10.1)
 
@@ -187,7 +187,7 @@ CHECKSUMS
   oj (3.17.7) sha256=7a21d3ac8e544a850f1cdaf711b0c8144ba587d14d3e4917c0855fd7b0483db7
   oj_serializers (3.0.2) sha256=ba6e338a4f7b399d92ab8fb7f13973f22b50e042ce1b73b2f185f088b3c15903
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
-  panko_serializer (0.8.5) sha256=ba95efee24a3b3abe4e025b4b9f1c39944b321a53f2a4cd6c5a9d5bd6540c929
+  panko_serializer (1.0.1) sha256=a6fd7b37da6457943970e4f3925cf8de509af922fb7cbe86debe076186498677
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
   rack (3.2.8) sha256=1fecc85e463ebc7a2a945fff829ffcd549babeb1556384796fad946c28dc4ec7

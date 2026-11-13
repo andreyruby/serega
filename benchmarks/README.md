@@ -11,13 +11,13 @@ JSON strings:
 <!-- benchmarks:json -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 1,086,086 |    13,520 |                    1,326 |   2,618 |     1,867 |
-| oj_serializers           |   523,537 |    10,604 |                      991 |       — |         — |
-| panko_serializer         |   402,686 |    12,531 |                    1,067 |   2,534 |     1,719 |
-| alba                     |   294,210 |     4,367 |                      412 |       — |         — |
-| blueprinter              |   241,254 |     3,062 |                      307 |       — |         — |
-| active_model_serializers |    35,403 |       582 |                       45 |      68 |         — |
-| *hand-written Hash*      | 1,215,868 |    13,496 |                    1,255 |   2,611 |     1,803 |
+| **Serega**               | 1,063,839 |    13,647 |                    1,317 |   2,584 |     1,858 |
+| oj_serializers           |   509,358 |    10,557 |                      987 |       — |         — |
+| panko_serializer         |   716,373 |    11,445 |                    1,099 |   2,279 |     1,605 |
+| alba                     |   289,734 |     4,351 |                      412 |       — |         — |
+| blueprinter              |   234,749 |     3,128 |                      308 |       — |         — |
+| active_model_serializers |    33,001 |       590 |                       45 |      66 |         — |
+| *hand-written Hash*      | 1,173,960 |    13,563 |                    1,250 |   2,557 |     1,752 |
 <!-- benchmarks:json:end -->
 
 Hashes:
@@ -25,13 +25,13 @@ Hashes:
 <!-- benchmarks:hash -->
 | Serializer               |    1 post | 100 posts | 100 posts with relations | `only:` | `except:` |
 |--------------------------|----------:|----------:|-------------------------:|--------:|----------:|
-| **Serega**               | 1,449,634 |    16,343 |                    1,528 |   2,935 |     2,138 |
-| oj_serializers           | 1,360,727 |    15,101 |                    1,303 |       — |         — |
-| panko_serializer         |   441,079 |     8,197 |                      737 |   1,506 |     1,038 |
-| alba                     |   364,151 |     4,614 |                      429 |       — |         — |
-| blueprinter              |   265,708 |     3,199 |                      313 |       — |         — |
-| active_model_serializers |    37,074 |       605 |                       46 |      69 |         — |
-| *hand-written Hash*      | 1,645,499 |    16,280 |                    1,449 |   2,908 |     2,074 |
+| **Serega**               | 1,449,291 |    16,480 |                    1,523 |   2,900 |     2,131 |
+| oj_serializers           | 1,361,989 |    15,269 |                    1,279 |       — |         — |
+| panko_serializer         |   914,969 |    11,973 |                    1,047 |   2,084 |     1,455 |
+| alba                     |   364,759 |     4,668 |                      426 |       — |         — |
+| blueprinter              |   258,801 |     3,256 |                      318 |       — |         — |
+| active_model_serializers |    36,761 |       601 |                       46 |      67 |         — |
+| *hand-written Hash*      | 1,631,347 |    16,485 |                    1,435 |   2,789 |     2,064 |
 <!-- benchmarks:hash:end -->
 
 "—" means the gem has no runtime field selection.
@@ -60,12 +60,11 @@ first value that differs.
   extractor for times. panko_serializer, active_model_serializers and
   oj_serializers: serializer methods for times. Every gem formats times with an
   explicit `iso8601(3)` call.
-- **Prepared serializers.** serega serializers and panko_serializer array
-  serializers serialize many times, thus they are prepared once with `.new`,
-  with their field selection, and reused by every call. alba and
-  active_model_serializers take the object in `.new`, panko_serializer
-  instances for one object are single-use, and blueprinter and oj_serializers
-  serialize with class methods.
+- **Prepared serializers.** serega and panko_serializer serializers serialize
+  many times, thus they are prepared once with `.new`, with their field
+  selection, and reused by every call. alba and active_model_serializers take
+  the object in `.new`, and blueprinter and oj_serializers serialize with class
+  methods.
 - **One object or a collection.** Each gem is told which one it gets where its
   API allows: serega with `many:`, panko_serializer and oj_serializers with
   separate methods, active_model_serializers with
@@ -83,7 +82,7 @@ first value that differs.
 ## Environment
 
 Docker on an Apple M4 (`benchmarks/Dockerfile`: Debian, Ruby 4.0.7 without a
-JIT, 2 GB of memory), alba 4.0.1, blueprinter 1.3.0, panko_serializer 0.8.5,
+JIT, 2 GB of memory), alba 4.0.1, blueprinter 1.3.0, panko_serializer 1.0.1,
 active_model_serializers 0.10.16, oj_serializers 3.0.2, activerecord 8.1.4.
 The gems come from `gemfiles/benchmarks.gemfile`, and `cases.rb` defines how
 each gem serializes each case.

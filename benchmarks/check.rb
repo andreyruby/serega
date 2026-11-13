@@ -17,7 +17,7 @@ require "fiddle"
 module BenchmarkCheck
   # The fastest other gem by case and format, see README.md
   RIVALS = {
-    ["single", :json] => "oj_serializers",
+    ["single", :json] => "panko_serializer",
     ["single", :hash] => "oj_serializers",
     ["collection", :json] => "panko_serializer",
     ["collection", :hash] => "oj_serializers",
@@ -47,7 +47,7 @@ module BenchmarkCheck
   }.freeze
 
   # How many more instructions than the fastest other gem Serega may run.
-  # Serega runs 0.51 to 0.98 of their instructions.
+  # Serega runs 0.70 to 0.96 of their instructions.
   MAX_RIVAL_RATIO = 1.0
 
   # How many more objects than the hand-written Hash Serega may allocate, by
