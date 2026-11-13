@@ -58,6 +58,7 @@ class Serega
       @default = normalizer.default
       @value_block = normalizer.value_block
       @value_block_signature = normalizer.value_block_signature
+      @value_callable = @value_block.is_a?(AttributeValueResolvers::Callable) ? @value_block.callable : nil
       @hide = normalizer.hide
       serializer = normalizer.serializer
       @serializer = serializer && SerializerReference.new(serializer)
@@ -65,6 +66,7 @@ class Serega
       @batch_loaders = normalizer.batch_loaders
       @inline_batch_loader = normalizer.inline_batch_loader
       @formatter = normalizer.formatter
+      @value_code = ValueCode.new(@name, @value_block, @default, @formatter)
       conditions = normalizer.conditions
       @conditions = conditions && SeregaConditions.new(self, conditions)
       @value_method = define_value_method(serializer_class)
@@ -79,6 +81,12 @@ class Serega
 
     # Name of the SeregaAttributeValues method that reads the value
     attr_reader :value_method
+
+    # Ruby code that reads the value in generated code
+    attr_reader :value_code
+
+    # The :value callable, nil without the :value option
+    attr_reader :value_callable
 
     # Methods that reading the value and checking the :if and :unless
     # conditions call on the object, nil when a callable or a batch loader
@@ -126,39 +134,19 @@ class Serega
 
     # Finds attribute value
     #
-    # Generated code reads plain attributes without this method, with
-    # their #value_code.
+    # Generated code reads plain attributes and :value callables without
+    # this method, with their #value_code.
     def value(object, context, batches: nil)
-      # Signatures should match allowed signatures in CheckOptValue
       result =
         case @value_block_signature
-        when "1" then @value_block.call(object)
-        when "1_ctx" then @value_block.call(object, ctx: context)
-        when "1_batches" then @value_block.call(object, batches: batches)
-        when "1_batches_ctx" then @value_block.call(object, ctx: context, batches: batches)
-        when "2" then @value_block.call(object, context)
-        when "2_batches_ctx" then @value_block.call(object, context, ctx: context, batches: batches)
-        else @value_block.call # signature is "0" - no parameters
+        when "1" then @value_block.call(object) # resolvers that read the object
+        when "1_batches" then @value_block.call(object, batches: batches) # the Batch resolver
+        when "1_batches_ctx" then @value_block.call(object, ctx: context, batches: batches) # Callable
+        else @value_block.call # the Const resolver
         end
 
       result = @default if result.nil?
       @formatter ? @formatter.call(result, context) : result
-    end
-
-    # Ruby code that reads the attribute value of the source. `:const` and
-    # `:default` values and formatters come from the `CONSTANTS`,
-    # `DEFAULTS`, `FORMATTERS` and `FORMATTER_ARGS` of SeregaAttributeValues.
-    def value_code(source_variable, constants_prefix = "")
-      return unless resolver?
-
-      resolver = @value_block
-      code = resolver.const? ? "#{constants_prefix}CONSTANTS[#{name.inspect}]" : resolver.code(source_variable)
-      return unless code
-
-      code = "(value = #{code}).nil? ? #{constants_prefix}DEFAULTS[#{name.inspect}] : value" unless @default.nil?
-      return code unless @formatter
-
-      @formatter.code(code, "#{constants_prefix}FORMATTERS[#{name.inspect}]", "#{constants_prefix}FORMATTER_ARGS[#{name.inspect}]")
     end
 
     # Defines the methods of the code on the owner, at the file and line of
@@ -178,19 +166,21 @@ class Serega
 
     # Defines the SeregaAttributeValues method that reads the value of a
     # source directly, for example `read_full_name`. The method has the
-    # file and line of the attribute.
+    # file and line of the attribute. The `:default` value and the
+    # formatter are stored for each attribute, because the generated code
+    # of a :value callable reads them too.
     def define_value_method(serializer_class)
-      code = value_code("source")
-      return unless code
-
       values_class = serializer_class::SeregaAttributeValues
-      values_class::CONSTANTS[name] = @value_block.call if @value_block.const?
       values_class::DEFAULTS[name] = @default unless @default.nil?
       values_class::FORMATTERS[name] = @formatter.callable if @formatter&.callable
       values_class::FORMATTER_ARGS[name] = @formatter.args if @formatter&.args
 
+      return unless @value_code.plain?
+
+      values_class::CONSTANTS[name] = @value_block.call if @value_block.const?
+
       method_name = value_method_name(values_class)
-      define_methods(values_class, "def #{method_name}(source) = #{code}")
+      define_methods(values_class, @value_code.plain_method(method_name))
       method_name
     end
 

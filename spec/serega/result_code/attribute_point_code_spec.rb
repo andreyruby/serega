@@ -15,6 +15,16 @@ RSpec.describe Serega::SeregaResultCode::AttributePointCode do
     context "with a :value attribute" do
       let(:serializer) { Class.new(Serega) { attribute :name, value: proc { |user| user.name } } }
 
+      it "returns the code that reads the callable" do
+        expect(variables).to eq ["callable_1 = @points[1].attribute.value_callable"]
+      end
+    end
+
+    context "with a :value attribute and a formatter that reads the context" do
+      let(:serializer) do
+        Class.new(Serega) { attribute :name, value: proc { |user| user.name }, format: proc { |name, ctx| ctx[name] } }
+      end
+
       it "returns the code that reads the attribute" do
         expect(variables).to eq ["attribute_1 = @points[1].attribute"]
       end
@@ -54,6 +64,29 @@ RSpec.describe Serega::SeregaResultCode::AttributePointCode do
 
     context "with a :value attribute" do
       let(:serializer) { Class.new(Serega) { attribute :name, value: proc { |user| user.name } } }
+
+      it "returns the code that calls the callable" do
+        expect(code).to include "callable_1.call(source)"
+      end
+    end
+
+    context "with a :value attribute with the :batches keyword" do
+      let(:serializer) do
+        Class.new(Serega) do
+          batch :ratings, proc { |users| users.to_h { |user| [user.id, 5] } }
+          attribute :rating, batch: {use: :ratings}, value: proc { |user, batches:| batches[:ratings][user.id] }
+        end
+      end
+
+      it "returns the code that calls the callable with the batches" do
+        expect(code).to include "callable_1.call(source, batches: batches_1)"
+      end
+    end
+
+    context "with a :value attribute and a formatter that reads the context" do
+      let(:serializer) do
+        Class.new(Serega) { attribute :name, value: proc { |user| user.name }, format: proc { |name, ctx| ctx[name] } }
+      end
 
       it "returns the code that calls the attribute" do
         expect(code).to include "attribute_1.value(source, context)"

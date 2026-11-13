@@ -6,6 +6,10 @@
   serialize up to 3 times faster. On a microbenchmark with `only:` and four
   plain fields, one object went from 698 ns to 249 ns, and 100 objects from
   15.4 µs to 5.4 µs. See [Presenter](docs/presenter.md).
+- Attributes with a `:value` callable serialize up to 20% faster: the
+  generated code calls the callable directly. On a microbenchmark with five
+  callables and two plain fields, 100 objects went from 27.7 µs to 21.8 µs,
+  and one object from 386 ns to 317 ns.
 
 ## [0.50.0] - 2026-10-31
 
