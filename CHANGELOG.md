@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- Fields selected without presenter methods skip the presenter wrapper and
+  serialize up to 3 times faster. See [Presenter](docs/presenter.md).
+
 ## [0.50.0] - 2026-10-31
 
 - **BREAKING**: `plugin :activerecord_preloads` requires ActiveRecord 8.0 or later.
