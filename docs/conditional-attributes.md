@@ -58,6 +58,45 @@ UserSerializer.to_h(user) # a user without posts and avatar
 # => {}
 ```
 
+## Conditions that load data
+
+A condition runs once per object, thus a query inside it runs once per object
+too. Load the data for all objects at once instead.
+
+An association: [preload](preloads.md) it, and read it in `:if`.
+
+```ruby
+class UserSerializer < Serega
+  plugin :activerecord_preloads
+
+  attribute :email, preload: :privacy_setting, if: proc { |user| user.privacy_setting.public_email }
+end
+
+UserSerializer.to_h(users)
+# SELECT * FROM privacy_settings WHERE user_id IN (1, 2)
+# => [{email: "bruce@wayne.com"}, {}]
+```
+
+Other data: load it with a [batch loader](batch-loading.md), build `nil` in
+`:value` for a hidden object, and skip `nil` with `:unless_value`.
+
+```ruby
+class UserSerializer < Serega
+  batch :visible_user_ids, ->(users, ctx:) { ctx[:viewer].visible_users.where(id: users).pluck(:id).to_set }
+
+  attribute :email, batch: {use: :visible_user_ids}, unless_value: :nil?,
+    value: proc { |user, batches:| user.email if batches[:visible_user_ids].include?(user.id) }
+end
+
+UserSerializer.to_h(users, context: {viewer: current_user})
+# SELECT id FROM users WHERE ... AND id IN (1, 2)
+# => [{email: "bruce@wayne.com"}, {}]
+```
+
+The batch way skips the attribute for a `nil` email of a visible user too. A
+relation works the same way: `:value` gives `nil` for a hidden object, and
+`unless_value: :nil?` skips the relation.
+
 ## Skipped attributes in results
 
 `.to_h` omits skipped attributes. `.to_struct` and `.to_data` return `nil` for
