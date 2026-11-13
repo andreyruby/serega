@@ -105,6 +105,9 @@ class Serega
       def delegate_default_allow_nil: () -> bool
       def delegate_default_allow_nil=: (bool value) -> bool
 
+      def compact: () -> bool
+      def compact=: (bool value) -> bool
+
       def hide_by_default: () -> (bool | :auto)
       def hide_by_default=: (bool | :auto value) -> (bool | :auto)
 

@@ -40,6 +40,15 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#compact=" do
+    it "validates value is boolean" do
+      expect { config.compact = false }.not_to raise_error
+      expect { config.compact = true }.not_to raise_error
+      expect { config.compact = nil }
+        .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
+    end
+  end
+
   describe "#max_cached_plans_per_serializer_count=" do
     it "validates value is boolean" do
       expect { config.max_cached_plans_per_serializer_count = 10 }.not_to raise_error
@@ -263,6 +272,7 @@ RSpec.describe Serega::SeregaConfig do
         auto_preload
         auto_preload_excluded_methods
         hide_by_default
+        compact
         batch_id_option
         base_serializer
         hash_access
@@ -272,6 +282,7 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.serialize_keys).to match_array(%i[context many])
       expect(config.check_attribute_name).to be true
       expect(config.require_many).to be false
+      expect(config.compact).to be false
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 20

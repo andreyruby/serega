@@ -23,6 +23,7 @@ it.
 | `auto_preload` | `false` | Adds [preloads][automatic-preloads] to `:delegate` and `:serializer` attributes |
 | `auto_preload_excluded_methods` | `[:itself, :__getobj__]` | Methods never preloaded automatically |
 | `hide_by_default` | `false` | Hides attributes, see [Hiding by default](selecting-fields.md#hiding-by-default) |
+| `compact` | `false` | [Leaves out keys with `nil` values](conditional-attributes.md#leaving-out-nil-values) |
 | `base_serializer` | `nil` | Superclass of [block-defined serializers][block-serializers] |
 | `batch_id_option` | `:id` | Method that returns the id of an object for [batch loaders](batch-loading.md#object-ids) |
 | `delegate_default_allow_nil` | `false` | Default `allow_nil:` of [delegates](attributes.md#delegate) |
