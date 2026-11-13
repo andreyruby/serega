@@ -416,7 +416,9 @@ RSpec.describe Serega::SeregaPresenter do
     end
   end
 
-  describe ".presents?" do
+  describe ".presents_any?" do
+    subject(:presents) { presenter_class.presents_any?(names) }
+
     let(:helpers) do
       Module.new do
         def initials = "#{first_name[0]}#{last_name[0]}"
@@ -432,26 +434,60 @@ RSpec.describe Serega::SeregaPresenter do
       end
     end
 
+    let(:names) { %i[first_name full_name] }
+
     before { presenter_class.define_delegators(%i[first_name]) }
 
-    it "returns true for a presenter method" do
-      expect(presenter_class.presents?(:full_name)).to be true
+    it "returns true" do
+      expect(presents).to be true
     end
 
-    it "returns true for a method of an included module" do
-      expect(presenter_class.presents?(:initials)).to be true
+    context "with a method of an included module" do
+      let(:names) { %i[initials] }
+
+      it "returns true" do
+        expect(presents).to be true
+      end
     end
 
-    it "returns true for a method of SimpleDelegator" do
-      expect(presenter_class.presents?(:itself)).to be true
+    context "with a method of SimpleDelegator" do
+      let(:names) { %i[itself] }
+
+      it "returns true" do
+        expect(presents).to be true
+      end
     end
 
-    it "returns false for a delegator" do
-      expect(presenter_class.presents?(:first_name)).to be false
+    context "with a delegator and an undefined method" do
+      let(:names) { %i[first_name last_name] }
+
+      it "returns false" do
+        expect(presents).to be false
+      end
     end
 
-    it "returns false for an undefined method" do
-      expect(presenter_class.presents?(:last_name)).to be false
+    context "when the presenter defines method_missing" do
+      let(:presenter_class) do
+        Class.new(described_class) do
+          def method_missing(*) = "Batman"
+
+          def respond_to_missing?(*) = true
+        end
+      end
+
+      let(:names) { %i[nick] }
+
+      it "returns true" do
+        expect(presents).to be true
+      end
+
+      context "with no names" do
+        let(:names) { [] }
+
+        it "returns false" do
+          expect(presents).to be false
+        end
+      end
     end
   end
 

@@ -76,6 +76,16 @@ class Serega
       end
     end
 
+    # Whether the presenter class answers one of the method names itself:
+    # it defines the method, not as a delegator to the wrapped object, or
+    # it defines its own `method_missing`, which can answer any name
+    def self.presents_any?(names)
+      return false if names.empty?
+      return true unless instance_method(:method_missing).owner.equal?(SeregaPresenter)
+
+      names.any? { |name| presents?(name) }
+    end
+
     # Whether the presenter class defines the method itself, not as a
     # delegator to the wrapped object
     def self.presents?(name)
@@ -84,6 +94,7 @@ class Serega
       owner = instance_method(name).owner
       !(owner.instance_of?(Module) && owner.include?(CalleeDelegator))
     end
+    private_class_method :presents?
 
     # Defines delegators for the method names that the presenter class does
     # not define itself, thus presenter methods stay in front of them
