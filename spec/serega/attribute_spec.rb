@@ -108,6 +108,14 @@ RSpec.describe Serega::SeregaAttribute do
       end
     end
 
+    context "with the :batch option" do
+      it "returns the value from the loaded batch" do
+        obj = double(id: 1)
+        attribute = described_class.new(serializer_class, name: :name, opts: {batch: proc { |users| users }})
+        expect(attribute.value(obj, nil, batches: {name: {1 => "NAME"}})).to eq "NAME"
+      end
+    end
+
     context "with the :const option" do
       it "returns the constant" do
         attribute = described_class.new(serializer_class, name: :name, opts: {const: "NAME"})

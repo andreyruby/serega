@@ -7,8 +7,9 @@ class Serega
   # output: a Hash, Struct or Data object.
   #
   # The group serializes its sources in two steps:
-  # - `#discover` runs the preloads, reads the relation sources and adds one
-  #   child group per relation.
+  # - `#discover` runs the preloads, reads the relation sources with the
+  #   generated `#collect` of the result builder and adds one child group per
+  #   relation.
   # - `#build` builds the serialized objects. It runs after the child groups
   #   are built, thus the relation values are ready.
   #
@@ -29,8 +30,8 @@ class Serega
     # source, after #build
     attr_reader :serialized
 
-    # Pulls from
-    # `SeregaEngine::Pulls.collect`, one per source of the parent group
+    # Pulls from the generated `#collect` of the parent group, one per
+    # source of the parent group
     attr_reader :pulls
 
     # Each source is wrapped in the presenter of the plan, when it has one,
@@ -45,18 +46,20 @@ class Serega
       @child_groups = nil
       @serialized = nil
       @loaded_batches = nil
-      @attribute_values = nil
     end
 
     # Runs the preloads, and makes one child group per relation point, in the
-    # order of the relation points.
+    # order of the relation points. The generated `#collect` reads the
+    # relation sources, and gives the child sources and the pulls of each
+    # relation point.
     def discover
       run_preloads
 
       relation_points = plan.relation_points
       return FROZEN_EMPTY_ARRAY if relation_points.empty?
 
-      @child_groups = relation_points.map { |point| child_group(point) }
+      collected = plan.result_builder(run.mode).collect(@sources, @context, relation_batches)
+      @child_groups = child_groups(relation_points, collected)
     end
 
     # Builds the serialized objects.
@@ -93,23 +96,6 @@ class Serega
       relations
     end
 
-    # Reads the relation sources of the point, and makes their child group.
-    # A relation without conditions reads and collects its sources without
-    # the condition and SKIP checks per source.
-    def child_group(point)
-      batches = batches_for(point)
-      child_sources = []
-      pulls =
-        if point.conditional?
-          relation_sources = read_conditional_relation_sources(point, batches)
-          SeregaEngine::Pulls.collect_conditional(child_sources, relation_sources, point.many, point.collection_classes)
-        else
-          relation_sources = read_relation_sources(point, batches)
-          SeregaEngine::Pulls.collect(child_sources, relation_sources, point.many, point.collection_classes)
-        end
-      run.new_source_group(point.child_plan, child_sources, pulls)
-    end
-
     # Runs the preloads of all points with the serializer's preload handler.
     # Preload handlers get the sources without presenters.
     def run_preloads
@@ -131,6 +117,23 @@ class Serega
       end
     end
 
+    # One child group per relation point, with the child sources and the
+    # pulls that `#collect` gave for it
+    def child_groups(relation_points, collected)
+      Array.new(relation_points.size) do |position|
+        offset = position * 2
+        run.new_source_group(relation_points[position].child_plan, collected[offset], collected[offset + 1])
+      end
+    end
+
+    # Loaded batches of the relation points, by point index, or nil
+    # without batch points. Other points load their batches in #build.
+    def relation_batches
+      return unless plan.batch_points?
+
+      plan.points.map { |point| batches_for(point) if point.child_plan }
+    end
+
     # Loads the batch loaders of the point, each once for all sources of
     # the group. An attribute with an inline batch loader uses it, other
     # attributes use the named batch loaders of the serializer. Returns nil
@@ -148,49 +151,6 @@ class Serega
       end
     rescue => error
       SeregaUtils::SerializedAttributeError.call(error, point)
-    end
-
-    # SeregaAttributeValues of the serializer: the methods that read
-    # attribute values with plain Ruby code
-    def attribute_values
-      @attribute_values ||= plan.serializer_class::SeregaAttributeValues.new
-    end
-
-    # Reads the relation source of every source: what the relation
-    # attribute returns, for example `user.posts`.
-    def read_relation_sources(point, batches)
-      attribute = point.attribute
-      value_method = attribute.value_method
-      context = @context
-
-      if value_method
-        values = attribute_values
-        @sources.map { |source| values.__send__(value_method, source) }
-      else
-        @sources.map { |source| attribute.value(source, context, batches: batches) }
-      end
-    rescue => error
-      SeregaUtils::SerializedAttributeError.call(error, point)
-    end
-
-    # Reads the relation source of every source of a conditional relation.
-    # A source failing the :if or :unless condition gets SKIP.
-    def read_conditional_relation_sources(point, batches)
-      attribute = point.attribute
-      value_method = attribute.value_method
-      values = attribute_values if value_method
-      conditions = attribute.conditions
-      context = @context
-
-      @sources.map do |source|
-        next SeregaEngine::SKIP unless conditions.satisfy?(source, context)
-
-        begin
-          value_method ? values.__send__(value_method, source) : attribute.value(source, context, batches: batches)
-        rescue => error
-          SeregaUtils::SerializedAttributeError.call(error, point)
-        end
-      end
     end
   end
 end

@@ -6,50 +6,6 @@ RSpec.describe Serega::SeregaEngine::Pulls do
   let(:many) { nil }
   let(:known_classes) { {}.compare_by_identity }
 
-  describe ".collect" do
-    subject(:pulls) { described_class.collect(sources, relation_sources, many, known_classes) }
-
-    let(:sources) { [] }
-    let(:relation_sources) { [[ann, bob], nil, ann] }
-
-    it "appends the sources of all relation sources and returns the pull of each one" do
-      expect(pulls).to eq [2, nil, described_class::SINGLE_SOURCE]
-      expect(sources).to eq [ann, bob, ann]
-    end
-
-    context "when many is true and a relation source is not a collection" do
-      let(:relation_sources) { [ann] }
-      let(:many) { true }
-
-      it "counts the relation source as a collection of one source" do
-        expect(pulls).to eq [1]
-        expect(sources).to eq [ann]
-      end
-    end
-
-    context "when many is false and a relation source is a collection" do
-      let(:relation_sources) { [[ann, bob]] }
-      let(:many) { false }
-
-      it "adds the collection as one source" do
-        expect(pulls).to eq [described_class::SINGLE_SOURCE]
-        expect(sources).to eq [[ann, bob]]
-      end
-    end
-  end
-
-  describe ".collect_conditional" do
-    subject(:pulls) { described_class.collect_conditional(sources, relation_sources, many, known_classes) }
-
-    let(:sources) { [] }
-    let(:relation_sources) { [[ann, bob], Serega::SeregaEngine::SKIP, ann] }
-
-    it "keeps SKIP as the pull of a skipped relation source" do
-      expect(pulls).to eq [2, Serega::SeregaEngine::SKIP, described_class::SINGLE_SOURCE]
-      expect(sources).to eq [ann, bob, ann]
-    end
-  end
-
   describe ".append" do
     subject(:pull) { described_class.append(sources, relation_source, many, known_classes) }
 

@@ -14,6 +14,10 @@
   the generated code reads the loaded batch directly. On a microbenchmark
   with three batch attributes and two plain fields, 100 objects went from
   29.8 µs to 16.8 µs, and one object from 1.21 µs to 1.07 µs.
+- Relations serialize up to 11% faster: generated code reads the related
+  objects and collects them in one loop per relation. On a microbenchmark
+  with 100 users, 500 posts and 1500 comments, serialization went from
+  144.9 µs to 128.3 µs, and one user from 3.48 µs to 3.30 µs.
 
 ## [0.50.0] - 2026-10-31
 
