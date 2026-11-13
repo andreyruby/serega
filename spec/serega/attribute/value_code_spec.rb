@@ -79,32 +79,6 @@ RSpec.describe Serega::SeregaAttribute::ValueCode do
     end
   end
 
-  describe "#plain?" do
-    subject(:plain) { Serega::SeregaAttribute.new(serializer_class, name: :name, opts: opts).value_code.plain? }
-
-    let(:opts) { {} }
-
-    it "returns true" do
-      expect(plain).to be true
-    end
-
-    context "with the :value option" do
-      let(:opts) { {value: proc { |user| user.name }} }
-
-      it "returns false" do
-        expect(plain).to be false
-      end
-    end
-  end
-
-  describe "#plain_method" do
-    subject(:code) { Serega::SeregaAttribute.new(serializer_class, name: :name, opts: {default: "Ann"}).value_code.plain_method(:read_name) }
-
-    it "returns the method that reads the value" do
-      expect(code).to eq "def read_name(source) = (value = source.name).nil? ? DEFAULTS[:name] : value"
-    end
-  end
-
   describe "#callable" do
     subject(:code) { Serega::SeregaAttribute.new(serializer_class, name: :name, opts: opts).value_code.callable("callable", "batches", "") }
 

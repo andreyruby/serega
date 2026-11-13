@@ -18,6 +18,9 @@
   objects and collects them in one loop per relation. On a microbenchmark
   with 100 users, 500 posts and 1500 comments, serialization went from
   144.9 µs to 128.3 µs, and one user from 3.48 µs to 3.30 µs.
+- Attributes are defined 2.5 times faster, thus serializers load faster:
+  an attribute no longer generates a read method. A serializer with 20
+  attributes is defined in 71 µs instead of 181 µs.
 
 ## [0.50.0] - 2026-10-31
 
