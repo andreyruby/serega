@@ -19,9 +19,9 @@ RSpec.describe Serega::SeregaUtils::CollectionDetector do
   context "with an Array" do
     let(:object) { [] }
 
-    it "returns true without remembering the class" do
+    it "returns true and remembers it for the class" do
       expect(collection).to be true
-      expect(known_classes).to be_empty
+      expect(known_classes.to_a).to eq [[Array, true]]
     end
   end
 
