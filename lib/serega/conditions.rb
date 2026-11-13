@@ -18,9 +18,21 @@ class Serega
       @conditions = conditions.transform_values do |condition|
         condition.is_a?(Symbol) ? AttributeValueResolvers::Keyword.new(condition) : condition
       end
+      @object_conditions = @conditions.key?(:if) || @conditions.key?(:unless)
+      @value_conditions = @conditions.key?(:if_value) || @conditions.key?(:unless_value)
       satisfy_code = "def satisfy?(object, context) = #{check_code(:if, :unless)}"
       satisfy_value_code = "def satisfy_value?(object, context) = #{check_code(:if_value, :unless_value)}"
       attribute.define_methods(singleton_class, "#{satisfy_code}; #{satisfy_value_code}")
+    end
+
+    # Whether there is an :if or :unless condition
+    def object_conditions?
+      @object_conditions
+    end
+
+    # Whether there is an :if_value or :unless_value condition
+    def value_conditions?
+      @value_conditions
     end
 
     # Methods that the :if and :unless conditions call on the object, nil

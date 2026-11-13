@@ -119,6 +119,69 @@ RSpec.describe Serega do
         end
       end
 
+      context "with value conditions on relations" do
+        let(:user_serializer) do
+          posts = post_serializer
+          avatar = avatar_serializer
+
+          Class.new(Serega) do
+            attribute :posts, serializer: posts, many: true, unless_value: :empty?
+            attribute :avatar, serializer: avatar, if_value: proc { |avatar| avatar && avatar[:url] != "bob.png" }
+          end
+        end
+
+        let(:users) do
+          [
+            user_class.new(posts: [post_class.new("Hello")], avatar: avatar_class.new("ann.png")),
+            user_class.new(posts: [], avatar: avatar_class.new("bob.png"))
+          ]
+        end
+
+        it "checks the serialized relation values and omits the relations that fail the conditions" do
+          expect(result).to eq [{posts: [{title: "Hello"}], avatar: {url: "ann.png"}}, {}]
+        end
+      end
+
+      context "with a value condition on a relation defined by a block" do
+        let(:user_serializer) do
+          Class.new(Serega) do
+            config.base_serializer = Serega
+
+            attribute :avatar, unless_value: :nil? do
+              attribute :url
+            end
+          end
+        end
+
+        let(:users) { [user_class.new(avatar: avatar_class.new("ann.png")), user_class.new(avatar: nil)] }
+
+        it "omits the nil relation" do
+          expect(result).to eq [{avatar: {url: "ann.png"}}, {}]
+        end
+      end
+
+      context "with object and value conditions on a relation" do
+        let(:user_serializer) do
+          avatar = avatar_serializer
+
+          Class.new(Serega) do
+            attribute :avatar, serializer: avatar, if: :admin, unless_value: :nil?
+          end
+        end
+
+        let(:users) do
+          [
+            user_class.new(admin: true, avatar: avatar_class.new("ann.png")),
+            user_class.new(admin: false, avatar: avatar_class.new("bob.png")),
+            user_class.new(admin: true, avatar: nil)
+          ]
+        end
+
+        it "omits the relations that fail either condition" do
+          expect(result).to eq [{avatar: {url: "ann.png"}}, {}, {}]
+        end
+      end
+
       context "with conditions in the related serializer" do
         let(:user_serializer) do
           avatar = Class.new(Serega) { attribute :url, unless_value: proc { |url| url == "bob.png" } }

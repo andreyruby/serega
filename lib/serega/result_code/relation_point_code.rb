@@ -4,8 +4,9 @@ class Serega
   class SeregaResultCode # :nodoc:
     #
     # Code of a point with a child plan. Its values are the relation values
-    # of all sources, built by the child group. A conditional relation value
-    # is SKIP already.
+    # of all sources, built by the child group. A relation value skipped by
+    # the :if and :unless conditions is SKIP already. The :if_value and
+    # :unless_value conditions check the serialized relation value.
     #
     # The point also writes its loop of the `#collect` method: it reads the
     # relation source of each source with the code of an AttributePointCode,
@@ -15,17 +16,30 @@ class Serega
     class RelationPointCode < PointCode # :nodoc:
       def initialize(point, index)
         super
-        @source_code = AttributePointCode.new(point, index)
+        @source_code = AttributePointCode.new(point, index, check_value: false)
+        conditions = point.attribute.conditions
+        @check_value = conditions ? conditions.value_conditions? : false
       end
 
-      # Code that sets the local variable of the relation values
+      # Code that sets the local variables of the relation values and the
+      # value conditions
       def variables
-        ["relation_values_#{@index} = relations[@points[#{@index}]]"]
+        index = @index
+        variables = ["relation_values_#{index} = relations[@points[#{index}]]"]
+        variables << "conditions_#{index} = @points[#{index}].attribute.conditions" if @check_value
+        variables
       end
 
-      # Code that assigns the relation value of the source to `value_N`
+      # Code that assigns the relation value of the source to `value_N`. A
+      # value that fails the value conditions gets SKIP.
       def assign_value
-        "value_#{@index} = relation_values_#{@index}[source_index]"
+        index = @index
+        code = "value_#{index} = relation_values_#{index}[source_index]"
+        return code unless @check_value
+
+        "#{code}\n" \
+          "value_#{index} = Serega::SeregaEngine::SKIP unless Serega::SeregaEngine::SKIP.equal?(value_#{index}) || " \
+          "conditions_#{index}.satisfy_value?(value_#{index}, context)"
       end
 
       # A relation needs the source group, thus no `#call_one`
@@ -76,7 +90,7 @@ class Serega
       # First branch of the pull code of a conditional relation: SKIP is the
       # pull of a skipped relation source
       def skip_branch
-        "if Serega::SeregaEngine::SKIP.equal?(value_#{@index})\n  value_#{@index}\nels" if conditional?
+        "if Serega::SeregaEngine::SKIP.equal?(value_#{@index})\n  value_#{@index}\nels" if @source_code.conditional?
       end
 
       # Branch of the pull code that appends a collection, unless the

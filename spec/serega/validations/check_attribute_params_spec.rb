@@ -70,9 +70,8 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     let(:opts) { {serializer: "PostSerializer", unless_value: :blank?} }
     let(:block) { nil }
 
-    it "raises an error" do
-      expect { validate }
-        .to raise_error Serega::SeregaError, "Option :serializer can not be used together with option :unless_value"
+    it "accepts the options" do
+      expect { validate }.not_to raise_error
     end
   end
 
@@ -80,8 +79,8 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     let(:opts) { {if_value: :present?} }
     let(:block) { proc { attribute :title } }
 
-    it "raises an error" do
-      expect { validate }.to raise_error Serega::SeregaError, "Option :if_value can not be used together with block"
+    it "accepts the options" do
+      expect { validate }.not_to raise_error
     end
   end
 

@@ -40,8 +40,23 @@ checked after.
 `:unless` is checked only when `:if` passes, and `:unless_value` only when
 `:if_value` passes.
 
-`:if_value` and `:unless_value` can not be used with `:serializer` or a block.
-Use `:if` and `:unless` for relations.
+## Relations
+
+`:if` and `:unless` skip a relation before its related objects are
+serialized. `:if_value` and `:unless_value` check the serialized relation
+value: a Hash, an Array of Hashes or `nil`, or `Struct` and `Data` objects with
+`.to_struct` and `.to_data`. The related objects are serialized before this
+check, thus prefer `:if` and `:unless` when the object decides.
+
+```ruby
+class UserSerializer < Serega
+  attribute :posts, serializer: PostSerializer, many: true, unless_value: :empty?
+  attribute :avatar, serializer: AvatarSerializer, unless_value: :nil?
+end
+
+UserSerializer.to_h(user) # a user without posts and avatar
+# => {}
+```
 
 ## Skipped attributes in results
 
