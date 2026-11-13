@@ -4,16 +4,28 @@ class Serega
   class SeregaResultCode # :nodoc:
     #
     # Code of a point without a child plan. A plain attribute reads its value
-    # with its SeregaAttribute#value_code, other attributes call
+    # with the SeregaAttribute::ValueCode#plain of its attribute, an
+    # attribute with a `:value` callable calls it with the
+    # SeregaAttribute::ValueCode#callable, other attributes call
     # SeregaAttribute#value.
     #
     class AttributePointCode < PointCode # :nodoc:
+      def initialize(point, index)
+        super
+        @batches_variable = point.batch_loaders.empty? ? nil : "batches_#{index}"
+        @callable_code = point.attribute.value_code.callable("callable_#{index}", @batches_variable || "nil", "SeregaAttributeValues::")
+      end
+
       # Code that sets the local variables that the value code reads
       def variables
         index = @index
         variables = []
-        variables << "attribute_#{index} = @points[#{index}].attribute" unless @point.attribute.value_method
-        variables << "batches_#{index} = batches[#{index}]" unless @point.batch_loaders.empty?
+        if @callable_code
+          variables << "callable_#{index} = @points[#{index}].attribute.value_callable"
+        elsif !@point.attribute.value_method
+          variables << "attribute_#{index} = @points[#{index}].attribute"
+        end
+        variables << "#{@batches_variable} = batches[#{index}]" if @batches_variable
         variables << "conditions_#{index} = @points[#{index}].attribute.conditions" if conditional?
         variables
       end
@@ -40,7 +52,7 @@ class Serega
       # An attribute without batch loaders reads one source alone, thus
       # `#call_one` can read it
       def call_one?
-        @point.batch_loaders.empty?
+        !@batches_variable
       end
 
       private
@@ -62,10 +74,11 @@ class Serega
       # SeregaAttributeValues.
       def read_value_code
         attribute = @point.attribute
-        return attribute.value_code("source", "SeregaAttributeValues::") if attribute.value_method
-        return "attribute_#{@index}.value(source, context)" if @point.batch_loaders.empty?
+        return attribute.value_code.plain("SeregaAttributeValues::") if attribute.value_method
+        return @callable_code if @callable_code
+        return "attribute_#{@index}.value(source, context)" unless @batches_variable
 
-        "attribute_#{@index}.value(source, context, batches: batches_#{@index})"
+        "attribute_#{@index}.value(source, context, batches: #{@batches_variable})"
       end
     end
   end

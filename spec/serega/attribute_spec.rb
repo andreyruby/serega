@@ -108,6 +108,13 @@ RSpec.describe Serega::SeregaAttribute do
       end
     end
 
+    context "with the :const option" do
+      it "returns the constant" do
+        attribute = described_class.new(serializer_class, name: :name, opts: {const: "NAME"})
+        expect(attribute.value(nil, nil)).to eq "NAME"
+      end
+    end
+
     context "with 1 arg" do
       it "gets value" do
         obj = double(name: "NAME")
@@ -428,78 +435,21 @@ RSpec.describe Serega::SeregaAttribute do
     end
   end
 
-  describe "#value_code" do
-    subject(:code) { described_class.new(serializer_class, name: :name, opts: opts).value_code("source", constants_prefix) }
+  describe "#value_callable" do
+    subject(:value_callable) { described_class.new(serializer_class, name: :name, opts: opts).value_callable }
 
-    let(:opts) { {} }
-    let(:constants_prefix) { "" }
+    let(:opts) { {value: value} }
+    let(:value) { proc { |user| user.name } }
 
-    it "returns the code of the value reader" do
-      expect(code).to eq "source.name"
+    it "returns the :value callable" do
+      expect(value_callable).to equal value
     end
 
-    context "with the :delegate option" do
-      let(:opts) { {delegate: {to: :profile}} }
-
-      it "returns the code of the delegate reader" do
-        expect(code).to eq "source.profile.name"
-      end
-    end
-
-    context "with the :default option" do
-      let(:opts) { {default: "Ann"} }
-
-      it "returns the code that reads the value or the default" do
-        expect(code).to eq "(value = source.name).nil? ? DEFAULTS[:name] : value"
-      end
-    end
-
-    context "with the :const option" do
-      let(:opts) { {const: "Ann"} }
-
-      it "returns the code that reads the constant" do
-        expect(code).to eq "CONSTANTS[:name]"
-      end
-    end
-
-    context "with the :value option" do
-      let(:opts) { {value: proc { |user| user.name }} }
+    context "without the :value option" do
+      let(:opts) { {} }
 
       it "returns nil" do
-        expect(code).to be_nil
-      end
-    end
-
-    context "with the :format option" do
-      let(:opts) { {format: proc { |name| name.upcase }} }
-
-      it "returns the code that formats the value" do
-        expect(code).to eq "FORMATTERS[:name].call(source.name)"
-      end
-    end
-
-    context "with the :format and :default options" do
-      let(:opts) { {format: proc { |name| name.upcase }, default: "Ann"} }
-
-      it "returns the code that formats the value or the default" do
-        expect(code).to eq "FORMATTERS[:name].call((value = source.name).nil? ? DEFAULTS[:name] : value)"
-      end
-    end
-
-    context "with a constants prefix" do
-      let(:opts) { {format: proc { |name| name.upcase }, default: "Ann"} }
-      let(:constants_prefix) { "SeregaAttributeValues::" }
-
-      it "returns the code that reads the constants with the prefix" do
-        expect(code).to eq "SeregaAttributeValues::FORMATTERS[:name].call((value = source.name).nil? ? SeregaAttributeValues::DEFAULTS[:name] : value)"
-      end
-    end
-
-    context "with a :format option that reads the context" do
-      let(:opts) { {format: proc { |name, ctx| "#{ctx[:title]} #{name}" }} }
-
-      it "returns nil" do
-        expect(code).to be_nil
+        expect(value_callable).to be_nil
       end
     end
   end

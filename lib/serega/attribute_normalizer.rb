@@ -112,7 +112,7 @@ class Serega
     end
 
     def prepare_value_block
-      init_opts[:value] \
+      prepare_callable_block \
         || prepare_const_block \
         || prepare_delegate_block \
         || prepare_batch_loader_block \
@@ -161,6 +161,11 @@ class Serega
 
     def prepare_method_name
       (init_opts[:method] || init_name).to_sym
+    end
+
+    def prepare_callable_block
+      callable = init_opts[:value]
+      callable && AttributeValueResolvers::Callable.new(callable)
     end
 
     def prepare_const_block
