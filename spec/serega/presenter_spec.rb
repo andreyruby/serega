@@ -417,8 +417,17 @@ RSpec.describe Serega::SeregaPresenter do
   end
 
   describe ".presents?" do
+    let(:helpers) do
+      Module.new do
+        def initials = "#{first_name[0]}#{last_name[0]}"
+      end
+    end
+
     let(:presenter_class) do
+      helpers_module = helpers
       Class.new(described_class) do
+        include helpers_module
+
         def full_name = "#{first_name} #{last_name}"
       end
     end
@@ -427,6 +436,10 @@ RSpec.describe Serega::SeregaPresenter do
 
     it "returns true for a presenter method" do
       expect(presenter_class.presents?(:full_name)).to be true
+    end
+
+    it "returns true for a method of an included module" do
+      expect(presenter_class.presents?(:initials)).to be true
     end
 
     it "returns true for a method of SimpleDelegator" do
