@@ -263,7 +263,13 @@ UserSerializer.to_h(user, context: {current_user: user}) # => {email: "gru@examp
 
 Symbol short form: `if: :active?` → calls `object.active?`.
 
-⚠️ `if_value`/`unless_value` cannot be combined with `:serializer` or a block — use `if`/`unless` there.
+On a relation, `if_value`/`unless_value` see the serialized value: a Hash, an Array of Hashes or `nil`.
+
+```ruby
+class UserSerializer < Serega
+  attribute :posts, serializer: PostSerializer, many: true, unless_value: :empty? # no key for no posts
+end
+```
 
 For unconditional hiding, prefer `hide: true` — see
 [Attribute Options][attributes] and [Field Selection][field-selection].

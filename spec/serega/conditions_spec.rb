@@ -154,6 +154,42 @@ RSpec.describe Serega::SeregaConditions do
     end
   end
 
+  describe "#object_conditions?" do
+    subject(:object_conditions) { conditions.object_conditions? }
+
+    let(:attribute_opts) { {unless: :admin} }
+
+    it "returns true" do
+      expect(object_conditions).to be true
+    end
+
+    context "with value conditions only" do
+      let(:attribute_opts) { {if_value: :present?} }
+
+      it "returns false" do
+        expect(object_conditions).to be false
+      end
+    end
+  end
+
+  describe "#value_conditions?" do
+    subject(:value_conditions) { conditions.value_conditions? }
+
+    let(:attribute_opts) { {unless_value: :nil?} }
+
+    it "returns true" do
+      expect(value_conditions).to be true
+    end
+
+    context "with object conditions only" do
+      let(:attribute_opts) { {if: :active} }
+
+      it "returns false" do
+        expect(value_conditions).to be false
+      end
+    end
+  end
+
   describe "#satisfy_value?" do
     subject(:satisfied) { conditions.satisfy_value?(email, context) }
 

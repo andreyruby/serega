@@ -10,9 +10,13 @@ class Serega
     # loaded batch with the SeregaAttribute::ValueCode#batch, other
     # attributes call SeregaAttribute#value.
     #
+    # A relation reads its relation source with this code too, without the
+    # value conditions: they check the serialized relation value later.
+    #
     class AttributePointCode < PointCode # :nodoc:
-      def initialize(point, index)
-        super
+      def initialize(point, index, check_value: true)
+        super(point, index)
+        @check_value = check_value
         value_code = point.attribute.value_code
         @batch_code = value_code.batch("batch_#{index}", "SeregaAttributeValues::")
         @batches_variable = (point.batch_loaders.empty? || @batch_code) ? nil : "batches_#{index}"
@@ -29,22 +33,27 @@ class Serega
         variables.compact
       end
 
+      # Whether the value can be SKIP. Without the value check, only the
+      # :if and :unless conditions give SKIP.
+      def conditional?
+        return super if @check_value
+
+        conditions = @point.attribute.conditions
+        conditions ? conditions.object_conditions? : false
+      end
+
       # Code that assigns the value of the source to `value_N`. A
       # conditional attribute gets SKIP when it fails its conditions.
       def assign_value
         index = @index
         read_code = rescued_read_code
         return "value_#{index} =\n#{read_code.gsub(/^/, "  ")}" unless conditional?
+        return conditional_read_code(read_code.gsub(/^/, "    ")) unless @check_value
 
-        <<~RUBY.chomp
-          value_#{index} =
-            if conditions_#{index}.satisfy?(source, context)
+        conditional_read_code(<<~RUBY.chomp)
               value_#{index} =
           #{read_code.gsub(/^/, "      ")}
               conditions_#{index}.satisfy_value?(value_#{index}, context) ? value_#{index} : Serega::SeregaEngine::SKIP
-            else
-              Serega::SeregaEngine::SKIP
-            end
         RUBY
       end
 
@@ -55,6 +64,19 @@ class Serega
       end
 
       private
+
+      # Code that gives the value of `read_code` when the source passes the
+      # :if and :unless conditions, and SKIP otherwise
+      def conditional_read_code(read_code)
+        <<~RUBY.chomp
+          value_#{@index} =
+            if conditions_#{@index}.satisfy?(source, context)
+          #{read_code}
+            else
+              Serega::SeregaEngine::SKIP
+            end
+        RUBY
+      end
 
       # Code that sets the variable that reads the value: the callable, the
       # loaded batch of the only loader, or the attribute. nil for a plain

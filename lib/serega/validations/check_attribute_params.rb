@@ -27,9 +27,7 @@ class Serega
         batch: %i[method const delegate hash_access],
         hash_access: %i[value const batch],
         preload: %i[const],
-        serializer: %i[block if_value unless_value],
-        if_value: %i[serializer block],
-        unless_value: %i[serializer block]
+        serializer: %i[block]
       }.freeze
 
       # Validated attribute name

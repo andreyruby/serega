@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Relations accept `:if_value` and `:unless_value`. They check the serialized
+  relation value, for example `unless_value: :empty?` leaves out an empty
+  list. See [Conditional attributes](docs/conditional-attributes.md#relations).
 - Fields selected without presenter methods skip the presenter wrapper and
   serialize up to 3 times faster. On a microbenchmark with `only:` and four
   plain fields, one object went from 698 ns to 249 ns, and 100 objects from
