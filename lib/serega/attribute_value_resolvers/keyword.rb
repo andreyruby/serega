@@ -13,6 +13,11 @@ class Serega
         @keyword = keyword
       end
 
+      # Methods that the value read calls on the source: the keyword
+      def source_methods
+        [@keyword]
+      end
+
       # Method of the object that gives the value: the keyword
       def object_method
         @keyword

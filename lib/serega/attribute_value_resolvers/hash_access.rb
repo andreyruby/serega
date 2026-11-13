@@ -30,6 +30,11 @@ class Serega
         @allow_missing_key = allow_missing_key
       end
 
+      # Methods that the value read calls on the source
+      def source_methods
+        @allow_missing_key ? %i[[]] : %i[fetch []]
+      end
+
       # Reads the key from the record
       def call(object)
         return object[@key] if @allow_missing_key
@@ -58,6 +63,11 @@ class Serega
         @final_step = final_step
       end
 
+      # Methods that the value read calls on the source: those of the first step
+      def source_methods
+        @to_step.source_methods
+      end
+
       # Delegates the value reading through the intermediate object
       def call(object)
         @final_step.call(@to_step.call(object))
@@ -80,6 +90,11 @@ class Serega
       def initialize(to_step, final_step)
         @to_step = to_step
         @final_step = final_step
+      end
+
+      # Methods that the value read calls on the source: those of the first step
+      def source_methods
+        @to_step.source_methods
       end
 
       # Delegates the value reading through the intermediate object,

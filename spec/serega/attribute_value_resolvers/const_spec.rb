@@ -20,6 +20,12 @@ RSpec.describe Serega::AttributeValueResolvers do
       end
     end
 
+    describe "#source_methods" do
+      it "returns no methods" do
+        expect(described_class.new(const_value).source_methods).to eq []
+      end
+    end
+
     describe "#const?" do
       it "returns true" do
         expect(described_class.new(const_value).const?).to be true

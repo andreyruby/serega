@@ -22,7 +22,7 @@ class Serega
     attr_reader :collection_classes
 
     # Presenter class that wraps the sources in the Ractor of the plan, `nil`
-    # without presenter methods
+    # when no point reads the sources through the presenter
     attr_reader :presenter
 
     # Instantiate new serialization plan of the selected attributes of the
@@ -36,9 +36,9 @@ class Serega
       serializer_class.lock
       @serializer_class = serializer_class
       @parent_plan_point = parent_plan_point
-      @presenter = serializer_class.local_presenter
       @builder_class = selection.builder_class
       @points = selected_points(selection)
+      @presenter = points_presenter(serializer_class)
       @relation_points = points.select(&:child_plan).freeze
       @preload_points = points.select(&:preloads).freeze
       @batch_points = points.any? { |point| !point.batch_loaders.empty? }
@@ -91,6 +91,12 @@ class Serega
     end
 
     private
+
+    # Presenter class of the Ractor, when a point reads the sources through it
+    def points_presenter(serializer_class)
+      presenter = serializer_class.local_presenter
+      presenter if presenter && points.any? { |point| point.attribute.reads_presenter? }
+    end
 
     # A child plan is one level deeper than the path of its parent point
     def check_depth_limit(parent_plan_point)

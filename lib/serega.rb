@@ -463,7 +463,10 @@ class Serega
         next if @locked
 
         SeregaUtils::EnumDeepFreeze.call(config.opts)
-        define_presenter_delegators if @presenter_class
+        if @presenter_class
+          define_presenter_delegators
+          attributes.each_value { |attribute| attribute.check_presenter(@presenter_class) }
+        end
         @locked = true
       end
     end

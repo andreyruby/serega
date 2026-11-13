@@ -33,6 +33,12 @@ RSpec.describe Serega::AttributeValueResolvers do
       end
     end
 
+    describe "#source_methods" do
+      it "returns the keyword" do
+        expect(described_class.new(keyword).source_methods).to eq [:name]
+      end
+    end
+
     describe "#object_method" do
       it "returns the keyword" do
         expect(described_class.new(keyword).object_method).to eq :name

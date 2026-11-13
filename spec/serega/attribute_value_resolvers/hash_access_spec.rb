@@ -298,6 +298,24 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
   end
 
   describe Serega::AttributeValueResolvers::HashAccessKeyword do
+    describe "#source_methods" do
+      subject(:source_methods) { described_class.new(:address, :symbol, allow_missing_key).source_methods }
+
+      let(:allow_missing_key) { false }
+
+      it "returns the fetch and [] methods" do
+        expect(source_methods).to eq %i[fetch []]
+      end
+
+      context "when missing keys are allowed" do
+        let(:allow_missing_key) { true }
+
+        it "returns the [] method" do
+          expect(source_methods).to eq %i[[]]
+        end
+      end
+    end
+
     describe "#call" do
       subject(:value) { described_class.new(:address, :symbol, allow_missing_key).call(record) }
 
@@ -345,6 +363,12 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
     let(:final_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:city, :string, false) }
     let(:record) { {address: {"city" => "Oslo"}} }
 
+    describe "#source_methods" do
+      it "returns the source methods of the first step" do
+        expect(resolver.source_methods).to eq %i[fetch []]
+      end
+    end
+
     describe "#call" do
       it "reads the final key of the intermediate value" do
         expect(resolver.call(record)).to eq "Oslo"
@@ -368,6 +392,12 @@ RSpec.describe Serega::AttributeValueResolvers::HashAccessResolver do
     let(:to_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:address, :symbol, false) }
     let(:final_step) { Serega::AttributeValueResolvers::HashAccessKeyword.new(:city, :string, false) }
     let(:record) { {address: {"city" => "Oslo"}} }
+
+    describe "#source_methods" do
+      it "returns the source methods of the first step" do
+        expect(resolver.source_methods).to eq %i[fetch []]
+      end
+    end
 
     describe "#call" do
       it "reads the final key of the intermediate value" do

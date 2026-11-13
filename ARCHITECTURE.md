@@ -35,6 +35,8 @@ Run          once per serialization      SeregaEngine::Run → SeregaSourceGroup
 
 The first plan locks the class. Later definition calls raise. Locking a serializer with a presenter defines the presenter delegators of the attributes that read a method of the object (`SeregaAttribute#object_method`), in the Ractor that defines the serializer. Other delegators are defined on the first `method_missing` call. Other Ractors can not define methods in a class of the main Ractor, thus `make_shareable!` freezes the presenter `Delegators` module, and `Serega.local_presenter` gives each Ractor its own subclass of the presenter (`SeregaUtils::RactorLocal`), which defines delegators in its own `Delegators` module. Each Ractor builds its own plans, thus `SeregaPlan#presenter` keeps the `local_presenter` of the Ractor that built the plan, and `SeregaSourceGroup` wraps sources in it.
 
+Locking also calls `SeregaAttribute#check_presenter` on each attribute. It sets `#reads_presenter?` when the attribute reads its object through the presenter: one of its `#source_methods` is defined by the presenter itself (`SeregaPresenter.presents?`, not a delegator), or `#source_methods` is nil because the object reaches a `:value` callable, a batch loader or a callable `:if` or `:unless` condition. `#source_methods` joins the methods that the value resolver (`AttributeValueResolvers::Base#source_methods`) and the Symbol conditions (`SeregaConditions#source_methods`) call on the object. The flag is set at lock, because a `presenter` block can come after the attribute. A plan keeps the presenter only when one of its points reads through it, thus `only: [:id]` wraps no source.
+
 `Serega.make_shareable!` locks the class and its nested serializers defined with blocks. Where Ruby has Ractors, it makes the definitions shareable with `Ractor.make_shareable` (`SeregaShareable`, `lib/serega/shareable.rb`, loaded by `make_shareable!`): the attributes, batch loaders, formatters, config and other class instance variables, and the `SeregaAttributeValues` constants. A definition that can not be shared stays as it is, and the serializer serializes in the main Ractor only; other Ractors get the first reason as a `SeregaError`. Config objects build their lazy parts in `#freeze`. `SeregaPlan` raises in other Ractors when its serializer is not shareable.
 
 ### 2. Plan
@@ -108,7 +110,7 @@ A flat plan (`SeregaPlan#flat?`) has no relations, preloads, batch loaders and p
 
 `SeregaSourceGroup` (`lib/serega/source_group.rb`) holds all sources of one plan in one run.
 
-- `#initialize` wraps the sources in the presenter. The group keeps the pulls of its parent group.
+- `#initialize` wraps the sources in the presenter of the plan, when it has one. The group keeps the pulls of its parent group.
 - `#discover` runs the preloads and returns one child group per relation.
 - `#build` builds the serialized objects. The child groups are built before it. It takes the relation values from the serialized objects of each child group with the pulls of the child group.
 

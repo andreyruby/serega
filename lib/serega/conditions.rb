@@ -23,6 +23,15 @@ class Serega
       attribute.define_methods(singleton_class, "#{satisfy_code}; #{satisfy_value_code}")
     end
 
+    # Methods that the :if and :unless conditions call on the object, nil
+    # when one of them is a callable, which gets the object
+    def source_methods
+      conditions = @conditions.values_at(:if, :unless).compact
+      return unless conditions.all?(AttributeValueResolvers::Keyword)
+
+      conditions.flat_map(&:source_methods)
+    end
+
     private
 
     # Code that is true when the object passes the :if and does not match the

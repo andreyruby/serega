@@ -18,6 +18,11 @@ class Serega
         @const_value
       end
 
+      # A constant reads no source
+      def source_methods
+        FROZEN_EMPTY_ARRAY
+      end
+
       # The value is the `:const` option
       def const?
         true

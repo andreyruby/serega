@@ -33,8 +33,8 @@ class Serega
     # `SeregaEngine::Pulls.collect`, one per source of the parent group
     attr_reader :pulls
 
-    # Each source is wrapped in the serializer's presenter, so value reading
-    # and batch loaders alike see presenters.
+    # Each source is wrapped in the presenter of the plan, when it has one,
+    # so value reading and batch loaders alike see presenters.
     def initialize(run, plan, sources, pulls)
       @run = run
       @plan = plan

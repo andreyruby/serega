@@ -76,6 +76,15 @@ class Serega
       end
     end
 
+    # Whether the presenter class defines the method itself, not as a
+    # delegator to the wrapped object
+    def self.presents?(name)
+      return false unless method_defined?(name) || private_method_defined?(name)
+
+      owner = instance_method(name).owner
+      !(owner.instance_of?(Module) && owner.include?(CalleeDelegator))
+    end
+
     # Defines delegators for the method names that the presenter class does
     # not define itself, thus presenter methods stay in front of them
     def self.define_delegators(names)
