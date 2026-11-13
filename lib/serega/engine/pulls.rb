@@ -18,23 +18,9 @@ class Serega
 
       module_function
 
-      # Appends the sources of the relation sources to sources, and returns
-      # the pull of each relation source
-      def collect(sources, relation_sources, many, known_classes)
-        relation_sources.map { |relation_source| append(sources, relation_source, many, known_classes) }
-      end
-
-      # Collects like `.collect`, and keeps SKIP of a skipped relation source
-      # as its pull. A separate method keeps the SKIP check out of the loop
-      # of relations without conditions.
-      def collect_conditional(sources, relation_sources, many, known_classes)
-        relation_sources.map do |relation_source|
-          SKIP.equal?(relation_source) ? relation_source : append(sources, relation_source, many, known_classes)
-        end
-      end
-
       # Appends the source(s) of one relation source to sources, and returns
-      # its pull
+      # its pull. The generated `#collect` of a result builder writes the
+      # same steps inline.
       def append(sources, relation_source, many, known_classes)
         return if relation_source.nil?
 

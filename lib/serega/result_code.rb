@@ -47,6 +47,7 @@ class Serega
       @point_codes = points.each_with_index.map do |point, index|
         point.child_plan ? RelationPointCode.new(point, index) : AttributePointCode.new(point, index)
       end
+      @relation_codes = @point_codes.grep(RelationPointCode)
     end
 
     # Returns the code of the `#call` method, and of the `#call_one`
@@ -60,10 +61,7 @@ class Serega
     def to_s
       variables = variables_code.join("\n  ")
       values = values_code
-      code = call_code(variables, values)
-      return code unless @point_codes.all?(&:call_one?)
-
-      "#{code}\n#{call_one_code(variables, values)}"
+      [call_code(variables, values), collect_code, call_one_code(variables, values)].compact.join("\n")
     end
 
     private
@@ -87,7 +85,27 @@ class Serega
       RUBY
     end
 
+    # One loop per relation point, in the order of the relation points.
+    # Returns the child sources and the pulls of each relation point, one
+    # after another. nil without relation points.
+    def collect_code
+      return if @relation_codes.empty?
+
+      loops = @relation_codes.map(&:collect)
+      collected = @relation_codes.map(&:collected)
+      <<~RUBY
+        def collect(sources, context, batches)
+          size = sources.size
+          #{loops.join("\n").gsub("\n", "\n  ")}
+          [#{collected.join(", ")}]
+        end
+      RUBY
+    end
+
+    # nil when a point needs the source group
     def call_one_code(variables, values)
+      return unless @point_codes.all?(&:call_one?)
+
       <<~RUBY
         def call_one(source, context)
           #{variables}
