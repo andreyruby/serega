@@ -18,6 +18,6 @@ gem "alba", "4.0.1"
 gem "blueprinter", "1.3.0"
 gem "oj", "3.17.7"
 gem "oj_serializers", "3.0.2"
-gem "panko_serializer", "0.8.5"
+gem "panko_serializer", "1.0.1"
 
 gemspec name: "serega", path: "../"
