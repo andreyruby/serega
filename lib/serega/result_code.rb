@@ -42,8 +42,10 @@ class Serega
     # Serialization mode
     attr_reader :mode
 
-    def initialize(mode, points)
+    # `compact` leaves out the keys with `nil` values from serialized Hashes
+    def initialize(mode, points, compact: false)
       @mode = mode
+      @compact = compact
       @point_codes = points.each_with_index.map do |point, index|
         point.child_plan ? RelationPointCode.new(point, index) : AttributePointCode.new(point, index)
       end
@@ -138,17 +140,19 @@ class Serega
     end
 
     # Code that builds the serialized Hash of the source, after `assign`.
-    # A Hash literal holds the values up to the first conditional value. Then
+    # A Hash literal holds the values up to the first value that can leave
+    # out its key: a conditional value, or any value of a compact Hash. Then
     # the code adds the other values one by one, thus the Hash keys keep the
     # order of the points.
     def build_serialized_hash_code(assign)
+      compact = @compact
       size = @point_codes.size
-      literal_size = @point_codes.index(&:conditional?) || size
+      literal_size = compact ? 0 : (@point_codes.index(&:conditional?) || size)
       pairs = @point_codes.first(literal_size).map(&:hash_pair)
       literal = "{#{pairs.join(", ")}}"
       return ["#{assign}#{literal}"] if literal_size == size
 
-      assigns = @point_codes.drop(literal_size).map(&:hash_assign)
+      assigns = @point_codes.drop(literal_size).map { |point_code| point_code.hash_assign(compact) }
       ["serialized_hash = #{literal}", *assigns, "#{assign}serialized_hash"]
     end
   end

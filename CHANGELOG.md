@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `config.compact = true` leaves out keys with `nil` values from serialized
+  Hashes. See [Leaving out nil values](docs/conditional-attributes.md#leaving-out-nil-values).
 - Relations accept `:if_value` and `:unless_value`. They check the serialized
   relation value, for example `unless_value: :empty?` leaves out an empty
   list. See [Conditional attributes](docs/conditional-attributes.md#relations).

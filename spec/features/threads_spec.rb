@@ -39,10 +39,13 @@ RSpec.describe Serega do
     let(:release) { Queue.new }
 
     before do
-      allow(user_serializer.config).to receive(:opts).and_wrap_original do |original|
-        locking << true
-        release.pop
-        original.call
+      config_opts = user_serializer.config.opts
+      allow(Serega::SeregaUtils::EnumDeepFreeze).to receive(:call).and_wrap_original do |original, value|
+        if value.equal?(config_opts)
+          locking << true
+          release.pop
+        end
+        original.call(value)
       end
     end
 
@@ -55,7 +58,7 @@ RSpec.describe Serega do
       2.times { release << true }
 
       expect([first.value, second.value]).to all eq(name: "Ann")
-      expect(user_serializer.config).to have_received(:opts).once
+      expect(Serega::SeregaUtils::EnumDeepFreeze).to have_received(:call).with(user_serializer.config.opts).once
     end
   end
 end

@@ -31,7 +31,7 @@ class Serega
       @result_class = result_class(serializer_class)
       # The generated code reads the `:const`, `:default` and formatter values from its constants
       singleton_class.const_set(:SeregaAttributeValues, serializer_class::SeregaAttributeValues)
-      singleton_class.class_eval(SeregaResultCode.new(mode, points).to_s, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
+      singleton_class.class_eval(SeregaResultCode.new(mode, points, compact: serializer_class.config.compact).to_s, SeregaUtils::SerializedAttributeError::GENERATED_CODE_FILE, 1)
     end
 
     private

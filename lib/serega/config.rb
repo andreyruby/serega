@@ -30,6 +30,7 @@ class Serega
       auto_preload: {has_delegate_option: false, has_serializer_option: false},
       auto_preload_excluded_methods: %i[itself __getobj__].freeze,
       hide_by_default: false,
+      compact: false,
       batch_id_option: :id,
       base_serializer: nil,
       hash_access: {default_mode: :symbol, default_allow_missing_key: false}
@@ -129,6 +130,17 @@ class Serega
           else
             raise SeregaError, "Must have true, false, or :auto, #{value.inspect} provided"
           end
+      end
+
+      # Whether serialized Hashes leave out keys with `nil` values, as
+      # `Hash#compact` does. `false` by default.
+      def compact
+        opts.fetch(:compact)
+      end
+
+      # Sets #compact
+      def compact=(value)
+        opts[:compact] = checked_boolean(value)
       end
 
       # Attributes that get preloads automatically: `:delegate` attributes with

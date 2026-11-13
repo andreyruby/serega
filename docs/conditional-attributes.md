@@ -110,6 +110,31 @@ UserSerializer.to_struct(user, context: {public: true})
 # => #<struct email="bruce@wayne.com", phone=nil, role=nil, nickname=nil, rating=5>
 ```
 
+## Leaving out nil values
+
+`config.compact = true` leaves out every key with a `nil` value, as
+`Hash#compact` does. Set it in a base serializer to compact whole responses,
+nested serializers included:
+
+```ruby
+class AppSerializer < Serega
+  config.compact = true
+end
+
+class UserSerializer < AppSerializer
+  attribute :first_name
+  attribute :nickname
+  attribute :posts, serializer: PostSerializer, many: true
+end
+
+UserSerializer.to_h(user) # a user without a nickname and posts
+# => {first_name: "Bruce", posts: []}
+```
+
+A nested serializer follows its own config: one without `compact` keeps its
+`nil` values. Empty Strings, Arrays and Hashes stay, and `nil` items inside an
+Array stay too. `.to_struct` and `.to_data` keep `nil` members.
+
 ## Errors
 
 An error raised by a condition names the condition and the line where the

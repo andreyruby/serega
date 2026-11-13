@@ -611,6 +611,21 @@ Accepts `false` (default), `true` (hide everything) or `:auto`.
 
 See [Field Selection][field-selection].
 
+### `config.compact` — leave out keys with `nil` values
+
+```ruby
+class UserSerializer < Serega
+  config.compact = true
+  attribute :first_name
+  attribute :nickname
+end
+
+UserSerializer.to_h(user) # => {first_name: "Felonious"}   (nickname is nil)
+```
+
+Default `false`. Nested serializers follow their own config, thus set it in a
+base serializer. `.to_struct` and `.to_data` keep `nil` members.
+
 ### `config.delegate_default_allow_nil` — default `:allow_nil` for every `:delegate`
 
 ```ruby

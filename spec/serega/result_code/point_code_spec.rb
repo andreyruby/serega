@@ -12,7 +12,9 @@ RSpec.describe Serega::SeregaResultCode::PointCode do
   end
 
   describe "#hash_assign" do
-    subject(:code) { point_code.hash_assign }
+    subject(:code) { point_code.hash_assign(compact) }
+
+    let(:compact) { false }
 
     it "returns the code that adds the value" do
       expect(code).to eq "serialized_hash[:name] = value_1"
@@ -23,6 +25,24 @@ RSpec.describe Serega::SeregaResultCode::PointCode do
 
       it "returns the code that adds a value that is not skipped" do
         expect(code).to eq "serialized_hash[:name] = value_1 unless Serega::SeregaEngine::SKIP.equal?(value_1)"
+      end
+    end
+
+    context "with compact" do
+      let(:compact) { true }
+
+      it "returns the code that adds a value that is not nil" do
+        expect(code).to eq "serialized_hash[:name] = value_1 unless value_1.nil?"
+      end
+    end
+
+    context "with compact and a conditional point" do
+      let(:serializer) { Class.new(Serega) { attribute :name, if: :active? } }
+      let(:compact) { true }
+
+      it "returns the code that adds a value that is neither nil nor skipped" do
+        expect(code)
+          .to eq "serialized_hash[:name] = value_1 unless value_1.nil? || Serega::SeregaEngine::SKIP.equal?(value_1)"
       end
     end
   end
