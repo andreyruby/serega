@@ -3,7 +3,9 @@
 ## [Unreleased]
 
 - Fields selected without presenter methods skip the presenter wrapper and
-  serialize up to 3 times faster. See [Presenter](docs/presenter.md).
+  serialize up to 3 times faster. On a microbenchmark with `only:` and four
+  plain fields, one object went from 698 ns to 249 ns, and 100 objects from
+  15.4 µs to 5.4 µs. See [Presenter](docs/presenter.md).
 
 ## [0.50.0] - 2026-10-31
 
