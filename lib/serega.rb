@@ -646,7 +646,7 @@ class Serega
       # and 1 object instead of 136 ns and 3 objects (Ruby 4.0, YJIT).
       builder = @direct_hash_builder
       if builder && object && !many && (context.nil? || context.is_a?(Hash))
-        many = SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
+        many = object.instance_of?(Array) || SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
         return builder.call_one(object, context.nil? ? FROZEN_EMPTY_HASH : context) unless many
       end
 
@@ -694,7 +694,7 @@ class Serega
       SeregaValidations::CheckSerializeKeywords.call(context, many)
       context ||= FROZEN_EMPTY_HASH
       object = prepare_objects(object, context) if self.class.prepare_initial_objects_signature
-      many = SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
+      many = object.instance_of?(Array) || SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
       serialize(object, opts, context, many, mode)
     end
 

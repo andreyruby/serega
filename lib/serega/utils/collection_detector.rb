@@ -8,6 +8,9 @@ class Serega
     # Hashes and Structs are Enumerable, but enumerate their own member
     # values, so they are treated as single objects.
     #
+    # Callers check `instance_of?(Array)` before they call the detector, thus
+    # an Array needs no lookup.
+    #
     class CollectionDetector # :nodoc:
       # Number of classes a Hash of known classes keeps
       MAX_KNOWN_CLASSES = 8
@@ -18,8 +21,6 @@ class Serega
         # MAX_KNOWN_CLASSES classes: `is_a?(Enumerable)` checks all
         # ancestors of a class that does not include Enumerable.
         def call(object, known_classes)
-          return true if object.instance_of?(Array)
-
           object_class = object.class
           collection = known_classes[object_class]
           return collection unless collection.nil?

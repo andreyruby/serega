@@ -24,7 +24,7 @@ class Serega
       def append(sources, relation_source, many, known_classes)
         return if relation_source.nil?
 
-        if many != false && SeregaUtils::CollectionDetector.call(relation_source, known_classes)
+        if many != false && (relation_source.instance_of?(Array) || SeregaUtils::CollectionDetector.call(relation_source, known_classes))
           collection = relation_source.to_a
           sources.concat(collection)
           collection.size
