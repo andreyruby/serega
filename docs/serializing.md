@@ -56,7 +56,11 @@ Oj.dump(UserSerializer.to_h(user), mode: :compat)
 ## Struct and Data results
 
 `.to_struct` returns `Struct` objects and `.to_data` returns `Data` objects,
-nested relations included. `.to_struct` is as fast as `.to_h`.
+nested relations included. `.to_struct` is as fast as `.to_h`. `.to_data` is
+about 1.8 times slower: Ruby builds each `Data` object through a Hash of its
+members, which takes about 2.5 times longer than building a `Struct` (see
+[Ruby issue #19693](https://bugs.ruby-lang.org/issues/19693)). Use
+`.to_struct` when you need members and speed.
 
 ```ruby
 UserSerializer.to_struct(user)
