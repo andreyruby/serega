@@ -139,4 +139,30 @@ RSpec.describe Serega::SeregaAttribute::ValueCode do
       end
     end
   end
+
+  describe "#batch" do
+    subject(:code) { Serega::SeregaAttribute.new(serializer_class, name: :name, opts: opts).value_code.batch("batch", "") }
+
+    let(:opts) { {batch: proc { |users| users }} }
+
+    it "returns the code that reads the value from the loaded batch" do
+      expect(code).to eq "batch[source.id]"
+    end
+
+    context "with the :default and :format options" do
+      let(:opts) { {batch: proc { |users| users }, default: "Ann", format: proc { |name| name.upcase }} }
+
+      it "returns the code that formats the value or the default" do
+        expect(code).to eq "FORMATTERS[:name].call((value = batch[source.id]).nil? ? DEFAULTS[:name] : value)"
+      end
+    end
+
+    context "with the :value option" do
+      let(:opts) { {batch: proc { |users| users }, value: proc { |user, batches:| batches[:name][user.id] }} }
+
+      it "returns nil" do
+        expect(code).to be_nil
+      end
+    end
+  end
 end

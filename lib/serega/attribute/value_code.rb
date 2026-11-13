@@ -48,6 +48,16 @@ class Serega
         finish(callable.code("source", callable_variable, batches_variable), constants_prefix)
       end
 
+      # Code that reads the value of a :batch attribute without the :value
+      # option from the loaded batch, which `batch_variable` holds. nil for
+      # other attributes.
+      def batch(batch_variable, constants_prefix)
+        resolver = @value_block
+        return unless resolver.is_a?(AttributeValueResolvers::Batch)
+
+        finish(resolver.batch_code("source", batch_variable), constants_prefix)
+      end
+
       private
 
       # Adds the `:default` value and the formatter to the code that reads

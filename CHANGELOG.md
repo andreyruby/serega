@@ -10,6 +10,10 @@
   generated code calls the callable directly. On a microbenchmark with five
   callables and two plain fields, 100 objects went from 27.7 µs to 21.8 µs,
   and one object from 386 ns to 317 ns.
+- `:batch` attributes without a `:value` callable serialize up to 44% faster:
+  the generated code reads the loaded batch directly. On a microbenchmark
+  with three batch attributes and two plain fields, 100 objects went from
+  29.8 µs to 16.8 µs, and one object from 1.21 µs to 1.07 µs.
 
 ## [0.50.0] - 2026-10-31
 
