@@ -57,6 +57,28 @@ attribute :email, format: ->(email) { email.downcase }
 attribute :nickname, format: {use: :upcase, allow_nil: true}
 ```
 
+## Decimals
+
+Serega returns a `BigDecimal` as is, and `to_json` writes it with
+`JSON.generate`. Without ActiveSupport this writes it as a String in
+scientific notation: `"0.51501364e2"`. With ActiveSupport, as in Rails, it
+writes `"51.501364"`. A formatter gives the same output in both cases.
+
+```ruby
+class PlaceSerializer < Serega
+  # JSON numbers: value.to_f
+  attribute :latitude, format: [:to_f]
+  attribute :longitude, format: [:to_f]
+end
+
+PlaceSerializer.to_json(place)
+# => "{\"latitude\":51.501364,\"longitude\":-0.14189}"
+```
+
+A Float keeps about 17 significant digits, thus `to_f` rounds longer decimals:
+`BigDecimal("12345678901234567.89").to_f` is `1.2345678901234568e+16`. For a
+String with every digit, use `format: [:to_s, "F"]`.
+
 ## `nil` values
 
 A formatter formats `nil` too: a callable receives `nil`, and a method is
