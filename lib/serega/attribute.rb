@@ -99,7 +99,7 @@ class Serega
     # presenter methods can be added after the attribute.
     def check_presenter(presenter_class)
       methods = source_methods
-      @reads_presenter = methods.nil? || methods.any? { |name| presenter_class.presents?(name) }
+      @reads_presenter = methods.nil? || presenter_class.presents_any?(methods)
     end
 
     # Whether the attribute reads the object through the presenter, known
