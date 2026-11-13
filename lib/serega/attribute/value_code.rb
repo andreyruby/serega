@@ -27,17 +27,6 @@ class Serega
         code && finish(code, constants_prefix)
       end
 
-      # Whether a resolver reads the value with #plain code
-      def plain?
-        !plain.nil?
-      end
-
-      # Code of the SeregaAttributeValues method that reads the value with
-      # #plain code, for example `def read_name(source) = source.name`
-      def plain_method(method_name)
-        "def #{method_name}(source) = #{plain}"
-      end
-
       # Code that calls the :value callable, which `callable_variable`
       # holds. `batches_variable` holds the loaded batches. nil without the
       # :value option.

@@ -73,6 +73,67 @@ RSpec.describe Serega::SeregaAttribute do
     end
   end
 
+  describe "stored values" do
+    subject(:values) do
+      described_class.new(serializer_class, name: :full_name, opts: opts)
+      serializer_class::SeregaAttributeValues
+    end
+
+    let(:opts) { {const: "Ann"} }
+
+    it "stores the :const value" do
+      expect(values::CONSTANTS).to eq(full_name: "Ann")
+    end
+
+    context "with the :default option" do
+      let(:opts) { {default: "Nobody"} }
+
+      it "stores the default value" do
+        expect(values::DEFAULTS).to eq(full_name: "Nobody")
+      end
+    end
+
+    context "with the :value and :default options" do
+      let(:opts) { {value: proc { |user| user.full_name }, default: "Nobody"} }
+
+      it "stores the default value" do
+        expect(values::DEFAULTS).to eq(full_name: "Nobody")
+      end
+    end
+
+    context "with a method formatter with arguments" do
+      let(:opts) { {format: [:round, 2]} }
+
+      it "stores the formatter arguments" do
+        expect(values::FORMATTER_ARGS).to eq(full_name: [2])
+      end
+    end
+
+    context "with a callable formatter" do
+      let(:formatter) { proc { |name| name.upcase } }
+      let(:opts) { {format: formatter} }
+
+      it "stores the formatter callable" do
+        expect(values::FORMATTERS).to eq(full_name: formatter)
+      end
+    end
+
+    context "with the :const option in a subclass" do
+      subject(:values) do
+        described_class.new(serializer_class, name: :full_name, opts: opts)
+        subclass.attribute :full_name, const: "Bob"
+        serializer_class::SeregaAttributeValues
+      end
+
+      let(:subclass) { Class.new(serializer_class) }
+
+      it "keeps the constant of the parent" do
+        expect(values::CONSTANTS).to eq(full_name: "Ann")
+        expect(subclass::SeregaAttributeValues::CONSTANTS).to eq(full_name: "Bob")
+      end
+    end
+  end
+
   describe "#relation?" do
     it "returns true if serializer option provided" do
       expect(described_class.new(serializer_class, name: :name).relation?).to be false
@@ -302,143 +363,6 @@ RSpec.describe Serega::SeregaAttribute do
 
       it "returns false" do
         expect(reads_presenter).to be false
-      end
-    end
-  end
-
-  describe "#value_method" do
-    subject(:attribute) { described_class.new(serializer_class, name: name, opts: opts, location: "app/serializers/user_serializer.rb:3") }
-
-    let(:name) { :full_name }
-    let(:opts) { {} }
-    let(:user) { Struct.new(:full_name, :first_name).new("Ann", "Bob") }
-
-    it "defines a method that reads the value of a source" do
-      attribute
-
-      expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Ann"
-    end
-
-    it "defines the method with the file and line of the attribute" do
-      attribute
-
-      expect(serializer_class::SeregaAttributeValues.instance_method(:read_full_name).source_location)
-        .to eq ["app/serializers/user_serializer.rb", 3]
-    end
-
-    it "returns the method name" do
-      expect(attribute.value_method).to eq :read_full_name
-    end
-
-    context "with a name that is not a method name" do
-      let(:name) { :"first-name" }
-      let(:opts) { {method: :first_name} }
-
-      it "returns the name with _ in place of other characters" do
-        expect(attribute.value_method).to eq :read_first_name
-      end
-    end
-
-    context "with a name ending with a question mark" do
-      before { serializer_class.config.check_attribute_name = false }
-
-      let(:name) { :admin? }
-      let(:opts) { {const: true} }
-
-      it "keeps the question mark" do
-        expect(attribute.value_method).to eq :read_admin?
-      end
-    end
-
-    context "when another attribute has the same method name" do
-      before { serializer_class.attribute :first_name }
-
-      let(:name) { :"first-name" }
-      let(:opts) { {method: :first_name} }
-
-      it "returns the name with a number" do
-        expect(attribute.value_method).to eq :read_first_name_2
-      end
-
-      it "defines a method for each attribute" do
-        attribute
-
-        values = serializer_class::SeregaAttributeValues.new
-        expect([values.read_first_name(user), values.read_first_name_2(user)]).to eq %w[Bob Bob]
-      end
-    end
-
-    context "when the attribute is defined again" do
-      before { serializer_class.attribute :full_name }
-
-      let(:opts) { {const: "Ann"} }
-
-      it "keeps the method name" do
-        expect(attribute.value_method).to eq :read_full_name
-      end
-    end
-
-    context "without a location" do
-      subject(:attribute) { described_class.new(serializer_class, name: name, opts: opts) }
-
-      it "defines the method with the attribute name as its file" do
-        attribute
-
-        expect(serializer_class::SeregaAttributeValues.instance_method(:read_full_name).source_location)
-          .to eq ["(attribute full_name)", 1]
-      end
-    end
-
-    context "with a name of an Object method" do
-      let(:name) { :initialize }
-      let(:opts) { {const: "Ann"} }
-
-      it "defines a method with the read_ prefix" do
-        attribute
-
-        expect(serializer_class::SeregaAttributeValues.new.read_initialize(user)).to eq "Ann"
-      end
-    end
-
-    context "with the :default option" do
-      let(:opts) { {default: "Nobody"} }
-      let(:user) { Struct.new(:full_name, :first_name).new(nil, "Bob") }
-
-      it "defines a method that returns the default for nil" do
-        attribute
-
-        expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Nobody"
-      end
-    end
-
-    context "with the :const option" do
-      let(:opts) { {const: "Ann"} }
-
-      it "defines a method that returns the constant" do
-        attribute
-
-        expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Ann"
-      end
-    end
-
-    context "with the :const option in a subclass" do
-      let(:subclass) { Class.new(serializer_class) }
-      let(:opts) { {const: "Ann"} }
-
-      it "keeps the constant of the parent" do
-        attribute
-        subclass.attribute :full_name, const: "Bob"
-
-        expect(serializer_class::SeregaAttributeValues.new.read_full_name(user)).to eq "Ann"
-        expect(subclass::SeregaAttributeValues.new.read_full_name(user)).to eq "Bob"
-      end
-    end
-
-    context "with the :value option" do
-      let(:opts) { {value: proc { |user| user.full_name }} }
-
-      it "returns nil" do
-        expect(attribute.value_method).to be_nil
       end
     end
   end

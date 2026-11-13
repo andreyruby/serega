@@ -69,7 +69,7 @@ class Serega
       @value_code = ValueCode.new(@name, @value_block, @default, @formatter)
       conditions = normalizer.conditions
       @conditions = conditions && SeregaConditions.new(self, conditions)
-      @value_method = define_value_method(serializer_class)
+      store_values(serializer_class)
       @reads_presenter = false
     end
 
@@ -78,9 +78,6 @@ class Serega
     def object_method
       @value_block.object_method if resolver?
     end
-
-    # Name of the SeregaAttributeValues method that reads the value
-    attr_reader :value_method
 
     # Ruby code that reads the value in generated code
     attr_reader :value_code
@@ -164,44 +161,15 @@ class Serega
       @value_block.is_a?(AttributeValueResolvers::Base)
     end
 
-    # Defines the SeregaAttributeValues method that reads the value of a
-    # source directly, for example `read_full_name`. The method has the
-    # file and line of the attribute. The `:default` value and the
-    # formatter are stored for each attribute, because the generated code
-    # of a :value callable reads them too.
-    def define_value_method(serializer_class)
+    # Stores the values of the attribute that generated code reads in the
+    # SeregaAttributeValues of the serializer: the `:const` and `:default`
+    # values and the formatter
+    def store_values(serializer_class)
       values_class = serializer_class::SeregaAttributeValues
+      values_class::CONSTANTS[name] = @value_block.call if resolver? && @value_block.const?
       values_class::DEFAULTS[name] = @default unless @default.nil?
       values_class::FORMATTERS[name] = @formatter.callable if @formatter&.callable
       values_class::FORMATTER_ARGS[name] = @formatter.args if @formatter&.args
-
-      return unless @value_code.plain?
-
-      values_class::CONSTANTS[name] = @value_block.call if @value_block.const?
-
-      method_name = value_method_name(values_class)
-      define_methods(values_class, @value_code.plain_method(method_name))
-      method_name
-    end
-
-    # Plain method name of the attribute, for example `read_first_name` for
-    # `first-name`. The name keeps a final `?` or `!`. A name taken by
-    # another attribute gets a number, for example `read_first_name_2`. The
-    # same attribute keeps its name.
-    def value_method_name(values_class)
-      method_names = values_class::METHOD_NAMES
-      method_name = method_names[name]
-      return method_name if method_name
-
-      base, mark = name.to_s.match(/\A(.*?)([?!]?)\z/).captures
-      base = "read_#{base.gsub(/\W/, "_")}"
-      method_name = :"#{base}#{mark}"
-      number = 1
-      while method_names.value?(method_name)
-        number += 1
-        method_name = :"#{base}_#{number}#{mark}"
-      end
-      method_names[name] = method_name
     end
   end
 end
