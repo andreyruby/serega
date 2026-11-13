@@ -74,7 +74,9 @@ jobs:
 
       # rake benchmarks:check counts instructions with callgrind
       - name: Install Valgrind
-        run: sudo apt-get install -y -qq valgrind
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq valgrind
 
       - name: Check benchmarks
         run: bundle exec rake benchmarks:check
