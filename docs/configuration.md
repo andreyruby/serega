@@ -13,8 +13,8 @@ end
 
 Set config before defining attributes. An attribute reads the config when it is
 defined, so a later change to `auto_preload`, `hide_by_default`,
-`batch_id_option` or `base_serializer` affects only attributes defined after
-it.
+`key_transform`, `batch_id_option` or `base_serializer` affects only attributes
+defined after it.
 
 ## Options
 
@@ -23,6 +23,7 @@ it.
 | `auto_preload` | `false` | Adds [preloads][automatic-preloads] to `:delegate` and `:serializer` attributes |
 | `auto_preload_excluded_methods` | `[:itself, :__getobj__]` | Methods never preloaded automatically |
 | `hide_by_default` | `false` | Hides attributes, see [Hiding by default](selecting-fields.md#hiding-by-default) |
+| `key_transform` | `nil` | Changes attribute keys, see [Key transformation](attributes.md#key-transformation) |
 | `compact` | `false` | [Leaves out keys with `nil` values](conditional-attributes.md#leaving-out-nil-values) |
 | `base_serializer` | `nil` | Superclass of [block-defined serializers][block-serializers] |
 | `batch_id_option` | `:id` | Method that returns the id of an object for [batch loaders](batch-loading.md#object-ids) |

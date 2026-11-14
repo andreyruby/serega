@@ -285,6 +285,38 @@ attribute :firstName, method: :first_name
 # => {firstName: "Bruce"}
 ```
 
+### Key transformation
+
+`config.key_transform` changes the names of the attributes defined after it.
+Set it in a base serializer to change the keys of all serializers:
+
+```ruby
+class AppSerializer < Serega
+  config.key_transform = :camel_case
+end
+
+class UserSerializer < AppSerializer
+  attribute :first_name
+end
+
+UserSerializer.to_h(user)                   # => {firstName: "Bruce"}
+UserSerializer.to_h(user, only: :firstName) # => {firstName: "Bruce"}
+```
+
+A callable receives the name as a Symbol and returns the key. A String key
+stays a String in the serialized Hash:
+
+```ruby
+config.key_transform = ->(name) { name.to_s.camelize(:lower) } # ActiveSupport
+# => {"firstName" => "Bruce"}
+```
+
+The new name is the key as a Symbol: `.attributes`, `only:`, `except:`, `with:`
+and the members of `.to_struct` and `.to_data` use it. The keys of the `:root`,
+`:metadata` and `:context_metadata` plugins stay as they are. The
+transformation runs once, when an attribute is defined, thus it costs nothing
+during serialization.
+
 ## Listing attributes
 
 `.attributes` returns the attributes by name, hidden and inherited ones too:

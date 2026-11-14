@@ -10,6 +10,54 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
+  describe "#key" do
+    subject(:key) { described_class.new(serializer_class, name: "first_name").key }
+
+    let(:serializer_class) do
+      key_transform = transform
+      Class.new(Serega) { config.key_transform = key_transform }
+    end
+
+    let(:transform) { nil }
+
+    it "returns the symbolized name" do
+      expect(key).to eq :first_name
+    end
+
+    context "with the :camel_case key_transform" do
+      let(:transform) { :camel_case }
+
+      it "returns the name in camelCase" do
+        expect(key).to eq :firstName
+      end
+    end
+
+    context "with a key_transform that returns a Symbol" do
+      let(:transform) { ->(name) { :"#{name}_key" } }
+
+      it "returns the Symbol" do
+        expect(key).to eq :first_name_key
+      end
+    end
+
+    context "with a key_transform that returns a String" do
+      let(:transform) { ->(name) { name.to_s.tr("_", "-") } }
+
+      it "returns the frozen String" do
+        expect(key).to eq("first-name").and be_frozen
+      end
+    end
+
+    context "with a key_transform that returns another object" do
+      let(:transform) { ->(name) { 1 } }
+
+      it "raises an error" do
+        expect { key }.to raise_error Serega::SeregaError,
+          "config.key_transform must return a Symbol or a String, 1 returned for :first_name"
+      end
+    end
+  end
+
   describe "#method_name" do
     it "returns symbolized :method options" do
       attribute = described_class.new(serializer_class, name: "current_name", opts: {method: "method"})

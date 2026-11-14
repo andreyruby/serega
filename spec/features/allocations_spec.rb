@@ -41,6 +41,21 @@ RSpec.describe Serega, if: RUBY_ENGINE == "ruby" && RUBY_VERSION >= "4.0" do
     end
   end
 
+  context "with String keys added one by one" do
+    let(:serializer) do
+      Class.new(described_class) do
+        config.compact = true
+        config.key_transform = ->(name) { name.to_s }
+        attribute :id
+        attribute :name
+      end
+    end
+
+    it "allocates the serialized Hashes, the sources and the serialized Array" do
+      expect(serialize).to allocate_objects(T_HASH: 2, T_ARRAY: 2)
+    end
+  end
+
   context "with blocks that take the context" do
     let(:serializer) do
       Class.new(described_class) do

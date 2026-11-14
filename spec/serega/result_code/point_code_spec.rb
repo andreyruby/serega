@@ -9,6 +9,19 @@ RSpec.describe Serega::SeregaResultCode::PointCode do
     it "returns the pair of the name and the value" do
       expect(point_code.hash_pair).to eq ":name => value_1"
     end
+
+    context "with a String key" do
+      let(:serializer) do
+        Class.new(Serega) do
+          config.key_transform = ->(name) { name.to_s }
+          attribute :name
+        end
+      end
+
+      it "returns the pair of the String key and the value" do
+        expect(point_code.hash_pair).to eq '-"name" => value_1'
+      end
+    end
   end
 
   describe "#hash_assign" do
@@ -18,6 +31,19 @@ RSpec.describe Serega::SeregaResultCode::PointCode do
 
     it "returns the code that adds the value" do
       expect(code).to eq "serialized_hash[:name] = value_1"
+    end
+
+    context "with a String key" do
+      let(:serializer) do
+        Class.new(Serega) do
+          config.key_transform = ->(name) { name.to_s }
+          attribute :name
+        end
+      end
+
+      it "returns the code that adds the value by the String key" do
+        expect(code).to eq 'serialized_hash[-"name"] = value_1'
+      end
     end
 
     context "with a conditional point" do

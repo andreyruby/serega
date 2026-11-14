@@ -15,6 +15,9 @@ class Serega
       # Attribute `name`
       attr_reader :name
 
+      # Attribute `key`, the key of the serialized Hash
+      attr_reader :key
+
       # Preloads of the point, given by the selection
       attr_reader :preloads
 
@@ -31,6 +34,7 @@ class Serega
         @plan = plan
         @attribute = attribute
         @name = attribute.name
+        @key = attribute.key
         @preloads = preloads
         @child_plan = child_selection ? SeregaPlan.new(child_selection, self) : nil
         @collection_classes = @child_plan ? {}.compare_by_identity : nil

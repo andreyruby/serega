@@ -15,11 +15,17 @@ class Serega
       @init_opts = initials[:opts]
       @init_block = initials[:block]
       @method_name = nil
+      @key = nil
     end
 
-    # Symbolized initial attribute name
+    # Attribute name, the serialized key as a Symbol
     def name
-      @name ||= prepare_name
+      @name ||= key.to_sym
+    end
+
+    # Serialized key, the name changed by `config.key_transform`
+    def key
+      @key ||= prepare_key
     end
 
     # Symbolized initial attribute method name
@@ -107,8 +113,17 @@ class Serega
 
     private
 
-    def prepare_name
-      init_name.to_sym
+    def prepare_key
+      transform = @serializer_class.config.key_transform
+      name = init_name.to_sym
+      return name unless transform
+      return SeregaUtils::CamelCase.call(name) if transform == :camel_case
+
+      key = transform.call(name)
+      return key if key.is_a?(Symbol)
+      return -key if key.is_a?(String)
+
+      raise SeregaError, "config.key_transform must return a Symbol or a String, #{key.inspect} returned for #{name.inspect}"
     end
 
     def prepare_value_block
