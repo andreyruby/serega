@@ -4,7 +4,7 @@
 |---|---|
 | `Serega::SeregaError` | Invalid definitions, options or changes to locked serializers. Base class of other errors |
 | `Serega::AttributeNotExist` | `:only`, `:except` or `:with` lists an unknown field |
-| `Serega::DepthLimitError` | Fields nest deeper than [`config.depth_limit`][depth_limit] allows |
+| `Serega::DepthLimitError` | Fields nest deeper than [`config.depth_limit`][depth_limit], off by default, allows |
 
 `Serega::AttributeNotExist#serializer` returns the serializer and `#attributes`
 returns the unknown fields. See [Selecting fields](selecting-fields.md#unknown-fields).
