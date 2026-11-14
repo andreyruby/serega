@@ -28,7 +28,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
 
   # Plan of the modifiers, without validation
   def plan(modifiers)
-    user_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except], check_initiate_params: false)
+    user_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except], modifiers[:preset], check_initiate_params: false)
   end
 
   def satisfy_attribute_names(names)
@@ -173,8 +173,8 @@ RSpec.describe Serega::SeregaPlan::Cache do
     let(:empty) { false }
 
     before do
-      allow(planner).to receive(:parse).with("posts", nil, nil).and_return(params)
-      allow(planner).to receive(:parse).with(no_args).and_return(no_params)
+      allow(planner).to receive(:parse).with(user_serializer, "posts", nil, nil, nil).and_return(params)
+      allow(planner).to receive(:parse).with(user_serializer).and_return(no_params)
       allow(planner).to receive(:empty?).and_return(empty)
       allow(planner).to receive(:plan).with(user_serializer, params).and_return(params_plan)
       allow(planner).to receive(:plan).with(user_serializer, no_params).and_return(no_params_plan)
@@ -184,11 +184,11 @@ RSpec.describe Serega::SeregaPlan::Cache do
     it "builds the plan of the parameters with the planner" do
       expect(cache.fetch("posts", check_initiate_params: true)).to be params_plan
 
-      expect(planner).to have_received(:parse).with("posts", nil, nil)
+      expect(planner).to have_received(:parse).with(user_serializer, "posts", nil, nil, nil)
       expect(planner).to have_received(:empty?).with(params)
       expect(planner).to have_received(:validate).with(user_serializer, params)
       expect(planner).to have_received(:plan).with(user_serializer, params)
-      expect(planner).not_to have_received(:parse).with(no_args)
+      expect(planner).not_to have_received(:parse).with(user_serializer)
       expect(planner).not_to have_received(:plan).with(user_serializer, no_params)
     end
 
@@ -214,7 +214,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
       it "returns the plan the planner builds from no parameters" do
         expect(cache.fetch).to be no_params_plan
 
-        expect(planner).to have_received(:parse).with(no_args)
+        expect(planner).to have_received(:parse).with(user_serializer)
         expect(planner).to have_received(:plan).with(user_serializer, no_params)
         expect(planner).not_to have_received(:empty?)
       end

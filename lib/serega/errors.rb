@@ -29,6 +29,28 @@ class Serega
     end
   end
 
+  # Raised when `preset:` names an undefined preset
+  #
+  # ```ruby
+  # UserSerializer.to_h(user, preset: :admin)
+  # # => Serega::PresetNotExist: Preset :admin is not defined in UserSerializer
+  # ```
+  #
+  # See [Presets](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md#presets).
+  class PresetNotExist < SeregaError
+    # Serializer that has no such preset
+    attr_reader :serializer
+
+    # Name of the undefined preset, for example `:admin`
+    attr_reader :preset
+
+    def initialize(message = nil, serializer = nil, preset = nil) # :nodoc:
+      super(message)
+      @serializer = serializer
+      @preset = preset
+    end
+  end
+
   # Raised when fields nest deeper than `config.depth_limit` of the
   # serializer that starts the serialization
   #

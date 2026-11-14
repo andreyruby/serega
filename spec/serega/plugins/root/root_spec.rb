@@ -313,6 +313,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
       Class.new(Serega) do
         plugin :root
         attribute :name
+        preset :names, only: :name
 
         private
 
@@ -379,7 +380,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
 
     context "with the serializer class" do
       let(:target) { serializer }
-      let(:opts) { {only: :name, root: :user} }
+      let(:opts) { {only: :name, preset: :names, root: :user} }
 
       it "passes the plugin options without the modifiers" do
         expect(result).to eq [{root: :user}, :hash]

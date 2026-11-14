@@ -9,21 +9,35 @@ RSpec.describe Serega::SeregaPlan::ModifiersPlanner do
   end
 
   describe ".parse" do
-    subject(:modifiers) { described_class.parse(only, with, except) }
+    subject(:modifiers) { described_class.parse(user_serializer, only, with, except, preset) }
 
     let(:only) { "name,posts(title)" }
     let(:with) { [:email] }
     let(:except) { nil }
+    let(:preset) { nil }
 
     it "returns the modifiers as Hashes of attribute names" do
       expect(modifiers).to eq(only: {name: {}, posts: {title: {}}}, with: {email: {}}, except: {})
     end
 
     context "without modifiers" do
-      subject(:modifiers) { described_class.parse }
+      subject(:modifiers) { described_class.parse(user_serializer) }
 
       it "returns empty Hashes" do
         expect(modifiers).to eq(only: {}, with: {}, except: {})
+      end
+    end
+
+    context "with a preset" do
+      let(:preset) { :contacts }
+      let(:presets_modifiers) { {only: {name: {}}, with: {email: {}}, except: {}} }
+
+      before { allow(Serega::SeregaPlan::Presets).to receive(:modifiers).and_return(presets_modifiers) }
+
+      it "returns the modifiers merged with the modifiers of the presets" do
+        expect(modifiers).to equal presets_modifiers
+        expect(Serega::SeregaPlan::Presets).to have_received(:modifiers)
+          .with(user_serializer, :contacts, {only: {name: {}, posts: {title: {}}}, with: {email: {}}, except: {}})
       end
     end
   end
