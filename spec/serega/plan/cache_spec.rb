@@ -243,4 +243,27 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(flat).to satisfy_attribute_names(address: {city: nil, zip: nil})
     end
   end
+
+  context "with room for four cached plans" do
+    let(:max_cached_plans_count) { 4 }
+    let(:user_serializer) { Class.new(super()) { preset :first_name, only: :first_name } }
+
+    it "caches the same names in only, with, except and preset separately" do
+      only_plan = plan(only: :first_name)
+      with_plan = plan(with: :first_name)
+      except_plan = plan(except: :first_name)
+      preset_plan = plan(preset: :first_name)
+
+      expect(only_plan).to satisfy_attribute_names(first_name: nil)
+      expect(with_plan).to satisfy_attribute_names(first_name: nil, last_name: nil, address: {city: nil, zip: nil})
+      expect(except_plan).to satisfy_attribute_names(last_name: nil, address: {city: nil, zip: nil})
+      expect(preset_plan).to satisfy_attribute_names(first_name: nil)
+      expect(preset_plan).not_to equal only_plan
+
+      expect(plan(only: :first_name)).to equal only_plan
+      expect(plan(with: :first_name)).to equal with_plan
+      expect(plan(except: :first_name)).to equal except_plan
+      expect(plan(preset: :first_name)).to equal preset_plan
+    end
+  end
 end
