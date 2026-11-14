@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `Serega::DepthLimitError#details` adds a line that names the serializer
+  whose `config.depth_limit` to raise. See
+  [Depth limit](docs/configuration.md#depth-limit).
 - `config.key_transform` changes attribute keys: `:camel_case` gives
   `firstName` for `first_name`, and a callable gives any key, a String too.
   Fields are selected by the new names. See

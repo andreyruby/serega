@@ -39,8 +39,10 @@ class Serega
   #
   # See [Depth limit](https://github.com/andreyruby/serega/blob/master/docs/configuration.md#depth-limit).
   class DepthLimitError < SeregaError
-    # Path that exceeds the limit, for example
-    # `UserSerializer (depth limit: 2) -> friends -> friends`
+    # Path that exceeds the limit, and on the next line a hint to raise the limit:
+    #
+    #   UserSerializer (depth limit: 2) -> friends -> friends
+    #   Raise config.depth_limit of UserSerializer to allow deeper nesting
     attr_reader :details
 
     def initialize(message = nil, details = nil) # :nodoc:
