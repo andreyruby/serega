@@ -39,8 +39,13 @@ defined after it.
 ## Depth limit
 
 `config.depth_limit` guards against expensive requests and cyclic relations.
-The limit of the serializer that starts the serialization applies to all
-nested serializers.
+The fields of the serializer itself are depth 1, so `1` allows no relations
+and `2` allows one level of relations. The limit of the serializer that starts
+the serialization applies to all nested serializers.
+
+The limit counts only relations, the attributes with a `:serializer`. It does
+not check attribute values: a Hash or an Array that a value returns is
+serialized as it is, at any depth.
 
 ```ruby
 class AppSerializer < Serega
@@ -57,8 +62,15 @@ UserSerializer.to_h(user, with: {friends: :friends})
 # => Serega::DepthLimitError: Depth limit was exceeded
 ```
 
-`Serega::DepthLimitError#details` shows the path:
-`UserSerializer (depth limit: 2) -> friends -> friends`.
+`Serega::DepthLimitError#details` shows the path, and on the next line the
+serializer whose limit applies:
+
+```text
+UserSerializer (depth limit: 2) -> friends -> friends
+(hint: if the nesting is not a cycle, increase config.depth_limit of UserSerializer)
+```
+
+The message is `Depth limit was exceeded`, safe to show to API clients.
 
 The limit is checked when the serialization plan is built, before any
 serialization. Call `UserSerializer.new(with: params[:with])` early to

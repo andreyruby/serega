@@ -107,7 +107,7 @@ class Serega
       path = parent_plan_point.path
       return if path.size + 1 <= limit
 
-      raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{path.join(" -> ")}")
+      raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{path.join(" -> ")}\nRaise config.depth_limit of #{root_serializer} to allow deeper nesting")
     end
 
     # Makes a point of each selected attribute, with the preloads and child

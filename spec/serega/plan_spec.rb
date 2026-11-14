@@ -98,7 +98,7 @@ RSpec.describe Serega::SeregaPlan do
 
       it "raises DepthLimitError with the path deeper than the root serializer limit" do
         expect { plan(with: with) }.to raise_error(Serega::DepthLimitError, "Depth limit was exceeded") do |error|
-          expect(error.details).to eq "#{post_serializer} (depth limit: 2) -> comments -> post"
+          expect(error.details).to eq "#{post_serializer} (depth limit: 2) -> comments -> post\nRaise config.depth_limit of #{post_serializer} to allow deeper nesting"
         end
       end
 
