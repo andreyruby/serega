@@ -42,9 +42,15 @@ class Serega
             # Return when attribute has no nested fields
             next if nested_fields.empty?
 
-            with_parent_name(name) do
-              validate(attribute.serializer, nested_fields)
-            end
+            validate_nested(name, attribute, nested_fields)
+          end
+        end
+
+        # Validates the nested fields of an attribute with the attributes of
+        # its serializer
+        def validate_nested(name, attribute, nested_fields)
+          with_parent_name(name) do
+            validate(attribute.serializer, nested_fields)
           end
         end
 

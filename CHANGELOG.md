@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- `preset` saves `:only`, `:with` and `:except` under a name, and the
+  `preset:` option selects its fields: `to_h(user, preset: :card)`. A preset
+  can include other presets, and merges with the options of the call. An
+  undefined preset raises `Serega::PresetNotExist`. See
+  [Presets](docs/selecting-fields.md#presets).
 - `Serega::DepthLimitError#details` adds a line that names the serializer
   whose `config.depth_limit` to increase. See
   [Depth limit](docs/configuration.md#depth-limit).

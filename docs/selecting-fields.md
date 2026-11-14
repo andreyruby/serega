@@ -99,6 +99,66 @@ UserSerializer.to_h(bruce, only: "username,friends(username,email)")
 UserSerializer.to_h(users, only: params[:fields]) # all default fields when params[:fields] is nil
 ```
 
+## Presets
+
+A preset saves `:only`, `:with` and `:except` under a name, at any depth. The
+`:preset` option selects its fields, so a client sends a short name instead of
+a long list of fields.
+
+```ruby
+class UserSerializer < Serega
+  attribute :username
+  attribute :first_name
+  attribute :email, hide: true
+  attribute :friends, serializer: UserSerializer, hide: true
+
+  preset :card, only: [:username, {friends: :username}]
+  preset :profile, preset: :card, with: :email
+end
+
+UserSerializer.to_h(bruce, preset: :card)
+# => {username: "batman", friends: [{username: "alfred"}]}
+
+UserSerializer.to_h(bruce, preset: :profile)
+# => {username: "batman", email: "bruce@wayne.com", friends: [{username: "alfred"}]}
+```
+
+- `preset:` in a preset definition names presets defined earlier. Their
+  fields merge in when the preset is used.
+- A preset with the name of an existing preset replaces it, also in the
+  presets that include it.
+- Subclasses inherit the presets, and can redefine them without changing the
+  parent serializer.
+- `preset:` in a serialization takes a name or an Array of names. An
+  undefined preset raises `Serega::PresetNotExist`.
+- A preset is checked when it is defined: its name, the presets it includes,
+  that presets do not include each other, and the attributes it names. An
+  unknown attribute raises `Serega::AttributeNotExist`:
+  `Preset :card names not existing attributes: nickname`. The
+  nested fields of a relation with a serializer name or a Proc are not
+  checked then, so that serializer can be defined later. They are checked
+  with the options of the call, like other fields.
+
+### Presets with other options
+
+Each option of the call merges with the option of the same name of the
+presets. The result is the same as writing the merged options by hand, so
+the rules of [Combining options](#combining-options) apply. `:only` and
+`:with` add fields to a preset, and `:except` removes them:
+
+```ruby
+UserSerializer.to_h(bruce, preset: :card, only: {friends: :first_name})
+# => {username: "batman", friends: [{username: "alfred", first_name: "Alfred"}]}
+
+UserSerializer.to_h(bruce, preset: :card, except: :friends)
+# => {username: "batman"}
+
+UserSerializer.to_h(bruce, preset: [:card, :profile], with: :first_name)
+```
+
+Options name only attributes: `with: {friends: :card}` names an attribute
+`card` of the friends.
+
 ## Unknown fields
 
 An unknown field raises `Serega::AttributeNotExist`. Its `#serializer` and

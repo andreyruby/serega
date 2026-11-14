@@ -92,8 +92,10 @@ require_relative "serega/validations/attribute/check_opt_preload"
 require_relative "serega/validations/attribute/check_opt_serializer"
 require_relative "serega/validations/attribute/check_opt_value"
 require_relative "serega/validations/initiate/check_modifiers"
+require_relative "serega/validations/initiate/check_preset_modifiers"
 require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
+require_relative "serega/validations/check_preset_params"
 require_relative "serega/validations/check_formatter"
 require_relative "serega/validations/check_serialize_keywords"
 
@@ -111,6 +113,7 @@ require_relative "serega/result_code/attribute_point_code"
 require_relative "serega/result_code/relation_point_code"
 require_relative "serega/result_builder"
 require_relative "serega/plan/modifiers_planner"
+require_relative "serega/plan/presets"
 require_relative "serega/plan/cache"
 require_relative "serega/plugins"
 
@@ -163,6 +166,18 @@ class Serega
     #
     def attributes
       @attributes
+    end
+
+    #
+    # Presets by name: the names of the presets each one includes and its
+    # own modifiers
+    #
+    # ```ruby
+    # UserSerializer.presets # => {card: {presets: [], only: {posts: {title: {}}}, with: {}, except: {}}}
+    # ```
+    #
+    def presets
+      @presets
     end
 
     # Lists defined batch loaders
@@ -247,6 +262,31 @@ class Serega
       location = caller_locations.find { |caller_location| !caller_location.path.start_with?(LIB_PATH) }
       attribute = SeregaAttribute.new(self, name: name, opts: opts, block: block, location: location && "#{location.path}:#{location.lineno}")
       attributes[attribute.name] = attribute
+    end
+
+    #
+    # Saves `only`, `with` and `except` modifiers under a name. The `preset:`
+    # serialization option selects the fields of the presets, merged with the
+    # modifiers given in the call. A preset replaces the preset with the same
+    # name.
+    #
+    # - `preset:` names presets defined earlier. They are merged when the
+    #   preset is used, thus a redefined preset changes the presets that
+    #   include it.
+    #
+    # ```ruby
+    # preset :card, only: [:first_name, {avatar: :url}]
+    # preset :profile, preset: :card, with: {posts: :comments}
+    #
+    # UserSerializer.to_h(user, preset: :profile, except: :avatar)
+    # ```
+    #
+    # See [Presets](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md#presets).
+    #
+    def preset(name, preset: nil, only: nil, with: nil, except: nil)
+      check_unlocked
+      definition = SeregaPlan::Presets.define(self, name, preset, only, with, except)
+      presets[name.to_sym] = definition
     end
 
     #
@@ -403,10 +443,10 @@ class Serega
     #
     # See [Serializing](https://github.com/andreyruby/serega/blob/master/docs/serializing.md).
     #
-    def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
+    def call(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
       # The serialization methods list each keyword instead of taking
       # `**opts`: a `**opts` Hash allocates on every call, even when empty.
-      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
         .to_h(object, context: context, many: many)
     end
 
@@ -420,8 +460,8 @@ class Serega
     # UserSerializer.to_data(user) # => #<data first_name="Bruce">
     # ```
     #
-    def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
-      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+    def to_data(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
         .to_data(object, context: context, many: many)
     end
 
@@ -435,8 +475,8 @@ class Serega
     # UserSerializer.to_struct(user) # => #<struct first_name="Bruce">
     # ```
     #
-    def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
-      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+    def to_struct(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
         .to_struct(object, context: context, many: many)
     end
 
@@ -451,8 +491,8 @@ class Serega
     # UserSerializer.to_json(user) # => "{\"first_name\":\"Bruce\"}"
     # ```
     #
-    def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil)
-      new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+    def to_json(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
         .to_json(object, context: context, many: many)
     end
 
@@ -552,6 +592,9 @@ class Serega
         subclass.attributes[subclass_attribute.name] = subclass_attribute
       end
 
+      # Assign same presets
+      subclass.presets.merge!(presets)
+
       # Assign same preload handler
       subclass.preload_with(preload_with) if preload_with
 
@@ -572,6 +615,7 @@ class Serega
     def initialize_definition(config, formatters)
       @config = config
       @attributes = {}
+      @presets = {}
       @batch_loaders = {}
       @formatters = formatters
       @presenter_class = nil
@@ -623,8 +667,8 @@ class Serega
     # serializer.to_h(users) # => [{first_name: "Bruce"}, {first_name: "Alfred"}]
     # ```
     #
-    def initialize(only: nil, with: nil, except: nil, check_initiate_params: nil)
-      @plan = self.class.plan_cache.fetch(only, with, except, check_initiate_params: check_initiate_params)
+    def initialize(only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil)
+      @plan = self.class.plan_cache.fetch(only, with, except, preset, check_initiate_params: check_initiate_params)
       @direct_hash_builder = @plan.direct_hash_builder
     end
 

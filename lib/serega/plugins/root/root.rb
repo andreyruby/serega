@@ -38,23 +38,23 @@ class Serega
 
       # Class methods the plugin adds to serializers
       module ClassMethods
-        def call(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
-          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        def call(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
+          new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
             .to_h(object, context: context, many: many, **opts)
         end
 
-        def to_data(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
-          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        def to_data(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
+          new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
             .to_data(object, context: context, many: many, **opts)
         end
 
-        def to_struct(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
-          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        def to_struct(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
+          new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
             .to_struct(object, context: context, many: many, **opts)
         end
 
-        def to_json(object, only: nil, with: nil, except: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
-          new(only: only, with: with, except: except, check_initiate_params: check_initiate_params)
+        def to_json(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil, **opts) # :nodoc:
+          new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
             .to_json(object, context: context, many: many, **opts)
         end
 

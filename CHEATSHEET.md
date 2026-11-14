@@ -214,6 +214,19 @@ UserSerializer.to_h(user, only: [:name], with: [:phone]) # => {name: "Felonious"
 Each relation can use its own option, see [Combining options][combining-options].
 
 ```ruby
+# Presets: named options, merged with the options of the call
+class UserSerializer < Serega
+  preset :card, only: [:name, :email]
+  preset :full, preset: :card, with: [:phone]
+end
+
+UserSerializer.to_h(user, preset: :card) # => {name: "Felonious", email: "gru@example.com"}
+UserSerializer.to_h(user, preset: :card, except: [:email]) # => {name: "Felonious"}
+```
+
+See [Presets][presets].
+
+```ruby
 # Unknown attribute
 UserSerializer.to_h(user, only: [:address])
 # => raises Serega::AttributeNotExist
@@ -880,6 +893,7 @@ ResponseSerializer.to_h([walter, lucy], meta: {page: 1})
 
 [attributes]: #attribute-options
 [field-selection]: #field-selection--only-except-with
+[presets]: docs/selecting-fields.md#presets
 [combining-options]: docs/selecting-fields.md#combining-options
 [context]: #context
 [relations]: #relations

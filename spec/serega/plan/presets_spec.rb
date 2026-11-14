@@ -1,0 +1,79 @@
+# frozen_string_literal: true
+
+RSpec.describe Serega::SeregaPlan::Presets do
+  let!(:user_serializer) do
+    Class.new(Serega) do
+      attribute :name
+      attribute :email, hide: true
+
+      preset :contacts, with: :email
+      preset :profile, preset: :contacts, only: :name
+    end
+  end
+
+  let(:check_preset_params) { instance_double(Serega::SeregaValidations::CheckPresetParams) }
+
+  before do
+    allow(Serega::SeregaValidations::CheckPresetParams).to receive(:new).and_return(check_preset_params)
+    allow(check_preset_params).to receive(:validate)
+  end
+
+  describe ".define" do
+    subject(:definition) { described_class.define(user_serializer, "card", ["contacts"], "name", nil, nil) }
+
+    it "returns the frozen names of the included presets and the own parsed modifiers" do
+      expect(definition).to eq(presets: [:contacts], only: {name: {}}, with: {}, except: {})
+      expect(definition).to be_frozen
+      expect(definition[:presets]).to be_frozen
+      expect(definition[:only][:name]).to be_frozen
+
+      expect(Serega::SeregaValidations::CheckPresetParams).to have_received(:new)
+        .with(user_serializer, "card", ["contacts"], "name", nil, nil)
+      expect(check_preset_params).to have_received(:validate)
+    end
+  end
+
+  describe ".modifiers" do
+    subject(:merged) { described_class.modifiers(user_serializer, preset, modifiers) }
+
+    let(:preset) { ["profile"] }
+    let(:modifiers) { {only: {}, with: {}, except: {email: {}}} }
+
+    it "merges the given modifiers into the modifiers of the presets" do
+      expect(merged).to eq(only: {name: {}}, with: {email: {}}, except: {email: {}})
+      expect(Serega::SeregaValidations::CheckPresetParams).not_to have_received(:new)
+    end
+
+    it "leaves the serializer unlocked" do
+      merged
+
+      expect { user_serializer.attribute :phone }.not_to raise_error
+    end
+
+    context "with an undefined preset" do
+      let(:preset) { :admin }
+
+      it "raises a PresetNotExist error" do
+        expect { merged }.to raise_error(Serega::PresetNotExist, "Preset :admin is not defined in #{user_serializer}")
+      end
+    end
+
+    context "with a preset of another type" do
+      let(:preset) { {contacts: true} }
+
+      it "raises a SeregaError" do
+        expect { merged }
+          .to raise_error Serega::SeregaError, "Invalid option :preset => #{preset.inspect}. Must be a Symbol, a String, or an Array of them"
+      end
+    end
+
+    context "with an Array of preset names of another type" do
+      let(:preset) { [:contacts, 1] }
+
+      it "raises a SeregaError" do
+        expect { merged }
+          .to raise_error Serega::SeregaError, "Invalid option :preset => [:contacts, 1]. Must be a Symbol, a String, or an Array of them"
+      end
+    end
+  end
+end

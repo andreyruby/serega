@@ -4,6 +4,12 @@ class Serega
   # Fields of the `only:`, `except:` and `with:` options
   type fields = Symbol | String | Array[fields] | Hash[Symbol | String, fields]
 
+  # Names of the `preset:` option
+  type preset_names = Symbol | String | Array[Symbol | String]
+
+  # Definition of a preset: the presets it includes and its own modifiers
+  type preset_definition = { presets: Array[Symbol], only: Hash[Symbol, untyped], with: Hash[Symbol, untyped], except: Hash[Symbol, untyped] }
+
   # Serialization context
   type context = Hash[untyped, untyped]
 
@@ -18,6 +24,10 @@ class Serega
     def attributes: () -> Hash[Symbol, SeregaAttribute]
 
     def attribute: (Symbol | String name, **untyped opts) ?{ () [self: singleton(Serega)] -> void } -> SeregaAttribute
+
+    def presets: () -> Hash[Symbol, preset_definition]
+
+    def preset: (Symbol | String name, ?preset: preset_names?, ?only: fields?, ?with: fields?, ?except: fields?) -> preset_definition
 
     def batch: (Symbol | String name, untyped loader) -> void
              | (Symbol | String name) { (untyped objects) -> untyped } -> void
@@ -44,17 +54,17 @@ class Serega
 
     # Results are `untyped`: plugins change their shape. Options that plugins
     # add at load time, such as `root:`, are not in these signatures.
-    def call: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
+    def call: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?preset: preset_names?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
     alias to_h call
-    def to_data: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
-    def to_struct: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
-    def to_json: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> String
+    def to_data: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?preset: preset_names?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
+    def to_struct: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?preset: preset_names?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> untyped
+    def to_json: (untyped object, ?only: fields?, ?with: fields?, ?except: fields?, ?preset: preset_names?, ?check_initiate_params: bool?, ?context: context?, ?many: bool?) -> String
 
     def make_shareable!: () -> self
   end
 
   module InstanceMethods
-    def initialize: (?only: fields?, ?with: fields?, ?except: fields?, ?check_initiate_params: bool?) -> void
+    def initialize: (?only: fields?, ?with: fields?, ?except: fields?, ?preset: preset_names?, ?check_initiate_params: bool?) -> void
 
     def call: (untyped object, ?context: context?, ?many: bool?) -> untyped
     alias to_h call
