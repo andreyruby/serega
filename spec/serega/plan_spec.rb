@@ -69,62 +69,17 @@ RSpec.describe Serega::SeregaPlan do
         d: {d1: nil, d2: nil}
       )
     end
+  end
 
-    context "with cyclic relations" do
-      let(:current_serializer) { post_serializer }
-      let(:post_depth_limit) { 2 }
-      let(:comment_depth_limit) { nil }
-      let(:with) { {comments: {post: {}}} }
+  describe "#depth_left" do
+    subject(:result) { plan({}) }
 
-      let(:post_serializer) do
-        depth_limit = post_depth_limit
-        comments = -> { comment_serializer }
-        Class.new(base_class) do
-          config.depth_limit = depth_limit
-          attribute :title
-          attribute :comments, serializer: comments, many: true, hide: true
-        end
-      end
+    before { allow(Serega::SeregaPlan::DepthLimit).to receive(:depth_left).and_return(3) }
 
-      let(:comment_serializer) do
-        depth_limit = comment_depth_limit
-        post = -> { post_serializer }
-        Class.new(base_class) do
-          config.depth_limit = depth_limit
-          attribute :text
-          attribute :post, serializer: post, many: false, hide: true
-        end
-      end
-
-      it "raises DepthLimitError with the path deeper than the root serializer limit" do
-        expect { plan(with: with) }.to raise_error(Serega::DepthLimitError, "Depth limit was exceeded") do |error|
-          expect(error.details).to eq "#{post_serializer} (depth limit: 2) -> comments -> post\nRaise config.depth_limit of #{post_serializer} to allow deeper nesting"
-        end
-      end
-
-      context "when the plan depth equals the limit" do
-        let(:with) { {comments: {}} }
-
-        it "returns the plan" do
-          expect(plan(with: with)).to satisfy_attribute_names(title: nil, comments: {text: nil})
-        end
-      end
-
-      context "when only a relation serializer allows the depth" do
-        let(:comment_depth_limit) { 5 }
-
-        it "raises DepthLimitError" do
-          expect { plan(with: with) }.to raise_error(Serega::DepthLimitError, "Depth limit was exceeded")
-        end
-      end
-
-      context "without a depth limit" do
-        let(:post_depth_limit) { nil }
-
-        it "returns the plan" do
-          expect(plan(with: with)).to satisfy_attribute_names(title: nil, comments: {text: nil, post: {title: nil}})
-        end
-      end
+    it "returns the depth left from DepthLimit for the serializer and the parent point" do
+      expect(result.depth_left).to eq 3
+      expect(Serega::SeregaPlan::DepthLimit).to have_received(:depth_left).with(a, nil)
+      expect(Serega::SeregaPlan::DepthLimit).to have_received(:depth_left).with(d, result.points.last)
     end
   end
 

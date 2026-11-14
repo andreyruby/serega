@@ -25,17 +25,21 @@ class Serega
     # when no point reads the sources through the presenter
     attr_reader :presenter
 
+    # Levels of child plans the depth limit of the root serializer allows
+    # below this plan, `nil` without a limit. See DepthLimit.
+    attr_reader :depth_left
+
     # Instantiate new serialization plan of the selected attributes of the
     # selection's serializer, with the result builder class of the
     # selection. A child plan gets the point of its parent plan. Raises
     # DepthLimitError when the plan nests deeper than the depth limit of the
     # root serializer.
     def initialize(selection, parent_plan_point = nil)
-      check_depth_limit(parent_plan_point) if parent_plan_point
       serializer_class = selection.serializer_class
       serializer_class.lock
       @serializer_class = serializer_class
       @parent_plan_point = parent_plan_point
+      @depth_left = DepthLimit.depth_left(serializer_class, parent_plan_point)
       @builder_class = selection.builder_class
       @points = selected_points(selection)
       @presenter = points_presenter(serializer_class)
@@ -96,18 +100,6 @@ class Serega
     def points_presenter(serializer_class)
       presenter = serializer_class.local_presenter
       presenter if presenter && points.any? { |point| point.attribute.reads_presenter? }
-    end
-
-    # A child plan is one level deeper than the path of its parent point
-    def check_depth_limit(parent_plan_point)
-      root_serializer = parent_plan_point.plan.root_plan.serializer_class
-      limit = root_serializer.config.depth_limit
-      return unless limit
-
-      path = parent_plan_point.path
-      return if path.size + 1 <= limit
-
-      raise DepthLimitError.new("Depth limit was exceeded", "#{root_serializer} (depth limit: #{limit}) -> #{path.join(" -> ")}\nRaise config.depth_limit of #{root_serializer} to allow deeper nesting")
     end
 
     # Makes a point of each selected attribute, with the preloads and child
