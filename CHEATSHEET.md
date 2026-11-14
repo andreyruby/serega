@@ -626,6 +626,21 @@ UserSerializer.to_h(user) # => {first_name: "Felonious"}   (nickname is nil)
 Default `false`. Nested serializers follow their own config, thus set it in a
 base serializer. `.to_struct` and `.to_data` keep `nil` members.
 
+### `config.key_transform` — change attribute keys
+
+```ruby
+class UserSerializer < Serega
+  config.key_transform = :camel_case                         # or ->(name) { name.to_s.camelize(:lower) }
+  attribute :first_name
+end
+
+UserSerializer.to_h(user)                   # => {firstName: "Felonious"}
+UserSerializer.to_h(user, only: :firstName) # fields are selected by the new names
+```
+
+Default `nil`. A callable gets the name Symbol, and a String it returns stays a
+String key. Set it before the attributes, in a base serializer for all keys.
+
 ### `config.delegate_default_allow_nil` — default `:allow_nil` for every `:delegate`
 
 ```ruby

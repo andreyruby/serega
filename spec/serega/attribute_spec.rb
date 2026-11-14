@@ -37,6 +37,7 @@ RSpec.describe Serega::SeregaAttribute do
       normalizer = instance_double(
         Serega::SeregaAttributeNormalizer,
         name: nil,
+        key: nil,
         many: nil,
         default: nil,
         hide: nil,
@@ -58,6 +59,7 @@ RSpec.describe Serega::SeregaAttribute do
       expect(attribute.instance_variables)
         .to include(
           :@name,
+          :@key,
           :@default,
           :@value_block,
           :@value_block_signature,

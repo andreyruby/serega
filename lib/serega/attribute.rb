@@ -14,6 +14,9 @@ class Serega
     # Attribute name
     attr_reader :name
 
+    # Serialized key, a Symbol or a String
+    attr_reader :key
+
     # Where the attribute is defined
     def location
       initials[:location]
@@ -54,6 +57,7 @@ class Serega
 
       normalizer = SeregaAttributeNormalizer.new(serializer_class, initials)
       @name = normalizer.name
+      @key = normalizer.key
       @many = normalizer.many
       @default = normalizer.default
       @value_block = normalizer.value_block

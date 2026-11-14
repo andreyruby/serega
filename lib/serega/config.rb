@@ -31,6 +31,7 @@ class Serega
       auto_preload_excluded_methods: %i[itself __getobj__].freeze,
       hide_by_default: false,
       compact: false,
+      key_transform: nil,
       batch_id_option: :id,
       base_serializer: nil,
       hash_access: {default_mode: :symbol, default_allow_missing_key: false}
@@ -143,6 +144,20 @@ class Serega
         opts[:compact] = checked_boolean(value)
       end
 
+      # How attribute names become serialized keys: `nil` (names as they are,
+      # the default), `:camel_case` (`first_name` gives `firstName`), or a
+      # callable that receives the name Symbol and returns the key. A String
+      # key stays a String in the serialized Hash. The attribute name is the
+      # key as a Symbol, thus `only:`, `except:` and `with:` take it.
+      def key_transform
+        opts.fetch(:key_transform)
+      end
+
+      # Sets #key_transform
+      def key_transform=(value)
+        opts[:key_transform] = checked_key_transform(value)
+      end
+
       # Attributes that get preloads automatically: `:delegate` attributes with
       # `has_delegate_option` and `:serializer` attributes with
       # `has_serializer_option`. Both are `false` by default.
@@ -237,6 +252,18 @@ class Serega
       end
 
       private
+
+      def checked_key_transform(value)
+        return value if value.nil? || value == :camel_case
+
+        params =
+          if value.respond_to?(:parameters) then value.parameters
+          elsif value.respond_to?(:call) then value.method(:call).parameters
+          end
+        return value if params&.size == 1 && %i[req opt].include?(params[0][0])
+
+        raise SeregaError, "Must be nil, :camel_case, or a callable with one parameter, #{value.inspect} provided"
+      end
 
       def checked_boolean(value)
         raise SeregaError, "Must have boolean value, #{value.inspect} provided" unless value == true || value == false

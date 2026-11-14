@@ -49,6 +49,27 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#key_transform=" do
+    it "accepts nil, :camel_case and a callable with one parameter" do
+      expect { config.key_transform = nil }.not_to raise_error
+      expect { config.key_transform = :camel_case }.not_to raise_error
+      expect { config.key_transform = ->(name) { name } }.not_to raise_error
+      expect { config.key_transform = proc { |name| name } }.not_to raise_error
+      expect { config.key_transform = Module.new { def self.call(name) = name } }.not_to raise_error
+      expect { config.key_transform = Integer.method(:sqrt) }.not_to raise_error
+    end
+
+    it "raises an error for other values" do
+      message = "Must be nil, :camel_case, or a callable with one parameter"
+
+      expect { config.key_transform = :snake_case }.to raise_error Serega::SeregaError, /\A#{message}/
+      expect { config.key_transform = ->(name, other) { name } }.to raise_error Serega::SeregaError, /\A#{message}/
+      expect { config.key_transform = ->(name:) { name } }.to raise_error Serega::SeregaError, /\A#{message}/
+      expect { config.key_transform = -> { :name } }.to raise_error Serega::SeregaError, /\A#{message}/
+      expect { config.key_transform = "name" }.to raise_error Serega::SeregaError, /\A#{message}/
+    end
+  end
+
   describe "#max_cached_plans_per_serializer_count=" do
     it "validates value is boolean" do
       expect { config.max_cached_plans_per_serializer_count = 10 }.not_to raise_error
@@ -273,6 +294,7 @@ RSpec.describe Serega::SeregaConfig do
         auto_preload_excluded_methods
         hide_by_default
         compact
+        key_transform
         batch_id_option
         base_serializer
         hash_access
@@ -283,6 +305,7 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.check_attribute_name).to be true
       expect(config.require_many).to be false
       expect(config.compact).to be false
+      expect(config.key_transform).to be_nil
       expect(config.check_initiate_params).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 20

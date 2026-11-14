@@ -38,6 +38,7 @@ class Serega
 end
 
 require_relative "serega/errors"
+require_relative "serega/utils/camel_case"
 require_relative "serega/utils/collection_detector"
 require_relative "serega/utils/deep_merge"
 require_relative "serega/utils/enum_deep_dup"

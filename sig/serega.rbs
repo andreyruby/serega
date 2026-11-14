@@ -108,6 +108,9 @@ class Serega
       def compact: () -> bool
       def compact=: (bool value) -> bool
 
+      def key_transform: () -> (:camel_case | ^(Symbol) -> (Symbol | String) | nil)
+      def key_transform=: (:camel_case | ^(Symbol) -> (Symbol | String) | nil value) -> (:camel_case | ^(Symbol) -> (Symbol | String) | nil)
+
       def hide_by_default: () -> (bool | :auto)
       def hide_by_default=: (bool | :auto value) -> (bool | :auto)
 
