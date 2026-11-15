@@ -103,8 +103,22 @@ end
 ## Benchmarks
 
 Serega is on par with the fastest Ruby serializers in speed and allocations,
-and in some cases beats them. Results, the details of each case and how to run
-them: [benchmarks/README.md](https://github.com/andreyruby/serega/blob/master/benchmarks/README.md).
+and in some cases beats them. Serializations per second of 100 posts with their
+author and 10 comments each, more is better:
+
+<!-- benchmarks:summary -->
+| Serializer               | 100 posts with relations, JSON per second |
+|--------------------------|------------------------------------------:|
+| **Serega**               |                                     1,317 |
+| panko_serializer         |                                     1,099 |
+| oj_serializers           |                                       987 |
+| alba                     |                                       412 |
+| blueprinter              |                                       308 |
+| active_model_serializers |                                        45 |
+<!-- benchmarks:summary:end -->
+
+Results of all cases, the details of each case and how to run them:
+[benchmarks/README.md](https://github.com/andreyruby/serega/blob/master/benchmarks/README.md).
 
 ## Features
 
