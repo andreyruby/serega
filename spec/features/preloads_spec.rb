@@ -4,8 +4,10 @@ RSpec.describe Serega do
   let(:serializer_class) { Class.new(described_class) }
 
   describe ".preload_with" do
-    it "returns nil when no handler was registered" do
-      expect(serializer_class.preload_with).to be_nil
+    context "when no handler is registered" do
+      it "returns nil" do
+        expect(serializer_class.preload_with).to be_nil
+      end
     end
 
     it "registers and returns a block handler" do
@@ -29,21 +31,41 @@ RSpec.describe Serega do
       expect(serializer_class.preload_with).to equal handler
     end
 
-    it "raises when both a value and a block are given" do
-      expect { serializer_class.preload_with(proc { |a, b| }) { |a, b| } }
-        .to raise_error Serega::SeregaError, "preload_with accepts a single callable or a block, not both"
+    context "when both a value and a block are given" do
+      it "raises" do
+        expect { serializer_class.preload_with(proc { |a, b| }) { |a, b| } }
+          .to raise_error Serega::SeregaError, "preload_with accepts a single callable or a block, not both"
+      end
     end
 
-    it "raises when the handler is not callable" do
-      expect { serializer_class.preload_with(:not_callable) }
-        .to raise_error Serega::SeregaError, "preload_with value must be a Proc or respond to #call"
+    context "when nil and a block are given" do
+      it "raises" do
+        expect { serializer_class.preload_with(nil) { |a, b| } }
+          .to raise_error Serega::SeregaError, "preload_with accepts a single callable or a block, not both"
+      end
     end
 
-    it "raises when the handler does not accept two positional arguments" do
-      error = "preload_with handler must accept two positional arguments: (objects, preloads)"
-      expect { serializer_class.preload_with(->(objects) {}) }.to raise_error Serega::SeregaError, error
-      expect { serializer_class.preload_with(->(a, b, c) {}) }.to raise_error Serega::SeregaError, error
-      expect { serializer_class.preload_with(->(objects, ctx:) {}) }.to raise_error Serega::SeregaError, error
+    context "when the handler is not callable" do
+      it "raises" do
+        expect { serializer_class.preload_with(:not_callable) }
+          .to raise_error Serega::SeregaError, "preload_with value must be a Proc or respond to #call"
+      end
+    end
+
+    context "when the handler is nil" do
+      it "raises" do
+        expect { serializer_class.preload_with(nil) }
+          .to raise_error Serega::SeregaError, "preload_with value must be a Proc or respond to #call"
+      end
+    end
+
+    context "when the handler does not accept two positional arguments" do
+      it "raises" do
+        error = "preload_with handler must accept two positional arguments: (objects, preloads)"
+        expect { serializer_class.preload_with(->(objects) {}) }.to raise_error Serega::SeregaError, error
+        expect { serializer_class.preload_with(->(a, b, c) {}) }.to raise_error Serega::SeregaError, error
+        expect { serializer_class.preload_with(->(objects, ctx:) {}) }.to raise_error Serega::SeregaError, error
+      end
     end
   end
 

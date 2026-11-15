@@ -103,7 +103,7 @@ class Serega
       return if points.empty?
 
       serializer_class = plan.serializer_class
-      handler = serializer_class.preload_with
+      handler = serializer_class.preload_with_handler
       sources = plan.presenter ? @sources.map(&:__getobj__) : @sources
 
       points.each do |point|

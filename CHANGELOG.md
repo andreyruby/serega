@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- `preload_with nil` and `prepare_initial_objects nil` raise
+  `Serega::SeregaError`, as with other values that are not callable. Before,
+  they returned the registered handler. With `nil` and a block, they raise
+  that they accept a callable or a block, not both.
+
 ## [0.51.0] - 2026-11-15
 
 - **Breaking:** `check_initiate_params` is renamed to `check_selection`, in
