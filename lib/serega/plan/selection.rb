@@ -37,13 +37,13 @@ class Serega
       end
 
       # Returns the selection of the child plan of a selected attribute: the
-      # relation serializer with the selection of the relation. Returns nil
-      # for an attribute without a child plan.
+      # relation serializer with the selection of the relation, merged into
+      # the presets of the relation. Returns nil for an attribute without a
+      # child plan.
       def child(attribute)
         return unless attribute.relation?
 
-        name = attribute.name
-        Selection.new(attribute.serializer, {only: @only[name], with: @with[name], except: @except[name]})
+        Selection.new(attribute.serializer, child_selection(attribute))
       end
 
       # Returns the result builder class of the plan: SeregaResultBuilder
@@ -58,6 +58,14 @@ class Serega
       end
 
       private
+
+      # The selection of the relation, merged into the presets of the relation
+      def child_selection(attribute)
+        name = attribute.name
+        selection = {only: @only[name], with: @with[name], except: @except[name]}
+        preset = attribute.preset
+        preset ? Presets.selection(attribute.serializer, preset, selection) : selection
+      end
 
       # `except` without nested fields hides the attribute, `only` and `with`
       # show it, `only` hides the other attributes when it limits this

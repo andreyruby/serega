@@ -10,6 +10,9 @@
   can include other presets, and merges with the options of the call. An
   undefined preset raises `Serega::PresetNotExist`. See
   [Presets](docs/selecting-fields.md#presets).
+- `preset:` on a relation serializes the fields of a preset of its
+  serializer: `attribute :posts, serializer: PostSerializer, preset: :summary`.
+  See [Preset on a relation](docs/selecting-fields.md#preset-on-a-relation).
 - `Serega::DepthLimitError#details` adds a line that names the serializer
   whose `config.depth_limit` to increase. See
   [Depth limit](docs/configuration.md#depth-limit).

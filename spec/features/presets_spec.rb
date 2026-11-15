@@ -176,4 +176,128 @@ RSpec.describe Serega do
       end
     end
   end
+
+  describe "a relation preset" do
+    subject(:result) { serializer.to_h(user, only: only, with: with, except: except) }
+
+    let(:serializer) { user_serializer }
+
+    let(:post_serializer) do
+      Class.new(described_class) do
+        attribute :id
+        attribute :title
+        attribute :body
+
+        preset :summary, only: [:id, :title]
+      end
+    end
+
+    let(:user_serializer) do
+      posts = post_serializer
+
+      Class.new(described_class) do
+        attribute :name
+        attribute :posts, serializer: posts, many: true, preset: :summary
+
+        preset :card, only: [:name, :posts]
+      end
+    end
+
+    let(:user) { Struct.new(:name, :posts).new("Ann", [post]) }
+    let(:post) { Struct.new(:id, :title, :body).new(1, "Hello", "Text") }
+    let(:only) { nil }
+    let(:with) { nil }
+    let(:except) { nil }
+
+    it "serializes the fields of the preset" do
+      expect(result).to eq(name: "Ann", posts: [{id: 1, title: "Hello"}])
+    end
+
+    context "with only that names the relation" do
+      let(:only) { :posts }
+
+      it "serializes the fields of the preset" do
+        expect(result).to eq(posts: [{id: 1, title: "Hello"}])
+      end
+    end
+
+    context "with with that names the hidden relation" do
+      let(:serializer) do
+        posts = post_serializer
+        Class.new(described_class) { attribute :posts, serializer: posts, many: true, preset: :summary, hide: true }
+      end
+
+      let(:with) { :posts }
+
+      it "serializes the fields of the preset" do
+        expect(result).to eq(posts: [{id: 1, title: "Hello"}])
+      end
+    end
+
+    context "with with that names a nested field" do
+      let(:with) { {posts: :body} }
+
+      it "adds the field to the fields of the preset" do
+        expect(result).to eq(name: "Ann", posts: [{id: 1, title: "Hello", body: "Text"}])
+      end
+    end
+
+    context "with except that names a nested field" do
+      let(:except) { {posts: :title} }
+
+      it "removes the field from the fields of the preset" do
+        expect(result).to eq(name: "Ann", posts: [{id: 1}])
+      end
+    end
+
+    context "with only that names a nested field" do
+      let(:only) { {posts: :id} }
+
+      it "serializes the fields of the preset" do
+        expect(result).to eq(posts: [{id: 1, title: "Hello"}])
+      end
+    end
+
+    context "with except that names the relation" do
+      let(:except) { :posts }
+
+      it "does not serialize the relation" do
+        expect(result).to eq(name: "Ann")
+      end
+    end
+
+    context "with except that names a nested relation" do
+      subject(:result) { serializer.to_h(comment, except: {user: :posts}) }
+
+      let(:serializer) do
+        users = user_serializer
+        Class.new(described_class) { attribute :user, serializer: users, many: false }
+      end
+
+      let(:comment) { Struct.new(:user).new(user) }
+
+      it "serializes the parent relation without the nested relation" do
+        expect(result).to eq(user: {name: "Ann"})
+      end
+    end
+
+    context "with a preset of the parent serializer that names the relation" do
+      subject(:result) { serializer.to_h(user, preset: :card) }
+
+      it "serializes the fields of the relation preset" do
+        expect(result).to eq(name: "Ann", posts: [{id: 1, title: "Hello"}])
+      end
+    end
+
+    context "with an undefined preset of a serializer resolved later" do
+      let(:serializer) do
+        posts = post_serializer
+        Class.new(described_class) { attribute :posts, serializer: -> { posts }, many: true, preset: :full }
+      end
+
+      it "raises PresetNotExist" do
+        expect { result }.to raise_error Serega::PresetNotExist, "Preset :full is not defined in #{post_serializer}"
+      end
+    end
+  end
 end

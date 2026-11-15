@@ -19,6 +19,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     allow(Serega::SeregaValidations::Attribute::CheckOptBatch).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptMethod).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptMany).to receive(:call)
+    allow(Serega::SeregaValidations::Attribute::CheckOptPreset).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptSerializer).to receive(:call)
     allow(Serega::SeregaValidations::Attribute::CheckOptValue).to receive(:call)
   end
@@ -44,6 +45,7 @@ RSpec.describe Serega::SeregaValidations::CheckAttributeParams do
     expect(Serega::SeregaValidations::Attribute::CheckOptBatch).to have_received(:call).with(serializer, name, opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMethod).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptMany).to have_received(:call).with(opts, block, false)
+    expect(Serega::SeregaValidations::Attribute::CheckOptPreset).to have_received(:call).with(opts, block)
     expect(Serega::SeregaValidations::Attribute::CheckOptSerializer).to have_received(:call).with(opts)
     expect(Serega::SeregaValidations::Attribute::CheckOptValue).to have_received(:call).with(opts)
   end

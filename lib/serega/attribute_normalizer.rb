@@ -65,6 +65,13 @@ class Serega
       @serializer = prepare_serializer
     end
 
+    # Names of the presets of the relation serializer, nil without the
+    # :preset option
+    def preset
+      preset = init_opts[:preset]
+      preset && SeregaPlan::Presets.names(preset).freeze
+    end
+
     # Shows the default attribute value. It is a value that replaces found nils.
     #
     # When custom :default is not specified, we set empty array as default when `many: true` specified

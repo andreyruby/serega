@@ -25,6 +25,10 @@ class Serega
     # Attribute :many option
     attr_reader :many
 
+    # Names of the presets that the relation serializes, nil without the
+    # :preset option
+    attr_reader :preset
+
     # Attribute :default option
     attr_reader :default
 
@@ -66,6 +70,7 @@ class Serega
       @hide = normalizer.hide
       serializer = normalizer.serializer
       @serializer = serializer && SerializerReference.new(serializer)
+      @preset = normalizer.preset
       @preloads = normalizer.preloads
       @batch_loaders = normalizer.batch_loaders
       @inline_batch_loader = normalizer.inline_batch_loader
