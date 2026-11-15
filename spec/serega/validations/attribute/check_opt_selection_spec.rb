@@ -14,7 +14,7 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckOptSelection do
     check
 
     expect(Serega::SeregaValidations::CheckRelationSelection).to have_received(:check)
-      .with(:posts, post_serializer, {only: {title: {}}, with: {}, except: {}}, Serega::SeregaValidations::CheckPresetSelection)
+      .with(:posts, post_serializer, {only: {title: {}}, with: {}, except: {}}, Serega::SeregaValidations::CheckDefinitionSelection)
   end
 
   context "without field selection options" do

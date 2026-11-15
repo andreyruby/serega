@@ -87,7 +87,7 @@ class Serega
       end
 
       def check_attributes(selection)
-        CheckPresetSelection.new.call(@serializer_class, selection[:only], selection[:with], selection[:except])
+        CheckDefinitionSelection.new.call(@serializer_class, selection[:only], selection[:with], selection[:except])
       rescue AttributeNotExist => error
         attributes = error.attributes
         raise AttributeNotExist.new("Preset :#{@name} names not existing attributes: #{attributes.join(", ")}", error.serializer, attributes)

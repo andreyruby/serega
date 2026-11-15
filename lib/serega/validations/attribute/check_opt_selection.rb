@@ -24,7 +24,7 @@ class Serega
             selection = KEYS.to_h { |option| [option, parse(option, opts[option])] }
             return unless serializer.is_a?(Class)
 
-            CheckRelationSelection.check(name, serializer, selection, CheckPresetSelection)
+            CheckRelationSelection.check(name, serializer, selection, CheckDefinitionSelection)
           end
 
           private
