@@ -12,7 +12,7 @@ class Serega
       # Options of `Serega.attribute`
       ATTRIBUTE_KEYS = %i[
         method value serializer many hide const delegate default format preload batch
-        base_serializer hash_access preset if unless if_value unless_value
+        base_serializer hash_access preset only with except if unless if_value unless_value
       ].freeze
 
       # Options that can't be given together, `block` for the attribute
@@ -79,6 +79,7 @@ class Serega
         Attribute::CheckOptMany.call(opts, block, require_many)
         Attribute::CheckOptPreload.call(opts)
         Attribute::CheckOptPreset.call(opts, block)
+        Attribute::CheckOptSelection.call(name, opts, block)
         Attribute::CheckOptSerializer.call(opts)
         Attribute::CheckOptValue.call(opts)
         Attribute::CheckOptBatch.call(@serializer_class, name, opts)

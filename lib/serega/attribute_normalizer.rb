@@ -65,11 +65,13 @@ class Serega
       @serializer = prepare_serializer
     end
 
-    # Names of the presets of the relation serializer, nil without the
-    # :preset option
-    def preset
-      preset = init_opts[:preset]
-      preset && SeregaPlan::Presets.names(preset).freeze
+    # Preset definition of the :preset, :only, :with and :except options of
+    # a relation, nil without these options
+    def selection
+      preset, only, with, except = init_opts.values_at(:preset, :only, :with, :except)
+      return unless preset || only || with || except
+
+      SeregaPlan::Presets.definition(preset, only, with, except)
     end
 
     # Shows the default attribute value. It is a value that replaces found nils.
