@@ -4,8 +4,10 @@ RSpec.describe Serega do
   let(:serializer_class) { Class.new(described_class) }
 
   describe ".prepare_initial_objects" do
-    it "returns nil when no handler was registered" do
-      expect(serializer_class.prepare_initial_objects).to be_nil
+    context "when no handler is registered" do
+      it "returns nil" do
+        expect(serializer_class.prepare_initial_objects).to be_nil
+      end
     end
 
     it "registers and returns a block handler" do
@@ -38,27 +40,47 @@ RSpec.describe Serega do
       expect(serializer_class.prepare_initial_objects).to equal second
     end
 
-    it "raises when both a value and a block are given" do
-      expect { serializer_class.prepare_initial_objects(proc { |a| }) { |a| } }
-        .to raise_error Serega::SeregaError, "prepare_initial_objects accepts a single callable or a block, not both"
+    context "when both a value and a block are given" do
+      it "raises" do
+        expect { serializer_class.prepare_initial_objects(proc { |a| }) { |a| } }
+          .to raise_error Serega::SeregaError, "prepare_initial_objects accepts a single callable or a block, not both"
+      end
     end
 
-    it "raises when the handler is not callable" do
-      expect { serializer_class.prepare_initial_objects(:not_callable) }
-        .to raise_error Serega::SeregaError, "prepare_initial_objects value must be a Proc or respond to #call"
+    context "when nil and a block are given" do
+      it "raises" do
+        expect { serializer_class.prepare_initial_objects(nil) { |a| } }
+          .to raise_error Serega::SeregaError, "prepare_initial_objects accepts a single callable or a block, not both"
+      end
     end
 
-    it "raises when the handler has an unsupported signature" do
-      error = <<~ERR.strip
-        prepare_initial_objects handler arguments should have one of this signatures:
-        - (objects)        # one argument
-        - (objects, ctx)   # two arguments
-        - (objects, ctx:)  # one argument and one :ctx keyword argument
-      ERR
-      expect { serializer_class.prepare_initial_objects(-> {}) }.to raise_error Serega::SeregaError, error
-      expect { serializer_class.prepare_initial_objects(->(a, b, c) {}) }.to raise_error Serega::SeregaError, error
-      expect { serializer_class.prepare_initial_objects(->(objects, foo:) {}) }.to raise_error Serega::SeregaError, error
-      expect { serializer_class.prepare_initial_objects(proc {}) }.to raise_error Serega::SeregaError, error
+    context "when the handler is not callable" do
+      it "raises" do
+        expect { serializer_class.prepare_initial_objects(:not_callable) }
+          .to raise_error Serega::SeregaError, "prepare_initial_objects value must be a Proc or respond to #call"
+      end
+    end
+
+    context "when the handler is nil" do
+      it "raises" do
+        expect { serializer_class.prepare_initial_objects(nil) }
+          .to raise_error Serega::SeregaError, "prepare_initial_objects value must be a Proc or respond to #call"
+      end
+    end
+
+    context "when the handler has an unsupported signature" do
+      it "raises" do
+        error = <<~ERR.strip
+          prepare_initial_objects handler arguments should have one of this signatures:
+          - (objects)        # one argument
+          - (objects, ctx)   # two arguments
+          - (objects, ctx:)  # one argument and one :ctx keyword argument
+        ERR
+        expect { serializer_class.prepare_initial_objects(-> {}) }.to raise_error Serega::SeregaError, error
+        expect { serializer_class.prepare_initial_objects(->(a, b, c) {}) }.to raise_error Serega::SeregaError, error
+        expect { serializer_class.prepare_initial_objects(->(objects, foo:) {}) }.to raise_error Serega::SeregaError, error
+        expect { serializer_class.prepare_initial_objects(proc {}) }.to raise_error Serega::SeregaError, error
+      end
     end
   end
 

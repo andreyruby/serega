@@ -384,16 +384,19 @@ class Serega
     #
     # See [Preloads](https://github.com/andreyruby/serega/blob/master/docs/preloads.md).
     #
-    def preload_with(value = nil, &block)
-      return @preload_with if value.nil? && block.nil?
+    def preload_with(value = (omitted = true), &block)
+      return @preload_with_handler if omitted && block.nil?
 
       check_unlocked
-      handler = checked_handler(:preload_with, value, block)
+      handler = omitted ? block : checked_value_handler(:preload_with, value, block)
       signature = SeregaUtils::MethodSignature.call(handler, pos_limit: 2)
       raise SeregaError, "preload_with handler must accept two positional arguments: (objects, preloads)" unless signature == "2"
 
-      @preload_with = handler
+      @preload_with_handler = handler
     end
+
+    # The handler registered with `preload_with`
+    attr_reader :preload_with_handler # :nodoc:
 
     #
     # Sets the handler that replaces the objects given to the serializer, for
@@ -410,17 +413,20 @@ class Serega
     #
     # See [Prepare initial objects](https://github.com/andreyruby/serega/blob/master/docs/prepare-initial-objects.md).
     #
-    def prepare_initial_objects(value = nil, &block)
-      return @prepare_initial_objects if value.nil? && block.nil?
+    def prepare_initial_objects(value = (omitted = true), &block)
+      return @prepare_initial_objects_handler if omitted && block.nil?
 
       check_unlocked
-      handler = checked_handler(:prepare_initial_objects, value, block)
+      handler = omitted ? block : checked_value_handler(:prepare_initial_objects, value, block)
       signature = SeregaUtils::MethodSignature.call(handler, pos_limit: 2, keyword_args: [:ctx])
       raise SeregaError, prepare_initial_objects_signature_error unless %w[1 2 1_ctx].include?(signature)
 
       @prepare_initial_objects_signature = signature
-      @prepare_initial_objects = handler
+      @prepare_initial_objects_handler = handler
     end
+
+    # The handler registered with `prepare_initial_objects`
+    attr_reader :prepare_initial_objects_handler # :nodoc:
 
     # Signature of the registered prepare_initial_objects handler
     attr_reader :prepare_initial_objects_signature # :nodoc:
@@ -601,10 +607,10 @@ class Serega
       subclass.presets.merge!(presets)
 
       # Assign same preload handler
-      subclass.preload_with(preload_with) if preload_with
+      subclass.preload_with(preload_with_handler) if preload_with_handler
 
       # Assign same initial objects handler
-      subclass.prepare_initial_objects(prepare_initial_objects) if prepare_initial_objects
+      subclass.prepare_initial_objects(prepare_initial_objects_handler) if prepare_initial_objects_handler
 
       # Assign same presenter blocks
       presenter_blocks.each do |presenter_block|
@@ -628,8 +634,8 @@ class Serega
       @presenter_key = nil
       @data_classes = {}
       @struct_classes = {}
-      @preload_with = nil
-      @prepare_initial_objects = nil
+      @preload_with_handler = nil
+      @prepare_initial_objects_handler = nil
       @prepare_initial_objects_signature = nil
       @locked = false
       @shareable = false
@@ -637,14 +643,12 @@ class Serega
       @plan_cache = SeregaPlan::Cache.new(self, SeregaPlan::SelectionPlanner)
     end
 
-    # The handler given to `method_name` as a value or a block
-    def checked_handler(method_name, value, block)
-      raise SeregaError, "#{method_name} accepts a single callable or a block, not both" if value && block
+    # The handler given to `method_name` as a value, which must come without a block
+    def checked_value_handler(method_name, value, block)
+      raise SeregaError, "#{method_name} accepts a single callable or a block, not both" if block
+      raise SeregaError, "#{method_name} value must be a Proc or respond to #call" unless value.respond_to?(:call)
 
-      handler = value || block
-      raise SeregaError, "#{method_name} value must be a Proc or respond to #call" unless handler.respond_to?(:call)
-
-      handler
+      value
     end
 
     def prepare_initial_objects_signature_error
@@ -750,7 +754,7 @@ class Serega
     end
 
     def prepare_objects(objects, context)
-      handler = self.class.prepare_initial_objects
+      handler = self.class.prepare_initial_objects_handler
 
       case self.class.prepare_initial_objects_signature
       when "1" then handler.call(objects)
