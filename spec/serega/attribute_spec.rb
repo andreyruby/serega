@@ -42,6 +42,7 @@ RSpec.describe Serega::SeregaAttribute do
         default: nil,
         hide: nil,
         serializer: nil,
+        preset: nil,
         batch_loaders: nil,
         inline_batch_loader: nil,
         method: nil,
@@ -68,6 +69,7 @@ RSpec.describe Serega::SeregaAttribute do
           :@many,
           :@hide,
           :@serializer,
+          :@preset,
           :@preloads,
           :@conditions,
           :@formatter

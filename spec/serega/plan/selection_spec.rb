@@ -161,6 +161,21 @@ RSpec.describe Serega::SeregaPlan::Selection do
       expect(child.serializer_class).to be d
     end
 
+    context "with a relation preset" do
+      let(:attribute) { serializer.attributes[:d] }
+      let(:options) { {with: {d: {d3: {}}}} }
+
+      let(:serializer) do
+        child = d
+        child.preset :short, only: :d1
+        Class.new(base_class) { attribute :d, serializer: child, preset: :short }
+      end
+
+      it "merges the selection of the relation into the preset" do
+        expect(selected_names(child)).to eq(d1: nil, d3: nil)
+      end
+    end
+
     context "with an attribute without a relation" do
       let(:attribute) { a.attributes[:a1] }
 

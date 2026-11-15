@@ -224,6 +224,22 @@ UserSerializer.to_h(user, preset: :card) # => {name: "Felonious", email: "gru@ex
 UserSerializer.to_h(user, preset: :card, except: [:email]) # => {name: "Felonious"}
 ```
 
+```ruby
+# Preset on a relation: the fields of a preset of the relation serializer
+class MinionSerializer < Serega
+  attribute :name
+  attribute :eyes
+  preset :short, only: [:name]
+end
+
+class BossSerializer < Serega
+  attribute :minions, serializer: MinionSerializer, many: true, preset: :short
+end
+
+BossSerializer.to_h(boss) # => {minions: [{name: "Kevin"}]}
+BossSerializer.to_h(boss, with: {minions: :eyes}) # => {minions: [{name: "Kevin", eyes: 2}]}
+```
+
 See [Presets][presets].
 
 ```ruby

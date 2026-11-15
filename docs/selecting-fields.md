@@ -159,6 +159,79 @@ UserSerializer.to_h(bruce, preset: [:card, :profile], with: :first_name)
 Options name only attributes: `with: {friends: :card}` names an attribute
 `card` of the friends.
 
+### Preset on a relation
+
+`preset:` on a relation names presets of the relation serializer. The
+relation serializes the fields of these presets by default. The relation
+serializer owns the list of fields: each parent names it once, and a change
+to the preset changes every parent.
+
+```ruby
+class PostSerializer < Serega
+  attribute :id
+  attribute :title
+  attribute :body
+
+  preset :summary, only: [:id, :title]
+end
+
+class UserSerializer < Serega
+  attribute :username
+  attribute :posts, serializer: PostSerializer, many: true, preset: :summary
+
+  preset :card, only: [:username, :posts]
+end
+
+UserSerializer.to_h(bruce)
+# => {username: "batman", posts: [{id: 1, title: "Gotham at night"}]}
+
+PostSerializer.to_h(post)
+# => {id: 1, title: "Gotham at night", body: "Patrol notes"}
+```
+
+The options of the call for the relation merge with the preset, like
+[Presets with other options](#presets-with-other-options):
+
+| Call | Fields of `posts` |
+|---|---|
+| `to_h(bruce)` | `id`, `title` |
+| `to_h(bruce, only: :posts)` | `id`, `title` |
+| `to_h(bruce, preset: :card)` | `id`, `title` |
+| `to_h(bruce, with: {posts: :body})` | `id`, `title`, `body` |
+| `to_h(bruce, except: {posts: :title})` | `id` |
+| `to_h(bruce, only: {posts: :id})` | `id`, `title`: `:only` adds fields to the preset |
+| `to_h(bruce, except: :posts)` | `posts` is not serialized |
+
+An option that names the relation without nested fields keeps the preset.
+`:except` with nested fields removes only these fields, and the relation
+stays:
+
+```ruby
+class CommentSerializer < Serega
+  attribute :text
+  attribute :user, serializer: UserSerializer
+end
+
+CommentSerializer.to_h(comment, except: {user: :posts})
+# => {text: "Nice", user: {username: "batman"}}
+```
+
+- `preset:` takes a name or an Array of names, like the option of a call.
+- A relation needs `:serializer` or a block. `preset:` without them raises
+  `Serega::SeregaError`.
+- When `:serializer` is a class, an undefined preset raises
+  `Serega::PresetNotExist` when the attribute is defined. With a serializer
+  name, a Proc or a block, it raises when the relation is first serialized.
+
+### When to use a preset
+
+| Need | Use |
+|---|---|
+| A field is serialized only on request | [`hide: true`](attributes.md#hidden-attributes) |
+| A relation serializes the same fields in every response | [`preset:` on the relation](#preset-on-a-relation) |
+| A client or an endpoint chooses the fields | `preset:`, `:only`, `:with` or `:except` in the call |
+| The fields have other values or logic, not only fewer fields | Another serializer |
+
 ## Unknown fields
 
 An unknown field raises `Serega::AttributeNotExist`. Its `#serializer` and

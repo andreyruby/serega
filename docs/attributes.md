@@ -187,6 +187,16 @@ class PostSerializer < AppSerializer
 end
 ```
 
+### `:preset`
+
+Serializes the fields of a preset of the relation serializer by default. The
+options of the call merge with the preset. See [Preset on a relation](selecting-fields.md#preset-on-a-relation).
+
+```ruby
+attribute :posts, serializer: PostSerializer, many: true, preset: :summary
+# => {posts: [{id: 1, title: "Gotham at night"}]}
+```
+
 ### `:preload`
 
 Names the associations to preload for the value, so the value is read without
@@ -348,6 +358,7 @@ AdminSerializer.attributes.keys # => [:username, :email, :role]
 | `hide` | [Exclude unless requested](#hidden-attributes) |
 | `serializer` | [Serialize with another serializer](#serializer) |
 | `many` | [Mark a list](#many) |
+| `preset` | [Serialize the fields of a preset of the relation](#preset) |
 | `preload` | [Preload associations](#preload) |
 | `base_serializer` | [Base of a block-defined serializer](#nested-serializers-defined-with-a-block) |
 | `if`, `unless`, `if_value`, `unless_value` | [Conditional attributes](conditional-attributes.md) |

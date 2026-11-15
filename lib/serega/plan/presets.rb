@@ -37,14 +37,26 @@ class Serega
           end
         end
 
+        # Returns the preset names of a `preset:` option as an Array of
+        # Symbols, raises SeregaError for another value
+        def names(preset)
+          case preset
+          when Symbol then [preset]
+          when String then [preset.to_sym]
+          when Array then preset.map { |name| name_of(name, preset) }
+          else raise_option_error(preset)
+          end
+        end
+
         private
 
         # Merges each option of `other` into the option of `selection` with
-        # the same name. Nested Hashes merge into new Hashes, thus the frozen
-        # selections of presets stay unchanged.
+        # the same name, and skips a nil option. Nested Hashes merge into new
+        # Hashes, thus the frozen selections of presets stay unchanged.
         def merge(selection, other)
           selection.each_key do |key|
-            SeregaUtils::DeepMerge.call(selection[key], other[key])
+            option = other[key]
+            SeregaUtils::DeepMerge.call(selection[key], option) if option
           end
           selection
         end
@@ -59,15 +71,6 @@ class Serega
             merge(selection, definition)
           end
           selection
-        end
-
-        def names(preset)
-          case preset
-          when Symbol then [preset]
-          when String then [preset.to_sym]
-          when Array then preset.map { |name| name_of(name, preset) }
-          else raise_option_error(preset)
-          end
         end
 
         def name_of(name, preset)
