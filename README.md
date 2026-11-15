@@ -22,14 +22,14 @@ Clients choose the fields they need, and Serega loads only the data those
 fields use — in a few queries, with no N+1.
 
 - ⚡ **Fast** — serialization code is generated per field selection and cached.
-  [See benchmarks](#benchmarks).
 - 🎯 **Clients choose fields** — `?fields=name,posts(title)` works out of the
-  box, nested at any depth. [See selecting fields](docs/selecting-fields.md#fields-from-a-request).
+  box, nested at any depth.
 - 🧺 **No N+1** — associations are preloaded and batch loaders run once per
-  relation, only for the requested fields. [See preloads](docs/preloads.md)
-  and [batch loading](docs/batch-loading.md).
+  relation, only for the requested fields.
 - 🪶 **No dependencies** — plain Ruby, works with Rails, Hanami, Roda, Sinatra
-  or no framework at all. [See quick start](#quick-start).
+  or no framework at all.
+
+[Quick start][start] · [Benchmarks][bench] · [Selecting fields][fields] · [Preloads][preloads] · [Batch loading][batch]
 
 ## Show me
 
@@ -223,3 +223,8 @@ The gem is available as open source under the terms of the
 
 [build-badge]: https://github.com/andreyruby/serega/actions/workflows/main.yml/badge.svg?event=push
 [build]: https://github.com/andreyruby/serega/actions/workflows/main.yml
+[start]: #quick-start
+[bench]: #benchmarks
+[fields]: docs/selecting-fields.md#fields-from-a-request
+[preloads]: docs/preloads.md
+[batch]: docs/batch-loading.md
