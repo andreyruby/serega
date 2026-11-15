@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.51.0] - 2026-11-15
 
 - **Breaking:** `check_initiate_params` is renamed to `check_selection`, in
   calls and in config: `config.check_selection = false`. See
