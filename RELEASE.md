@@ -64,6 +64,13 @@ Steps to release a new version:
     gem push "serega-$(cat VERSION).gem"
     ```
 
+11. Publish the GitHub Release with the notes of the version from CHANGELOG.md
+
+    ```bash
+    bundle exec rake release:notes | \
+      gh release create "v$(cat VERSION)" --verify-tag --title "v$(cat VERSION)" --notes-file -
+    ```
+
 ## Release Checklist
 
 - [ ] All tests pass
