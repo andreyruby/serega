@@ -31,11 +31,11 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
-  describe "#check_initiate_params=" do
+  describe "#check_selection=" do
     it "validates value is boolean" do
-      expect { config.check_initiate_params = false }.not_to raise_error
-      expect { config.check_initiate_params = true }.not_to raise_error
-      expect { config.check_initiate_params = nil }
+      expect { config.check_selection = false }.not_to raise_error
+      expect { config.check_selection = true }.not_to raise_error
+      expect { config.check_selection = nil }
         .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
     end
   end
@@ -286,7 +286,7 @@ RSpec.describe Serega::SeregaConfig do
         serialize_keys
         check_attribute_name
         require_many
-        check_initiate_params
+        check_selection
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
         depth_limit
@@ -306,7 +306,7 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.require_many).to be false
       expect(config.compact).to be false
       expect(config.key_transform).to be_nil
-      expect(config.check_initiate_params).to be true
+      expect(config.check_selection).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 20
       expect(config.hide_by_default).to be false

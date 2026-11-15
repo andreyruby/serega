@@ -23,7 +23,7 @@ class Serega
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
       require_many: false,
-      check_initiate_params: true,
+      check_selection: true,
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 20,
       depth_limit: nil,
@@ -63,13 +63,13 @@ class Serega
 
       # Whether unknown fields of `only:`, `except:` and `with:` raise
       # `Serega::AttributeNotExist`. `true` by default.
-      def check_initiate_params
-        opts.fetch(:check_initiate_params)
+      def check_selection
+        opts.fetch(:check_selection)
       end
 
-      # Sets #check_initiate_params
-      def check_initiate_params=(value)
-        opts[:check_initiate_params] = checked_boolean(value)
+      # Sets #check_selection
+      def check_selection=(value)
+        opts[:check_selection] = checked_boolean(value)
       end
 
       # Default `allow_nil:` of the `:delegate` attribute option. `false` by

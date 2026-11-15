@@ -410,24 +410,24 @@ RSpec.describe Serega do
     end
   end
 
-  describe "validating initiate options" do
-    subject(:serializer) { user_serializer.new(**initiate_options) }
+  describe "validating the field selection options" do
+    subject(:serializer) { user_serializer.new(**options) }
 
     let!(:user_serializer) do
-      check_initiate_params = check_initiate_params_config
+      check_selection = check_selection_config
 
       Class.new(Serega) do
-        config.check_initiate_params = check_initiate_params
+        config.check_selection = check_selection
 
         attribute :name
       end
     end
 
-    let(:check_initiate_params_config) { true }
-    let(:initiate_options) { {only: :name} }
+    let(:check_selection_config) { true }
+    let(:options) { {only: :name} }
 
     context "with a missing attribute in the field selection options" do
-      let(:initiate_options) { {only: :email} }
+      let(:options) { {only: :email} }
 
       it "raises an AttributeNotExist error" do
         expect { serializer }.to raise_error Serega::AttributeNotExist
@@ -435,7 +435,7 @@ RSpec.describe Serega do
     end
 
     context "with an unknown option" do
-      let(:initiate_options) { {only: :name, foo: 1} }
+      let(:options) { {only: :name, foo: 1} }
 
       it "raises an ArgumentError that names the option" do
         expect { serializer }.to raise_error ArgumentError, /foo/
@@ -443,16 +443,16 @@ RSpec.describe Serega do
     end
 
     context "when the config disables the validation" do
-      let(:check_initiate_params_config) { false }
-      let(:initiate_options) { {only: :email} }
+      let(:check_selection_config) { false }
+      let(:options) { {only: :email} }
 
       it "builds an empty plan" do
         expect(serializer.plan.points).to be_empty
       end
     end
 
-    context "when the check_initiate_params option disables the validation" do
-      let(:initiate_options) { {only: :email, check_initiate_params: false} }
+    context "when the check_selection option disables the validation" do
+      let(:options) { {only: :email, check_selection: false} }
 
       it "builds an empty plan" do
         expect(serializer.plan.points).to be_empty

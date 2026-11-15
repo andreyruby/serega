@@ -429,8 +429,8 @@ class Serega
     #
     # - `only`, `except`, `with`: fields to serialize, to skip and to add,
     #   see [Selecting fields](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md);
-    # - `check_initiate_params`: `false` skips unknown fields, by default
-    #   `config.check_initiate_params`;
+    # - `check_selection`: `false` skips unknown fields, by default
+    #   `config.check_selection`;
     # - `context`: data for attribute values and conditions;
     # - `many`: `true` serializes a list, `false` one object. By default an
     #   `Enumerable` that is not a `Hash` or `Struct` is a list.
@@ -443,10 +443,10 @@ class Serega
     #
     # See [Serializing](https://github.com/andreyruby/serega/blob/master/docs/serializing.md).
     #
-    def call(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
+    def call(object, only: nil, with: nil, except: nil, preset: nil, check_selection: nil, context: nil, many: nil)
       # The serialization methods list each keyword instead of taking
       # `**opts`: a `**opts` Hash allocates on every call, even when empty.
-      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
+      new(only: only, with: with, except: except, preset: preset, check_selection: check_selection)
         .to_h(object, context: context, many: many)
     end
 
@@ -460,8 +460,8 @@ class Serega
     # UserSerializer.to_data(user) # => #<data first_name="Bruce">
     # ```
     #
-    def to_data(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
-      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
+    def to_data(object, only: nil, with: nil, except: nil, preset: nil, check_selection: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, preset: preset, check_selection: check_selection)
         .to_data(object, context: context, many: many)
     end
 
@@ -475,8 +475,8 @@ class Serega
     # UserSerializer.to_struct(user) # => #<struct first_name="Bruce">
     # ```
     #
-    def to_struct(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
-      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
+    def to_struct(object, only: nil, with: nil, except: nil, preset: nil, check_selection: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, preset: preset, check_selection: check_selection)
         .to_struct(object, context: context, many: many)
     end
 
@@ -491,8 +491,8 @@ class Serega
     # UserSerializer.to_json(user) # => "{\"first_name\":\"Bruce\"}"
     # ```
     #
-    def to_json(object, only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil, context: nil, many: nil)
-      new(only: only, with: with, except: except, preset: preset, check_initiate_params: check_initiate_params)
+    def to_json(object, only: nil, with: nil, except: nil, preset: nil, check_selection: nil, context: nil, many: nil)
+      new(only: only, with: with, except: except, preset: preset, check_selection: check_selection)
         .to_json(object, context: context, many: many)
     end
 
@@ -667,8 +667,8 @@ class Serega
     # serializer.to_h(users) # => [{first_name: "Bruce"}, {first_name: "Alfred"}]
     # ```
     #
-    def initialize(only: nil, with: nil, except: nil, preset: nil, check_initiate_params: nil)
-      @plan = self.class.plan_cache.fetch(only, with, except, preset, check_initiate_params: check_initiate_params)
+    def initialize(only: nil, with: nil, except: nil, preset: nil, check_selection: nil)
+      @plan = self.class.plan_cache.fetch(only, with, except, preset, check_selection: check_selection)
       @direct_hash_builder = @plan.direct_hash_builder
     end
 
