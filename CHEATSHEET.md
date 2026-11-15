@@ -760,7 +760,8 @@ CommentSerializer.new(with: {replies: :replies})
 # => raises Serega::DepthLimitError (#details has the path)
 ```
 
-Default `nil` — no limit. The root serializer's limit applies. Counts only
+Default `nil` — no limit, but relations that nest in a cycle raise
+`Serega::DepthLimitError`. The root serializer's limit applies. Counts only
 relations (`:serializer`), not the depth of Hash or Array values. Checked at
 `.new` — instantiate before business logic to fail fast on malicious `?with=`
 queries.
@@ -914,7 +915,7 @@ ResponseSerializer.to_h([walter, lucy], meta: {page: 1})
 |--------------------------------|------|
 | `Serega::SeregaError` | base class for everything |
 | `Serega::AttributeNotExist` | unknown attr in [Field Selection][field-selection] — `#serializer`, `#attributes` |
-| `Serega::DepthLimitError` | [`config.depth_limit`][depth-limit] breach — `#details`. The limit is off by default |
+| `Serega::DepthLimitError` | [`config.depth_limit`][depth-limit] breach or a relation cycle — `#details` |
 
 [attributes]: #attribute-options
 [field-selection]: #field-selection--only-except-with

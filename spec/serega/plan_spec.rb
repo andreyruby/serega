@@ -76,10 +76,12 @@ RSpec.describe Serega::SeregaPlan do
 
     before { allow(Serega::SeregaPlan::DepthLimit).to receive(:depth_left).and_return(3) }
 
-    it "returns the depth left from DepthLimit for the serializer and the parent point" do
+    it "returns the depth left from DepthLimit for the selection and the parent point" do
+      d_point = result.points.last
+
       expect(result.depth_left).to eq 3
-      expect(Serega::SeregaPlan::DepthLimit).to have_received(:depth_left).with(a, nil)
-      expect(Serega::SeregaPlan::DepthLimit).to have_received(:depth_left).with(d, result.points.last)
+      expect(Serega::SeregaPlan::DepthLimit).to have_received(:depth_left).with(result.selection, nil)
+      expect(Serega::SeregaPlan::DepthLimit).to have_received(:depth_left).with(d_point.child_plan.selection, d_point)
     end
   end
 

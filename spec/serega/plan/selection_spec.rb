@@ -188,6 +188,41 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
   end
 
+  describe "#==" do
+    subject(:same) { selection == other }
+
+    let(:options) { {with: {b: {b3: {}}}} }
+    let(:other) { described_class.new(a, {with: {b: {b3: {}}}}) }
+
+    it "returns true for the same serializer and options" do
+      expect(same).to be true
+    end
+
+    context "with other options" do
+      let(:other) { described_class.new(a, {with: {b: {}}}) }
+
+      it "returns false" do
+        expect(same).to be false
+      end
+    end
+
+    context "with another serializer" do
+      let(:other) { described_class.new(b, {with: {b: {b3: {}}}}) }
+
+      it "returns false" do
+        expect(same).to be false
+      end
+    end
+
+    context "with a selection of another class" do
+      let(:other) { Class.new(described_class).new(a, {with: {b: {b3: {}}}}) }
+
+      it "returns false" do
+        expect(same).to be false
+      end
+    end
+  end
+
   describe "#builder_class" do
     it "returns SeregaResultBuilder" do
       expect(selection.builder_class).to be Serega::SeregaResultBuilder

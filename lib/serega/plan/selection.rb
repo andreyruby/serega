@@ -13,6 +13,9 @@ class Serega
       # Serializer of the selected attributes
       attr_reader :serializer_class
 
+      # Parsed `only`, `with` and `except` options
+      attr_reader :only, :with, :except
+
       # Selects the attributes of the serializer with the parsed selection,
       # Hashes of attribute names
       def initialize(serializer_class, selection)
@@ -44,6 +47,13 @@ class Serega
         return unless attribute.relation?
 
         Selection.new(attribute.serializer, child_selection(attribute))
+      end
+
+      # Whether the other selection selects the same attributes and child
+      # selections of the same serializer
+      def ==(other)
+        other.class == self.class && other.serializer_class == serializer_class &&
+          other.only == @only && other.with == @with && other.except == @except
       end
 
       # Returns the result builder class of the plan: SeregaResultBuilder
