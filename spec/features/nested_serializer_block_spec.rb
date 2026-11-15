@@ -57,7 +57,7 @@ RSpec.describe Serega do
       expect(user_serializer.to_h(user)).to eq(posts: [{title: "one"}, {title: "two"}])
     end
 
-    it "supports nested serialization modifiers same as regular relations" do
+    it "supports nested field selection same as regular relations" do
       user_serializer = Class.new(Serega) do
         config.base_serializer = Serega
         attribute :statistics, method: :itself do

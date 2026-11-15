@@ -7,7 +7,7 @@ class Serega
   # Names of the `preset:` option
   type preset_names = Symbol | String | Array[Symbol | String]
 
-  # Definition of a preset: the presets it includes and its own modifiers
+  # Definition of a preset: the presets it includes and its own field selection
   type preset_definition = { presets: Array[Symbol], only: Hash[Symbol, untyped], with: Hash[Symbol, untyped], except: Hash[Symbol, untyped] }
 
   # Serialization context

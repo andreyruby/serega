@@ -5,14 +5,14 @@ class Serega
     #
     # Parses fields listed in one String, with nested fields in parentheses
     #
-    class ParseStringModifiers # :nodoc:
+    class ParseStringSelection # :nodoc:
       SEPARATOR = /[,()]/
       COMMA = ",".ord
       LPAREN = "(".ord
       private_constant :SEPARATOR, :COMMA, :LPAREN
 
       class << self
-        # Parses string modifiers
+        # Parses a field selection String
         #
         #   parse("user") => { user: {} }
         #   parse("user(id)") => { user: { id: {} } }

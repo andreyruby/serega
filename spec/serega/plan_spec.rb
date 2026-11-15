@@ -42,8 +42,8 @@ RSpec.describe Serega::SeregaPlan do
 
   let(:current_serializer) { a }
 
-  def plan(modifiers)
-    described_class.new(Serega::SeregaPlan::Selection.new(current_serializer, modifiers))
+  def plan(selection)
+    described_class.new(Serega::SeregaPlan::Selection.new(current_serializer, selection))
   end
 
   def satisfy_attribute_names(names)

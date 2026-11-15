@@ -2,10 +2,10 @@
 
 RSpec.describe Serega do
   describe "serialization" do
-    subject(:result) { user_serializer.new(**modifiers).to_h(user, context: context) }
+    subject(:result) { user_serializer.new(**selection).to_h(user, context: context) }
 
     let(:context) { {} }
-    let(:modifiers) { {} }
+    let(:selection) { {} }
 
     context "with object with Struct relation" do
       let(:statistics_struct) { Struct.new(:likes_count, :comments_count) }

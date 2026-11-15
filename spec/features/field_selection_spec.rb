@@ -2,7 +2,7 @@
 
 RSpec.describe Serega do
   describe "serialization" do
-    subject(:result) { user_serializer.new(**modifiers).to_h(user, context: context) }
+    subject(:result) { user_serializer.new(**selection).to_h(user, context: context) }
 
     let(:user_serializer) do
       Class.new(Serega) do
@@ -12,7 +12,7 @@ RSpec.describe Serega do
     end
 
     let(:context) { {} }
-    let(:modifiers) { {} }
+    let(:selection) { {} }
 
     context "with object with hidden attribute" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME") }
@@ -39,7 +39,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {with: :first_name} }
+      let(:selection) { {with: :first_name} }
 
       it "returns specified in `:with` option hidden attributes" do
         expect(result).to include({first_name: "FIRST_NAME"})
@@ -56,7 +56,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {only: :first_name} }
+      let(:selection) { {only: :first_name} }
 
       it "returns hash with `only` selected attributes" do
         expect(result).to eq({first_name: "FIRST_NAME"})
@@ -65,7 +65,7 @@ RSpec.describe Serega do
 
     context "with :except option" do
       let(:user) { double(first_name: "FIRST_NAME", last_name: "LAST_NAME") }
-      let(:modifiers) { {except: :first_name} }
+      let(:selection) { {except: :first_name} }
 
       it "returns hash without :excepted attributes" do
         expect(result).to eq({last_name: "LAST_NAME"})
@@ -82,7 +82,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {with: %w[first_name last_name]} }
+      let(:selection) { {with: %w[first_name last_name]} }
 
       it "returns specified in `:with` option hidden attributes" do
         expect(result).to include({first_name: "FIRST_NAME", last_name: "LAST_NAME"})
@@ -100,7 +100,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {only: %i[first_name last_name]} }
+      let(:selection) { {only: %i[first_name last_name]} }
 
       it "returns hash with `only` selected attributes" do
         expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME"})
@@ -118,7 +118,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {except: %i[first_name last_name]} }
+      let(:selection) { {except: %i[first_name last_name]} }
 
       it "returns hash without :excepted attributes" do
         expect(result).to eq({middle_name: "MIDDLE_NAME"})
@@ -145,7 +145,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {with: {comment: :text}} }
+      let(:selection) { {with: {comment: :text}} }
 
       it "returns hash with additional attributes specified in `:with` option" do
         expect(result).to include({first_name: "FIRST_NAME", comment: {text: "TEXT"}})
@@ -172,7 +172,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {only: {comment: :text}} }
+      let(:selection) { {only: {comment: :text}} }
 
       it "returns hash with `only` selected attributes" do
         expect(result).to eq({comment: {text: "TEXT"}})
@@ -199,7 +199,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {except: {comment: :text}} }
+      let(:selection) { {except: {comment: :text}} }
 
       it "returns hash without excepted attributes" do
         expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: {}})
@@ -227,7 +227,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {except: [:first_name, comment: :text]} }
+      let(:selection) { {except: [:first_name, comment: :text]} }
 
       it "returns hash without excepted attributes" do
         expect(result).to eq({last_name: "LAST_NAME", comment: {likes_count: 10}})
@@ -255,7 +255,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {with: [:last_name, comment: :text]} }
+      let(:selection) { {with: [:last_name, comment: :text]} }
 
       it "returns hash with additional attributes specified in `:with` option" do
         expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME", comment: {text: "TEXT", likes_count: 10}})
@@ -281,7 +281,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {only: {comment: :text}} }
+      let(:selection) { {only: {comment: :text}} }
 
       it "returns hash with the hidden attribute only" do
         expect(result).to eq({comment: {text: "TEXT"}})
@@ -308,7 +308,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {except: :comment} }
+      let(:selection) { {except: :comment} }
 
       it "returns hash without excepted attributes" do
         expect(result).to eq({first_name: "FIRST_NAME", last_name: "LAST_NAME"})
@@ -335,7 +335,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {only: :comment} }
+      let(:selection) { {only: :comment} }
 
       it "returns hash with only requested fields and all fields of requested relation" do
         expect(result).to eq({comment: {text: "TEXT"}})
@@ -363,7 +363,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {except: :last_name, only: {comment: :text}} }
+      let(:selection) { {except: :last_name, only: {comment: :text}} }
 
       it "returns the other attributes and only the requested relation fields" do
         expect(result).to eq({first_name: "FIRST_NAME", comment: {text: "TEXT"}})
@@ -383,7 +383,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {only: [:first_name, {friend: {friend: :last_name}}], except: {friend: :first_name}} }
+      let(:selection) { {only: [:first_name, {friend: {friend: :last_name}}], except: {friend: :first_name}} }
 
       it "selects the fields of each level with its own option" do
         expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle", friend: {last_name: "Pennyworth"}}})
@@ -402,7 +402,7 @@ RSpec.describe Serega do
         end
       end
 
-      let(:modifiers) { {with: "friend", except: "last_name,friend(first_name)"} }
+      let(:selection) { {with: "friend", except: "last_name,friend(first_name)"} }
 
       it "reads nested fields from parentheses" do
         expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle"}})
@@ -426,7 +426,7 @@ RSpec.describe Serega do
     let(:check_initiate_params_config) { true }
     let(:initiate_options) { {only: :name} }
 
-    context "with a missing attribute in the modifiers" do
+    context "with a missing attribute in the field selection options" do
       let(:initiate_options) { {only: :email} }
 
       it "raises an AttributeNotExist error" do

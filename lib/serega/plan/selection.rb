@@ -4,7 +4,7 @@ class Serega
   class SeregaPlan # :nodoc:
     #
     # The attributes a plan serializes, selected with the parsed `only`,
-    # `with` and `except` modifiers. A plan reads the selected attributes,
+    # `with` and `except` options. A plan reads the selected attributes,
     # the selection of each child plan from `#child`, the preloads of each
     # point from `#preloads`, and its result builder class from
     # `#builder_class`.
@@ -13,13 +13,13 @@ class Serega
       # Serializer of the selected attributes
       attr_reader :serializer_class
 
-      # Selects the attributes of the serializer with the parsed modifiers,
+      # Selects the attributes of the serializer with the parsed selection,
       # Hashes of attribute names
-      def initialize(serializer_class, modifiers)
+      def initialize(serializer_class, selection)
         @serializer_class = serializer_class
-        @only = modifiers[:only] || FROZEN_EMPTY_HASH
-        @with = modifiers[:with] || FROZEN_EMPTY_HASH
-        @except = modifiers[:except] || FROZEN_EMPTY_HASH
+        @only = selection[:only] || FROZEN_EMPTY_HASH
+        @with = selection[:with] || FROZEN_EMPTY_HASH
+        @except = selection[:except] || FROZEN_EMPTY_HASH
         @only_limits = only_limits?
       end
 
@@ -37,7 +37,7 @@ class Serega
       end
 
       # Returns the selection of the child plan of a selected attribute: the
-      # relation serializer with the modifiers of the relation. Returns nil
+      # relation serializer with the selection of the relation. Returns nil
       # for an attribute without a child plan.
       def child(attribute)
         return unless attribute.relation?

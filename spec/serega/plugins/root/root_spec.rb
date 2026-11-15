@@ -382,7 +382,7 @@ RSpec.describe Serega::SeregaPlugins::Root do
       let(:target) { serializer }
       let(:opts) { {only: :name, preset: :names, root: :user} }
 
-      it "passes the plugin options without the modifiers" do
+      it "passes the plugin options without the field selection options" do
         expect(result).to eq [{root: :user}, :hash]
       end
 

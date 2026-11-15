@@ -3,14 +3,14 @@
 class Serega
   class SeregaPlan # :nodoc:
     #
-    # Presets of saved `only`, `with` and `except` modifiers. The serializer
-    # calls it to define its presets, and the modifiers planner to merge the
-    # requested presets with the modifiers of a call.
+    # Presets: named field selections. The serializer calls it to define its
+    # presets, and the selection planner to merge the requested presets with
+    # the selection of a call.
     #
     module Presets # :nodoc:
       class << self
         # Returns the frozen definition of a new preset: the names of the
-        # presets it includes and its own parsed modifiers. The included
+        # presets it includes and its own parsed selection. The included
         # presets are merged when a plan is built, thus a redefined preset
         # changes the presets that include it. See
         # SeregaValidations::CheckPresetParams for the checks.
@@ -18,15 +18,15 @@ class Serega
           SeregaValidations::CheckPresetParams.new(serializer_class, name, preset, only, with, except).validate
 
           names = preset.nil? ? FROZEN_EMPTY_ARRAY : names(preset)
-          definition = {presets: names, only: ModifiersPlanner.parse_modifier(only), with: ModifiersPlanner.parse_modifier(with), except: ModifiersPlanner.parse_modifier(except)}
+          definition = {presets: names, only: SelectionPlanner.parse_option(only), with: SelectionPlanner.parse_option(with), except: SelectionPlanner.parse_option(except)}
           deep_freeze(definition)
         end
 
-        # Returns the modifiers of the requested presets, merged in order,
-        # with the given parsed modifiers merged into them. Presets are
+        # Returns the selection of the requested presets, merged in order,
+        # with the given parsed selection merged into it. Presets are
         # checked when they are defined, not here.
-        def modifiers(serializer_class, preset, modifiers)
-          merge(merged_modifiers(serializer_class, names(preset)), modifiers)
+        def selection(serializer_class, preset, selection)
+          merge(merged_selection(serializer_class, names(preset)), selection)
         end
 
         # Returns the definition of the preset, raises PresetNotExist for an
@@ -39,26 +39,26 @@ class Serega
 
         private
 
-        # Merges each modifier of `other` into the modifier of `modifiers`
-        # with the same name. Nested Hashes merge into new Hashes, thus the
-        # frozen modifiers of presets stay unchanged.
-        def merge(modifiers, other)
-          modifiers.each_key do |key|
-            SeregaUtils::DeepMerge.call(modifiers[key], other[key])
+        # Merges each option of `other` into the option of `selection` with
+        # the same name. Nested Hashes merge into new Hashes, thus the frozen
+        # selections of presets stay unchanged.
+        def merge(selection, other)
+          selection.each_key do |key|
+            SeregaUtils::DeepMerge.call(selection[key], other[key])
           end
-          modifiers
+          selection
         end
 
-        # Merges the modifiers of the named presets and of the presets they
-        # include into `modifiers`, the included presets first. Presets never
+        # Merges the selection of the named presets and of the presets they
+        # include into `selection`, the included presets first. Presets never
         # include each other: #define checks it.
-        def merged_modifiers(serializer_class, names, modifiers = {only: {}, with: {}, except: {}})
+        def merged_selection(serializer_class, names, selection = {only: {}, with: {}, except: {}})
           names.each do |name|
             definition = fetch_definition(serializer_class, name)
-            merged_modifiers(serializer_class, definition[:presets], modifiers)
-            merge(modifiers, definition)
+            merged_selection(serializer_class, definition[:presets], selection)
+            merge(selection, definition)
           end
-          modifiers
+          selection
         end
 
         def names(preset)

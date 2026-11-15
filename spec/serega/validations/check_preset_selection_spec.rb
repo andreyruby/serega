@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaValidations::Initiate::CheckPresetModifiers do
+RSpec.describe Serega::SeregaValidations::CheckPresetSelection do
   subject(:check) { described_class.new.call(lazy_serializer, only, {}, {}) }
 
   let(:lazy_serializer) do
@@ -9,7 +9,7 @@ RSpec.describe Serega::SeregaValidations::Initiate::CheckPresetModifiers do
     Class.new(Serega) do
       attribute :loaded, serializer: nested
       attribute :lazy, serializer: -> { nested }
-      attribute :named, serializer: "CheckPresetModifiersSpecSerializer"
+      attribute :named, serializer: "CheckPresetSelectionSpecSerializer"
       attribute :plain
     end
   end
