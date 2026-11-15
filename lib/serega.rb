@@ -90,10 +90,12 @@ require_relative "serega/validations/attribute/check_opt_many"
 require_relative "serega/validations/attribute/check_opt_method"
 require_relative "serega/validations/attribute/check_opt_preload"
 require_relative "serega/validations/attribute/check_opt_preset"
+require_relative "serega/validations/attribute/check_opt_selection"
 require_relative "serega/validations/attribute/check_opt_serializer"
 require_relative "serega/validations/attribute/check_opt_value"
 require_relative "serega/validations/check_selection"
 require_relative "serega/validations/check_preset_selection"
+require_relative "serega/validations/check_relation_selection"
 require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_preset_params"
@@ -244,6 +246,7 @@ class Serega
     # attribute :email, hide: true
     # attribute :posts, serializer: PostSerializer
     # attribute :posts, serializer: PostSerializer, preset: :summary # fields of a preset
+    # attribute :posts, serializer: PostSerializer, only: [:id, :title]
     # ```
     #
     # A block defines the attributes of a nested serializer. It inherits from

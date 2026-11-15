@@ -33,6 +33,25 @@ RSpec.describe Serega::SeregaPlan::Presets do
     end
   end
 
+  describe ".definition" do
+    subject(:definition) { described_class.definition(preset, nil, "email", nil) }
+
+    let(:preset) { "contacts" }
+
+    it "returns the frozen preset names and the parsed selection" do
+      expect(definition).to eq(presets: [:contacts], only: {}, with: {email: {}}, except: {})
+      expect(definition).to be_frozen
+    end
+
+    context "without presets" do
+      let(:preset) { nil }
+
+      it "returns no preset names" do
+        expect(definition[:presets]).to equal Serega::FROZEN_EMPTY_ARRAY
+      end
+    end
+  end
+
   describe ".selection" do
     subject(:merged) { described_class.selection(user_serializer, preset, selection) }
 
@@ -74,6 +93,25 @@ RSpec.describe Serega::SeregaPlan::Presets do
         expect { merged }
           .to raise_error Serega::SeregaError, "Invalid option :preset => [:contacts, 1]. Must be a Symbol, a String, or an Array of them"
       end
+    end
+  end
+
+  describe ".relation_selection" do
+    subject(:merged) { described_class.relation_selection(attribute, selection) }
+
+    let(:attribute) { post_serializer.attributes[:author] }
+    let(:selection) { {only: nil, with: nil, except: {email: {}}} }
+
+    let(:post_serializer) do
+      users = user_serializer
+      Class.new(Serega) { attribute :author, serializer: users, preset: :contacts, only: :name }
+    end
+
+    before { allow(Serega::SeregaValidations::CheckRelationSelection).to receive(:call) }
+
+    it "merges the definition of the relation and the given selection into the selection of the presets" do
+      expect(merged).to eq(only: {name: {}}, with: {email: {}}, except: {email: {}})
+      expect(Serega::SeregaValidations::CheckRelationSelection).to have_received(:call).with(attribute, user_serializer)
     end
   end
 end

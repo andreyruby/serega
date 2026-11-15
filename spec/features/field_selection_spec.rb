@@ -459,4 +459,77 @@ RSpec.describe Serega do
       end
     end
   end
+
+  describe "field selection options of a relation" do
+    subject(:result) { serializer.to_h(user, only: only, with: with, except: except) }
+
+    let(:serializer) { user_serializer }
+
+    let(:post_serializer) do
+      Class.new(described_class) do
+        attribute :id
+        attribute :title
+        attribute :body
+
+        preset :summary, only: [:id, :title]
+      end
+    end
+
+    let(:user_serializer) do
+      posts = post_serializer
+
+      Class.new(described_class) do
+        attribute :name
+        attribute :posts, serializer: posts, many: true, only: [:id, :title]
+      end
+    end
+
+    let(:user) { Struct.new(:name, :posts).new("Ann", [post]) }
+    let(:post) { Struct.new(:id, :title, :body).new(1, "Hello", "Text") }
+    let(:only) { nil }
+    let(:with) { nil }
+    let(:except) { nil }
+
+    it "serializes the fields of the options" do
+      expect(result).to eq(name: "Ann", posts: [{id: 1, title: "Hello"}])
+    end
+
+    context "with with that names a nested field" do
+      let(:with) { {posts: :body} }
+
+      it "adds the field to the fields of the options" do
+        expect(result).to eq(name: "Ann", posts: [{id: 1, title: "Hello", body: "Text"}])
+      end
+    end
+
+    context "with except that names a nested field" do
+      let(:except) { {posts: :title} }
+
+      it "removes the field from the fields of the options" do
+        expect(result).to eq(name: "Ann", posts: [{id: 1}])
+      end
+    end
+
+    context "with a relation preset" do
+      let(:serializer) do
+        posts = post_serializer
+        Class.new(described_class) { attribute :posts, serializer: posts, many: true, preset: :summary, with: :body }
+      end
+
+      it "merges the options into the preset" do
+        expect(result).to eq(posts: [{id: 1, title: "Hello", body: "Text"}])
+      end
+    end
+
+    context "with an unknown field of a serializer resolved later" do
+      let(:serializer) do
+        posts = post_serializer
+        Class.new(described_class) { attribute :posts, serializer: -> { posts }, many: true, only: :subtitle }
+      end
+
+      it "raises AttributeNotExist" do
+        expect { result }.to raise_error Serega::AttributeNotExist, "Relation :posts names not existing attributes: subtitle"
+      end
+    end
+  end
 end

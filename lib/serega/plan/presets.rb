@@ -16,7 +16,13 @@ class Serega
         # SeregaValidations::CheckPresetParams for the checks.
         def define(serializer_class, name, preset, only, with, except)
           SeregaValidations::CheckPresetParams.new(serializer_class, name, preset, only, with, except).validate
+          definition(preset, only, with, except)
+        end
 
+        # Returns a frozen preset definition of checked options: the names
+        # of the included presets and the parsed selection. A relation keeps
+        # its `preset`, `only`, `with` and `except` options in one.
+        def definition(preset, only, with, except)
           names = preset.nil? ? FROZEN_EMPTY_ARRAY : names(preset)
           definition = {presets: names, only: SelectionPlanner.parse_option(only), with: SelectionPlanner.parse_option(with), except: SelectionPlanner.parse_option(except)}
           deep_freeze(definition)
@@ -27,6 +33,18 @@ class Serega
         # checked when they are defined, not here.
         def selection(serializer_class, preset, selection)
           merge(merged_selection(serializer_class, names(preset)), selection)
+        end
+
+        # Returns the selection of a relation: the selection of the preset
+        # definition of the attribute, with the given parsed selection
+        # merged into it. Checks the definition of a relation serializer that
+        # was resolved later, see SeregaValidations::CheckRelationSelection.
+        def relation_selection(attribute, selection)
+          serializer = attribute.serializer
+          SeregaValidations::CheckRelationSelection.call(attribute, serializer)
+
+          definition = attribute.selection
+          merge(merge(merged_selection(serializer, definition[:presets]), definition), selection)
         end
 
         # Returns the definition of the preset, raises PresetNotExist for an

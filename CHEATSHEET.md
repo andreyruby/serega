@@ -240,6 +240,15 @@ BossSerializer.to_h(boss) # => {minions: [{name: "Kevin"}]}
 BossSerializer.to_h(boss, with: {minions: :eyes}) # => {minions: [{name: "Kevin", eyes: 2}]}
 ```
 
+```ruby
+# Field selection options on a relation, like the options of a call
+class VillainSerializer < Serega
+  attribute :minions, serializer: MinionSerializer, many: true, only: [:eyes]
+end
+
+VillainSerializer.to_h(boss) # => {minions: [{eyes: 2}]}
+```
+
 See [Presets][presets].
 
 ```ruby

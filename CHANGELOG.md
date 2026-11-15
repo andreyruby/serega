@@ -10,6 +10,9 @@
   can include other presets, and merges with the options of the call. An
   undefined preset raises `Serega::PresetNotExist`. See
   [Presets](docs/selecting-fields.md#presets).
+- `:only`, `:with` and `:except` on a relation select its fields by default:
+  `attribute :posts, serializer: PostSerializer, only: [:id, :title]`. See
+  [Field selection options of a relation](docs/selecting-fields.md#field-selection-options-of-a-relation).
 - `preset:` on a relation serializes the fields of a preset of its
   serializer: `attribute :posts, serializer: PostSerializer, preset: :summary`.
   See [Preset on a relation](docs/selecting-fields.md#preset-on-a-relation).

@@ -119,20 +119,20 @@ RSpec.describe Serega::SeregaAttributeNormalizer do
     end
   end
 
-  describe "#preset" do
-    subject(:preset) { described_class.new(serializer_class, name: :posts, opts: opts).preset }
+  describe "#selection" do
+    subject(:selection) { described_class.new(serializer_class, name: :posts, opts: opts).selection }
 
-    let(:opts) { {serializer: "PostSerializer", preset: ["summary", :stats]} }
+    let(:opts) { {serializer: "PostSerializer", preset: "summary", with: :body} }
 
-    it "returns the frozen preset names as Symbols" do
-      expect(preset).to eq(%i[summary stats]).and be_frozen
+    it "returns the preset definition of the relation options" do
+      expect(selection).to eq(presets: [:summary], only: {}, with: {body: {}}, except: {})
     end
 
-    context "without the :preset option" do
+    context "without the :preset, :only, :with and :except options" do
       let(:opts) { {serializer: "PostSerializer"} }
 
       it "returns nil" do
-        expect(preset).to be_nil
+        expect(selection).to be_nil
       end
     end
   end

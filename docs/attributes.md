@@ -197,6 +197,16 @@ attribute :posts, serializer: PostSerializer, many: true, preset: :summary
 # => {posts: [{id: 1, title: "Gotham at night"}]}
 ```
 
+### `:only`, `:with`, `:except`
+
+Select the fields of the relation by default, like the same options of a
+call. See [Field selection options of a relation](selecting-fields.md#field-selection-options-of-a-relation).
+
+```ruby
+attribute :posts, serializer: PostSerializer, many: true, only: [:id, :title]
+# => {posts: [{id: 1, title: "Gotham at night"}]}
+```
+
 ### `:preload`
 
 Names the associations to preload for the value, so the value is read without
@@ -359,6 +369,7 @@ AdminSerializer.attributes.keys # => [:username, :email, :role]
 | `serializer` | [Serialize with another serializer](#serializer) |
 | `many` | [Mark a list](#many) |
 | `preset` | [Serialize the fields of a preset of the relation](#preset) |
+| `only`, `with`, `except` | [Select the fields of the relation](#only-with-except) |
 | `preload` | [Preload associations](#preload) |
 | `base_serializer` | [Base of a block-defined serializer](#nested-serializers-defined-with-a-block) |
 | `if`, `unless`, `if_value`, `unless_value` | [Conditional attributes](conditional-attributes.md) |
