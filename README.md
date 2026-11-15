@@ -24,11 +24,12 @@ fields use — in a few queries, with no N+1.
 - ⚡ **Fast** — serialization code is generated per field selection and cached.
   [See benchmarks](#benchmarks).
 - 🎯 **Clients choose fields** — `?fields=name,posts(title)` works out of the
-  box, nested at any depth.
+  box, nested at any depth. [See selecting fields](docs/selecting-fields.md#fields-from-a-request).
 - 🧺 **No N+1** — associations are preloaded and batch loaders run once per
-  relation, only for the requested fields.
+  relation, only for the requested fields. [See preloads](docs/preloads.md)
+  and [batch loading](docs/batch-loading.md).
 - 🪶 **No dependencies** — plain Ruby, works with Rails, Hanami, Roda, Sinatra
-  or no framework at all.
+  or no framework at all. [See quick start](#quick-start).
 
 ## Show me
 
