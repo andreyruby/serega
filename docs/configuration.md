@@ -32,7 +32,7 @@ defined after it.
 | `hash_access.default_allow_missing_key` | `false` | `nil` for missing Hash keys |
 | `check_attribute_name` | `true` | Allows only `a-z`, `A-Z`, `0-9`, `_`, `-`, `~` in attribute names |
 | `require_many` | `false` | Requires [`:many`](attributes.md#many) on relations |
-| `check_initiate_params` | `true` | Raises on unknown fields in `:only`, `:except`, `:with` |
+| `check_selection` | `true` | Raises on unknown fields in `:only`, `:except`, `:with` |
 | `max_cached_plans_per_serializer_count` | `20` | Serialization plans cached per serializer, `0` disables the cache |
 | `depth_limit` | `nil` | Deepest nesting of serialized fields, see [Depth limit](#depth-limit) |
 

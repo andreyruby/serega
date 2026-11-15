@@ -11,11 +11,11 @@ RSpec.describe Serega::SeregaPlan::Cache do
   let(:user_serializer) do
     address = address_serializer
     max_cached_plans = max_cached_plans_count
-    check_initiate_params = check_initiate_params_config
+    check_selection = check_selection_config
 
     Class.new(Serega) do
       config.max_cached_plans_per_serializer_count = max_cached_plans
-      config.check_initiate_params = check_initiate_params
+      config.check_selection = check_selection
 
       attribute :first_name
       attribute :last_name
@@ -24,11 +24,11 @@ RSpec.describe Serega::SeregaPlan::Cache do
   end
 
   let(:max_cached_plans_count) { 0 }
-  let(:check_initiate_params_config) { true }
+  let(:check_selection_config) { true }
 
   # Plan of the selection, without validation
   def plan(selection)
-    user_serializer.plan_cache.fetch(selection[:only], selection[:with], selection[:except], selection[:preset], check_initiate_params: false)
+    user_serializer.plan_cache.fetch(selection[:only], selection[:with], selection[:except], selection[:preset], check_selection: false)
   end
 
   def satisfy_attribute_names(names)
@@ -75,9 +75,9 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(result2).to equal result1
     end
 
-    it "caches the plans of serializers built with other initiate options" do
-      result1 = user_serializer.new(only: :first_name, check_initiate_params: false).plan
-      result2 = user_serializer.new(only: :first_name, check_initiate_params: false).plan
+    it "caches the plans of serializers built with other options" do
+      result1 = user_serializer.new(only: :first_name, check_selection: false).plan
+      result2 = user_serializer.new(only: :first_name, check_selection: false).plan
 
       expect(result1).to satisfy_attribute_names(first_name: nil)
       expect(result2).to equal result1
@@ -125,14 +125,14 @@ RSpec.describe Serega::SeregaPlan::Cache do
     end
 
     it "shares the cached plan between calls with and without validation" do
-      result1 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: false)
-      result2 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_initiate_params: true)
+      result1 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_selection: false)
+      result2 = user_serializer.plan_cache.fetch({first_name: {}}, nil, nil, check_selection: true)
 
       expect(result2).to equal result1
     end
 
     it "validates the selection of a plan that was cached without validation" do
-      user_serializer.new(only: :email, check_initiate_params: false)
+      user_serializer.new(only: :email, check_selection: false)
 
       expect { user_serializer.new(only: :email) }.to raise_error Serega::AttributeNotExist
     end
@@ -182,7 +182,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
     end
 
     it "builds the plan of the parameters with the planner" do
-      expect(cache.fetch("posts", check_initiate_params: true)).to be params_plan
+      expect(cache.fetch("posts", check_selection: true)).to be params_plan
 
       expect(planner).to have_received(:parse).with(user_serializer, "posts", nil, nil, nil)
       expect(planner).to have_received(:empty?).with(params)
@@ -192,15 +192,15 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(planner).not_to have_received(:plan).with(user_serializer, no_params)
     end
 
-    context "without check_initiate_params" do
+    context "without check_selection" do
       it "validates the parameters" do
         cache.fetch("posts")
 
         expect(planner).to have_received(:validate).with(user_serializer, params)
       end
 
-      context "when config.check_initiate_params is false" do
-        let(:check_initiate_params_config) { false }
+      context "when config.check_selection is false" do
+        let(:check_selection_config) { false }
 
         it "does not validate the parameters" do
           cache.fetch("posts")
@@ -224,7 +224,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
       let(:empty) { true }
 
       it "returns the plan the planner builds from no parameters" do
-        expect(cache.fetch("posts", check_initiate_params: true)).to be no_params_plan
+        expect(cache.fetch("posts", check_selection: true)).to be no_params_plan
 
         expect(planner).not_to have_received(:validate)
         expect(planner).not_to have_received(:plan).with(user_serializer, params)

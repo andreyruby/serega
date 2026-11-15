@@ -231,7 +231,7 @@ See [Presets][presets].
 UserSerializer.to_h(user, only: [:address])
 # => raises Serega::AttributeNotExist
 
-UserSerializer.to_h(user, only: [:address], check_initiate_params: false)
+UserSerializer.to_h(user, only: [:address], check_selection: false)
 # => {}
 ```
 
@@ -531,7 +531,7 @@ Define a base serializer once, then put shared setup there.
 
 ```ruby
 class AppSerializer < Serega
-  config.check_initiate_params = false # shared by every subclass
+  config.check_selection = false # shared by every subclass
   config.base_serializer = self # nested serializers from attribute blocks inherit AppSerializer
 end
 
@@ -697,11 +697,11 @@ No default — an attribute block raises an error when no base serializer is
 chosen. Can be set per attribute with the `base_serializer:` option (it wins
 over config). Attributes of the base, if any, are serialized too.
 
-### `config.check_initiate_params` — validate `:only` / `:except` / `:with`
+### `config.check_selection` — validate `:only` / `:except` / `:with`
 
 ```ruby
 class UserSerializer < Serega
-  config.check_initiate_params = false
+  config.check_selection = false
   attribute :name
 end
 UserSerializer.to_h(user, only: [:nope])   # => {}        (silently skipped)

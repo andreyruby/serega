@@ -169,10 +169,10 @@ UserSerializer.to_h(bruce, only: [:nickname, {friends: :age}])
 # => Serega::AttributeNotExist: Not existing attributes: nickname, friends(age)
 ```
 
-`check_initiate_params: false` skips unknown fields:
+`check_selection: false` skips unknown fields:
 
 ```ruby
-UserSerializer.to_h(bruce, only: [:username, :nickname], check_initiate_params: false)
+UserSerializer.to_h(bruce, only: [:username, :nickname], check_selection: false)
 # => {username: "batman"}
 ```
 
