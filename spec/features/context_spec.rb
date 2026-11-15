@@ -49,7 +49,7 @@ RSpec.describe Serega do
 
     let(:only) { [:first_name] }
 
-    it "does not change the given modifiers" do
+    it "does not change the given selection" do
       serializer
 
       expect(only).to eq [:first_name]

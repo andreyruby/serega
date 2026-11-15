@@ -19,14 +19,14 @@ class Serega
       end
 
       # Raises an error for an invalid name, an invalid `:preset` option,
-      # presets that include each other, invalid modifiers and a preset
-      # without modifiers, PresetNotExist for an undefined included preset,
-      # and AttributeNotExist for unknown attributes
+      # presets that include each other, invalid field selection options and
+      # a preset without a field selection, PresetNotExist for an undefined
+      # included preset, and AttributeNotExist for unknown attributes
       def validate
         check_name
         names = included_names
         check_included_presets(names)
-        check_modifiers(names)
+        check_selection(names)
       end
 
       private
@@ -74,27 +74,27 @@ class Serega
         end
       end
 
-      def parse_modifier(key, value)
-        SeregaPlan::ModifiersPlanner.parse_modifier(value)
+      def parse_option(key, value)
+        SeregaPlan::SelectionPlanner.parse_option(value)
       rescue SeregaError
         raise SeregaError, "Invalid :#{key} => #{value.inspect} in preset :#{@name}. Must be a Symbol, a String, an Array or a Hash of attribute names"
       end
 
-      def check_modifiers(names)
-        modifiers = {only: parse_modifier(:only, @only), with: parse_modifier(:with, @with), except: parse_modifier(:except, @except)}
-        check_not_empty(names, modifiers)
-        check_attributes(modifiers)
+      def check_selection(names)
+        selection = {only: parse_option(:only, @only), with: parse_option(:with, @with), except: parse_option(:except, @except)}
+        check_not_empty(names, selection)
+        check_attributes(selection)
       end
 
-      def check_attributes(modifiers)
-        Initiate::CheckPresetModifiers.new.call(@serializer_class, modifiers[:only], modifiers[:with], modifiers[:except])
+      def check_attributes(selection)
+        CheckPresetSelection.new.call(@serializer_class, selection[:only], selection[:with], selection[:except])
       rescue AttributeNotExist => error
         attributes = error.attributes
         raise AttributeNotExist.new("Preset :#{@name} names not existing attributes: #{attributes.join(", ")}", error.serializer, attributes)
       end
 
-      def check_not_empty(names, modifiers)
-        return unless names.empty? && SeregaPlan::ModifiersPlanner.empty?(modifiers)
+      def check_not_empty(names, selection)
+        return unless names.empty? && SeregaPlan::SelectionPlanner.empty?(selection)
 
         raise SeregaError, "Preset :#{@name} must select fields with :only, :with, :except or :preset"
       end

@@ -3,8 +3,8 @@
 RSpec.describe Serega::SeregaPlan::Selection do
   subject(:names) { selected_names(selection) }
 
-  let(:selection) { described_class.new(a, modifiers) }
-  let(:modifiers) { {} }
+  let(:selection) { described_class.new(a, options) }
+  let(:options) { {} }
   let(:base_class) { Class.new(Serega) }
 
   let(:a) do
@@ -54,8 +54,8 @@ RSpec.describe Serega::SeregaPlan::Selection do
   end
 
   describe "#attributes" do
-    context "without modifiers" do
-      let(:modifiers) { {} }
+    context "without field selection options" do
+      let(:options) { {} }
 
       it "selects the not hidden attributes" do
         expect(names).to eq(a1: nil, a2: nil, d: {d1: nil, d2: nil})
@@ -63,7 +63,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "with :only" do
-      let(:modifiers) { {only: {a2: {}, d: {d1: {}}}, except: {}, with: {}} }
+      let(:options) { {only: {a2: {}, d: {d1: {}}}, except: {}, with: {}} }
 
       it "selects the named attributes" do
         expect(names).to eq(a2: nil, d: {d1: nil})
@@ -71,7 +71,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "when :only names a hidden attribute" do
-      let(:modifiers) { {only: {a3: {}}, except: {}, with: {}} }
+      let(:options) { {only: {a3: {}}, except: {}, with: {}} }
 
       it "selects the named attribute" do
         expect(names).to eq(a3: nil)
@@ -79,7 +79,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "when :only limits the level and :with names a hidden attribute" do
-      let(:modifiers) { {only: {a1: {}}, except: {}, with: {a3: {}}} }
+      let(:options) { {only: {a1: {}}, except: {}, with: {a3: {}}} }
 
       it "selects the attributes that :only and :with name" do
         expect(names).to eq(a1: nil, a3: nil)
@@ -87,7 +87,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "when :except names the attribute that :only and :with name" do
-      let(:modifiers) { {only: {a1: {}}, except: {a1: {}}, with: {a1: {}}} }
+      let(:options) { {only: {a1: {}}, except: {a1: {}}, with: {a1: {}}} }
 
       it "selects no attributes" do
         expect(names).to eq({})
@@ -95,7 +95,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "with :except" do
-      let(:modifiers) { {only: {}, except: {a2: {}, d: {d1: {}}}, with: {}} }
+      let(:options) { {only: {}, except: {a2: {}, d: {d1: {}}}, with: {}} }
 
       it "selects the not hidden attributes without the named attributes" do
         expect(names).to eq(a1: nil, d: {d2: nil})
@@ -103,7 +103,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "with :with" do
-      let(:modifiers) { {only: {}, except: {}, with: {a3: {}, b: {}, c: {c3: {}}}} }
+      let(:options) { {only: {}, except: {}, with: {a3: {}, b: {}, c: {c3: {}}}} }
 
       it "selects the not hidden attributes and the named attributes" do
         expect(names).to eq(
@@ -118,7 +118,7 @@ RSpec.describe Serega::SeregaPlan::Selection do
     end
 
     context "when :only names nested fields only" do
-      let(:modifiers) { {only: {d: {d1: {}}}, except: except, with: with} }
+      let(:options) { {only: {d: {d1: {}}}, except: except, with: with} }
       let(:except) { {} }
       let(:with) { {} }
 

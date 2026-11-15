@@ -2,7 +2,7 @@
 
 RSpec.describe Serega do
   describe "serialization" do
-    subject(:result) { user_serializer.new(**modifiers).to_h(user, context: context) }
+    subject(:result) { user_serializer.new(**selection).to_h(user, context: context) }
 
     let(:user_serializer) do
       Class.new(Serega) do
@@ -12,7 +12,7 @@ RSpec.describe Serega do
     end
 
     let(:context) { {} }
-    let(:modifiers) { {} }
+    let(:selection) { {} }
 
     context "with empty array" do
       let(:user) { [] }

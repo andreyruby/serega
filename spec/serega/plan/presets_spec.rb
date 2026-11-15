@@ -21,7 +21,7 @@ RSpec.describe Serega::SeregaPlan::Presets do
   describe ".define" do
     subject(:definition) { described_class.define(user_serializer, "card", ["contacts"], "name", nil, nil) }
 
-    it "returns the frozen names of the included presets and the own parsed modifiers" do
+    it "returns the frozen names of the included presets and the own parsed selection" do
       expect(definition).to eq(presets: [:contacts], only: {name: {}}, with: {}, except: {})
       expect(definition).to be_frozen
       expect(definition[:presets]).to be_frozen
@@ -33,13 +33,13 @@ RSpec.describe Serega::SeregaPlan::Presets do
     end
   end
 
-  describe ".modifiers" do
-    subject(:merged) { described_class.modifiers(user_serializer, preset, modifiers) }
+  describe ".selection" do
+    subject(:merged) { described_class.selection(user_serializer, preset, selection) }
 
     let(:preset) { ["profile"] }
-    let(:modifiers) { {only: {}, with: {}, except: {email: {}}} }
+    let(:selection) { {only: {}, with: {}, except: {email: {}}} }
 
-    it "merges the given modifiers into the modifiers of the presets" do
+    it "merges the given selection into the selection of the presets" do
       expect(merged).to eq(only: {name: {}}, with: {email: {}}, except: {email: {}})
       expect(Serega::SeregaValidations::CheckPresetParams).not_to have_received(:new)
     end

@@ -12,10 +12,10 @@ RSpec.describe Serega do
       end
     end
 
-    let(:modifiers) { {except: :except} }
+    let(:selection) { {except: :except} }
     let(:serialize_opts) { {context: {data: "bar"}} }
 
-    let(:serializer) { serializer_class.new(**modifiers) }
+    let(:serializer) { serializer_class.new(**selection) }
 
     describe "#call" do
       it "returns serialized response" do
@@ -31,13 +31,13 @@ RSpec.describe Serega do
 
     describe ".call" do
       it "returns serialized to response" do
-        expect(serializer_class.call("foo", **modifiers, **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
+        expect(serializer_class.call("foo", **selection, **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
       end
     end
 
     describe ".to_h" do
       it "returns serialized response same as .call method" do
-        expect(serializer_class.to_h("foo", **modifiers, **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
+        expect(serializer_class.to_h("foo", **selection, **serialize_opts)).to eq({obj: "foo", ctx: "bar"})
       end
     end
 
@@ -56,14 +56,14 @@ RSpec.describe Serega do
 
     describe ".to_data" do
       it "returns a Data object with correct members" do
-        result = serializer_class.to_data("foo", **modifiers, **serialize_opts)
+        result = serializer_class.to_data("foo", **selection, **serialize_opts)
         expect(result).to be_a(Data)
         expect(result.obj).to eq "foo"
         expect(result.ctx).to eq "bar"
       end
 
       it "returns nil when object is nil" do
-        expect(serializer_class.to_data(nil, **modifiers, **serialize_opts)).to be_nil
+        expect(serializer_class.to_data(nil, **selection, **serialize_opts)).to be_nil
       end
     end
 
@@ -82,11 +82,11 @@ RSpec.describe Serega do
 
     describe ".to_struct" do
       it "returns a Struct object with serialized attributes" do
-        expect(serializer_class.to_struct("foo", **modifiers, **serialize_opts).to_h).to eq(obj: "foo", ctx: "bar")
+        expect(serializer_class.to_struct("foo", **selection, **serialize_opts).to_h).to eq(obj: "foo", ctx: "bar")
       end
 
       it "returns nil when object is nil" do
-        expect(serializer_class.to_struct(nil, **modifiers, **serialize_opts)).to be_nil
+        expect(serializer_class.to_struct(nil, **selection, **serialize_opts)).to be_nil
       end
     end
 
@@ -102,11 +102,11 @@ RSpec.describe Serega do
 
     describe ".to_json" do
       it "returns the serialized response as JSON" do
-        expect(serializer_class.to_json("foo", **modifiers, **serialize_opts)).to eq '{"obj":"foo","ctx":"bar"}'
+        expect(serializer_class.to_json("foo", **selection, **serialize_opts)).to eq '{"obj":"foo","ctx":"bar"}'
       end
 
       it "returns JSON null when object is nil" do
-        expect(serializer_class.to_json(nil, **modifiers, **serialize_opts)).to eq "null"
+        expect(serializer_class.to_json(nil, **selection, **serialize_opts)).to eq "null"
       end
     end
   end

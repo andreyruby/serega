@@ -100,7 +100,7 @@ RSpec.describe Serega::SeregaValidations::CheckPresetParams do
     end
   end
 
-  context "with invalid modifiers" do
+  context "with invalid selection" do
     let(:only) { [:name, 1] }
 
     it "raises a SeregaError" do
@@ -109,7 +109,7 @@ RSpec.describe Serega::SeregaValidations::CheckPresetParams do
     end
   end
 
-  context "without modifiers" do
+  context "without selection" do
     let(:preset) { nil }
     let(:only) { nil }
 
@@ -122,19 +122,19 @@ RSpec.describe Serega::SeregaValidations::CheckPresetParams do
   context "with nested fields" do
     let!(:user_serializer) { super() }
     let(:preset) { nil }
-    let(:check_modifiers) { instance_double(Serega::SeregaValidations::Initiate::CheckPresetModifiers) }
+    let(:check_selection) { instance_double(Serega::SeregaValidations::CheckPresetSelection) }
     let(:only) { "posts(title)" }
 
     before do
-      allow(Serega::SeregaValidations::Initiate::CheckPresetModifiers).to receive(:new).and_return(check_modifiers)
-      allow(check_modifiers).to receive(:call)
+      allow(Serega::SeregaValidations::CheckPresetSelection).to receive(:new).and_return(check_selection)
+      allow(check_selection).to receive(:call)
     end
 
     it "checks the parsed fields without resolving the relation serializers" do
       validate
 
-      expect(Serega::SeregaValidations::Initiate::CheckPresetModifiers).to have_received(:new)
-      expect(check_modifiers).to have_received(:call).with(user_serializer, {posts: {title: {}}}, {}, {})
+      expect(Serega::SeregaValidations::CheckPresetSelection).to have_received(:new)
+      expect(check_selection).to have_received(:call).with(user_serializer, {posts: {title: {}}}, {}, {})
     end
   end
 

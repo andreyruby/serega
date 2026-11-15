@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaValidations::Initiate::CheckModifiers do
+RSpec.describe Serega::SeregaValidations::CheckSelection do
   let(:serializer) do
     serializer_class = Class.new(Serega)
     serializer_class.attribute :foo_bar

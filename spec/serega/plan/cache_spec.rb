@@ -26,9 +26,9 @@ RSpec.describe Serega::SeregaPlan::Cache do
   let(:max_cached_plans_count) { 0 }
   let(:check_initiate_params_config) { true }
 
-  # Plan of the modifiers, without validation
-  def plan(modifiers)
-    user_serializer.plan_cache.fetch(modifiers[:only], modifiers[:with], modifiers[:except], modifiers[:preset], check_initiate_params: false)
+  # Plan of the selection, without validation
+  def plan(selection)
+    user_serializer.plan_cache.fetch(selection[:only], selection[:with], selection[:except], selection[:preset], check_initiate_params: false)
   end
 
   def satisfy_attribute_names(names)
@@ -46,15 +46,15 @@ RSpec.describe Serega::SeregaPlan::Cache do
   context "without plan caching" do
     let(:max_cached_plans_count) { 0 }
 
-    it "reuses one plan for missing and empty modifiers" do
-      plan_without_modifiers = plan({})
-      plan_with_empty_modifiers = plan(only: {}, with: {}, except: {})
+    it "reuses one plan for missing and empty selection" do
+      plan_without_selection = plan({})
+      plan_with_empty_selection = plan(only: {}, with: {}, except: {})
 
-      expect(plan_without_modifiers).to satisfy_attribute_names(first_name: nil, last_name: nil, address: {city: nil, zip: nil})
-      expect(plan_with_empty_modifiers).to equal plan_without_modifiers
+      expect(plan_without_selection).to satisfy_attribute_names(first_name: nil, last_name: nil, address: {city: nil, zip: nil})
+      expect(plan_with_empty_selection).to equal plan_without_selection
     end
 
-    it "builds a new plan for each call with modifiers" do
+    it "builds a new plan for each call with selection" do
       result1 = plan(only: {first_name: {}})
       result2 = plan(only: {first_name: {}})
 
@@ -67,7 +67,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
   context "with plan caching" do
     let(:max_cached_plans_count) { 1 }
 
-    it "reuses the cached plan for the same modifiers" do
+    it "reuses the cached plan for the same selection" do
       result1 = plan(only: {first_name: {}})
       result2 = plan(only: {first_name: {}})
 
@@ -83,7 +83,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(result2).to equal result1
     end
 
-    it "keeps the cached plan after the caller changes the modifiers hash" do
+    it "keeps the cached plan after the caller changes the selection hash" do
       only = {first_name: {}}
       result1 = plan(only: only)
       only[:last_name] = {}
@@ -91,7 +91,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(plan(only: {first_name: {}})).to equal result1
     end
 
-    it "keeps the cached plan after the caller changes the modifiers string" do
+    it "keeps the cached plan after the caller changes the selection string" do
       only = +"first_name"
       result1 = user_serializer.new(only: only).plan
       only.replace("last_name")
@@ -99,8 +99,8 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(user_serializer.new(only: "first_name").plan).to equal result1
     end
 
-    context "when the modifiers are a String" do
-      before { allow(Serega::SeregaUtils::ParseStringModifiers).to receive(:parse).and_call_original }
+    context "when the selection are a String" do
+      before { allow(Serega::SeregaUtils::ParseStringSelection).to receive(:parse).and_call_original }
 
       it "parses the String once" do
         result1 = plan(only: "address(city)")
@@ -108,18 +108,18 @@ RSpec.describe Serega::SeregaPlan::Cache do
 
         expect(result1).to satisfy_attribute_names(address: {city: nil})
         expect(result2).to equal result1
-        expect(Serega::SeregaUtils::ParseStringModifiers).to have_received(:parse).once
+        expect(Serega::SeregaUtils::ParseStringSelection).to have_received(:parse).once
       end
     end
 
-    context "when the cached modifiers have the hash of other modifiers" do
+    context "when the cached selection have the hash of other selection" do
       let(:array_with_hash_zero) { Class.new(Array) { def hash = 0 } }
       let(:cached_only) { array_with_hash_zero[:first_name] }
       let(:other_only) { array_with_hash_zero[:last_name] }
 
       before { plan(only: cached_only) }
 
-      it "builds the plan of the other modifiers" do
+      it "builds the plan of the other selection" do
         expect(plan(only: other_only)).to satisfy_attribute_names(last_name: nil)
       end
     end
@@ -131,7 +131,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(result2).to equal result1
     end
 
-    it "validates the modifiers of a plan that was cached without validation" do
+    it "validates the selection of a plan that was cached without validation" do
       user_serializer.new(only: :email, check_initiate_params: false)
 
       expect { user_serializer.new(only: :email) }.to raise_error Serega::AttributeNotExist
@@ -147,17 +147,17 @@ RSpec.describe Serega::SeregaPlan::Cache do
       expect(result2).not_to equal result1
     end
 
-    context "when two serializers use the same modifiers" do
+    context "when two serializers use the same selection" do
       before do
         allow(Serega::SeregaUtils::ToHash).to receive(:call).and_call_original
-        allow(Serega::SeregaValidations::Initiate::CheckModifiers).to receive(:new).and_call_original
+        allow(Serega::SeregaValidations::CheckSelection).to receive(:new).and_call_original
       end
 
-      it "parses and validates the modifiers once" do
+      it "parses and validates the selection once" do
         2.times { user_serializer.new(only: [:first_name]) }
 
         expect(Serega::SeregaUtils::ToHash).to have_received(:call).with([:first_name]).once
-        expect(Serega::SeregaValidations::Initiate::CheckModifiers).to have_received(:new).once
+        expect(Serega::SeregaValidations::CheckSelection).to have_received(:new).once
       end
     end
   end
@@ -165,7 +165,7 @@ RSpec.describe Serega::SeregaPlan::Cache do
   context "with another planner" do
     subject(:cache) { described_class.new(user_serializer, planner) }
 
-    let(:planner) { class_double(Serega::SeregaPlan::ModifiersPlanner) }
+    let(:planner) { class_double(Serega::SeregaPlan::SelectionPlanner) }
     let(:params) { {include: "posts"} }
     let(:no_params) { {include: nil} }
     let(:params_plan) { default_plan(user_serializer) }

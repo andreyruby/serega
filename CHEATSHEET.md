@@ -743,8 +743,8 @@ queries.
 ### `config.max_cached_plans_per_serializer_count` — plan cache
 
 Caches prepared serialization plans by `:only` / `:except` / `:with` signature
-so repeated requests with the same modifiers skip rebuilding. Default `20`
-(`0` disables it); the plan without modifiers is always cached. No effect on
+so repeated requests with the same field selection skip rebuilding. Default
+`20` (`0` disables it); the plan without a field selection is always cached. No effect on
 output — purely a performance tuning knob.
 
 ---

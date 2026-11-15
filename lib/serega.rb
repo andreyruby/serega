@@ -44,7 +44,7 @@ require_relative "serega/utils/deep_merge"
 require_relative "serega/utils/enum_deep_dup"
 require_relative "serega/utils/enum_deep_freeze"
 require_relative "serega/utils/method_signature"
-require_relative "serega/utils/parse_string_modifiers"
+require_relative "serega/utils/parse_string_selection"
 require_relative "serega/utils/ractor_local"
 require_relative "serega/utils/ruby_literal"
 require_relative "serega/utils/serialized_attribute_error"
@@ -91,8 +91,8 @@ require_relative "serega/validations/attribute/check_opt_method"
 require_relative "serega/validations/attribute/check_opt_preload"
 require_relative "serega/validations/attribute/check_opt_serializer"
 require_relative "serega/validations/attribute/check_opt_value"
-require_relative "serega/validations/initiate/check_modifiers"
-require_relative "serega/validations/initiate/check_preset_modifiers"
+require_relative "serega/validations/check_selection"
+require_relative "serega/validations/check_preset_selection"
 require_relative "serega/validations/check_attribute_params"
 require_relative "serega/validations/check_batch_loader_params"
 require_relative "serega/validations/check_preset_params"
@@ -112,7 +112,7 @@ require_relative "serega/result_code/point_code"
 require_relative "serega/result_code/attribute_point_code"
 require_relative "serega/result_code/relation_point_code"
 require_relative "serega/result_builder"
-require_relative "serega/plan/modifiers_planner"
+require_relative "serega/plan/selection_planner"
 require_relative "serega/plan/presets"
 require_relative "serega/plan/cache"
 require_relative "serega/plugins"
@@ -170,7 +170,7 @@ class Serega
 
     #
     # Presets by name: the names of the presets each one includes and its
-    # own modifiers
+    # own field selection
     #
     # ```ruby
     # UserSerializer.presets # => {card: {presets: [], only: {posts: {title: {}}}, with: {}, except: {}}}
@@ -265,9 +265,9 @@ class Serega
     end
 
     #
-    # Saves `only`, `with` and `except` modifiers under a name. The `preset:`
-    # serialization option selects the fields of the presets, merged with the
-    # modifiers given in the call. A preset replaces the preset with the same
+    # Saves the `only`, `with` and `except` options under a name. The
+    # `preset:` serialization option selects the fields of the presets,
+    # merged with the options given in the call. A preset replaces the preset with the same
     # name.
     #
     # - `preset:` names presets defined earlier. They are merged when the
@@ -548,7 +548,7 @@ class Serega
           @presenter_key = SeregaUtils::RactorLocal.key(self, :presenter)
         end
         @unshareable_reason = SeregaShareable.call(self)
-        @plan_cache = SeregaPlan::PerRactorCache.new(self, SeregaPlan::ModifiersPlanner) unless @unshareable_reason
+        @plan_cache = SeregaPlan::PerRactorCache.new(self, SeregaPlan::SelectionPlanner) unless @unshareable_reason
       end
       # :nocov:
       self
@@ -629,7 +629,7 @@ class Serega
       @locked = false
       @shareable = false
       @unshareable_reason = nil
-      @plan_cache = SeregaPlan::Cache.new(self, SeregaPlan::ModifiersPlanner)
+      @plan_cache = SeregaPlan::Cache.new(self, SeregaPlan::SelectionPlanner)
     end
 
     # The handler given to `method_name` as a value or a block

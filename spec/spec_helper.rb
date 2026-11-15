@@ -34,7 +34,7 @@ def load_plugin_code(*names)
   names.each { |name| serializer_class.plugin(name) }
 end
 
-# The plan of the serializer without modifiers
+# The plan of the serializer without a field selection
 def default_plan(serializer_class)
   Serega::SeregaPlan.new(Serega::SeregaPlan::Selection.new(serializer_class, {}))
 end

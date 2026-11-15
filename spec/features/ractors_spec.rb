@@ -109,7 +109,7 @@ RSpec.describe Serega do
       expect(result).to eq(title: "Hello", rating: 10, headline: "Hello!", comments: [{text: "NICE"}])
     end
 
-    it "serializes with the plan of the modifiers" do
+    it "serializes with the plan of the selection" do
       result = run_in_ractor(post_serializer, post) { |serializer, post| serializer.to_h(post, only: {comments: :text}) }
 
       expect(result).to eq(comments: [{text: "NICE"}])

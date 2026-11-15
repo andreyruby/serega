@@ -4,8 +4,8 @@ class Serega
   class SeregaPlan # :nodoc:
     #
     # Serialization plans of one serializer, cached by up to four
-    # parameters, such as the `only`, `with` and `except` modifiers and the
-    # `preset`. The planner parses and validates the parameters and builds
+    # parameters, such as the `only`, `with` and `except` field selection
+    # options and the `preset`. The planner parses and validates the parameters and builds
     # the plans.
     #
     class Cache # :nodoc:
@@ -89,7 +89,7 @@ class Serega
       # recursion guard. A lone parameter is keyed by its own hash, salted by
       # its position, so `only: x`, `with: x`, `except: x` and `preset: x`
       # have different keys. It skips the Array and takes 11% off a cached
-      # `Serega.new` with one modifier or preset. A missing fourth parameter
+      # `Serega.new` with one option or preset. A missing fourth parameter
       # stays out of the Array: the longer Array adds about 4 ns.
       def cache_key(param1, param2, param3, param4)
         # rubocop:disable Security/CompoundHash -- `[param1, param2, param3].hash` hashes nested arrays inside a recursion guard

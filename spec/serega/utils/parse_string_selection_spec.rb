@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Serega::SeregaUtils::ParseStringModifiers do
+RSpec.describe Serega::SeregaUtils::ParseStringSelection do
   def parse(str)
     described_class.parse(str)
   end
