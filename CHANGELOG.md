@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Relations that nest in a cycle, shown by default without `config.depth_limit`,
+  raise `Serega::DepthLimitError` instead of overflowing the stack. See
+  [Depth limit](docs/configuration.md#depth-limit).
 - `preload_with nil` and `prepare_initial_objects nil` raise
   `Serega::SeregaError`, as with other values that are not callable. Before,
   they returned the registered handler. With `nil` and a block, they raise

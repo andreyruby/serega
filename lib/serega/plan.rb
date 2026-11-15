@@ -9,6 +9,9 @@ class Serega
     # Serializer of the plan
     attr_reader :serializer_class
 
+    # Selection of the attributes of the plan
+    attr_reader :selection
+
     # Parent plan point
     attr_reader :parent_plan_point
 
@@ -33,13 +36,14 @@ class Serega
     # selection's serializer, with the result builder class of the
     # selection. A child plan gets the point of its parent plan. Raises
     # DepthLimitError when the plan nests deeper than the depth limit of the
-    # root serializer.
+    # root serializer, or repeats a parent plan without a depth limit.
     def initialize(selection, parent_plan_point = nil)
       serializer_class = selection.serializer_class
       serializer_class.lock
       @serializer_class = serializer_class
+      @selection = selection
       @parent_plan_point = parent_plan_point
-      @depth_left = DepthLimit.depth_left(serializer_class, parent_plan_point)
+      @depth_left = DepthLimit.depth_left(selection, parent_plan_point)
       @builder_class = selection.builder_class
       @points = selected_points(selection)
       @presenter = points_presenter(serializer_class)

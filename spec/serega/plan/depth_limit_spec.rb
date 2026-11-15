@@ -2,7 +2,9 @@
 
 RSpec.describe Serega::SeregaPlan::DepthLimit do
   describe ".depth_left" do
-    subject(:depth_left) { described_class.depth_left(post_serializer, parent_plan_point) }
+    subject(:depth_left) { described_class.depth_left(selection, parent_plan_point) }
+
+    let(:selection) { Serega::SeregaPlan::Selection.new(post_serializer, {}) }
 
     let(:user_depth_limit) { 3 }
     let(:post_depth_limit) { nil }
@@ -45,6 +47,37 @@ RSpec.describe Serega::SeregaPlan::DepthLimit do
 
       it "returns nil" do
         expect(depth_left).to be_nil
+      end
+    end
+
+    context "when a parent plan has the same selection without a depth limit" do
+      let(:user_depth_limit) { nil }
+      let(:selection) { Serega::SeregaPlan::Selection.new(user_serializer, {}) }
+
+      it "raises DepthLimitError with the path of the cycle" do
+        expect { depth_left }.to raise_error(Serega::DepthLimitError, "Relations nest in a cycle") do |error|
+          expect(error.details).to eq "#{user_serializer} -> posts\n(hint: hide a relation of the cycle or set config.depth_limit)"
+        end
+      end
+    end
+
+    context "when a grandparent plan has the same selection without a depth limit" do
+      let(:user_depth_limit) { nil }
+      let(:selection) { Serega::SeregaPlan::Selection.new(user_serializer, {with: {posts: {}}}) }
+
+      let(:post_serializer) do
+        Class.new(Serega) { attribute :user, serializer: Class.new(Serega), hide: true }
+      end
+
+      let(:parent_plan_point) do
+        posts_plan = Serega::SeregaPlan.new(selection).points.first.child_plan
+        Serega::SeregaPlan::Point.new(posts_plan, post_serializer.attributes[:user], nil, nil)
+      end
+
+      it "raises DepthLimitError with the path of the cycle" do
+        expect { depth_left }.to raise_error(Serega::DepthLimitError, "Relations nest in a cycle") do |error|
+          expect(error.details).to eq "#{user_serializer} -> posts -> user\n(hint: hide a relation of the cycle or set config.depth_limit)"
+        end
       end
     end
 

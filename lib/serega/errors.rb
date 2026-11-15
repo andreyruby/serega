@@ -52,7 +52,8 @@ class Serega
   end
 
   # Raised when fields nest deeper than `config.depth_limit` of the
-  # serializer that starts the serialization
+  # serializer that starts the serialization, or, without a limit, when
+  # relations nest in a cycle
   #
   # ```ruby
   # UserSerializer.to_h(user, with: {friends: :friends})
@@ -61,7 +62,7 @@ class Serega
   #
   # See [Depth limit](https://github.com/andreyruby/serega/blob/master/docs/configuration.md#depth-limit).
   class DepthLimitError < SeregaError
-    # Path that exceeds the limit, and on the next line a hint to increase the limit:
+    # Path that exceeds the limit or closes the cycle, and on the next line a hint:
     #
     #   UserSerializer (depth limit: 2) -> friends -> friends
     #   (hint: if the nesting is not a cycle, increase config.depth_limit of UserSerializer)

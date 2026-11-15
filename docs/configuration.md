@@ -72,6 +72,25 @@ UserSerializer (depth limit: 2) -> friends -> friends
 
 The message is `Depth limit was exceeded`, safe to show to API clients.
 
+Without a limit, relations that nest in a cycle raise `Serega::DepthLimitError`
+with the message `Relations nest in a cycle`. A cycle is a relation that
+selects the same fields of a serializer that a level above it already selects,
+for example `friends` shown by default in `UserSerializer`:
+
+```ruby
+class UserSerializer < Serega
+  attribute :friends, serializer: -> { UserSerializer }
+end
+
+UserSerializer.to_h(user)
+# => Serega::DepthLimitError: Relations nest in a cycle
+```
+
+```text
+UserSerializer -> friends
+(hint: hide a relation of the cycle or set config.depth_limit)
+```
+
 The limit is checked when the serialization plan is built, before any
 serialization. Call `UserSerializer.new(with: params[:with])` early to
 validate a request before running other code.
