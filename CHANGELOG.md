@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [0.51.1] - 2026-11-16
 
 - Relations that nest in a cycle, shown by default without `config.depth_limit`,
   raise `Serega::DepthLimitError` instead of overflowing the stack. See
