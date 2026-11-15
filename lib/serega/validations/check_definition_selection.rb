@@ -3,11 +3,11 @@
 class Serega
   module SeregaValidations # :nodoc:
     #
-    # Field selection validation of a preset definition. It skips the nested
-    # fields of relations with a serializer name or a Proc, as that
-    # serializer may be defined later.
+    # Field selection validation of a preset or a relation when it is
+    # defined. It skips the nested fields of relations with a serializer name
+    # or a Proc, as that serializer may be defined later.
     #
-    class CheckPresetSelection < CheckSelection # :nodoc:
+    class CheckDefinitionSelection < CheckSelection # :nodoc:
       private
 
       def validate_nested(name, attribute, nested_fields)

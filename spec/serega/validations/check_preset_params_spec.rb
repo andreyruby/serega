@@ -122,18 +122,18 @@ RSpec.describe Serega::SeregaValidations::CheckPresetParams do
   context "with nested fields" do
     let!(:user_serializer) { super() }
     let(:preset) { nil }
-    let(:check_selection) { instance_double(Serega::SeregaValidations::CheckPresetSelection) }
+    let(:check_selection) { instance_double(Serega::SeregaValidations::CheckDefinitionSelection) }
     let(:only) { "posts(title)" }
 
     before do
-      allow(Serega::SeregaValidations::CheckPresetSelection).to receive(:new).and_return(check_selection)
+      allow(Serega::SeregaValidations::CheckDefinitionSelection).to receive(:new).and_return(check_selection)
       allow(check_selection).to receive(:call)
     end
 
     it "checks the parsed fields without resolving the relation serializers" do
       validate
 
-      expect(Serega::SeregaValidations::CheckPresetSelection).to have_received(:new)
+      expect(Serega::SeregaValidations::CheckDefinitionSelection).to have_received(:new)
       expect(check_selection).to have_received(:call).with(user_serializer, {posts: {title: {}}}, {}, {})
     end
   end
