@@ -12,10 +12,10 @@
 **Serialize exactly what was asked. Load exactly what is needed.**
 
 [![Gem Version](https://badge.fury.io/rb/serega.svg)](https://badge.fury.io/rb/serega)
-[![GitHub Actions][build-badge]][build]
-![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)
-![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
-![Ruby >= 3.3](https://img.shields.io/badge/ruby-%3E%3D%203.3-red)
+[![GitHub Actions](https://github.com/andreyruby/serega/actions/workflows/main.yml/badge.svg?event=push)][build]
+[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)][build]
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)][rubygems]
+[![Ruby >= 3.3](https://img.shields.io/badge/ruby-%3E%3D%203.3-red)][gemspec]
 
 Serega is a Ruby serializer that turns your objects into Hashes ready for JSON.
 Clients choose the fields they need, and Serega loads only the data those
@@ -221,10 +221,11 @@ Bug reports, pull requests and ideas are welcome!
 The gem is available as open source under the terms of the
 [MIT License](https://opensource.org/licenses/MIT).
 
-[build-badge]: https://github.com/andreyruby/serega/actions/workflows/main.yml/badge.svg?event=push
 [build]: https://github.com/andreyruby/serega/actions/workflows/main.yml
 [start]: #quick-start
 [bench]: #benchmarks
 [fields]: docs/selecting-fields.md#fields-from-a-request
 [preloads]: docs/preloads.md
 [batch]: docs/batch-loading.md
+[rubygems]: https://rubygems.org/gems/serega
+[gemspec]: https://github.com/andreyruby/serega/blob/master/serega.gemspec
