@@ -8,11 +8,11 @@ Gem::Specification.new do |spec|
   spec.authors = ["Andrey"]
   spec.email = ["andreyruby@yandex.ru"]
 
-  spec.summary = "Ruby Serializer"
+  spec.summary = "Fast Ruby serializer: clients choose the fields, Serega loads only what they use"
   spec.description = <<~DESC.tr("\n", " ").strip
-    Serializes Ruby objects into Hashes, ready for further conversion to JSON
-    or other formats, with a simple DSL for selecting fields and solving N+1
-    queries through batch loading. No runtime dependencies.
+    Serializes Ruby objects to Hashes, JSON, Data or Struct. Clients choose
+    the fields, and Serega preloads associations and runs batch loaders only
+    for those fields, with no N+1 queries. No runtime dependencies.
   DESC
   spec.homepage = "https://github.com/andreyruby/serega"
   spec.license = "MIT"
