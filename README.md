@@ -15,7 +15,7 @@
 [![GitHub Actions](https://github.com/andreyruby/serega/actions/workflows/main.yml/badge.svg?event=push)][build]
 [![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)][build]
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)][rubygems]
-[![Ruby >= 3.3](https://img.shields.io/badge/ruby-%3E%3D%203.3-red)][gemspec]
+[![Ruby >= 3.3](https://img.shields.io/badge/ruby-%3E%3D%203.3-brightgreen)][gemspec]
 
 Serega is a Ruby serializer that turns your objects into Hashes ready for JSON.
 Clients choose the fields they need, and Serega loads only the data those
