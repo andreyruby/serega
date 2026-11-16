@@ -51,7 +51,22 @@ module ReleaseTasks
   end
 end
 
+# Lockfiles that record the serega version, from `gemspec` or `path:`
+RELEASE_LOCKFILES = %w[Gemfile.lock gemfiles/8.1.gemfile.lock gemfiles/benchmarks.gemfile.lock].freeze
+
 namespace :release do
+  desc "Check that every lockfile records the serega version of VERSION"
+  task :lockfiles do
+    version = File.read("VERSION").strip
+    stale = RELEASE_LOCKFILES.filter_map do |lockfile|
+      locked = File.read(lockfile)[/^    serega \(([^)]+)\)$/, 1]
+      "#{lockfile} records serega #{locked}" unless locked == version
+    end
+    abort "#{stale.join("\n")}\nVERSION is #{version}: run `bundle install` with each Gemfile" if stale.any?
+
+    puts "Lockfiles record serega #{version}"
+  end
+
   desc "Print the GitHub Release notes of the version in VERSION, or of release:notes[version]"
   task :notes, [:version] do |_task, args|
     version = args[:version] || File.read("VERSION").strip
