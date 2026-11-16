@@ -83,4 +83,58 @@ RSpec.describe Serega::SeregaPlan::Point do
       end
     end
   end
+
+  describe "#many" do
+    subject(:many) { point_for(serializer, :posts).many }
+
+    let(:post_serializer) do
+      post_many = post_config_many
+      Class.new(base) do
+        config.many = post_many
+        attribute :title
+      end
+    end
+
+    let(:serializer) do
+      opts = attribute_opts
+      posts = post_serializer
+      Class.new(base) { attribute :posts, serializer: posts, **opts }
+    end
+
+    let(:attribute_opts) { {} }
+    let(:post_config_many) { nil }
+
+    context "with the :many option" do
+      let(:attribute_opts) { {many: true} }
+      let(:post_config_many) { false }
+
+      it "returns the option" do
+        expect(many).to be true
+      end
+    end
+
+    context "when the relation serializer sets config.many" do
+      let(:post_config_many) { false }
+
+      it "returns config.many of the relation serializer" do
+        expect(many).to be false
+      end
+    end
+
+    context "without the :many option and config.many" do
+      it "returns nil" do
+        expect(many).to be_nil
+      end
+    end
+
+    context "with an attribute without a serializer" do
+      subject(:many) { point_for(serializer, :title).many }
+
+      let(:serializer) { Class.new(base) { attribute :title } }
+
+      it "returns nil" do
+        expect(many).to be_nil
+      end
+    end
+  end
 end

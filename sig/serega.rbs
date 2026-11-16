@@ -111,6 +111,8 @@ class Serega
 
       def require_many: () -> bool
       def require_many=: (bool value) -> bool
+      def many: () -> bool?
+      def many=: (bool? value) -> bool?
 
       def delegate_default_allow_nil: () -> bool
       def delegate_default_allow_nil=: (bool value) -> bool

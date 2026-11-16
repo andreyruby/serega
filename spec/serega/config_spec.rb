@@ -22,6 +22,27 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#many" do
+    it "returns nil by default" do
+      expect(config.many).to be_nil
+    end
+  end
+
+  describe "#many=" do
+    it "validates value is true, false or nil" do
+      expect { config.many = false }.not_to raise_error
+      expect { config.many = true }.not_to raise_error
+      expect { config.many = nil }.not_to raise_error
+      expect { config.many = :auto }
+        .to raise_error Serega::SeregaError, "Must have true, false or nil, :auto provided"
+    end
+
+    it "sets the many option" do
+      config.many = false
+      expect(config.many).to be false
+    end
+  end
+
   describe "#delegate_default_allow_nil=" do
     it "validates value is boolean" do
       expect { config.delegate_default_allow_nil = false }.not_to raise_error
@@ -301,6 +322,7 @@ RSpec.describe Serega::SeregaConfig do
         serialize_keys
         check_attribute_name
         require_many
+        many
         check_selection
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count

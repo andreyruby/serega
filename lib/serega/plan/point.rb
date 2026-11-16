@@ -48,9 +48,13 @@ class Serega
         names
       end
 
-      # Attribute `many` option
+      # Attribute `many` option, or `config.many` of the relation serializer
+      # when the attribute has no `many` option
       def many
-        attribute.many
+        many = attribute.many
+        return many unless many.nil? && @child_plan
+
+        @child_plan.serializer_class.config.many
       end
 
       # Attribute `batch_loaders`

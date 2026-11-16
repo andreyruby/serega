@@ -103,6 +103,7 @@ module Serializers
     # A list under `data`; the `meta` serializer receives the whole list
     def self.list(data:, meta: Meta)
       Class.new(Base) do
+        config.many = false # one response for the whole list
         attribute :data, serializer: data, method: :itself, many: true # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself, many: false # the list as one object
       end
@@ -120,7 +121,7 @@ USERS_SERIALIZER = Serializers::Response.list(data: Serializers::User)
 USER_SERIALIZER.to_json(user)
 # => {"data":{"id":1,"name":"Bruce Wayne"},"meta":{"version":"1"}}
 
-USERS_SERIALIZER.to_json(users, many: false, context: {request_id: "f3a9"})
+USERS_SERIALIZER.to_json(users, context: {request_id: "f3a9"})
 # => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1","request_id":"f3a9"}}
 ```
 
@@ -128,8 +129,8 @@ USERS_SERIALIZER.to_json(users, many: false, context: {request_id: "f3a9"})
   builds a new class with its own [plan cache](serializing.md#plan-cache),
   thus a call per request builds the class and its plans again.
 - A constant names the class, so errors show `USERS_SERIALIZER`.
-- The list is one object: serialize it with `many: false`, see
-  [Why `many: false`](#why-many-false).
+- `Response.list` sets `config.many = false`, so a call serializes the whole
+  list as one response, see [Why `many: false`](#why-many-false).
 
 ## ActiveRecord
 
@@ -159,11 +160,11 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(User.order(:id).limit(20), many: false)
+USERS_SERIALIZER.to_json(User.order(:id).limit(20))
 # SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
 # => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1"}}
 
-USERS_SERIALIZER.to_json(User.order(:id).limit(20), many: false, with: "data(posts)")
+USERS_SERIALIZER.to_json(User.order(:id).limit(20), with: "data(posts)")
 # SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
 # SELECT "posts".* FROM "posts" WHERE "posts"."user_id" IN (1, 2, ...)
 # => {"data":[{"id":1,"name":"Bruce Wayne","posts":[{"id":1,"title":"Gotham"}]}],"meta":{"version":"1"}}
@@ -225,7 +226,7 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(User.order(:id).page(1).per(20), many: false, only: "meta")
+USERS_SERIALIZER.to_json(User.order(:id).page(1).per(20), only: "meta")
 # => {"meta":{"version":"1","paging":{"page":1,"per_page":20,"total_count":1,"total_pages":1}}}
 ```
 
@@ -249,7 +250,7 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(users, many: false, with: "data(avatar_url)")
+USERS_SERIALIZER.to_json(users, with: "data(avatar_url)")
 # => {"data":[{"id":1,"name":"Bruce Wayne","avatar_url":"https://..."}],"meta":{"version":"1"}}
 ```
 
@@ -275,7 +276,7 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(users, many: false, context: {paging: {page: 1, per_page: 20, total_count: 1}})
+USERS_SERIALIZER.to_json(users, context: {paging: {page: 1, per_page: 20, total_count: 1}})
 # => {"data":[...],"meta":{"version":"1","paging":{"page":1,"per_page":20,"total_count":1}}}
 ```
 
@@ -293,7 +294,7 @@ class UsersController < ApplicationController
 
   def index
     users = User.order(:id).page(params[:page]).per(20)
-    render json: INDEX_SERIALIZER.to_json(users, many: false, context: {request_id: request.request_id})
+    render json: INDEX_SERIALIZER.to_json(users, context: {request_id: request.request_id})
   end
 
   def show
@@ -371,13 +372,15 @@ parent's mode. Related serializers follow their own config.
 Serega serializes a scope or an Array as a list. A response serializer gets
 the whole list as one object, thus:
 
-- `to_json(users, many: false)` builds one response, not one per user;
+- `config.many = false` in `Response.list` builds one response from the list,
+  not one per user. A `many:` option of a call overrides it;
 - `many: false` on `meta` and `paging` passes the list as one object, so
   `Paging` can call `current_page` and the other Kaminari methods;
 - `many: true` on `data` serializes each user.
 
-Without `many: false`, Serega calls the methods of `Paging` on each user and
-raises `NoMethodError: undefined method 'current_page' for an instance of User`.
+Without `many: false` on `paging`, Serega calls the methods of `Paging` on
+each user and raises
+`NoMethodError: undefined method 'current_page' for an instance of User`.
 
 ## Selecting fields
 
@@ -385,13 +388,13 @@ Clients select fields from the root of the response. `meta` is left out
 unless the selection names it:
 
 ```ruby
-USERS_SERIALIZER.to_json(users, many: false, only: "data(id,name),meta")
+USERS_SERIALIZER.to_json(users, only: "data(id,name),meta")
 # => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1","paging":{...}}}
 
-USERS_SERIALIZER.to_json(users, many: false, only: "data(id)")
+USERS_SERIALIZER.to_json(users, only: "data(id)")
 # => {"data":[{"id":1}]}
 
-USERS_SERIALIZER.to_json(users, many: false, only: "data(id),meta(paging(total_count))")
+USERS_SERIALIZER.to_json(users, only: "data(id),meta(paging(total_count))")
 # => {"data":[{"id":1}],"meta":{"paging":{"total_count":1}}}
 ```
 
@@ -400,7 +403,7 @@ Array of names works; a String inside a Hash is not parsed:
 
 ```ruby
 fields = params[:fields]&.split(",") # ?fields=id,name
-USERS_SERIALIZER.to_json(users, many: false, only: fields && {data: fields, meta: nil})
+USERS_SERIALIZER.to_json(users, only: fields && {data: fields, meta: nil})
 ```
 
 See [Selecting Fields](selecting-fields.md).

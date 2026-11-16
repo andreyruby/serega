@@ -682,6 +682,7 @@ class Serega
     def initialize(only: nil, with: nil, except: nil, preset: nil, check_selection: nil)
       @plan = self.class.plan_cache.fetch(only, with, except, preset, check_selection: check_selection)
       @direct_hash_builder = @plan.direct_hash_builder
+      @many = self.class.config.many
     end
 
     # Plan for serialization.
@@ -702,6 +703,7 @@ class Serega
     def call(object, context: nil, many: nil)
       # One Hash source of a flat plan skips #serialize_to and the run: 73 ns
       # and 1 object instead of 136 ns and 3 objects (Ruby 4.0, YJIT).
+      many = @many if many.nil?
       builder = @direct_hash_builder
       if builder && object && !many && (context.nil? || context.is_a?(Hash))
         many = object.instance_of?(Array) || SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
@@ -750,6 +752,7 @@ class Serega
     # options other than :context and :many.
     def serialize_to(mode, object, context, many, opts)
       SeregaValidations::CheckSerializeKeywords.call(context, many)
+      many = @many if many.nil?
       context ||= FROZEN_EMPTY_HASH
       object = prepare_objects(object, context) if self.class.prepare_initial_objects_signature
       many = object.instance_of?(Array) || SeregaUtils::CollectionDetector.call(object, @plan.collection_classes) if many.nil?
