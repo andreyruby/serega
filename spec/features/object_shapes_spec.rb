@@ -125,6 +125,26 @@ RSpec.describe Serega do
       end
     end
 
+    context "when a relation serializer sets config.many to true" do
+      subject(:result) { team_serializer.to_h(team) }
+
+      let(:team_serializer) do
+        members_serializer = Class.new(Serega) do
+          config.many = true
+          attribute :first_name
+        end
+        Class.new(Serega) do
+          attribute :members, serializer: members_serializer
+        end
+      end
+
+      let(:team) { double(members: nil) }
+
+      it "serializes a nil relation as an empty list" do
+        expect(result).to eq(members: [])
+      end
+    end
+
     context "when config.many is true" do
       subject(:result) { user_serializer.to_h(user) }
 

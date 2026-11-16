@@ -57,6 +57,13 @@ class Serega
         @child_plan.serializer_class.config.many
       end
 
+      # Whether a nil relation value serializes as `[]`: `config.many` of
+      # the relation serializer is true, and the attribute has neither the
+      # `:many` nor the `:default` option
+      def nil_as_empty_list?
+        attribute.many.nil? && many == true && !attribute.initials[:opts].key?(:default)
+      end
+
       # Attribute `batch_loaders`
       def batch_loaders
         attribute.batch_loaders
