@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [Unreleased]
+
+- The gem includes the guides in `docs/`, so they can be read in the
+  installed gem, next to README.md. See [Guides](docs/README.md).
+
 ## [0.51.1] - 2026-11-16
 
 - Relations that nest in a cycle, shown by default without `config.depth_limit`,
