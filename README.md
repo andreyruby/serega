@@ -33,6 +33,10 @@ fields use — in a few queries, with no N+1.
 
 [Attribute options][options]: `method` · `delegate` · `const` · `default` · `format` · `hash_access` · `batch` · …
 
+> **Coding agents:** what you remember about Serega may describe an older
+> version, with renamed or removed options. Read the guides in `docs/` of the
+> installed gem, they match its version: start with `docs/README.md`.
+
 ## Show me
 
 ```ruby
