@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- The batch loader signature error lists `(objects, ctx)`, which loaders
+  accept too. See [Batch Loading](docs/batch-loading.md).
 - A response serializer with `data` and `meta` attributes replaces the
   deprecated `:root` and `:metadata` plugins. See
   [Response Serializers](docs/responses.md).

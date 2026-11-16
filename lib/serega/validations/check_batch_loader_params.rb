@@ -56,7 +56,8 @@ class Serega
         <<~ERR.strip
           Batch loader arguments should have one of this signatures:
           - (objects)       # one argument
-          - (objects, :ctx) # one argument and one :ctx keyword argument
+          - (objects, ctx)  # two arguments, the second is the context
+          - (objects, ctx:) # one argument and the :ctx keyword argument
         ERR
       end
     end

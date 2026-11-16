@@ -77,6 +77,33 @@ RSpec.describe Serega do
       end
     end
 
+    context "with a loader class that responds to .call" do
+      subject(:result) { user_serializer.to_h(user, context: {multiplier: 10}) }
+
+      let(:loader) do
+        Class.new do
+          def self.call(users, ctx)
+            users.to_h { |user| [user.id, user.id * ctx[:multiplier]] }
+          end
+        end
+      end
+
+      let(:user_serializer) do
+        stats_loader = loader
+        Class.new(Serega) do
+          batch :stats, stats_loader
+          attribute :named_stat, batch: :stats
+          attribute :inline_stat, batch: stats_loader
+        end
+      end
+
+      let(:user) { double(id: 2) }
+
+      it "serializes the values that the class loads" do
+        expect(result).to eq(named_stat: 20, inline_stat: 20)
+      end
+    end
+
     context "when serialized objects are a non-Array enumerable" do
       let(:user_serializer) do
         Class.new(Serega) do
