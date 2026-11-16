@@ -184,3 +184,24 @@ end
 The [preloads](preloads.md) of `PostSerializer` run for the loaded posts, so a
 level can load with a batch and the next with preloads. For ActiveRecord
 associations, preloads alone are usually simpler.
+
+A related serializer can also summarize the loaded records instead of listing
+them. With `config.many = false`, it receives each user's Array as one object:
+
+```ruby
+class OrdersSummarySerializer < Serega
+  config.many = false # the user's orders as one object, not one item per order
+
+  attribute :count, method: :size
+  attribute :total_cents, value: proc { |orders| orders.sum(&:total_cents) }
+end
+
+class UserSerializer < Serega
+  batch :orders, ->(users) { Order.where(user: users).group_by(&:user_id) }
+
+  attribute :orders_summary, batch: :orders, serializer: OrdersSummarySerializer
+end
+
+UserSerializer.to_h(user)
+# => {orders_summary: {count: 2, total_cents: 4998}}
+```
