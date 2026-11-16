@@ -26,6 +26,7 @@ see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET
 
 - [Preloads](preloads.md) — preload associations used by requested fields
 - [Batch Loading](batch-loading.md) — load data for all serialized objects at once
+- [Testing Serializers](testing.md) — test attributes, value classes and batch loaders
 
 ## Data sources
 
