@@ -161,17 +161,25 @@ attribute :bio, format: :presence
 ### API type names (`:type`)
 
 Clients that store records by type and id need a type in every record. A
-constant attribute holds the model, and the formatter names its type.
-`TYPES.fetch` raises `KeyError` for a model without a type, so a new model
-can't send a wrong one.
+constant attribute holds the model, and the formatter names its type. The
+formatter takes a class or a class name, so it also names the type of a
+polymorphic `*_type` column.
 
 ```ruby
 TYPES = {"User" => "users", "Post" => "posts"}.freeze
-formatter :type, ->(model) { TYPES.fetch(model.name) }
+formatter :type, ->(model) { TYPES.fetch(model.to_s) }
 
 attribute :type, const: User, format: :type
 # User => "users"
+
+attribute :commentable_type, format: :type
+# "Post" => "posts"
 ```
+
+`TYPES.fetch` raises `KeyError` for a model without a type, so a new model
+can't send a wrong one. The Hash keeps API type names apart from class names:
+renaming a model doesn't change the API, and `TYPES.invert` turns a type from
+a request back into a class name.
 
 ### Money (`:money`)
 
