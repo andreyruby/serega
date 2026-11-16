@@ -5,17 +5,35 @@ class Serega
   # Prepares provided attribute options
   #
   class SeregaAttributeNormalizer # :nodoc:
+    # Value of a lazy instance variable that is not prepared yet. The
+    # prepared value can be nil or false.
+    UNPREPARED = Object.new.freeze
+    private_constant :UNPREPARED
+
     # Attribute initial params
     attr_reader :init_name, :init_opts, :init_block
 
-    # Instantiates attribute options normalizer
+    # Instantiates attribute options normalizer. The readers prepare their
+    # values lazily and call each other in an order that depends on the
+    # options, thus every instance variable is declared here, and objects
+    # of this class share one shape.
     def initialize(serializer_class, initials)
       @serializer_class = serializer_class
       @init_name = initials[:name]
       @init_opts = initials[:opts]
       @init_block = initials[:block]
-      @method_name = nil
+      @name = nil
       @key = nil
+      @method_name = nil
+      @value_block = nil
+      @value_block_signature = nil
+      @batch_loaders = nil
+      @hide = UNPREPARED
+      @many = UNPREPARED
+      @serializer = UNPREPARED
+      @default = UNPREPARED
+      @preloads = UNPREPARED
+      @batch_option = UNPREPARED
     end
 
     # Attribute name, the serialized key as a Symbol
@@ -46,21 +64,21 @@ class Serega
 
     # Shows if attribute is specified to be hidden
     def hide
-      return @hide if instance_variable_defined?(:@hide)
+      return @hide unless UNPREPARED.equal?(@hide)
 
       @hide = prepare_hide
     end
 
     # Shows if attribute is specified to be a one-to-many relationship
     def many
-      return @many if instance_variable_defined?(:@many)
+      return @many unless UNPREPARED.equal?(@many)
 
       @many = prepare_many
     end
 
     # Shows specified attribute serializer
     def serializer
-      return @serializer if instance_variable_defined?(:@serializer)
+      return @serializer unless UNPREPARED.equal?(@serializer)
 
       @serializer = prepare_serializer
     end
@@ -78,14 +96,14 @@ class Serega
     #
     # When custom :default is not specified, we set empty array as default when `many: true` specified
     def default
-      return @default if instance_variable_defined?(:@default)
+      return @default unless UNPREPARED.equal?(@default)
 
       @default = prepare_default
     end
 
     # Preloads declared for this attribute, passed through as provided.
     def preloads
-      return @preloads if instance_variable_defined?(:@preloads)
+      return @preloads unless UNPREPARED.equal?(@preloads)
 
       @preloads = prepare_preloads
     end
@@ -221,7 +239,7 @@ class Serega
 
     # The parsed :batch option, `nil` without it
     def batch_option
-      return @batch_option if instance_variable_defined?(:@batch_option)
+      return @batch_option unless UNPREPARED.equal?(@batch_option)
 
       batch = init_opts[:batch]
       @batch_option = batch && AttributeNormalizers::Batch.new(batch, name)
