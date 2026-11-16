@@ -52,15 +52,6 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
-  describe "#check_selection=" do
-    it "validates value is boolean" do
-      expect { config.check_selection = false }.not_to raise_error
-      expect { config.check_selection = true }.not_to raise_error
-      expect { config.check_selection = nil }
-        .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
-    end
-  end
-
   describe "#deprecation_warnings" do
     it "is true by default" do
       expect(described_class.new.deprecation_warnings).to be true
@@ -323,7 +314,6 @@ RSpec.describe Serega::SeregaConfig do
         check_attribute_name
         require_many
         many
-        check_selection
         delegate_default_allow_nil
         max_cached_plans_per_serializer_count
         depth_limit
@@ -344,7 +334,6 @@ RSpec.describe Serega::SeregaConfig do
       expect(config.require_many).to be false
       expect(config.compact).to be false
       expect(config.key_transform).to be_nil
-      expect(config.check_selection).to be true
       expect(config.delegate_default_allow_nil).to be false
       expect(config.max_cached_plans_per_serializer_count).to eq 20
       expect(config.hide_by_default).to be false

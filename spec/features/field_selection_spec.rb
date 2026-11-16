@@ -414,16 +414,11 @@ RSpec.describe Serega do
     subject(:serializer) { user_serializer.new(**options) }
 
     let!(:user_serializer) do
-      check_selection = check_selection_config
-
       Class.new(Serega) do
-        config.check_selection = check_selection
-
         attribute :name
       end
     end
 
-    let(:check_selection_config) { true }
     let(:options) { {only: :name} }
 
     context "with a missing attribute in the field selection options" do
@@ -439,23 +434,6 @@ RSpec.describe Serega do
 
       it "raises an ArgumentError that names the option" do
         expect { serializer }.to raise_error ArgumentError, /foo/
-      end
-    end
-
-    context "when the config disables the validation" do
-      let(:check_selection_config) { false }
-      let(:options) { {only: :email} }
-
-      it "builds an empty plan" do
-        expect(serializer.plan.points).to be_empty
-      end
-    end
-
-    context "when the check_selection option disables the validation" do
-      let(:options) { {only: :email, check_selection: false} }
-
-      it "builds an empty plan" do
-        expect(serializer.plan.points).to be_empty
       end
     end
   end

@@ -9,20 +9,11 @@ class Serega
     # the plans.
     #
     class Cache # :nodoc:
-      # Cached plan, whether its parameters were validated, and the
-      # parameters as provided
-      CACHED_PLAN = Struct.new(:plan, :validated, :param1, :param2, :param3, :param4) do
+      # Cached plan and the parameters as provided
+      CACHED_PLAN = Struct.new(:plan, :param1, :param2, :param3, :param4) do
         # Whether the given parameters equal the cached ones
         def same_params?(param1, param2, param3, param4)
           param1.eql?(self.param1) && param2.eql?(self.param2) && param3.eql?(self.param3) && param4.eql?(self.param4)
-        end
-
-        # Validates the cached parameters with the planner, once
-        def validate(planner, serializer_class)
-          return if validated
-
-          planner.validate(serializer_class, planner.parse(serializer_class, param1, param2, param3, param4))
-          self.validated = true
         end
       end
       private_constant :CACHED_PLAN
@@ -46,18 +37,14 @@ class Serega
       # The plan without parameters is always cached; plans with parameters
       # are cached by parameters as provided when
       # `max_cached_plans_per_serializer_count` is positive. Parameters are
-      # parsed when a plan is built, and validated when
-      # `check_selection` is true, or nil with
-      # `config.check_selection` on.
-      def fetch(param1 = nil, param2 = nil, param3 = nil, param4 = nil, check_selection: nil)
+      # parsed and validated when a plan is built.
+      def fetch(param1 = nil, param2 = nil, param3 = nil, param4 = nil)
         return default_plan if param1.nil? && param2.nil? && param3.nil? && param4.nil?
 
-        config = @serializer_class.config
-        check_selection = config.check_selection if check_selection.nil?
-        max_size = config.max_cached_plans_per_serializer_count
-        return build(param1, param2, param3, param4, check_selection) if max_size.zero?
+        max_size = @serializer_class.config.max_cached_plans_per_serializer_count
+        return build(param1, param2, param3, param4) if max_size.zero?
 
-        cached_plan(param1, param2, param3, param4, max_size, check_selection)
+        cached_plan(param1, param2, param3, param4, max_size)
       end
 
       private
@@ -70,16 +57,13 @@ class Serega
       # Keeps plans by the key of the parameters, and compares each
       # parameter with the cached one. Parameters with the key of other
       # cached parameters replace them.
-      def cached_plan(param1, param2, param3, param4, max_size, check_selection)
+      def cached_plan(param1, param2, param3, param4, max_size)
         key = cache_key(param1, param2, param3, param4)
         cached = @plans[key]
-        if cached&.same_params?(param1, param2, param3, param4)
-          cached.validate(@planner, @serializer_class) if check_selection
-          return cached.plan
-        end
+        return cached.plan if cached&.same_params?(param1, param2, param3, param4)
 
-        plan = build(param1, param2, param3, param4, check_selection)
-        @plans[key] = CACHED_PLAN.new(plan, check_selection, *frozen_copy([param1, param2, param3, param4]))
+        plan = build(param1, param2, param3, param4)
+        @plans[key] = CACHED_PLAN.new(plan, *frozen_copy([param1, param2, param3, param4]))
         @plans.shift if @plans.length > max_size
         plan
       end
@@ -103,11 +87,11 @@ class Serega
         # rubocop:enable Security/CompoundHash
       end
 
-      def build(param1, param2, param3, param4, check_selection)
+      def build(param1, param2, param3, param4)
         params = @planner.parse(@serializer_class, param1, param2, param3, param4)
         return default_plan if @planner.empty?(params)
 
-        @planner.validate(@serializer_class, params) if check_selection
+        @planner.validate(@serializer_class, params)
         @planner.plan(@serializer_class, params)
       end
 
