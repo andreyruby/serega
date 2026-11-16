@@ -8,7 +8,9 @@ Steps to release a new version:
    bundle exec rake rdoc:coverage && bundle exec rbs -I sig validate && bundle exec steep check
    ```
 
-2. Run and fix all warnings
+2. Update version number in VERSION file, before the bundles record it
+
+3. Run and fix all warnings
 
    ```bash
    pip3 install codespell && \
@@ -19,10 +21,9 @@ Steps to release a new version:
    bundle exec rspec && \
    bundle exec rake benchmarks:check && \
    bundle exec rubocop -A && \
-   codespell --skip="./sig,./doc,./coverage"
+   codespell --skip="./sig,./doc,./coverage" && \
+   bundle exec rake release:lockfiles
    ```
-
-3. Update version number in VERSION file
 
 4. Checkout to new release branch
 
@@ -36,7 +37,7 @@ Steps to release a new version:
    gem build serega.gemspec
    ```
 
-6. Run final validation (repeat step 2)
+6. Run final validation (repeat step 3)
 
 7. Validate documentation
 
