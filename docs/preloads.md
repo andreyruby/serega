@@ -33,6 +33,17 @@ The `:preload` value is passed to the preload handler as is: a Symbol, Array,
 Hash, or any value your handler understands. `preload: false` and
 `preload: nil` disable preloading for the attribute.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [ActiveRecord](#activerecord)
+- [Automatic preloads](#automatic-preloads)
+- [Expensive fields on request](#expensive-fields-on-request)
+- [Custom preloading](#custom-preloading)
+
+<!-- tocstop -->
+
 ## ActiveRecord
 
 `plugin :activerecord_preloads` loads the preloads with

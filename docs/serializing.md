@@ -35,6 +35,16 @@ UserSerializer.to_h(user, **options)
 An unknown option raises `ArgumentError`. With `plugin :root` or
 `plugin :context_metadata`, it raises `Serega::SeregaError`.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [JSON](#json)
+- [Struct and Data results](#struct-and-data-results)
+- [Reusing a serializer](#reusing-a-serializer)
+
+<!-- tocstop -->
+
 ## JSON
 
 `.to_json` returns a JSON String: `JSON.generate` of the `.to_h` result. It

@@ -16,6 +16,16 @@ defined, so a later change to `auto_preload`, `hide_by_default`,
 `key_transform`, `batch_id_option` or `base_serializer` affects only attributes
 defined after it.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Options](#options)
+- [Depth limit](#depth-limit)
+- [Plan cache](#plan-cache)
+
+<!-- tocstop -->
+
 ## Options
 
 | Option | Default | Description |

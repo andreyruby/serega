@@ -11,6 +11,16 @@
 > `config.deprecation_warnings = false` before the `plugin` call, or once on
 > `Serega` itself before the serializers load.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Root key](#root-key)
+- [Metadata](#metadata)
+- [Metadata per serialization](#metadata-per-serialization)
+
+<!-- tocstop -->
+
 ## Root key
 
 `plugin :root` wraps results in a root key, `:data` by default.

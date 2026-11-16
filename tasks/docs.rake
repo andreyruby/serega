@@ -2,8 +2,11 @@
 
 # Table of contents generation and link checking for the documentation files.
 module DocsTasks
-  # Files with a generated table of contents, and the deepest heading level included
-  TOC_FILES = {"CHEATSHEET.md" => 2, "docs/responses.md" => 3}.freeze
+  # Guides index, which is a list of links itself
+  GUIDES_INDEX = "docs/README.md"
+
+  # Sections a guide needs for a table of contents
+  TOC_MIN_SECTIONS = 2
 
   # Files checked for broken links
   LINK_FILES = (%w[README.md CHEATSHEET.md CHANGELOG.md RELEASE.md] + Dir["docs/*.md"].sort).freeze
@@ -13,6 +16,18 @@ module DocsTasks
   TOC_END = "<!-- tocstop -->"
 
   class << self
+    # Files with a generated table of contents: the cheatsheet, and every guide
+    # with at least TOC_MIN_SECTIONS sections
+    #
+    # @return [Hash{String => Integer}] Files with the deepest heading level included
+    def toc_files
+      guides = (Dir["docs/*.md"].sort - [GUIDES_INDEX]).select do |file|
+        headings(File.read(file)).count { |level, _title| level == 2 } >= TOC_MIN_SECTIONS
+      end
+
+      {"CHEATSHEET.md" => 2}.merge(guides.to_h { |file| [file, 3] })
+    end
+
     # Headings outside fenced code blocks
     #
     # @param text [String] File contents
@@ -118,7 +133,7 @@ end
 namespace :docs do
   desc "Write the table of contents into the documentation files"
   task :toc do
-    DocsTasks::TOC_FILES.each do |file, max_level|
+    DocsTasks.toc_files.each do |file, max_level|
       text = File.read(file)
       toc = DocsTasks.build_toc(text, max_level)
       File.write(file, DocsTasks.replace_toc(text, toc))
@@ -130,7 +145,7 @@ namespace :docs do
   task :check do
     errors = []
 
-    DocsTasks::TOC_FILES.each do |file, max_level|
+    DocsTasks.toc_files.each do |file, max_level|
       text = File.read(file)
       current = DocsTasks.current_toc(text)
       if current.nil?

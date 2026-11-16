@@ -16,6 +16,20 @@ UserSerializer.to_h(user, context: {admin: true})
 # => {email: "bruce@wayne.com", phone: "555-0100", role: "admin", rating: 5}
 ```
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Conditions](#conditions)
+- [Order of checks](#order-of-checks)
+- [Relations](#relations)
+- [Conditions that load data](#conditions-that-load-data)
+- [Skipped attributes in results](#skipped-attributes-in-results)
+- [Leaving out nil values](#leaving-out-nil-values)
+- [Errors](#errors)
+
+<!-- tocstop -->
+
 ## Conditions
 
 A condition is one of:

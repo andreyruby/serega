@@ -12,6 +12,35 @@ end
 UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
 ```
 
+## Table of Contents
+
+<!-- toc -->
+
+- [All options](#all-options)
+- [Base serializer](#base-serializer)
+- [Locked serializers](#locked-serializers)
+- [Attribute values](#attribute-values)
+   - [`:method`](#method)
+   - [`:value`](#value)
+   - [`:delegate`](#delegate)
+   - [`:const`](#const)
+   - [`:default`](#default)
+   - [Other sources](#other-sources)
+- [Hidden attributes](#hidden-attributes)
+- [Relations](#relations)
+   - [`:serializer`](#serializer)
+   - [`:many`](#many)
+   - [`:preset`](#preset)
+   - [`:only`, `:with`, `:except`](#only-with-except)
+   - [`:preload`](#preload)
+- [Nested serializers defined with a block](#nested-serializers-defined-with-a-block)
+- [Conditions and formatting](#conditions-and-formatting)
+- [Attribute names](#attribute-names)
+   - [Key transformation](#key-transformation)
+- [Listing attributes](#listing-attributes)
+
+<!-- tocstop -->
+
 ## All options
 
 | Option | Purpose |
