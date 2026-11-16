@@ -36,7 +36,7 @@ class Serega
   # # => Serega::PresetNotExist: Preset :admin is not defined in UserSerializer
   # ```
   #
-  # See [Presets](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md#presets).
+  # See [Presets](https://github.com/andreyruby/serega/blob/master/docs/presets.md).
   class PresetNotExist < SeregaError
     # Serializer that has no such preset
     attr_reader :serializer
@@ -60,7 +60,7 @@ class Serega
   # # => Serega::DepthLimitError: Depth limit was exceeded
   # ```
   #
-  # See [Depth limit](https://github.com/andreyruby/serega/blob/master/docs/configuration.md#depth-limit).
+  # See [Limiting nesting depth](https://github.com/andreyruby/serega/blob/master/docs/relations.md#limiting-nesting-depth).
   class DepthLimitError < SeregaError
     # Path that exceeds the limit or closes the cycle, and on the next line a hint:
     #

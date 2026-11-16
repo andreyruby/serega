@@ -17,8 +17,8 @@ UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
 <!-- toc -->
 
 - [All options](#all-options)
-- [Base serializer](#base-serializer)
-- [Locked serializers](#locked-serializers)
+- [Shared config in a base serializer](#shared-config-in-a-base-serializer)
+- [Configure before the first serialization](#configure-before-the-first-serialization)
 - [Attribute values](#attribute-values)
    - [`:method`](#method)
    - [`:value`](#value)
@@ -28,15 +28,8 @@ UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
    - [Other sources](#other-sources)
 - [Hidden attributes](#hidden-attributes)
 - [Relations](#relations)
-   - [`:serializer`](#serializer)
-   - [`:many`](#many)
-   - [`:preset`](#preset)
-   - [`:only`, `:with`, `:except`](#only-with-except)
-   - [`:preload`](#preload)
-- [Nested serializers defined with a block](#nested-serializers-defined-with-a-block)
 - [Conditions and formatting](#conditions-and-formatting)
 - [Attribute names](#attribute-names)
-   - [Key transformation](#key-transformation)
 - [Listing attributes](#listing-attributes)
 
 <!-- tocstop -->
@@ -53,16 +46,16 @@ UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
 | `batch` | [Load values for all objects at once](batch-loading.md) |
 | `hash_access` | [Read Hash keys](hash-records.md) |
 | `hide` | [Exclude unless requested](#hidden-attributes) |
-| `serializer` | [Serialize with another serializer](#serializer) |
-| `many` | [Mark a list](#many) |
-| `preset` | [Serialize the fields of a preset of the relation](#preset) |
-| `only`, `with`, `except` | [Select the fields of the relation](#only-with-except) |
-| `preload` | [Preload associations](#preload) |
-| `base_serializer` | [Base of a block-defined serializer](#nested-serializers-defined-with-a-block) |
+| `serializer` | [Serialize with another serializer](relations.md#serializer) |
+| `many` | [Mark a list](relations.md#many) |
+| `preset` | [Serialize the fields of a preset of the relation](relations.md#preset) |
+| `only`, `with`, `except` | [Select the fields of the relation](relations.md#only-with-except) |
+| `preload` | [Preload associations](relations.md#preload) |
+| `base_serializer` | [Base of a block-defined serializer](relations.md#nested-serializers-defined-with-a-block) |
 | `if`, `unless`, `if_value`, `unless_value` | [Conditional attributes](conditional-attributes.md) |
 | `format` | [Format the value](formatters.md) |
 
-## Base serializer
+## Shared config in a base serializer
 
 Define one base serializer with the plugins and config your app uses. Every
 serializer inherits plugins, config and attributes from its superclass.
@@ -83,7 +76,7 @@ class CommentSerializer < AppSerializer
 end
 ```
 
-## Locked serializers
+## Configure before the first serialization
 
 Configure a serializer fully before it serializes anything. A serializer is
 locked after its first serialization, directly or as a nested serializer.
@@ -196,138 +189,12 @@ UserSerializer.to_h(user, with: :last_name) # => {first_name: "Bruce", last_name
 
 ## Relations
 
-### `:serializer`
-
-Serializes the value with another serializer. Use a String or a Proc when
-serializers refer to each other.
-
-```ruby
-attribute :posts, serializer: PostSerializer
-attribute :posts, serializer: "PostSerializer"
-attribute :posts, serializer: -> { PostSerializer }
-# => {posts: [{title: "Gotham at night"}]}
-```
-
-### `:many`
-
-Serega serializes a value as a list when it is an `Enumerable`, except `Hash`
-and `Struct`. `many: true` marks a list explicitly and serializes `nil` as
-`[]`.
+An attribute with `:serializer`, or with a block, serializes its value with
+another serializer. See [Relations](relations.md).
 
 ```ruby
 attribute :posts, serializer: PostSerializer, many: true
-# => {posts: []} when user.posts is nil
 ```
-
-`config.require_many = true` requires `:many` on every relation, an
-attribute with `:serializer` or a block. A relation without `:many` raises
-`Serega::SeregaError`.
-
-```ruby
-class AppSerializer < Serega
-  config.require_many = true
-  config.base_serializer = self
-end
-
-class PostSerializer < AppSerializer
-  attribute :comments, serializer: CommentSerializer, many: true
-  attribute :author, many: false do
-    attribute :name
-  end
-end
-```
-
-### `:preset`
-
-Serializes the fields of a preset of the relation serializer by default. The
-options of the call merge with the preset. See [Preset on a relation](selecting-fields.md#preset-on-a-relation).
-
-```ruby
-attribute :posts, serializer: PostSerializer, many: true, preset: :summary
-# => {posts: [{id: 1, title: "Gotham at night"}]}
-```
-
-### `:only`, `:with`, `:except`
-
-Select the fields of the relation by default, like the same options of a
-call. See [Field selection options of a relation](selecting-fields.md#field-selection-options-of-a-relation).
-
-```ruby
-attribute :posts, serializer: PostSerializer, many: true, only: [:id, :title]
-# => {posts: [{id: 1, title: "Gotham at night"}]}
-```
-
-### `:preload`
-
-Names the associations to preload for the value, so the value is read without
-N+1 queries. See [Preloads](preloads.md).
-
-```ruby
-attribute :email, preload: :emails, value: proc { |user| user.emails.find(&:verified?) }
-```
-
-## Nested serializers defined with a block
-
-A block defines an anonymous nested serializer for the attribute value. The
-value is found as usual, by the attribute name or the `:method`, `:value`,
-`:delegate` or `:batch` option.
-
-```ruby
-class UserSerializer < AppSerializer
-  attribute :first_name
-
-  # user.profile
-  attribute :profile do
-    attribute :city
-  end
-
-  # The user itself, with only its counters
-  attribute :statistics, method: :itself do
-    attribute :likes_count
-    attribute :comments_count
-  end
-end
-
-UserSerializer.to_h(user)
-# => {first_name: "Bruce", profile: {city: "Gotham"}, statistics: {likes_count: 10, comments_count: 3}}
-```
-
-The nested serializer is a subclass of a base serializer, set with
-`config.base_serializer` or the `base_serializer:` attribute option. The
-attribute option takes precedence. An attribute block raises
-`Serega::SeregaError` when neither is set.
-
-```ruby
-attribute :statistics, method: :itself, base_serializer: StatisticsSerializer do
-  attribute :likes_count
-end
-```
-
-The nested serializer inherits everything from its base serializer: plugins,
-config, attributes, batch loaders and the preload handler. Anything else can be
-declared inside the block:
-
-```ruby
-attribute :statistics, method: :itself do
-  batch :statistics, ->(users) { Statistics.for_users(users) } # => {user_id => statistics}
-
-  attribute :likes_count, batch: :statistics,
-    value: proc { |user, batches:| batches[:statistics][user.id].likes }
-end
-```
-
-Good to know:
-
-- The nested serializer is created when the attribute is defined. Later
-  changes to the base serializer do not reach it.
-- With a [presenter](presenter.md), `method: :itself` serializes the presenter.
-  `method: :__getobj__` serializes the original object.
-- Errors name the nested serializer and the line where the attribute is
-  defined:
-
-  ```text
-  (when serializing the 'likes_count' attribute in UserSerializer.<statistics>, app/serializers/user_serializer.rb:12)
-  ```
 
 ## Conditions and formatting
 
@@ -355,37 +222,7 @@ attribute :firstName, method: :first_name
 # => {firstName: "Bruce"}
 ```
 
-### Key transformation
-
-`config.key_transform` changes the names of the attributes defined after it.
-Set it in a base serializer to change the keys of all serializers:
-
-```ruby
-class AppSerializer < Serega
-  config.key_transform = :camel_case
-end
-
-class UserSerializer < AppSerializer
-  attribute :first_name
-end
-
-UserSerializer.to_h(user)                   # => {firstName: "Bruce"}
-UserSerializer.to_h(user, only: :firstName) # => {firstName: "Bruce"}
-```
-
-A callable receives the name as a Symbol and returns the key. A String key
-stays a String in the serialized Hash:
-
-```ruby
-config.key_transform = ->(name) { name.to_s.camelize(:lower) } # ActiveSupport
-# => {"firstName" => "Bruce"}
-```
-
-The new name is the key as a Symbol: `.attributes`, `only:`, `except:`, `with:`
-and the members of `.to_struct` and `.to_data` use it. The keys of the `:root`,
-`:metadata` and `:context_metadata` plugins stay as they are. The
-transformation runs once, when an attribute is defined, thus it costs nothing
-during serialization.
+For camelCase keys in every serializer, see [camelCase Keys](camel-case.md).
 
 ## Listing attributes
 

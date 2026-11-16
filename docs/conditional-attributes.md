@@ -22,11 +22,11 @@ UserSerializer.to_h(user, context: {admin: true})
 
 - [Conditions](#conditions)
 - [Order of checks](#order-of-checks)
-- [Relations](#relations)
+- [Conditions on relations](#conditions-on-relations)
 - [Conditions that load data](#conditions-that-load-data)
 - [Skipped attributes in results](#skipped-attributes-in-results)
 - [Leaving out nil values](#leaving-out-nil-values)
-- [Errors](#errors)
+- [Finding a failing condition](#finding-a-failing-condition)
 
 <!-- tocstop -->
 
@@ -54,7 +54,7 @@ checked after.
 `:unless` is checked only when `:if` passes, and `:unless_value` only when
 `:if_value` passes.
 
-## Relations
+## Conditions on relations
 
 `:if` and `:unless` skip a relation before its related objects are
 serialized. `:if_value` and `:unless_value` check the serialized relation
@@ -71,6 +71,9 @@ end
 UserSerializer.to_h(user) # a user without posts and avatar
 # => {}
 ```
+
+Without a condition, a relation keeps its key: a `nil` related object
+serializes as `{avatar: nil}`, and `many: true` serializes `nil` as `[]`.
 
 ## Conditions that load data
 
@@ -149,7 +152,7 @@ A nested serializer follows its own config: one without `compact` keeps its
 `nil` values. Empty Strings, Arrays and Hashes stay, and `nil` items inside an
 Array stay too. `.to_struct` and `.to_data` keep `nil` members.
 
-## Errors
+## Finding a failing condition
 
 An error raised by a condition names the condition and the line where the
 attribute is defined:

@@ -5,7 +5,8 @@ see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET
 
 ## Basics
 
-- [Attributes](attributes.md) — define serializers, attributes and relations
+- [Attributes](attributes.md) — define serializers and attributes
+- [Relations](relations.md) — nested serializers, `:many`, depth limit
 - [Serializing](serializing.md) — `to_h`, `to_struct`, `to_data`
 - [Response Serializers](responses.md) — wrap results in `{data: ..., meta: ...}`
   with a serializer
@@ -14,10 +15,12 @@ see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET
 - [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metadata.md)
   — replace the deprecated plugins with a response serializer
 - [Selecting Fields](selecting-fields.md) — `:only`, `:except`, `:with`
+- [Presets](presets.md) — named field selections, also on relations
 - [Context](context.md) — pass `current_user` and other request data
 - [Conditional Attributes](conditional-attributes.md) — `:if`, `:unless`,
   `:if_value`, `:unless_value`
 - [Formatters](formatters.md) — format dates, money and other values
+- [camelCase Keys](camel-case.md) — `firstName` keys from `first_name` attributes
 
 ## Loading data without N+1
 

@@ -12,7 +12,9 @@ UserSerializer.to_h(user)
 UserSerializer.to_h([user])
 # => [{username: "batman", posts: [{title: "Gotham at night"}]}]
 
-UserSerializer.to_h(nil) # => nil
+UserSerializer.to_h(nil)    # => nil
+UserSerializer.to_h([])     # => []
+UserSerializer.to_json(nil) # => "null"
 ```
 
 `.call` is an alias of `.to_h`. Both accept the [field
@@ -42,6 +44,7 @@ An unknown option raises `ArgumentError`. With `plugin :root` or
 - [JSON](#json)
 - [Struct and Data results](#struct-and-data-results)
 - [Reusing a serializer](#reusing-a-serializer)
+- [Plan cache](#plan-cache)
 
 <!-- tocstop -->
 
@@ -95,6 +98,14 @@ serializer.to_h(user, many: false)
 serializer.to_json(users, context: {current_user: current_user})
 ```
 
-Class methods cache plans too: `config.max_cached_plans_per_serializer_count`
-keeps up to 20 plans per serializer by default. See
-[Configuration](configuration.md).
+Class methods cache plans too, see [Plan cache](#plan-cache).
+
+## Plan cache
+
+A serialization plan lists the fields to serialize. Serega caches plans by the
+`:only`, `:except` and `:with` options as given, so `[:id, :name]` and
+`"id,name"` are cached separately. The plan without these options is always
+cached.
+
+Class methods keep up to `config.max_cached_plans_per_serializer_count` plans
+per serializer, 20 by default. See [Configuration](configuration.md).

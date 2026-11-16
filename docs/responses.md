@@ -184,7 +184,7 @@ end
 ```
 
 - Build response serializers once, in constants. Each factory call builds a
-  new class with its own [plan cache](configuration.md#plan-cache), thus a call
+  new class with its own [plan cache](serializing.md#plan-cache), thus a call
   per request builds the class and its plans again.
 - A constant names the class, so errors show `UsersController::INDEX_SERIALIZER`.
 - The scope is one object: serialize it with `many: false`, see

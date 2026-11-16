@@ -31,15 +31,17 @@ run.
 
 - [Defining loaders](#defining-loaders)
 - [Using loaders](#using-loaders)
-- [Building the value](#building-the-value)
-- [Object ids](#object-ids)
-- [Relations](#relations)
+- [Defaults and combined loaders](#defaults-and-combined-loaders)
+- [Records without an `id`](#records-without-an-id)
+- [Loading relations in batches](#loading-relations-in-batches)
 
 <!-- tocstop -->
 
 ## Defining loaders
 
-`batch` defines a named loader. Child serializers inherit it.
+`batch` defines a named loader. Child serializers inherit it, and a child
+that defines a loader with the same name uses its own, while the parent keeps
+the original.
 
 ```ruby
 class UserSerializer < Serega
@@ -69,7 +71,19 @@ end
 `batch: true` and `batch: :name` raise `Serega::SeregaError` when no loader
 with that name is defined.
 
-## Building the value
+Several attributes can use one loader. It runs once per serialization for all
+of them:
+
+```ruby
+class UserSerializer < Serega
+  batch :stats, ->(users) { UserStats.where(user: users).index_by(&:user_id) }
+
+  attribute :likes_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id].likes }
+  attribute :views_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id].views }
+end
+```
+
+## Defaults and combined loaders
 
 `:value` builds the value from the loaded batches, for example to set a default
 or combine several loaders. A loader given directly to the attribute is found
@@ -86,7 +100,7 @@ attribute :likes_count, batch: {use: [:facebook_likes, :x_likes]},
 Several loaders in `:use` require `:value`. For a simple fallback,
 [`default:`](attributes.md#default) also works: `batch: true, default: 0`.
 
-## Object ids
+## Records without an `id`
 
 Values are looked up by `object.id`. The `:id` option or
 `config.batch_id_option` choose another method:
@@ -99,7 +113,7 @@ class AppSerializer < Serega
 end
 ```
 
-## Relations
+## Loading relations in batches
 
 A loader can return records for a relation serializer:
 
@@ -111,4 +125,6 @@ class UserSerializer < Serega
 end
 ```
 
-For ActiveRecord associations, [preloads](preloads.md) are usually simpler.
+The [preloads](preloads.md) of `PostSerializer` run for the loaded posts, so a
+level can load with a batch and the next with preloads. For ActiveRecord
+associations, preloads alone are usually simpler.
