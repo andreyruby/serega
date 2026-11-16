@@ -22,8 +22,10 @@ RSpec.describe Serega::SeregaValidations::Attribute::CheckBlock do
       .to raise_error Serega::SeregaError, described_class::ERROR_MESSAGE
   end
 
-  it "explains the changed block behavior in the error message" do
-    expect(described_class::ERROR_MESSAGE).to include "defines a nested serializer"
-    expect(described_class::ERROR_MESSAGE).to include "use the `value: <callable>` option instead"
+  it "hints the :value option in the error message" do
+    expect(described_class::ERROR_MESSAGE).to eq <<~MESSAGE.chomp
+      Attribute block defines a nested serializer and must define its attributes
+      (hint: to compute the attribute value, use the `value: <callable>` option)
+    MESSAGE
   end
 end

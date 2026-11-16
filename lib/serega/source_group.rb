@@ -108,7 +108,7 @@ class Serega
 
       points.each do |point|
         unless handler
-          raise SeregaError, "The :preload option requires a preload handler. Register one with `preload_with` (the :activerecord_preloads plugin does this for you)."
+          raise SeregaError, "The :preload option requires a preload handler\n(hint: register one with `preload_with`, or load the :activerecord_preloads plugin)"
         end
 
         handler.call(sources, point.preloads)

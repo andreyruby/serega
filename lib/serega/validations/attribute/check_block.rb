@@ -10,14 +10,11 @@ class Serega
       # Attribute `block` parameter validator
       #
       class CheckBlock # :nodoc:
-        # Explains the changed attribute block behavior. Shown when the block
-        # looks like an old-style value block — it accepts parameters or
-        # defines no attributes.
+        # Error of a block that looks like a value block: it accepts
+        # parameters or defines no attributes.
         ERROR_MESSAGE =
-          "Attribute block now defines a nested serializer:" \
-          " it is executed in the context of a new serializer class and must define its attributes." \
-          " Defining the attribute value with a block is not supported anymore," \
-          " use the `value: <callable>` option instead."
+          "Attribute block defines a nested serializer and must define its attributes\n" \
+          "(hint: to compute the attribute value, use the `value: <callable>` option)"
 
         class << self
           # Checks block parameter provided with attribute.

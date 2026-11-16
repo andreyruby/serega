@@ -22,9 +22,8 @@ class Serega
             return unless opts.key?(:delegate)
 
             raise SeregaError,
-              "Option :hash_access can not be used together with option :delegate." \
-              " Use the delegate :to_hash_access (intermediate step) and" \
-              " :hash_access (final step) sub-options instead"
+              "Option :hash_access can not be used together with option :delegate\n" \
+              "(hint: use the :to_hash_access and :hash_access sub-options of :delegate)"
           end
         end
       end

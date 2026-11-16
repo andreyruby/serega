@@ -59,7 +59,7 @@ class Serega
     rescue *RACTOR_ISOLATION_ERRORS
       raise if serializer_class.shareable?
 
-      raise SeregaError, "#{serializer_class} can not serialize in other Ractors. Call `make_shareable!` at the end of its definition"
+      raise SeregaError, "#{serializer_class} can not serialize in other Ractors\n(hint: call `make_shareable!` at the end of its definition)"
       # :nocov:
     end
 
