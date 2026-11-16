@@ -39,11 +39,11 @@ Serializers::Responses::Users::Index.to_h(users, many: false, context: {request_
 ```
 
 - `plugin :root`: the `data` attribute, or an attribute named like the root key.
-- `root_one:` and `root_many:`: the `show` and `index` factories of
-  [step 6](responses.md#6-add-a-response-factory), or one response serializer each.
+- `root_one:` and `root_many:`: `Response.one` and `Response.list` of
+  [step 3](responses.md#3-add-a-common-response-shape), or one response serializer each.
 - `to_h(user, root: nil)`: serialize with the record serializer itself.
 - `meta_attribute :meta, :paging do |records, ctx| ... end`: a meta
-  serializer with a `paging` attribute, see [step 5](responses.md#5-describe-meta).
+  serializer with a `paging` attribute, see [step 2](responses.md#2-describe-meta).
 - `hide_nil: true`: `unless_value: :nil?`, see
   [Conditional Attributes](conditional-attributes.md).
 - `meta:` of `plugin :context_metadata`: the [context](context.md), read in an
