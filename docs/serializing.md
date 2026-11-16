@@ -12,7 +12,9 @@ UserSerializer.to_h(user)
 UserSerializer.to_h([user])
 # => [{username: "batman", posts: [{title: "Gotham at night"}]}]
 
-UserSerializer.to_h(nil) # => nil
+UserSerializer.to_h(nil)    # => nil
+UserSerializer.to_h([])     # => []
+UserSerializer.to_json(nil) # => "null"
 ```
 
 `.call` is an alias of `.to_h`. Both accept the [field

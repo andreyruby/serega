@@ -72,6 +72,9 @@ UserSerializer.to_h(user) # a user without posts and avatar
 # => {}
 ```
 
+Without a condition, a relation keeps its key: a `nil` related object
+serializes as `{avatar: nil}`, and `many: true` serializes `nil` as `[]`.
+
 ## Conditions that load data
 
 A condition runs once per object, thus a query inside it runs once per object

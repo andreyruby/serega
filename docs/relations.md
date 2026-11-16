@@ -56,6 +56,7 @@ and `Struct`. `many: true` marks a list explicitly and serializes `nil` as
 ```ruby
 attribute :posts, serializer: PostSerializer, many: true
 # => {posts: []} when user.posts is nil
+# => {posts: [{title: "Gotham at night"}]} when user.posts is one post
 ```
 
 `config.require_many = true` requires `:many` on every relation, an

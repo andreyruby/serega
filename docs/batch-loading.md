@@ -39,7 +39,9 @@ run.
 
 ## Defining loaders
 
-`batch` defines a named loader. Child serializers inherit it.
+`batch` defines a named loader. Child serializers inherit it, and a child
+that defines a loader with the same name uses its own, while the parent keeps
+the original.
 
 ```ruby
 class UserSerializer < Serega
@@ -68,6 +70,18 @@ end
 
 `batch: true` and `batch: :name` raise `Serega::SeregaError` when no loader
 with that name is defined.
+
+Several attributes can use one loader. It runs once per serialization for all
+of them:
+
+```ruby
+class UserSerializer < Serega
+  batch :stats, ->(users) { UserStats.where(user: users).index_by(&:user_id) }
+
+  attribute :likes_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id].likes }
+  attribute :views_count, batch: :stats, value: proc { |user, batches:| batches[:stats][user.id].views }
+end
+```
 
 ## Defaults and combined loaders
 
@@ -111,4 +125,6 @@ class UserSerializer < Serega
 end
 ```
 
-For ActiveRecord associations, [preloads](preloads.md) are usually simpler.
+The [preloads](preloads.md) of `PostSerializer` run for the loaded posts, so a
+level can load with a batch and the next with preloads. For ActiveRecord
+associations, preloads alone are usually simpler.

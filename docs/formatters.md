@@ -19,7 +19,9 @@ OrderSerializer.to_h(order, context: {currency: "EUR"})
 # => {created_at: "2026-10-18T12:30:15.000Z", total_cents: "19.99 EUR"}
 ```
 
-Child serializers get the formatters of their parents.
+Child serializers get the formatters of their parents. Define a formatter
+before the attributes that use it: `format: :money` with no `:money`
+formatter defined yet raises `Serega::SeregaError`.
 
 ## Table of Contents
 
@@ -41,6 +43,9 @@ class AppSerializer < Serega
 
   # A method name with arguments: value.iso8601(3)
   formatter :iso8601, [:iso8601, 3]
+
+  # An operator is a method too: value * 100
+  formatter :percent, [:*, 100]
 
   # A callable with the value
   formatter :yes_no, ->(value) { value ? "yes" : "no" }
