@@ -35,6 +35,7 @@ defined after it.
 | `check_selection` | `true` | Raises on unknown fields in `:only`, `:except`, `:with` |
 | `max_cached_plans_per_serializer_count` | `20` | Serialization plans cached per serializer, `0` disables the cache |
 | `depth_limit` | `nil` | Deepest nesting of serialized fields, see [Depth limit](#depth-limit) |
+| `deprecation_warnings` | `true` | Warns when a [deprecated plugin][root-metadata] loads |
 
 ## Depth limit
 
@@ -106,4 +107,5 @@ cached.
 [Root Key and Metadata](root-and-metadata.md).
 
 [automatic-preloads]: preloads.md#automatic-preloads
+[root-metadata]: root-and-metadata.md
 [block-serializers]: attributes.md#nested-serializers-defined-with-a-block

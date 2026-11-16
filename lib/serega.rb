@@ -136,19 +136,22 @@ class Serega
 
     #
     # Turns on a built-in feature by name, with its options. Subclasses get it
-    # too.
+    # too. The deprecated `:root`, `:metadata` and `:context_metadata` plugins
+    # print a warning, unless `config.deprecation_warnings` is `false`.
     #
     # ```ruby
-    # plugin :root, root_one: :user, root_many: :users
+    # plugin :activerecord_preloads
     # ```
     #
-    # See [Root Key and Metadata](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md).
+    # See [Preloads](https://github.com/andreyruby/serega/blob/master/docs/preloads.md).
     #
     def plugin(name, **opts)
       check_unlocked
       raise SeregaError, "This plugin is already loaded" if plugin_used?(name)
 
       plugin = SeregaPlugins.find(name)
+      deprecation = config.deprecation_warnings && SeregaPlugins.deprecation_warning(self, name)
+      warn(deprecation, uplevel: 1) if deprecation
       plugin.apply(self, **opts)
       config.plugins << name
 

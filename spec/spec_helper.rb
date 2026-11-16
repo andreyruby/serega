@@ -29,6 +29,9 @@ end
 
 require "serega"
 
+# Specs load the deprecated plugins; the specs of the warning turn it on again
+Serega.config.deprecation_warnings = false
+
 def load_plugin_code(*names)
   serializer_class = Class.new(Serega)
   names.each { |name| serializer_class.plugin(name) }

@@ -5,6 +5,9 @@
 - A response serializer with `data` and `meta` attributes replaces the
   deprecated `:root` and `:metadata` plugins. See
   [Response Serializers](docs/responses.md).
+- Loading the `:root`, `:metadata` or `:context_metadata` plugin prints a
+  deprecation warning; `config.deprecation_warnings = false` hides it. See
+  [Root Key and Metadata](docs/root-and-metadata.md).
 - The gem includes the guides in `docs/`, so they can be read in the
   installed gem, next to README.md. See [Guides](docs/README.md).
 

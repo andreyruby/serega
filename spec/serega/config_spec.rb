@@ -40,6 +40,21 @@ RSpec.describe Serega::SeregaConfig do
     end
   end
 
+  describe "#deprecation_warnings" do
+    it "is true by default" do
+      expect(described_class.new.deprecation_warnings).to be true
+    end
+  end
+
+  describe "#deprecation_warnings=" do
+    it "validates value is boolean" do
+      expect { config.deprecation_warnings = false }.not_to raise_error
+      expect { config.deprecation_warnings = true }.not_to raise_error
+      expect { config.deprecation_warnings = nil }
+        .to raise_error Serega::SeregaError, "Must have boolean value, #{nil.inspect} provided"
+    end
+  end
+
   describe "#compact=" do
     it "validates value is boolean" do
       expect { config.compact = false }.not_to raise_error
@@ -298,6 +313,7 @@ RSpec.describe Serega::SeregaConfig do
         batch_id_option
         base_serializer
         hash_access
+        deprecation_warnings
       ]
 
       expect(config.plugins).to eq []

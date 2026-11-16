@@ -118,6 +118,9 @@ class Serega
       def compact: () -> bool
       def compact=: (bool value) -> bool
 
+      def deprecation_warnings: () -> bool
+      def deprecation_warnings=: (bool value) -> bool
+
       def key_transform: () -> (:camel_case | ^(Symbol) -> (Symbol | String) | nil)
       def key_transform=: (:camel_case | ^(Symbol) -> (Symbol | String) | nil value) -> (:camel_case | ^(Symbol) -> (Symbol | String) | nil)
 
