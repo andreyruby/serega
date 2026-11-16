@@ -125,11 +125,17 @@ attribute :current, value: proc { |user, ctx| user == ctx[:current_user] }
 attribute :current, value: proc { |user, ctx:| user == ctx[:current_user] }
 attribute :api_version, value: proc { 2 }
 attribute :full_name, value: FullName # FullName.call(user)
+attribute :link, value: UserLink.new # UserLink.new.call(user)
 ```
 
 The callable receives the object to serialize and, optionally, the
 [context](context.md) as a second parameter or the `:ctx` keyword. The
 `:batches` keyword gives the results of the attribute's [batch loaders](batch-loading.md).
+
+An existing callable class or instance needs no `proc` wrapper:
+`value: UserLink.new` replaces `value: proc { |user| UserLink.new.call(user) }`.
+The instance is built once, when the serializer is defined, and every
+serialization shares it, so it keeps no per-call state.
 
 ### `:delegate`
 
