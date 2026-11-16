@@ -169,12 +169,12 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(User.order(:id).limit(20))
+users = User.order(:id).limit(20)
+USERS_SERIALIZER.to_json(users)
 # SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
 # => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1"}}
 
-USERS_SERIALIZER.to_json(User.order(:id).limit(20), with: "data(posts)")
-# SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
+USERS_SERIALIZER.to_json(users, with: "data(posts)") # users are loaded already
 # SELECT "posts".* FROM "posts" WHERE "posts"."user_id" IN (1, 2, ...)
 # => {"data":[{"id":1,"name":"Bruce Wayne","posts":[{"id":1,"title":"Gotham"}]}],"meta":{"version":"1"}}
 ```
@@ -235,7 +235,8 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(User.order(:id).page(1).per(20), only: "meta")
+users = User.order(:id).page(1).per(20)
+USERS_SERIALIZER.to_json(users, only: "meta")
 # => {"meta":{"version":"1","paging":{"page":1,"per_page":20,"total_count":1,"total_pages":1}}}
 ```
 
@@ -297,7 +298,8 @@ Records loaded as Hashes read their keys with `hash_access`, see
 ### Controllers
 
 Controllers keep the response serializers in constants and render JSON with
-the [common context](#a-common-context):
+`json`, an `ApplicationController` method that adds the
+[common context](#a-common-context):
 
 ```ruby
 class UsersController < ApplicationController
@@ -306,11 +308,12 @@ class UsersController < ApplicationController
 
   def index
     users = User.order(:id).page(params[:page]).per(20)
-    render json: USERS_SERIALIZER.to_json(users, context: serialization_context)
+    render json: json(USERS_SERIALIZER, users)
   end
 
   def show
-    render json: USER_SERIALIZER.to_json(User.find(params[:id]), context: serialization_context)
+    user = User.find(params[:id])
+    render json: json(USER_SERIALIZER, user)
   end
 end
 ```
@@ -319,10 +322,16 @@ end
 
 Most responses need the same [context](context.md): the current user, the
 request id. Build it in one method of `ApplicationController`, as a serializer
-has no access to the request:
+has no access to the request. `json` serializes with it, and with the fields
+the request [selects](#selecting-fields) in its `only`, `with`, `except` and
+`preset` parameters:
 
 ```ruby
 class ApplicationController < ActionController::API
+  rescue_from Serega::AttributeNotExist, Serega::PresetNotExist do |error|
+    render json: {errors: [{source: "fields", title: error.message}]}, status: :bad_request
+  end
+
   private
 
   # The context of every response
@@ -331,6 +340,19 @@ class ApplicationController < ActionController::API
       request_id: request.request_id,
       current_user: proc { current_user } # found only when a serialized field reads it
     }
+  end
+
+  # JSON of the serializer with the fields of the request and the common
+  # context; `context:` adds to it
+  def json(serializer, object, context: {})
+    serializer.to_json(
+      object,
+      only: params[:only],
+      with: params[:with],
+      except: params[:except],
+      preset: params[:preset],
+      context: serialization_context.merge(context)
+    )
   end
 end
 ```
@@ -348,13 +370,19 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(users, context: serialization_context)
-# => {"data":[{"id":1,"name":"Bruce Wayne"},{"id":2,"name":"Alfred"}],"meta":{"version":"1","request_id":"f3a9"}}
-# The proc is not called, so the user is not found.
+```
 
-USERS_SERIALIZER.to_json(users, with: "data(editable)", context: serialization_context)
-# => {"data":[{"id":1,"name":"Bruce Wayne","editable":true},{"id":2,"name":"Alfred","editable":false}],
-#     "meta":{"version":"1","request_id":"f3a9"}}
+```text
+GET /users
+{"data":[{"id":1,"name":"Bruce Wayne"},{"id":2,"name":"Alfred"}],"meta":{"version":"1","request_id":"f3a9"}}
+The proc is not called, so the user is not found.
+
+GET /users?with=data(editable)
+{"data":[{"id":1,"name":"Bruce Wayne","editable":true},{"id":2,"name":"Alfred","editable":false}],
+ "meta":{"version":"1","request_id":"f3a9"}}
+
+GET /users?only=data(nickname)
+400 {"errors":[{"source":"fields","title":"Not existing attributes: data(nickname)"}]}
 ```
 
 A `:value` proc runs once per object, so the proc runs once per user. Rails
@@ -373,9 +401,9 @@ attribute :notice, value: proc { |_object, ctx| ctx[:notice] }, unless_value: :n
 attribute :alert, value: proc { |_object, ctx| ctx[:alert] }, unless_value: :nil?
 ```
 
-API-only apps have no flash, so the controller adds the messages to the
-common context itself: `context: serialization_context.merge(notice: "Users imported")`.
-Other apps add them to `serialization_context`:
+API-only apps have no flash, so the controller adds the messages itself:
+`json(USERS_SERIALIZER, users, context: {notice: "Users imported"})`. Other
+apps add them to `serialization_context`:
 `notice: flash[:notice], alert: flash[:alert]`.
 
 ### Validation errors
@@ -408,14 +436,15 @@ record, so actions don't check for errors. One handler in
 ```ruby
 class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordInvalid do |error|
-    render json: Serializers::Errors.to_json(error.record.errors), status: :unprocessable_entity
+    errors = error.record.errors
+    render json: Serializers::Errors.to_json(errors), status: :unprocessable_entity
   end
 end
 
 class UsersController < ApplicationController
   def create
     user = User.create!(user_params) # raises ActiveRecord::RecordInvalid for an invalid user
-    render json: USER_SERIALIZER.to_json(user, context: serialization_context), status: :created
+    render json: json(USER_SERIALIZER, user), status: :created
   end
 end
 ```
