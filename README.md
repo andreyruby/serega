@@ -192,6 +192,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - [Prepare initial objects](docs/prepare-initial-objects.md) — serialize records by ids
 - [Configuration](docs/configuration.md) — all config options
 - [Response serializers](docs/responses.md) — wrap results in `{data: ..., meta: ...}`
+- [Responses in Rails](docs/responses-rails.md) — controllers, ActiveRecord preloads, paging, errors
 
 ## Benchmarks
 

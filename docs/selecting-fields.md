@@ -111,6 +111,13 @@ UserSerializer.to_h(gru, only: "username,friends(username,email)")
 UserSerializer.to_h(users, only: params[:fields]) # all default fields when params[:fields] is nil
 ```
 
+Public APIs select fields from the root of the response the same way, also
+inside a list wrapper: Google APIs with
+[`fields=items(id,snippet(title))`](https://developers.google.com/youtube/v3/getting-started),
+Stripe with [`expand[]=data.customer`](https://docs.stripe.com/expand) and
+Mailchimp with
+[`fields=lists.name,lists.id`](https://mailchimp.com/developer/marketing/docs/methods-parameters/).
+
 ## Unknown fields
 
 An unknown field raises `Serega::AttributeNotExist`. Its `#serializer` and

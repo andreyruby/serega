@@ -9,6 +9,7 @@ see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET
 - [Relations](relations.md) — nested serializers, `:many`, depth limit
 - [Serializing](serializing.md) — `to_h`, `to_struct`, `to_data`
 - [Response Serializers](responses.md) — wrap results in `{data: ..., meta: ...}`
+- [Responses in Rails](responses-rails.md) — controllers, ActiveRecord preloads, paging, errors
   with a serializer
 - [Root Key and Metadata](root-and-metadata.md) — deprecated plugins, see
   Response Serializers
