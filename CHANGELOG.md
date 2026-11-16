@@ -2,10 +2,8 @@
 
 ## [Unreleased]
 
-- Errors put their advice on a `(hint: ...)` line, as the depth limit errors
-  do: serializing in other Ractors, `:preload` without a preload handler, an
-  attribute block without a base serializer or without attributes, and
-  `:hash_access` with `:delegate`. See [Errors](docs/errors.md).
+## [0.52.0] - 2026-11-16
+
 - **Breaking:** the `check_selection:` option and `config.check_selection` are
   removed: an unknown field always raises `Serega::AttributeNotExist`. See
   [Unknown fields](docs/selecting-fields.md#unknown-fields).
@@ -14,6 +12,10 @@
   relation is `[]`. See [Serializing](docs/serializing.md).
 - The batch loader signature error lists `(objects, ctx)`, which loaders
   accept too. See [Batch Loading](docs/batch-loading.md).
+- Errors put their advice on a `(hint: ...)` line, as the depth limit errors
+  do: serializing in other Ractors, `:preload` without a preload handler, an
+  attribute block without a base serializer or without attributes, and
+  `:hash_access` with `:delegate`. See [Errors](docs/errors.md).
 - A response serializer with `data` and `meta` attributes replaces the
   deprecated `:root` and `:metadata` plugins. See
   [Response Serializers](docs/responses.md).
@@ -22,6 +24,9 @@
   [Root Key and Metadata](docs/root-and-metadata.md).
 - The gem includes the guides in `docs/`, so they can be read in the
   installed gem, next to README.md. See [Guides](docs/README.md).
+- New guides: [Relations](docs/relations.md), [Presets](docs/presets.md),
+  [camelCase Keys](docs/camel-case.md) and
+  [Testing Serializers](docs/testing.md).
 
 ## [0.51.1] - 2026-11-16
 
