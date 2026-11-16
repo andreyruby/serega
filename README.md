@@ -210,7 +210,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 
 ## Documentation
 
-- 📋 [Cheatsheet](CHEATSHEET.md) — every option on one page
+- 📋 [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET.md) — every option on one page
 - 📚 [Guides](docs/README.md) — each feature in depth
 - 🔎 [Documentation site](https://andreyruby.github.io/serega/) — guides and API reference
 - 🔤 [Type signatures](https://github.com/andreyruby/serega/tree/master/sig) — RBS of the public API

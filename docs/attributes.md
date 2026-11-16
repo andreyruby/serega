@@ -12,6 +12,27 @@ end
 UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
 ```
 
+## All options
+
+| Option | Purpose |
+|---|---|
+| `method` | [Read another method](#method) |
+| `value` | [Compute the value](#value) |
+| `delegate` | [Read from an associated object](#delegate) |
+| `const` | [Serialize a constant](#const) |
+| `default` | [Replace `nil`](#default) |
+| `batch` | [Load values for all objects at once](batch-loading.md) |
+| `hash_access` | [Read Hash keys](hash-records.md) |
+| `hide` | [Exclude unless requested](#hidden-attributes) |
+| `serializer` | [Serialize with another serializer](#serializer) |
+| `many` | [Mark a list](#many) |
+| `preset` | [Serialize the fields of a preset of the relation](#preset) |
+| `only`, `with`, `except` | [Select the fields of the relation](#only-with-except) |
+| `preload` | [Preload associations](#preload) |
+| `base_serializer` | [Base of a block-defined serializer](#nested-serializers-defined-with-a-block) |
+| `if`, `unless`, `if_value`, `unless_value` | [Conditional attributes](conditional-attributes.md) |
+| `format` | [Format the value](formatters.md) |
+
 ## Base serializer
 
 Define one base serializer with the plugins and config your app uses. Every
@@ -353,24 +374,3 @@ end
 
 AdminSerializer.attributes.keys # => [:username, :email, :role]
 ```
-
-## All options
-
-| Option | Purpose |
-|---|---|
-| `method` | [Read another method](#method) |
-| `value` | [Compute the value](#value) |
-| `delegate` | [Read from an associated object](#delegate) |
-| `const` | [Serialize a constant](#const) |
-| `default` | [Replace `nil`](#default) |
-| `batch` | [Load values for all objects at once](batch-loading.md) |
-| `hash_access` | [Read Hash keys](hash-records.md) |
-| `hide` | [Exclude unless requested](#hidden-attributes) |
-| `serializer` | [Serialize with another serializer](#serializer) |
-| `many` | [Mark a list](#many) |
-| `preset` | [Serialize the fields of a preset of the relation](#preset) |
-| `only`, `with`, `except` | [Select the fields of the relation](#only-with-except) |
-| `preload` | [Preload associations](#preload) |
-| `base_serializer` | [Base of a block-defined serializer](#nested-serializers-defined-with-a-block) |
-| `if`, `unless`, `if_value`, `unless_value` | [Conditional attributes](conditional-attributes.md) |
-| `format` | [Format the value](formatters.md) |

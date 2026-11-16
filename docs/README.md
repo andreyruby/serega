@@ -1,7 +1,7 @@
 # Serega Guides
 
 Each guide covers one feature in depth. For a one-page overview of every option,
-see the [Cheatsheet](../CHEATSHEET.md).
+see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET.md).
 
 ## Basics
 
