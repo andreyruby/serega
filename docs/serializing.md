@@ -26,7 +26,9 @@ serialization options:
 - `:many` — serializes the object as a list (`true`) or as one object
   (`false`). By default, an `Enumerable` that is not a `Hash` or `Struct` is a
   list. Serega remembers the answer for the class of the object. Pass it when
-  you know, to skip the check.
+  you know, to skip the check. `config.many` sets the default of a
+  serializer, for example `config.many = false` for a serializer that always
+  gets a list as one object.
 
 The options are keyword arguments. Pass a Hash of options with `**`:
 

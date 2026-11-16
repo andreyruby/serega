@@ -23,6 +23,7 @@ class Serega
       serialize_keys: %i[context many].freeze,
       check_attribute_name: true,
       require_many: false,
+      many: nil,
       check_selection: true,
       delegate_default_allow_nil: false,
       max_cached_plans_per_serializer_count: 20,
@@ -249,6 +250,20 @@ class Serega
       # Sets #require_many
       def require_many=(value)
         opts[:require_many] = checked_boolean(value)
+      end
+
+      # How a call without the `:many` option serializes the object: `true` as a
+      # list, `false` as one object. `nil`, the default, serializes an
+      # `Enumerable` that is not a `Hash` or `Struct` as a list.
+      def many
+        opts.fetch(:many)
+      end
+
+      # Sets #many
+      def many=(value)
+        raise SeregaError, "Must have true, false or nil, #{value.inspect} provided" unless value.nil? || value == true || value == false
+
+        opts[:many] = value
       end
 
       # Method that returns the id of an object for batch loaders, `:id` by

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `config.many` sets how a serializer serializes an object without a `:many`
+  option, as the root and as a relation. See [Serializing](docs/serializing.md).
 - The batch loader signature error lists `(objects, ctx)`, which loaders
   accept too. See [Batch Loading](docs/batch-loading.md).
 - A response serializer with `data` and `meta` attributes replaces the

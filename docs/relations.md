@@ -59,6 +59,9 @@ attribute :posts, serializer: PostSerializer, many: true
 # => {posts: [{title: "Gotham at night"}]} when user.posts is one post
 ```
 
+A relation without `:many` follows `config.many` of its serializer, so a
+serializer with `config.many = false` gets a list as one object.
+
 `config.require_many = true` requires `:many` on every relation, an
 attribute with `:serializer` or a block. A relation without `:many` raises
 `Serega::SeregaError`.

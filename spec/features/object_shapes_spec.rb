@@ -69,4 +69,77 @@ RSpec.describe Serega do
       end
     end
   end
+
+  describe "config.many" do
+    subject(:result) { response_serializer.to_h(users, many: many) }
+
+    let(:user_serializer) do
+      Class.new(Serega) do
+        attribute :first_name
+      end
+    end
+
+    let(:response_serializer) do
+      data_serializer = user_serializer
+      Class.new(Serega) do
+        config.many = false
+        attribute :data, serializer: data_serializer, method: :itself, many: true
+      end
+    end
+
+    let(:users) { [double(first_name: "Walter"), double(first_name: "Jesse")] }
+    let(:many) { nil }
+
+    context "when config.many is false" do
+      it "serializes a list as one object" do
+        expect(result).to eq(data: [{first_name: "Walter"}, {first_name: "Jesse"}])
+      end
+
+      it "serializes a list as one object to Struct objects" do
+        expect(response_serializer.to_struct(users).data.map(&:first_name)).to eq %w[Walter Jesse]
+      end
+    end
+
+    context "when the call gives the :many option" do
+      let(:many) { true }
+
+      it "uses the option of the call" do
+        expect(result).to eq [{data: [{first_name: "Walter"}]}, {data: [{first_name: "Jesse"}]}]
+      end
+    end
+
+    context "when a relation serializer sets config.many" do
+      subject(:result) { team_serializer.to_h(team) }
+
+      let(:team_serializer) do
+        members_serializer = response_serializer
+        Class.new(Serega) do
+          attribute :members, serializer: members_serializer
+        end
+      end
+
+      let(:team) { double(members: users) }
+
+      it "serializes the relation as config.many says" do
+        expect(result).to eq(members: {data: [{first_name: "Walter"}, {first_name: "Jesse"}]})
+      end
+    end
+
+    context "when config.many is true" do
+      subject(:result) { user_serializer.to_h(user) }
+
+      let(:user_serializer) do
+        Class.new(Serega) do
+          config.many = true
+          attribute :first_name
+        end
+      end
+
+      let(:user) { double(first_name: "Walter") }
+
+      it "serializes one object as a list" do
+        expect(result).to eq [{first_name: "Walter"}]
+      end
+    end
+  end
 end
