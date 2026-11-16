@@ -22,6 +22,17 @@ Modes:
 
 Records can be any objects with `#[]`, `#fetch` and `#key?`.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Missing keys](#missing-keys)
+- [Defaults](#defaults)
+- [Delegates](#delegates)
+- [Relations](#relations)
+
+<!-- tocstop -->
+
 ## Missing keys
 
 A missing key raises `KeyError`. `allow_missing_key: true` serializes `nil`

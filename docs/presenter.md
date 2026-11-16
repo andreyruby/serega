@@ -32,6 +32,16 @@ class UserSerializer < Serega
 end
 ```
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Inside presenter methods](#inside-presenter-methods)
+- [Speed](#speed)
+- [Inheritance](#inheritance)
+
+<!-- tocstop -->
+
 ## Inside presenter methods
 
 Presenter methods run on a `SimpleDelegator` that wraps the serialized object:

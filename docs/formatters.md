@@ -21,6 +21,17 @@ OrderSerializer.to_h(order, context: {currency: "EUR"})
 
 Child serializers get the formatters of their parents.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Formatter kinds](#formatter-kinds)
+- [Formatters without a name](#formatters-without-a-name)
+- [Decimals](#decimals)
+- [`nil` values](#nil-values)
+
+<!-- tocstop -->
+
 ## Formatter kinds
 
 ```ruby

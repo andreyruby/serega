@@ -23,6 +23,16 @@ prepare_initial_objects { |ids, ctx:| User.where(id: ids, account: ctx[:account]
 prepare_initial_objects UsersLoader
 ```
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Single objects and lists](#single-objects-and-lists)
+- [Preloads](#preloads)
+- [Scope](#scope)
+
+<!-- tocstop -->
+
 ## Single objects and lists
 
 The handler runs before Serega decides whether to serialize a list, so its

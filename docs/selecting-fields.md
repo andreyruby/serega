@@ -28,6 +28,23 @@ UserSerializer.to_h(bruce, with: :email)
 # => {username: "batman", first_name: "Bruce", email: "bruce@wayne.com"}
 ```
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Nested fields](#nested-fields)
+- [Combining options](#combining-options)
+- [Fields from a request](#fields-from-a-request)
+- [Presets](#presets)
+   - [Presets with other options](#presets-with-other-options)
+   - [Preset on a relation](#preset-on-a-relation)
+   - [Field selection options of a relation](#field-selection-options-of-a-relation)
+   - [When to use a preset](#when-to-use-a-preset)
+- [Unknown fields](#unknown-fields)
+- [Hiding by default](#hiding-by-default)
+
+<!-- tocstop -->
+
 ## Nested fields
 
 Select fields of relations with a Hash. Fields are Symbols, Strings, Arrays,

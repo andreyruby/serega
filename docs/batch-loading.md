@@ -25,6 +25,18 @@ A loader runs once per serialization for all objects of a relation: for
 posts of all users. A loader of an attribute that is not serialized does not
 run.
 
+## Table of Contents
+
+<!-- toc -->
+
+- [Defining loaders](#defining-loaders)
+- [Using loaders](#using-loaders)
+- [Building the value](#building-the-value)
+- [Object ids](#object-ids)
+- [Relations](#relations)
+
+<!-- tocstop -->
+
 ## Defining loaders
 
 `batch` defines a named loader. Child serializers inherit it.
