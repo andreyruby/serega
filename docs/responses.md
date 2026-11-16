@@ -3,7 +3,8 @@
 In this guide, a response serializer wraps the records of an API response
 with `data` and adds `meta`, such as paging. It is a plain serializer with a
 `data` and a `meta` attribute, so it uses the attribute options you already
-know, and clients select its fields from the root.
+know, and clients select its fields from the root, for example
+`?only=data(id,name)` (see [Selecting fields](#selecting-fields)).
 
 ```json
 {
@@ -527,8 +528,18 @@ each user and raises
 
 ## Selecting fields
 
-Clients select fields from the root of the response. `meta` is left out
-unless the selection names it:
+Clients can request any field of the response: `data`, `meta`, or any
+fields inside them. The API passes their selection to the response
+serializer unchanged, as the [`json` helper](#a-common-context) does.
+
+```text
+GET /users?only=data(id,name)
+GET /users?only=meta(paging(total_count))
+GET /users?only=data(id),meta
+GET /users?with=data(posts(comments_count))
+```
+
+`meta` is left out unless the selection names it:
 
 ```ruby
 USERS_SERIALIZER.to_json(users, only: "data(id,name),meta")
@@ -541,8 +552,8 @@ USERS_SERIALIZER.to_json(users, only: "data(id),meta(paging(total_count))")
 # => {"data":[{"id":1}],"meta":{"paging":{"total_count":1}}}
 ```
 
-When `?fields=` names the fields of the records, nest them under `data`. An
-Array of names works; a String inside a Hash is not parsed:
+To keep an existing `?fields=id,name` parameter that names the fields of the
+records, nest its names under `data`:
 
 ```ruby
 fields = params[:fields]&.split(",") # ?fields=id,name
