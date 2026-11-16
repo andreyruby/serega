@@ -12,8 +12,8 @@ require_relative "serega/version"
 #   attribute :email, hide: true
 # end
 #
-# UserSerializer.to_h(user)                # => {first_name: "Bruce"}
-# UserSerializer.to_h(user, with: :email)  # => {first_name: "Bruce", email: "bruce@wayne.com"}
+# UserSerializer.to_h(user)                # => {first_name: "Felonious"}
+# UserSerializer.to_h(user, with: :email)  # => {first_name: "Felonious", email: "gru@example.com"}
 # ```
 #
 # See the [guides](https://github.com/andreyruby/serega/blob/master/docs/README.md).
@@ -448,8 +448,8 @@ class Serega
     #   `Enumerable` that is not a `Hash` or `Struct` is a list.
     #
     # ```ruby
-    # UserSerializer.to_h(user)                     # => {first_name: "Bruce"}
-    # UserSerializer.to_h([user], with: :email)     # => [{first_name: "Bruce", email: "bruce@wayne.com"}]
+    # UserSerializer.to_h(user)                     # => {first_name: "Felonious"}
+    # UserSerializer.to_h([user], with: :email)     # => [{first_name: "Felonious", email: "gru@example.com"}]
     # UserSerializer.to_h(user, context: {admin: true})
     # ```
     #
@@ -469,7 +469,7 @@ class Serega
     # Serializes like #to_h, to `Data` objects
     #
     # ```ruby
-    # UserSerializer.to_data(user) # => #<data first_name="Bruce">
+    # UserSerializer.to_data(user) # => #<data first_name="Felonious">
     # ```
     #
     def to_data(object, only: nil, with: nil, except: nil, preset: nil, context: nil, many: nil)
@@ -484,7 +484,7 @@ class Serega
     # Serializes like #to_h, to `Struct` objects
     #
     # ```ruby
-    # UserSerializer.to_struct(user) # => #<struct first_name="Bruce">
+    # UserSerializer.to_struct(user) # => #<struct first_name="Felonious">
     # ```
     #
     def to_struct(object, only: nil, with: nil, except: nil, preset: nil, context: nil, many: nil)
@@ -500,7 +500,7 @@ class Serega
     # result
     #
     # ```ruby
-    # UserSerializer.to_json(user) # => "{\"first_name\":\"Bruce\"}"
+    # UserSerializer.to_json(user) # => "{\"first_name\":\"Felonious\"}"
     # ```
     #
     def to_json(object, only: nil, with: nil, except: nil, preset: nil, context: nil, many: nil)
@@ -673,8 +673,8 @@ class Serega
     #
     # ```ruby
     # serializer = UserSerializer.new(only: [:first_name])
-    # serializer.to_h(user)  # => {first_name: "Bruce"}
-    # serializer.to_h(users) # => [{first_name: "Bruce"}, {first_name: "Alfred"}]
+    # serializer.to_h(user)  # => {first_name: "Felonious"}
+    # serializer.to_h(users) # => [{first_name: "Felonious"}, {first_name: "Lucy"}]
     # ```
     #
     def initialize(only: nil, with: nil, except: nil, preset: nil)

@@ -55,10 +55,10 @@ class PostSerializer < AppSerializer
 end
 
 UserSerializer.to_h(User.all)
-# => [{name: "Bruce Wayne"}, ...]                                    1 query
+# => [{name: "Felonious Gru"}, ...]                                  1 query
 
 UserSerializer.to_h(User.all, only: "name,posts(title,comments_count)")
-# => [{name: "Bruce Wayne", posts: [{title: "Gotham at night", comments_count: 12}, ...]}, ...]
+# => [{name: "Felonious Gru", posts: [{title: "Stealing the Moon", comments_count: 12}, ...]}, ...]
 #                                                                    3 queries, for any number of users
 ```
 
@@ -157,9 +157,9 @@ class EventSerializer < Serega
   attribute :title, hash_access: true  # reads event[:title]
 end
 
-UserSerializer.to_h(user)      # => {name: "Bruce Wayne"}
-UserSerializer.to_struct(user) # => #<struct name="Bruce Wayne">
-UserSerializer.to_data(user)   # => #<data name="Bruce Wayne">
+UserSerializer.to_h(user)      # => {name: "Felonious Gru"}
+UserSerializer.to_struct(user) # => #<struct name="Felonious Gru">
+UserSerializer.to_data(user)   # => #<data name="Felonious Gru">
 ```
 
 → [Hash records guide](docs/hash-records.md) ·

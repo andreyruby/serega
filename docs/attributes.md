@@ -9,7 +9,7 @@ class UserSerializer < Serega
   attribute :last_name
 end
 
-UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
+UserSerializer.to_h(user) # => {first_name: "Felonious", last_name: "Gru"}
 ```
 
 ## Table of Contents
@@ -110,7 +110,7 @@ Reads the value from another method.
 
 ```ruby
 attribute :name, method: :first_name # user.first_name
-# => {name: "Bruce"}
+# => {name: "Felonious"}
 ```
 
 With [`:hash_access`](hash-records.md), `:method` names a Hash key.
@@ -189,8 +189,8 @@ class UserSerializer < Serega
   attribute :last_name, hide: true
 end
 
-UserSerializer.to_h(user)                   # => {first_name: "Bruce"}
-UserSerializer.to_h(user, with: :last_name) # => {first_name: "Bruce", last_name: "Wayne"}
+UserSerializer.to_h(user)                   # => {first_name: "Felonious"}
+UserSerializer.to_h(user, with: :last_name) # => {first_name: "Felonious", last_name: "Gru"}
 ```
 
 ## Relations
@@ -225,7 +225,7 @@ The name is the serialized key as is. A camelCase key reads its value with
 
 ```ruby
 attribute :firstName, method: :first_name
-# => {firstName: "Bruce"}
+# => {firstName: "Felonious"}
 ```
 
 For camelCase keys in every serializer, see [camelCase Keys](camel-case.md).

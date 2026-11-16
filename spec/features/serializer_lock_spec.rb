@@ -4,7 +4,7 @@ RSpec.describe Serega do
   context "when the serializer was used for serialization" do
     let(:post_class) { Struct.new(:title) }
     let(:user_class) { Struct.new(:name, :post) }
-    let(:user) { user_class.new("Bruce", post_class.new("Hello")) }
+    let(:user) { user_class.new("Felonious", post_class.new("Hello")) }
 
     let(:post_serializer) { Class.new(described_class) { attribute :title } }
 
@@ -77,7 +77,7 @@ RSpec.describe Serega do
     describe ".presenter" do
       context "with a block" do
         it "raises a SeregaError" do
-          expect { user_serializer.presenter { def name = "Batman" } }
+          expect { user_serializer.presenter { def name = "Minion" } }
             .to raise_error Serega::SeregaError, locked_error(user_serializer)
         end
       end
@@ -135,7 +135,7 @@ RSpec.describe Serega do
         child_serializer.config.root.one = :user
         child_serializer.attribute :name_length, value: proc { |user| user.name.length }
 
-        expect(child_serializer.call(user)).to eq(user: {name: "Bruce", post: {title: "Hello"}, name_length: 5})
+        expect(child_serializer.call(user)).to eq(user: {name: "Felonious", post: {title: "Hello"}, name_length: 9})
       end
     end
   end

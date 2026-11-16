@@ -10,7 +10,7 @@ class Serega
     # plugin :context_metadata
     #
     # UserSerializer.to_h(user, meta: {version: "1.0.1"})
-    # # => {data: {username: "batman"}, version: "1.0.1"}
+    # # => {data: {username: "gru"}, version: "1.0.1"}
     # ```
     #
     # See [Metadata per serialization](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#metadata-per-serialization).

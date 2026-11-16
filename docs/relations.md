@@ -15,7 +15,7 @@ class UserSerializer < Serega
 end
 
 UserSerializer.to_h(user)
-# => {username: "batman", posts: [{title: "Gotham at night"}]}
+# => {username: "gru", posts: [{title: "Stealing the Moon"}]}
 ```
 
 ## Table of Contents
@@ -44,7 +44,7 @@ serializers refer to each other.
 attribute :posts, serializer: PostSerializer
 attribute :posts, serializer: "PostSerializer"
 attribute :posts, serializer: -> { PostSerializer }
-# => {posts: [{title: "Gotham at night"}]}
+# => {posts: [{title: "Stealing the Moon"}]}
 ```
 
 ### `:many`
@@ -56,7 +56,7 @@ and `Struct`. `many: true` marks a list explicitly and serializes `nil` as
 ```ruby
 attribute :posts, serializer: PostSerializer, many: true
 # => {posts: []} when user.posts is nil
-# => {posts: [{title: "Gotham at night"}]} when user.posts is one post
+# => {posts: [{title: "Stealing the Moon"}]} when user.posts is one post
 ```
 
 A relation without `:many` follows `config.many` of its serializer, so a
@@ -87,7 +87,7 @@ options of the call merge with the preset. See [Preset on a relation](presets.md
 
 ```ruby
 attribute :posts, serializer: PostSerializer, many: true, preset: :summary
-# => {posts: [{id: 1, title: "Gotham at night"}]}
+# => {posts: [{id: 1, title: "Stealing the Moon"}]}
 ```
 
 ### `:only`, `:with`, `:except`
@@ -97,7 +97,7 @@ call. See [Field selection options of a relation](presets.md#field-selection-opt
 
 ```ruby
 attribute :posts, serializer: PostSerializer, many: true, only: [:id, :title]
-# => {posts: [{id: 1, title: "Gotham at night"}]}
+# => {posts: [{id: 1, title: "Stealing the Moon"}]}
 ```
 
 ### `:preload`
@@ -132,7 +132,7 @@ class UserSerializer < AppSerializer
 end
 
 UserSerializer.to_h(user)
-# => {first_name: "Bruce", profile: {city: "Gotham"}, statistics: {likes_count: 10, comments_count: 3}}
+# => {first_name: "Felonious", profile: {city: "Freedonia"}, statistics: {likes_count: 10, comments_count: 3}}
 ```
 
 The nested serializer is a subclass of a base serializer, set with

@@ -9,8 +9,8 @@ class Serega
     # plugin :root, root: :users                       # one key for objects and lists
     # plugin :root, root_one: :user, root_many: :users # separate keys
     #
-    # UserSerializer.to_h(user, root: :user) # => {user: {username: "batman"}}
-    # UserSerializer.to_h(user, root: nil)   # => {username: "batman"}
+    # UserSerializer.to_h(user, root: :user) # => {user: {username: "gru"}}
+    # UserSerializer.to_h(user, root: nil)   # => {username: "gru"}
     # ```
     #
     # See [Root key](https://github.com/andreyruby/serega/blob/master/docs/root-and-metadata.md#root-key).

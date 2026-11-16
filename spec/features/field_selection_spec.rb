@@ -371,9 +371,9 @@ RSpec.describe Serega do
     end
 
     context "with options that change on each of three levels" do
-      let(:friend_of_friend) { double(first_name: "Alfred", last_name: "Pennyworth") }
-      let(:friend) { double(first_name: "Selina", last_name: "Kyle", friend: friend_of_friend) }
-      let(:user) { double(first_name: "Bruce", last_name: "Wayne", friend: friend) }
+      let(:friend_of_friend) { double(first_name: "Lucy", last_name: "Wilde") }
+      let(:friend) { double(first_name: "Margo", last_name: "Gru", friend: friend_of_friend) }
+      let(:user) { double(first_name: "Felonious", last_name: "Gru", friend: friend) }
 
       let(:user_serializer) do
         Class.new(Serega) do
@@ -386,13 +386,13 @@ RSpec.describe Serega do
       let(:selection) { {only: [:first_name, {friend: {friend: :last_name}}], except: {friend: :first_name}} }
 
       it "selects the fields of each level with its own option" do
-        expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle", friend: {last_name: "Pennyworth"}}})
+        expect(result).to eq({first_name: "Felonious", friend: {last_name: "Gru", friend: {last_name: "Wilde"}}})
       end
     end
 
     context "with options given as Strings" do
-      let(:friend) { double(first_name: "Selina", last_name: "Kyle") }
-      let(:user) { double(first_name: "Bruce", last_name: "Wayne", friend: friend) }
+      let(:friend) { double(first_name: "Margo", last_name: "Gru") }
+      let(:user) { double(first_name: "Felonious", last_name: "Gru", friend: friend) }
 
       let(:user_serializer) do
         Class.new(Serega) do
@@ -405,7 +405,7 @@ RSpec.describe Serega do
       let(:selection) { {with: "friend", except: "last_name,friend(first_name)"} }
 
       it "reads nested fields from parentheses" do
-        expect(result).to eq({first_name: "Bruce", friend: {last_name: "Kyle"}})
+        expect(result).to eq({first_name: "Felonious", friend: {last_name: "Gru"}})
       end
     end
   end

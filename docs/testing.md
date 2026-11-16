@@ -43,14 +43,14 @@ data that attribute needs:
 RSpec.describe UserSerializer do
   subject(:result) { described_class.to_h(user, **selection, context: context) }
 
-  let(:user) { build_stubbed(:user, first_name: "Bruce", username: "batman", email: "bruce@example.com") }
+  let(:user) { build_stubbed(:user, first_name: "Felonious", username: "gru", email: "gru@example.com") }
   let(:context) { {} }
 
   context "#first_name" do
     let(:selection) { {only: :first_name} }
 
     it "serializes the first name" do
-      expect(result).to eq(first_name: "Bruce")
+      expect(result).to eq(first_name: "Felonious")
     end
   end
 end
@@ -88,7 +88,7 @@ context "#email" do
     let(:context) { {current_user: user} }
 
     it "serializes the email" do
-      expect(result).to eq(email: "bruce@example.com")
+      expect(result).to eq(email: "gru@example.com")
     end
   end
 
@@ -127,10 +127,10 @@ RSpec.describe UserLink do
   let(:user) { build_stubbed(:user, username: username) }
 
   context "when the user has a username" do
-    let(:username) { "batman" }
+    let(:username) { "gru" }
 
     it "links to the user page" do
-      expect(link).to eq("https://example.com/@batman")
+      expect(link).to eq("https://example.com/@gru")
     end
   end
 
@@ -151,7 +151,7 @@ context "#link" do
   let(:selection) { {only: :link} }
 
   it "serializes the user link" do
-    expect(result).to eq(link: "https://example.com/@batman")
+    expect(result).to eq(link: "https://example.com/@gru")
   end
 end
 ```
@@ -172,20 +172,20 @@ end
 RSpec.describe FollowersCount do
   subject(:counts) { described_class.call(users) }
 
-  let(:bruce) { create(:user) }
-  let(:alfred) { create(:user) }
-  let(:selina) { create(:user) }
-  let(:users) { [bruce, alfred] }
+  let(:gru) { create(:user) }
+  let(:lucy) { create(:user) }
+  let(:margo) { create(:user) }
+  let(:users) { [gru, lucy] }
 
   before do
-    create(:follow, user: bruce, follower: alfred)
-    create(:follow, user: bruce, follower: selina)
-    create(:follow, user: selina, follower: bruce)
+    create(:follow, user: gru, follower: lucy)
+    create(:follow, user: gru, follower: margo)
+    create(:follow, user: margo, follower: gru)
   end
 
   context "when some users have followers" do
     it "counts the followers of each user" do
-      expect(counts).to eq(bruce.id => 2)
+      expect(counts).to eq(gru.id => 2)
     end
   end
 end

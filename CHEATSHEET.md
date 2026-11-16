@@ -878,7 +878,7 @@ Combined (root_one/root_many + metadata + context_metadata):
 ResponseSerializer.to_h(user, meta: {page: 1})
 # => {user: {first_name: "Felonious"}, show: "Despicable Me", page: 1}
 
-ResponseSerializer.to_h([walter, lucy], meta: {page: 1})
+ResponseSerializer.to_h([gru, lucy], meta: {page: 1})
 # => {users: [{first_name: "Felonious"}, {first_name: "Lucy"}], show: "Despicable Me", page: 1}
 ```
 

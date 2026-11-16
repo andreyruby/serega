@@ -7,10 +7,10 @@ class UserSerializer < Serega
 end
 
 UserSerializer.to_h(user)
-# => {username: "batman", posts: [{title: "Gotham at night"}]}
+# => {username: "gru", posts: [{title: "Stealing the Moon"}]}
 
 UserSerializer.to_h([user])
-# => [{username: "batman", posts: [{title: "Gotham at night"}]}]
+# => [{username: "gru", posts: [{title: "Stealing the Moon"}]}]
 
 UserSerializer.to_h(nil)    # => nil
 UserSerializer.to_h([])     # => []
@@ -57,7 +57,7 @@ takes the same options as `.to_h`.
 
 ```ruby
 UserSerializer.to_json(user)
-# => "{\"username\":\"batman\",\"posts\":[{\"title\":\"Gotham at night\"}]}"
+# => "{\"username\":\"gru\",\"posts\":[{\"title\":\"Stealing the Moon\"}]}"
 
 render json: UserSerializer.to_json(user) # Rails renders the String as it is
 ```
@@ -75,12 +75,12 @@ nested relations included. `.to_struct` is as fast as `.to_h`.
 
 ```ruby
 UserSerializer.to_struct(user)
-# => #<struct username="batman", posts=[#<struct title="Gotham at night">]>
+# => #<struct username="gru", posts=[#<struct title="Stealing the Moon">]>
 
 UserSerializer.to_data(user)
-# => #<data username="batman", posts=[#<data title="Gotham at night">]>
+# => #<data username="gru", posts=[#<data title="Stealing the Moon">]>
 
-UserSerializer.to_data(user).posts.first.title # => "Gotham at night"
+UserSerializer.to_data(user).posts.first.title # => "Stealing the Moon"
 ```
 
 An attribute named `initialize` or a name that Ruby does not accept as a

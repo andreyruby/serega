@@ -15,11 +15,11 @@ class UserSerializer < Serega
   preset :profile, preset: :card, with: :email
 end
 
-UserSerializer.to_h(bruce, preset: :card)
-# => {username: "batman", friends: [{username: "alfred"}]}
+UserSerializer.to_h(gru, preset: :card)
+# => {username: "gru", friends: [{username: "lucy"}]}
 
-UserSerializer.to_h(bruce, preset: :profile)
-# => {username: "batman", email: "bruce@wayne.com", friends: [{username: "alfred"}]}
+UserSerializer.to_h(gru, preset: :profile)
+# => {username: "gru", email: "gru@example.com", friends: [{username: "lucy"}]}
 ```
 
 - `preset:` in a preset definition names presets defined earlier. Their
@@ -57,13 +57,13 @@ the rules of [Combining options](selecting-fields.md#combining-options) apply. `
 `:with` add fields to a preset, and `:except` removes them:
 
 ```ruby
-UserSerializer.to_h(bruce, preset: :card, only: {friends: :first_name})
-# => {username: "batman", friends: [{username: "alfred", first_name: "Alfred"}]}
+UserSerializer.to_h(gru, preset: :card, only: {friends: :first_name})
+# => {username: "gru", friends: [{username: "lucy", first_name: "Lucy"}]}
 
-UserSerializer.to_h(bruce, preset: :card, except: :friends)
-# => {username: "batman"}
+UserSerializer.to_h(gru, preset: :card, except: :friends)
+# => {username: "gru"}
 
-UserSerializer.to_h(bruce, preset: [:card, :profile], with: :first_name)
+UserSerializer.to_h(gru, preset: [:card, :profile], with: :first_name)
 ```
 
 Options name only attributes: `with: {friends: :card}` names an attribute
@@ -92,11 +92,11 @@ class UserSerializer < Serega
   preset :card, only: [:username, :posts]
 end
 
-UserSerializer.to_h(bruce)
-# => {username: "batman", posts: [{id: 1, title: "Gotham at night"}]}
+UserSerializer.to_h(gru)
+# => {username: "gru", posts: [{id: 1, title: "Stealing the Moon"}]}
 
 PostSerializer.to_h(post)
-# => {id: 1, title: "Gotham at night", body: "Patrol notes"}
+# => {id: 1, title: "Stealing the Moon", body: "Shrink ray plans"}
 ```
 
 The options of the call for the relation merge with the preset, like
@@ -104,13 +104,13 @@ The options of the call for the relation merge with the preset, like
 
 | Call | Fields of `posts` |
 |---|---|
-| `to_h(bruce)` | `id`, `title` |
-| `to_h(bruce, only: :posts)` | `id`, `title` |
-| `to_h(bruce, preset: :card)` | `id`, `title` |
-| `to_h(bruce, with: {posts: :body})` | `id`, `title`, `body` |
-| `to_h(bruce, except: {posts: :title})` | `id` |
-| `to_h(bruce, only: {posts: :id})` | `id`, `title`: `:only` adds fields to the preset |
-| `to_h(bruce, except: :posts)` | `posts` is not serialized |
+| `to_h(gru)` | `id`, `title` |
+| `to_h(gru, only: :posts)` | `id`, `title` |
+| `to_h(gru, preset: :card)` | `id`, `title` |
+| `to_h(gru, with: {posts: :body})` | `id`, `title`, `body` |
+| `to_h(gru, except: {posts: :title})` | `id` |
+| `to_h(gru, only: {posts: :id})` | `id`, `title`: `:only` adds fields to the preset |
+| `to_h(gru, except: :posts)` | `posts` is not serialized |
 
 An option that names the relation without nested fields keeps the preset.
 `:except` with nested fields removes only these fields, and the relation
@@ -123,7 +123,7 @@ class CommentSerializer < Serega
 end
 
 CommentSerializer.to_h(comment, except: {user: :posts})
-# => {text: "Nice", user: {username: "batman"}}
+# => {text: "Nice", user: {username: "gru"}}
 ```
 
 - `preset:` takes a name or an Array of names, like the option of a call.
@@ -147,14 +147,14 @@ class UserSerializer < Serega
   attribute :drafts, serializer: PostSerializer, many: true, preset: :summary, with: :body
 end
 
-UserSerializer.to_h(bruce)
-# => {username: "batman", posts: [{id: 1, title: "Gotham at night"}],
+UserSerializer.to_h(gru)
+# => {username: "gru", posts: [{id: 1, title: "Stealing the Moon"}],
 #     drafts: [{id: 2, title: "Arkham", body: "Draft notes"}]}
 ```
 
 The relation presets, the options of the relation and the options of the
 call merge, with the rules of [Combining options](selecting-fields.md#combining-options):
-`to_h(bruce, with: {posts: :body})` adds `body` to the posts.
+`to_h(gru, with: {posts: :body})` adds `body` to the posts.
 
 When `:serializer` is a class, an unknown field raises
 `Serega::AttributeNotExist` when the attribute is defined:

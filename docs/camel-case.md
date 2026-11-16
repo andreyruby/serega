@@ -18,7 +18,7 @@ class UserSerializer < AppSerializer
 end
 
 UserSerializer.to_h(user)
-# => {firstName: "Bruce", recentPosts: [{postTitle: "Gotham at night"}]}
+# => {firstName: "Felonious", recentPosts: [{postTitle: "Stealing the Moon"}]}
 ```
 
 ## Table of Contents
@@ -47,7 +47,7 @@ The key changes, the source does not: `first_name` still reads
 
 ```ruby
 UserSerializer.to_h(user, only: "firstName,recentPosts(postTitle)")
-# => {firstName: "Bruce", recentPosts: [{postTitle: "Gotham at night"}]}
+# => {firstName: "Felonious", recentPosts: [{postTitle: "Stealing the Moon"}]}
 
 preset :card, only: [:firstName, {recentPosts: :postTitle}] # in UserSerializer
 
@@ -61,7 +61,7 @@ camelCase key reads its value with `:method`:
 
 ```ruby
 attribute :firstName, method: :first_name
-# => {firstName: "Bruce"}
+# => {firstName: "Felonious"}
 ```
 
 ## Other key styles
@@ -71,7 +71,7 @@ stays a String in the serialized Hash:
 
 ```ruby
 config.key_transform = ->(name) { name.to_s.camelize(:lower) } # ActiveSupport
-# => {"firstName" => "Bruce"}
+# => {"firstName" => "Felonious"}
 ```
 
 Fields are still selected by the keys as Symbols: `only: :firstName`.

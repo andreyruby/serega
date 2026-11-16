@@ -10,8 +10,8 @@ class UserSerializer < Serega
   attribute :full_name, method: :name, hash_access: true # record[:name]
 end
 
-UserSerializer.to_h({:name => "Bruce", "email" => "bruce@wayne.com"})
-# => {name: "Bruce", email: "bruce@wayne.com", full_name: "Bruce"}
+UserSerializer.to_h({:name => "Felonious", "email" => "gru@example.com"})
+# => {name: "Felonious", email: "gru@example.com", full_name: "Felonious"}
 ```
 
 Modes:
@@ -89,5 +89,5 @@ class UserSerializer < Serega
   attribute :address, hash_access: true, serializer: AddressSerializer
 end
 
-UserSerializer.to_h({address: {city: "Gotham"}}) # => {address: {city: "Gotham"}}
+UserSerializer.to_h({address: {city: "Freedonia"}}) # => {address: {city: "Freedonia"}}
 ```

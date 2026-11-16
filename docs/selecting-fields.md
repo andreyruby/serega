@@ -15,17 +15,17 @@ class UserSerializer < Serega
   attribute :friends, serializer: UserSerializer, hide: true
 end
 
-UserSerializer.to_h(bruce)
-# => {username: "batman", first_name: "Bruce"}
+UserSerializer.to_h(gru)
+# => {username: "gru", first_name: "Felonious"}
 
-UserSerializer.to_h(bruce, only: :username)
-# => {username: "batman"}
+UserSerializer.to_h(gru, only: :username)
+# => {username: "gru"}
 
-UserSerializer.to_h(bruce, except: :first_name)
-# => {username: "batman"}
+UserSerializer.to_h(gru, except: :first_name)
+# => {username: "gru"}
 
-UserSerializer.to_h(bruce, with: :email)
-# => {username: "batman", first_name: "Bruce", email: "bruce@wayne.com"}
+UserSerializer.to_h(gru, with: :email)
+# => {username: "gru", first_name: "Felonious", email: "gru@example.com"}
 ```
 
 ## Table of Contents
@@ -46,17 +46,17 @@ Select fields of relations with a Hash. Fields are Symbols, Strings, Arrays,
 Hashes or their combinations.
 
 ```ruby
-UserSerializer.to_h(bruce, only: [:username, {friends: :email}])
-# => {username: "batman", friends: [{email: "alfred@wayne.com"}]}
+UserSerializer.to_h(gru, only: [:username, {friends: :email}])
+# => {username: "gru", friends: [{email: "lucy@example.com"}]}
 
-UserSerializer.to_h(bruce, with: {friends: :email})
+UserSerializer.to_h(gru, with: {friends: :email})
 # => {
-#   username: "batman", first_name: "Bruce",
-#   friends: [{username: "alfred", first_name: "Alfred", email: "alfred@wayne.com"}]
+#   username: "gru", first_name: "Felonious",
+#   friends: [{username: "lucy", first_name: "Lucy", email: "lucy@example.com"}]
 # }
 
-UserSerializer.to_h(bruce, with: :friends, except: {friends: :first_name})
-# => {username: "batman", first_name: "Bruce", friends: [{username: "alfred"}]}
+UserSerializer.to_h(gru, with: :friends, except: {friends: :first_name})
+# => {username: "gru", first_name: "Felonious", friends: [{username: "lucy"}]}
 ```
 
 A relation listed in `:only` without nested fields serializes its default
@@ -71,11 +71,11 @@ When options name the same field, `:except` wins. `:only` and `:with` both
 show the fields they name, hidden fields too:
 
 ```ruby
-UserSerializer.to_h(bruce, only: [:username, :email], except: :email)
-# => {username: "batman"}
+UserSerializer.to_h(gru, only: [:username, :email], except: :email)
+# => {username: "gru"}
 
-UserSerializer.to_h(bruce, only: :username, with: :email)
-# => {username: "batman", email: "bruce@wayne.com"}
+UserSerializer.to_h(gru, only: :username, with: :email)
+# => {username: "gru", email: "gru@example.com"}
 ```
 
 `:only` hides the other fields of a level when it names a field of that level
@@ -105,8 +105,8 @@ Fields can be one String, with nested fields in parentheses. This fits query
 parameters like `GET /users?fields=username,friends(username,email)`.
 
 ```ruby
-UserSerializer.to_h(bruce, only: "username,friends(username,email)")
-# => {username: "batman", friends: [{username: "alfred", email: "alfred@wayne.com"}]}
+UserSerializer.to_h(gru, only: "username,friends(username,email)")
+# => {username: "gru", friends: [{username: "lucy", email: "lucy@example.com"}]}
 
 UserSerializer.to_h(users, only: params[:fields]) # all default fields when params[:fields] is nil
 ```
@@ -117,7 +117,7 @@ An unknown field raises `Serega::AttributeNotExist`. Its `#serializer` and
 `#attributes` methods return the serializer and the unknown fields.
 
 ```ruby
-UserSerializer.to_h(bruce, only: [:nickname, {friends: :age}])
+UserSerializer.to_h(gru, only: [:nickname, {friends: :age}])
 # => Serega::AttributeNotExist: Not existing attributes: nickname, friends(age)
 ```
 
@@ -136,7 +136,7 @@ class UserSerializer < Serega
   attribute :first_name, hide: false
 end
 
-UserSerializer.to_h(bruce) # => {first_name: "Bruce"}
+UserSerializer.to_h(gru) # => {first_name: "Felonious"}
 ```
 
 With `:auto` and the serializers of [Preloads](preloads.md), a request without
@@ -150,7 +150,7 @@ class AppSerializer < Serega
 end
 
 UserSerializer.to_h(users)
-# => [{name: "Bruce"}, ...], no preloads
+# => [{name: "Felonious"}, ...], no preloads
 
 UserSerializer.to_h(users, with: [:followers_count, {albums: :downloads_count}])
 # preloads user_stats and albums for users, downloads for albums

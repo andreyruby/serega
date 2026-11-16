@@ -13,7 +13,7 @@ class UserSerializer < Serega
 end
 
 UserSerializer.to_h(user, context: {admin: true})
-# => {email: "bruce@wayne.com", phone: "555-0100", role: "admin", rating: 5}
+# => {email: "gru@example.com", phone: "555-0100", role: "admin", rating: 5}
 ```
 
 ## Table of Contents
@@ -91,7 +91,7 @@ end
 
 UserSerializer.to_h(users)
 # SELECT * FROM privacy_settings WHERE user_id IN (1, 2)
-# => [{email: "bruce@wayne.com"}, {}]
+# => [{email: "gru@example.com"}, {}]
 ```
 
 Other data: load it with a [batch loader](batch-loading.md), build `nil` in
@@ -107,7 +107,7 @@ end
 
 UserSerializer.to_h(users, context: {viewer: current_user})
 # SELECT id FROM users WHERE ... AND id IN (1, 2)
-# => [{email: "bruce@wayne.com"}, {}]
+# => [{email: "gru@example.com"}, {}]
 ```
 
 The batch way skips the attribute for a `nil` email of a visible user too. A
@@ -121,10 +121,10 @@ them, so all objects serialized with the same fields have the same members.
 
 ```ruby
 UserSerializer.to_h(user, context: {public: true})
-# => {email: "bruce@wayne.com", rating: 5}
+# => {email: "gru@example.com", rating: 5}
 
 UserSerializer.to_struct(user, context: {public: true})
-# => #<struct email="bruce@wayne.com", phone=nil, role=nil, nickname=nil, rating=5>
+# => #<struct email="gru@example.com", phone=nil, role=nil, nickname=nil, rating=5>
 ```
 
 ## Leaving out nil values
@@ -145,7 +145,7 @@ class UserSerializer < AppSerializer
 end
 
 UserSerializer.to_h(user) # a user without a nickname and posts
-# => {first_name: "Bruce", posts: []}
+# => {first_name: "Felonious", posts: []}
 ```
 
 A nested serializer follows its own config: one without `compact` keeps its

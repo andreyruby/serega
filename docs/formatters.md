@@ -156,7 +156,7 @@ formatter :presence, :presence
 
 attribute :bio, format: :presence
 # "" => nil
-# "Gotham" => "Gotham"
+# "Freedonia" => "Freedonia"
 ```
 
 ### API type names (`:type`)
