@@ -40,7 +40,7 @@ defined after it.
 [automatic-preloads]: preloads.md#automatic-preloads
 [root-metadata]: root-and-metadata.md
 [block-serializers]: relations.md#nested-serializers-defined-with-a-block
-[key-styles]: attributes.md#camelcase-and-other-key-styles
+[key-styles]: camel-case.md
 [batch-ids]: batch-loading.md#records-without-an-id
 [hash-mode]: hash-records.md#default-access-mode
 [plan-cache]: serializing.md#plan-cache

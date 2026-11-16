@@ -20,6 +20,7 @@ see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET
 - [Conditional Attributes](conditional-attributes.md) — `:if`, `:unless`,
   `:if_value`, `:unless_value`
 - [Formatters](formatters.md) — format dates, money and other values
+- [camelCase Keys](camel-case.md) — `firstName` keys from `first_name` attributes
 
 ## Loading data without N+1
 

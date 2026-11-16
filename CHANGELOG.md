@@ -43,7 +43,7 @@
 - `config.key_transform` changes attribute keys: `:camel_case` gives
   `firstName` for `first_name`, and a callable gives any key, a String too.
   Fields are selected by the new names. See
-  [Key transformation](docs/attributes.md#camelcase-and-other-key-styles).
+  [Key transformation](docs/camel-case.md).
 - `config.compact = true` leaves out keys with `nil` values from serialized
   Hashes. See [Leaving out nil values](docs/conditional-attributes.md#leaving-out-nil-values).
 - Relations accept `:if_value` and `:unless_value`. They check the serialized

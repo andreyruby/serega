@@ -185,6 +185,7 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 - [Attributes](docs/attributes.md) — all attribute options
 - [Relations](docs/relations.md) — nested serializers, `many:`, depth limit
 - [Presets](docs/presets.md) — named field selections, also on relations
+- [camelCase keys](docs/camel-case.md) — `firstName` keys from `first_name` attributes
 - [Conditional attributes](docs/conditional-attributes.md) — `if:`, `unless:`, `if_value:`, `unless_value:`
 - [Context](docs/context.md) — pass `current_user` and other request data
 - [Presenter](docs/presenter.md) — write computed attributes as methods
