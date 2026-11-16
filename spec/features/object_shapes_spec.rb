@@ -31,12 +31,12 @@ RSpec.describe Serega do
     end
 
     context "with a Set after one object of the same serializer" do
-      let(:user) { Set[double(first_name: "Jesse", last_name: "Pinkman")] }
+      let(:user) { Set[double(first_name: "Lucy", last_name: "Wilde")] }
 
-      before { user_serializer.to_h(double(first_name: "Walter", last_name: "White")) }
+      before { user_serializer.to_h(double(first_name: "Felonious", last_name: "Gru")) }
 
       it "returns an Array" do
-        expect(result).to eq([{first_name: "Jesse", last_name: "Pinkman"}])
+        expect(result).to eq([{first_name: "Lucy", last_name: "Wilde"}])
       end
     end
 
@@ -87,16 +87,16 @@ RSpec.describe Serega do
       end
     end
 
-    let(:users) { [double(first_name: "Walter"), double(first_name: "Jesse")] }
+    let(:users) { [double(first_name: "Felonious"), double(first_name: "Lucy")] }
     let(:many) { nil }
 
     context "when config.many is false" do
       it "serializes a list as one object" do
-        expect(result).to eq(data: [{first_name: "Walter"}, {first_name: "Jesse"}])
+        expect(result).to eq(data: [{first_name: "Felonious"}, {first_name: "Lucy"}])
       end
 
       it "serializes a list as one object to Struct objects" do
-        expect(response_serializer.to_struct(users).data.map(&:first_name)).to eq %w[Walter Jesse]
+        expect(response_serializer.to_struct(users).data.map(&:first_name)).to eq %w[Felonious Lucy]
       end
     end
 
@@ -104,7 +104,7 @@ RSpec.describe Serega do
       let(:many) { true }
 
       it "uses the option of the call" do
-        expect(result).to eq [{data: [{first_name: "Walter"}]}, {data: [{first_name: "Jesse"}]}]
+        expect(result).to eq [{data: [{first_name: "Felonious"}]}, {data: [{first_name: "Lucy"}]}]
       end
     end
 
@@ -121,7 +121,7 @@ RSpec.describe Serega do
       let(:team) { double(members: users) }
 
       it "serializes the relation as config.many says" do
-        expect(result).to eq(members: {data: [{first_name: "Walter"}, {first_name: "Jesse"}]})
+        expect(result).to eq(members: {data: [{first_name: "Felonious"}, {first_name: "Lucy"}]})
       end
     end
 
@@ -135,10 +135,10 @@ RSpec.describe Serega do
         end
       end
 
-      let(:user) { double(first_name: "Walter") }
+      let(:user) { double(first_name: "Felonious") }
 
       it "serializes one object as a list" do
-        expect(result).to eq [{first_name: "Walter"}]
+        expect(result).to eq [{first_name: "Felonious"}]
       end
     end
   end

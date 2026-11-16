@@ -67,7 +67,7 @@ RSpec.describe Serega::SeregaUtils::CollectionDetector do
   end
 
   context "with a class that has a remembered answer" do
-    let(:object) { "Heisenberg" }
+    let(:object) { "Minion" }
     let(:known_classes) { {String => true}.compare_by_identity }
 
     it "returns the remembered answer" do
