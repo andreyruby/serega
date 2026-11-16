@@ -70,7 +70,7 @@ bundle add serega
 
 ## Quick start
 
-Define a base serializer with the setup your app uses. Every serializer
+A base serializer can hold the setup your app uses. Every serializer
 inherits it.
 
 ```ruby

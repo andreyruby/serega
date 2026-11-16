@@ -549,7 +549,7 @@ UserSerializer.to_h({address: {city: "Paris"}})
 ## Sharing Setup via Inheritance
 
 A child serializer inherits attributes, config, and plugins from its parent.
-Define a base serializer once, then put shared setup there.
+A base serializer can hold the shared setup.
 
 ```ruby
 class AppSerializer < Serega
