@@ -235,6 +235,19 @@ writes `"51.501364"`. A formatter gives the same output in both cases.
 
 ```ruby
 class PlaceSerializer < Serega
+  attribute :latitude
+  attribute :longitude
+end
+
+PlaceSerializer.to_json(place)
+# => "{\"latitude\":\"0.51501364e2\",\"longitude\":\"-0.14189e0\"}" without ActiveSupport
+# => "{\"latitude\":\"51.501364\",\"longitude\":\"-0.14189\"}" with ActiveSupport
+```
+
+With a formatter, the decimals are JSON numbers:
+
+```ruby
+class PlaceSerializer < Serega
   # JSON numbers: value.to_f
   attribute :latitude, format: [:to_f]
   attribute :longitude, format: [:to_f]
