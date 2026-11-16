@@ -29,6 +29,15 @@ formatter defined yet raises `Serega::SeregaError`.
 
 - [Formatter kinds](#formatter-kinds)
 - [Formatters without a name](#formatters-without-a-name)
+- [Common formatters](#common-formatters)
+   - [Times for JavaScript clients (`:iso8601`)](#times-for-javascript-clients-iso8601)
+   - [Dates (`:date`)](#dates-date)
+   - [Decimals as JSON numbers (`:float`)](#decimals-as-json-numbers-float)
+   - [Rounding (`:round2`)](#rounding-round2)
+   - [Percents (`:percent`)](#percents-percent)
+   - [Blank strings as `nil` (`:presence`)](#blank-strings-as-nil-presence)
+   - [API type names (`:type`)](#api-type-names-type)
+   - [Money (`:money`)](#money-money)
 - [Decimals in JSON](#decimals-in-json)
 - [Formatting `nil` values](#formatting-nil-values)
 
@@ -59,6 +68,11 @@ class AppSerializer < Serega
 end
 ```
 
+A Symbol or an Array in a formatter is a plain Ruby method of the value, with
+its arguments: `:to_s` calls `value.to_s`, and `[:iso8601, 3]` calls
+`Time#iso8601(3)`. Serega adds no formatting methods of its own, so any method
+of the value works, from Ruby, ActiveSupport or your own classes.
+
 A method formatter is called directly in the generated serialization code,
 which makes it the fastest kind.
 
@@ -71,6 +85,106 @@ name, so a method name alone needs a named formatter.
 attribute :rating, format: [:round, 1]
 attribute :email, format: ->(email) { email.downcase }
 attribute :nickname, format: {use: :upcase, allow_nil: true}
+```
+
+## Common formatters
+
+Formatters most APIs need. Define the ones you use in your base serializer.
+The names, such as `:round2`, are yours to choose. The methods they call are
+Ruby's: `Time#iso8601`, `Date#iso8601`, `BigDecimal#to_f`, `Float#round` and
+ActiveSupport's `Object#presence`.
+
+### Times for JavaScript clients (`:iso8601`)
+
+JavaScript dates resolve to milliseconds, so three fraction digits are enough.
+
+```ruby
+formatter :iso8601, [:iso8601, 3], allow_nil: true
+
+attribute :created_at, format: :iso8601
+# Time.utc(2026, 11, 16, 10, 30, 15.123456) => "2026-11-16T10:30:15.123Z"
+# nil => nil
+```
+
+### Dates (`:date`)
+
+```ruby
+formatter :date, :iso8601, allow_nil: true
+
+attribute :birthday, format: :date
+# Date.new(2026, 11, 16) => "2026-11-16"
+```
+
+### Decimals as JSON numbers (`:float`)
+
+Decimal columns return a `BigDecimal`, which JSON writes as a String, see
+[Decimals in JSON](#decimals-in-json).
+
+```ruby
+formatter :float, :to_f, allow_nil: true
+
+attribute :latitude, format: :float
+# BigDecimal("51.501364") => 51.501364
+# nil => nil
+```
+
+### Rounding (`:round2`)
+
+```ruby
+formatter :round2, [:round, 2]
+
+attribute :ratio, format: :round2
+# 12.345 => 12.35
+```
+
+### Percents (`:percent`)
+
+```ruby
+formatter :percent, ->(fraction) { (fraction * 100).round(2) }
+
+attribute :conversion, format: :percent
+# 0.125 => 12.5
+```
+
+### Blank strings as `nil` (`:presence`)
+
+`Object#presence` comes from ActiveSupport.
+
+```ruby
+formatter :presence, :presence
+
+attribute :bio, format: :presence
+# "" => nil
+# "Gotham" => "Gotham"
+```
+
+### API type names (`:type`)
+
+Clients that store records by type and id need a type in every record. A
+constant attribute holds the model, and the formatter names its type.
+`TYPES.fetch` raises `KeyError` for a model without a type, so a new model
+can't send a wrong one.
+
+```ruby
+TYPES = {"User" => "users", "Post" => "posts"}.freeze
+formatter :type, ->(model) { TYPES.fetch(model.name) }
+
+attribute :type, const: User, format: :type
+# User => "users"
+```
+
+### Money (`:money`)
+
+Money in cents, without trailing zeros. A formatter that depends on the
+locale or the currency fits a callable class:
+`formatter :money, MoneyFormatter.new`.
+
+```ruby
+formatter :money, ->(cents) { format("$%.2f", cents / 100.0).delete_suffix(".00") }
+
+attribute :price_cents, format: :money
+# 1999 => "$19.99"
+# 2000 => "$20"
 ```
 
 ## Decimals in JSON
