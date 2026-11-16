@@ -11,6 +11,13 @@ module DocsTasks
   # Files checked for broken links
   LINK_FILES = (%w[README.md CHEATSHEET.md CHANGELOG.md RELEASE.md] + Dir["docs/*.md"].sort).freeze
 
+  # Files whose examples name people
+  NAME_FILES = (%w[README.md CHEATSHEET.md] + Dir["docs/*.md", "lib/**/*.rb", "spec/**/*.rb"].sort).freeze
+
+  # Examples name people from Despicable Me (Felonious Gru, Lucy, Margo, ...);
+  # these Breaking Bad and Batman names were replaced
+  REPLACED_NAMES = /\b(?:walter|jesse|skyler|heisenberg|pinkman|bruce|wayne|batman|alfred|pennyworth|selina|gotham)\b/i
+
   TOC_HEADING = "## Table of Contents"
   TOC_START = "<!-- toc -->"
   TOC_END = "<!-- tocstop -->"
@@ -141,7 +148,7 @@ namespace :docs do
     end
   end
 
-  desc "Check the table of contents is current and all links resolve"
+  desc "Check the table of contents is current, all links resolve and examples name Despicable Me people"
   task :check do
     errors = []
 
@@ -169,9 +176,16 @@ namespace :docs do
       end
     end
 
+    DocsTasks::NAME_FILES.each do |file|
+      File.foreach(file).with_index(1) do |line, number|
+        name = line[DocsTasks::REPLACED_NAMES]
+        errors << "#{file}:#{number}: #{name} — name people from Despicable Me, such as Felonious Gru or Lucy" if name
+      end
+    end
+
     raise "\n#{errors.join("\n")}" unless errors.empty?
 
-    puts "Documentation tables of contents and links are valid"
+    puts "Documentation tables of contents, links and example names are valid"
   end
 end
 
