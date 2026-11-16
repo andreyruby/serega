@@ -27,9 +27,9 @@ Records can be any objects with `#[]`, `#fetch` and `#key?`.
 <!-- toc -->
 
 - [Missing keys](#missing-keys)
-- [Defaults](#defaults)
-- [Delegates](#delegates)
-- [Relations](#relations)
+- [Default access mode](#default-access-mode)
+- [Delegating to nested Hashes](#delegating-to-nested-hashes)
+- [Relations in Hashes](#relations-in-hashes)
 
 <!-- tocstop -->
 
@@ -47,7 +47,7 @@ attribute :age, hash_access: {mode: :string, allow_missing_key: true}
 # => {age: nil}
 ```
 
-## Defaults
+## Default access mode
 
 ```ruby
 class AppSerializer < Serega
@@ -56,7 +56,7 @@ class AppSerializer < Serega
 end
 ```
 
-## Delegates
+## Delegating to nested Hashes
 
 Delegates choose hash access per step: `:to_hash_access` reads the associated
 record, `:hash_access` reads the final value. Both accept the same values as
@@ -78,7 +78,7 @@ attribute :city, delegate: {
 
 The `:hash_access` attribute option can not be combined with `:delegate`.
 
-## Relations
+## Relations in Hashes
 
 ```ruby
 class AddressSerializer < Serega

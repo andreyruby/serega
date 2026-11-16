@@ -922,7 +922,7 @@ ResponseSerializer.to_h([walter, lucy], meta: {page: 1})
 
 [attributes]: #attribute-options
 [field-selection]: #field-selection--only-except-with
-[presets]: docs/selecting-fields.md#presets
+[presets]: docs/presets.md
 [combining-options]: docs/selecting-fields.md#combining-options
 [context]: #context
 [relations]: #relations

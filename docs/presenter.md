@@ -37,7 +37,7 @@ end
 <!-- toc -->
 
 - [Inside presenter methods](#inside-presenter-methods)
-- [Speed](#speed)
+- [Performance cost](#performance-cost)
 - [Inheritance](#inheritance)
 
 <!-- tocstop -->
@@ -56,7 +56,7 @@ callable `:if` or `:unless` condition. Then these callables and batch loaders
 receive the wrapped objects, and preload handlers receive the original
 objects. With `attribute :email` added above, `only: [:email]` wraps nothing.
 
-## Speed
+## Performance cost
 
 Presenter methods are slower than `:value` options: each object is wrapped,
 and each attribute is read through the wrapper. Fields selected without

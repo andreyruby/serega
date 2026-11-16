@@ -182,13 +182,15 @@ Ractor.new(user) { |user| UserSerializer.to_h(user) }.value
 
 ### And more
 
-- [Attributes](docs/attributes.md) — all attribute options, relations and nested serializers
+- [Attributes](docs/attributes.md) — all attribute options
+- [Relations](docs/relations.md) — nested serializers, `many:`, depth limit
+- [Presets](docs/presets.md) — named field selections, also on relations
 - [Conditional attributes](docs/conditional-attributes.md) — `if:`, `unless:`, `if_value:`, `unless_value:`
 - [Context](docs/context.md) — pass `current_user` and other request data
 - [Presenter](docs/presenter.md) — write computed attributes as methods
 - [Prepare initial objects](docs/prepare-initial-objects.md) — serialize records by ids
 - [Configuration](docs/configuration.md) — all config options
-- [Root key and metadata](docs/root-and-metadata.md) — wrap results in `{data: ...}` and add metadata
+- [Response serializers](docs/responses.md) — wrap results in `{data: ..., meta: ...}`
 
 ## Benchmarks
 

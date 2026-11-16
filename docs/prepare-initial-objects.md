@@ -29,7 +29,7 @@ prepare_initial_objects UsersLoader
 
 - [Single objects and lists](#single-objects-and-lists)
 - [Preloads](#preloads)
-- [Scope](#scope)
+- [Where the handler runs](#where-the-handler-runs)
 
 <!-- tocstop -->
 
@@ -63,7 +63,7 @@ preloads ActiveRecord objects only, and raises `Serega::SeregaError` for other
 objects. For read-only records, Structs or Hashes, use
 [batch loading](batch-loading.md).
 
-## Scope
+## Where the handler runs
 
 - The handler runs for the objects given to the serializer only, not for
   objects of nested serializers.

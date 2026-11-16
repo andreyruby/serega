@@ -16,16 +16,6 @@ defined, so a later change to `auto_preload`, `hide_by_default`,
 `key_transform`, `batch_id_option` or `base_serializer` affects only attributes
 defined after it.
 
-## Table of Contents
-
-<!-- toc -->
-
-- [Options](#options)
-- [Depth limit](#depth-limit)
-- [Plan cache](#plan-cache)
-
-<!-- tocstop -->
-
 ## Options
 
 | Option | Default | Description |
@@ -33,89 +23,25 @@ defined after it.
 | `auto_preload` | `false` | Adds [preloads][automatic-preloads] to `:delegate` and `:serializer` attributes |
 | `auto_preload_excluded_methods` | `[:itself, :__getobj__]` | Methods never preloaded automatically |
 | `hide_by_default` | `false` | Hides attributes, see [Hiding by default](selecting-fields.md#hiding-by-default) |
-| `key_transform` | `nil` | Changes attribute keys, see [Key transformation](attributes.md#key-transformation) |
+| `key_transform` | `nil` | Changes attribute keys, see [camelCase and other key styles][key-styles] |
 | `compact` | `false` | [Leaves out keys with `nil` values](conditional-attributes.md#leaving-out-nil-values) |
 | `base_serializer` | `nil` | Superclass of [block-defined serializers][block-serializers] |
-| `batch_id_option` | `:id` | Method that returns the id of an object for [batch loaders](batch-loading.md#object-ids) |
+| `batch_id_option` | `:id` | Method that returns the id of an object for [batch loaders][batch-ids] |
 | `delegate_default_allow_nil` | `false` | Default `allow_nil:` of [delegates](attributes.md#delegate) |
-| `hash_access.default_mode` | `:symbol` | Mode of `hash_access: true`. See [Hash records](hash-records.md#defaults) |
+| `hash_access.default_mode` | `:symbol` | Mode of `hash_access: true`. See [Hash records][hash-mode] |
 | `hash_access.default_allow_missing_key` | `false` | `nil` for missing Hash keys |
 | `check_attribute_name` | `true` | Allows only `a-z`, `A-Z`, `0-9`, `_`, `-`, `~` in attribute names |
-| `require_many` | `false` | Requires [`:many`](attributes.md#many) on relations |
+| `require_many` | `false` | Requires [`:many`](relations.md#many) on relations |
 | `check_selection` | `true` | Raises on unknown fields in `:only`, `:except`, `:with` |
-| `max_cached_plans_per_serializer_count` | `20` | Serialization plans cached per serializer, `0` disables the cache |
-| `depth_limit` | `nil` | Deepest nesting of serialized fields, see [Depth limit](#depth-limit) |
+| `max_cached_plans_per_serializer_count` | `20` | [Plans cached][plan-cache] per serializer, `0` disables the cache |
+| `depth_limit` | `nil` | Deepest nesting of serialized fields, see [Limiting nesting depth][depth-limit] |
 | `deprecation_warnings` | `true` | Warns when a [deprecated plugin][root-metadata] loads |
-
-## Depth limit
-
-`config.depth_limit` guards against expensive requests and cyclic relations.
-The fields of the serializer itself are depth 1, so `1` allows no relations
-and `2` allows one level of relations. The limit of the serializer that starts
-the serialization applies to all nested serializers.
-
-The limit counts only relations, the attributes with a `:serializer`. It does
-not check attribute values: a Hash or an Array that a value returns is
-serialized as it is, at any depth.
-
-```ruby
-class AppSerializer < Serega
-  config.depth_limit = 10
-end
-
-class UserSerializer < AppSerializer
-  config.depth_limit = 2
-  attribute :friends, serializer: -> { UserSerializer }, hide: true
-end
-
-UserSerializer.to_h(user, with: :friends) # depth 2
-UserSerializer.to_h(user, with: {friends: :friends})
-# => Serega::DepthLimitError: Depth limit was exceeded
-```
-
-`Serega::DepthLimitError#details` shows the path, and on the next line the
-serializer whose limit applies:
-
-```text
-UserSerializer (depth limit: 2) -> friends -> friends
-(hint: if the nesting is not a cycle, increase config.depth_limit of UserSerializer)
-```
-
-The message is `Depth limit was exceeded`, safe to show to API clients.
-
-Without a limit, relations that nest in a cycle raise `Serega::DepthLimitError`
-with the message `Relations nest in a cycle`. A cycle is a relation that
-selects the same fields of a serializer that a level above it already selects,
-for example `friends` shown by default in `UserSerializer`:
-
-```ruby
-class UserSerializer < Serega
-  attribute :friends, serializer: -> { UserSerializer }
-end
-
-UserSerializer.to_h(user)
-# => Serega::DepthLimitError: Relations nest in a cycle
-```
-
-```text
-UserSerializer -> friends
-(hint: hide a relation of the cycle or set config.depth_limit)
-```
-
-The limit is checked when the serialization plan is built, before any
-serialization. Call `UserSerializer.new(with: params[:with])` early to
-validate a request before running other code.
-
-## Plan cache
-
-A serialization plan lists the fields to serialize. Serega caches plans by the
-`:only`, `:except` and `:with` options as given, so `[:id, :name]` and
-`"id,name"` are cached separately. The plan without these options is always
-cached.
-
-`config.root` and `config.context_metadata` are described in
-[Root Key and Metadata](root-and-metadata.md).
 
 [automatic-preloads]: preloads.md#automatic-preloads
 [root-metadata]: root-and-metadata.md
-[block-serializers]: attributes.md#nested-serializers-defined-with-a-block
+[block-serializers]: relations.md#nested-serializers-defined-with-a-block
+[key-styles]: attributes.md#camelcase-and-other-key-styles
+[batch-ids]: batch-loading.md#records-without-an-id
+[hash-mode]: hash-records.md#default-access-mode
+[plan-cache]: serializing.md#plan-cache
+[depth-limit]: relations.md#limiting-nesting-depth

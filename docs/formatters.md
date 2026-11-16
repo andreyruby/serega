@@ -27,8 +27,8 @@ Child serializers get the formatters of their parents.
 
 - [Formatter kinds](#formatter-kinds)
 - [Formatters without a name](#formatters-without-a-name)
-- [Decimals](#decimals)
-- [`nil` values](#nil-values)
+- [Decimals in JSON](#decimals-in-json)
+- [Formatting `nil` values](#formatting-nil-values)
 
 <!-- tocstop -->
 
@@ -68,7 +68,7 @@ attribute :email, format: ->(email) { email.downcase }
 attribute :nickname, format: {use: :upcase, allow_nil: true}
 ```
 
-## Decimals
+## Decimals in JSON
 
 Serega returns a `BigDecimal` as is, and `to_json` writes it with
 `JSON.generate`. Without ActiveSupport this writes it as a String in
@@ -90,7 +90,7 @@ A Float keeps about 17 significant digits, thus `to_f` rounds longer decimals:
 `BigDecimal("12345678901234567.89").to_f` is `1.2345678901234568e+16`. For a
 String with every digit, use `format: [:to_s, "F"]`.
 
-## `nil` values
+## Formatting `nil` values
 
 A formatter formats `nil` too: a callable receives `nil`, and a method is
 called on `nil`. With `allow_nil: true` a `nil` value stays `nil`.

@@ -11,7 +11,7 @@
 returns the unknown fields. See [Selecting fields](selecting-fields.md#unknown-fields).
 
 `Serega::PresetNotExist#serializer` returns the serializer and `#preset`
-returns the name of the undefined preset. See [Presets](selecting-fields.md#presets).
+returns the name of the undefined preset. See [Presets](presets.md).
 
 ## Errors in attributes
 
@@ -32,7 +32,7 @@ app/serializers/user_serializer.rb:5:in 'attribute :city of UserSerializer'
 (serega generated code):20:in 'call'
 ```
 
-Errors raised by [conditions](conditional-attributes.md#errors) name the
+Errors raised by [conditions](conditional-attributes.md#finding-a-failing-condition) name the
 condition too.
 
-[depth_limit]: configuration.md#depth-limit
+[depth_limit]: relations.md#limiting-nesting-depth

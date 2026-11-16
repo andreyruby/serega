@@ -33,14 +33,16 @@ The `:preload` value is passed to the preload handler as is: a Symbol, Array,
 Hash, or any value your handler understands. `preload: false` and
 `preload: nil` disable preloading for the attribute.
 
+To load preloads only for fields that clients request explicitly, see
+[Hiding by default](selecting-fields.md#hiding-by-default).
+
 ## Table of Contents
 
 <!-- toc -->
 
 - [ActiveRecord](#activerecord)
 - [Automatic preloads](#automatic-preloads)
-- [Expensive fields on request](#expensive-fields-on-request)
-- [Custom preloading](#custom-preloading)
+- [Preloading without ActiveRecord](#preloading-without-activerecord)
 
 <!-- tocstop -->
 
@@ -49,7 +51,7 @@ Hash, or any value your handler understands. `preload: false` and
 `plugin :activerecord_preloads` loads the preloads with
 `ActiveRecord::Associations::Preloader`. It preloads ActiveRecord objects only
 and raises `Serega::SeregaError` for other objects. Other objects need a
-[custom preload handler](#custom-preloading).
+[custom preload handler](#preloading-without-activerecord).
 
 ## Automatic preloads
 
@@ -83,26 +85,7 @@ are not preloaded:
 attribute :statistics, method: :itself, serializer: UserStatisticsSerializer
 ```
 
-## Expensive fields on request
-
-`config.hide_by_default = :auto` hides attributes with preloads or batch
-loaders. Clients request them explicitly, and only then are they loaded.
-
-```ruby
-class AppSerializer < Serega
-  plugin :activerecord_preloads
-  config.auto_preload = true
-  config.hide_by_default = :auto
-end
-
-UserSerializer.to_h(users)
-# => [{name: "Bruce"}, ...], no preloads
-
-UserSerializer.to_h(users, with: [:followers_count, {albums: :downloads_count}])
-# preloads user_stats and albums for users, downloads for albums
-```
-
-## Custom preloading
+## Preloading without ActiveRecord
 
 `plugin :activerecord_preloads` registers a preload handler. For another ORM
 or for plain Ruby objects, register your own with `preload_with`:

@@ -15,7 +15,7 @@
 
 - Relations that nest in a cycle, shown by default without `config.depth_limit`,
   raise `Serega::DepthLimitError` instead of overflowing the stack. See
-  [Depth limit](docs/configuration.md#depth-limit).
+  [Depth limit](docs/relations.md#limiting-nesting-depth).
 - `preload_with nil` and `prepare_initial_objects nil` raise
   `Serega::SeregaError`, as with other values that are not callable. Before,
   they returned the registered handler. With `nil` and a block, they raise
@@ -30,25 +30,25 @@
   `preset:` option selects its fields: `to_h(user, preset: :card)`. A preset
   can include other presets, and merges with the options of the call. An
   undefined preset raises `Serega::PresetNotExist`. See
-  [Presets](docs/selecting-fields.md#presets).
+  [Presets](docs/presets.md).
 - `:only`, `:with` and `:except` on a relation select its fields by default:
   `attribute :posts, serializer: PostSerializer, only: [:id, :title]`. See
-  [Field selection options of a relation](docs/selecting-fields.md#field-selection-options-of-a-relation).
+  [Field selection options of a relation](docs/presets.md#field-selection-options-of-a-relation).
 - `preset:` on a relation serializes the fields of a preset of its
   serializer: `attribute :posts, serializer: PostSerializer, preset: :summary`.
-  See [Preset on a relation](docs/selecting-fields.md#preset-on-a-relation).
+  See [Preset on a relation](docs/presets.md#preset-on-a-relation).
 - `Serega::DepthLimitError#details` adds a line that names the serializer
   whose `config.depth_limit` to increase. See
-  [Depth limit](docs/configuration.md#depth-limit).
+  [Depth limit](docs/relations.md#limiting-nesting-depth).
 - `config.key_transform` changes attribute keys: `:camel_case` gives
   `firstName` for `first_name`, and a callable gives any key, a String too.
   Fields are selected by the new names. See
-  [Key transformation](docs/attributes.md#key-transformation).
+  [Key transformation](docs/attributes.md#camelcase-and-other-key-styles).
 - `config.compact = true` leaves out keys with `nil` values from serialized
   Hashes. See [Leaving out nil values](docs/conditional-attributes.md#leaving-out-nil-values).
 - Relations accept `:if_value` and `:unless_value`. They check the serialized
   relation value, for example `unless_value: :empty?` leaves out an empty
-  list. See [Conditional attributes](docs/conditional-attributes.md#relations).
+  list. See [Conditional attributes](docs/conditional-attributes.md#conditions-on-relations).
 - Fields selected without presenter methods skip the presenter wrapper and
   serialize up to 3 times faster. On a microbenchmark with `only:` and four
   plain fields, one object went from 698 ns to 249 ns, and 100 objects from
@@ -80,7 +80,7 @@
   modules are not supported. See [Root key and metadata](docs/root-and-metadata.md).
 - **BREAKING**: Moved the `:explicit_many_option` plugin to core: set
   `config.require_many = true` in place of `plugin :explicit_many_option`.
-  See [`:many`](docs/attributes.md#many).
+  See [`:many`](docs/relations.md#many).
 - **BREAKING**: Moved the `:string_modifiers` plugin to core: `:only`,
   `:except` and `:with` accept one String like `"name,posts(title)"`. Remove
   `plugin :string_modifiers`. See [Fields from a request](docs/selecting-fields.md#fields-from-a-request).
@@ -100,7 +100,7 @@
   [JSON](docs/serializing.md#json).
 - **BREAKING**: Moved the depth limit from the `:depth_limit` plugin to core:
   set `config.depth_limit = 10` in place of `plugin :depth_limit, limit: 10`.
-  See [Depth limit](docs/configuration.md#depth-limit).
+  See [Depth limit](docs/relations.md#limiting-nesting-depth).
 - Serializers that end with `make_shareable!` serialize in other Ractors.
   See [Ractors](docs/ractors.md).
 - **BREAKING**: Raise the minimum supported Ruby version to 3.3. Ruby 3.2 has
@@ -135,12 +135,12 @@
   See [Serializing](docs/serializing.md).
 - **BREAKING**: Serializers are locked once they serialize something. Changing
   a locked serializer raises an error.
-  See [Locked serializers](docs/attributes.md#locked-serializers).
+  See [Locked serializers](docs/attributes.md#configure-before-the-first-serialization).
 - **BREAKING**: The context is a frozen empty Hash when the `:context` option
   is not given. See [Using Context](docs/context.md).
 - Faster serialization.
 - Serialization errors show where the failing attribute is defined.
-  See [Nested serializers](docs/attributes.md#nested-serializers-defined-with-a-block).
+  See [Nested serializers](docs/relations.md#nested-serializers-defined-with-a-block).
 - Backtraces of errors in attributes have a line at the attribute.
   See [Errors in attributes](docs/errors.md#errors-in-attributes).
 - Errors raised by conditional attribute options name the condition.

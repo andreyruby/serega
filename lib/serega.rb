@@ -289,7 +289,7 @@ class Serega
     # UserSerializer.to_h(user, preset: :profile, except: :avatar)
     # ```
     #
-    # See [Presets](https://github.com/andreyruby/serega/blob/master/docs/selecting-fields.md#presets).
+    # See [Presets](https://github.com/andreyruby/serega/blob/master/docs/presets.md).
     #
     def preset(name, preset: nil, only: nil, with: nil, except: nil)
       check_unlocked

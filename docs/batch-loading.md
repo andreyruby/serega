@@ -31,9 +31,9 @@ run.
 
 - [Defining loaders](#defining-loaders)
 - [Using loaders](#using-loaders)
-- [Building the value](#building-the-value)
-- [Object ids](#object-ids)
-- [Relations](#relations)
+- [Defaults and combined loaders](#defaults-and-combined-loaders)
+- [Records without an `id`](#records-without-an-id)
+- [Loading relations in batches](#loading-relations-in-batches)
 
 <!-- tocstop -->
 
@@ -69,7 +69,7 @@ end
 `batch: true` and `batch: :name` raise `Serega::SeregaError` when no loader
 with that name is defined.
 
-## Building the value
+## Defaults and combined loaders
 
 `:value` builds the value from the loaded batches, for example to set a default
 or combine several loaders. A loader given directly to the attribute is found
@@ -86,7 +86,7 @@ attribute :likes_count, batch: {use: [:facebook_likes, :x_likes]},
 Several loaders in `:use` require `:value`. For a simple fallback,
 [`default:`](attributes.md#default) also works: `batch: true, default: 0`.
 
-## Object ids
+## Records without an `id`
 
 Values are looked up by `object.id`. The `:id` option or
 `config.batch_id_option` choose another method:
@@ -99,7 +99,7 @@ class AppSerializer < Serega
 end
 ```
 
-## Relations
+## Loading relations in batches
 
 A loader can return records for a relation serializer:
 
