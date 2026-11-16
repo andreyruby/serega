@@ -76,6 +76,10 @@ Here `Serializers::Meta` serializes `meta` of every response. It receives
 the record or the whole list, and can add any attributes: constants and
 values from the [context](context.md).
 
+`Meta` is your class, so it holds only the fields your API sends. `version`
+and `request_id` below are examples: drop them to keep an existing `meta`
+unchanged, and add [paging](#paging-with-kaminari) when lists need it.
+
 ```ruby
 module Serializers
   # Meta of every response; receives the record or the whole list
