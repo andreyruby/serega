@@ -54,20 +54,19 @@ first value that differs.
 
 ## How each gem is called
 
-- **Fastest definition options.** serega: `format: [:iso8601, 3]` and `many:`
-  on relations. alba: resource methods instead of attribute blocks.
-  blueprinter: `PublicSendExtractor` as the default extractor and an
-  extractor for times. panko_serializer, active_model_serializers and
-  oj_serializers: serializer methods for times. Every gem formats times with an
-  explicit `iso8601(3)` call.
+- **Fastest definition options.** serega: `format: [:iso8601, 3]`. alba:
+  resource methods instead of attribute blocks. blueprinter:
+  `PublicSendExtractor` as the default extractor and an extractor for times.
+  panko_serializer, active_model_serializers and oj_serializers: serializer
+  methods for times. Every gem formats times with an explicit `iso8601(3)` call.
 - **Prepared serializers.** serega and panko_serializer serializers serialize
   many times, thus they are prepared once with `.new`, with their field
   selection, and reused by every call. alba and active_model_serializers take
   the object in `.new`, and blueprinter and oj_serializers serialize with class
   methods.
 - **One object or a collection.** Each gem is told which one it gets where its
-  API allows: serega with `many:`, panko_serializer and oj_serializers with
-  separate methods, active_model_serializers with
+  API allows: serega with `config.many` on each serializer, panko_serializer and
+  oj_serializers with separate methods, active_model_serializers with
   `serializer: ActiveModel::Serializer::CollectionSerializer`. alba and
   blueprinter have no such option and check the object's class.
 - **JSON.** Each gem renders JSON its own way: serega with `to_json`, which

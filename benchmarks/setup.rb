@@ -92,17 +92,23 @@ end
 require "serega"
 
 class SeregaUserSerializer < Serega
+  config.many = false
+
   attribute :id
   attribute :name
 end
 
 class SeregaCommentSerializer < Serega
+  config.many = true
+
   attribute :id
   attribute :body
   attribute :created_at, format: [:iso8601, 3]
 end
 
 class SeregaPostSerializer < Serega
+  config.many = false
+
   attribute :id
   attribute :title
   attribute :body
@@ -110,9 +116,13 @@ class SeregaPostSerializer < Serega
   attribute :created_at, format: [:iso8601, 3]
 end
 
-class SeregaPostWithRelationsSerializer < SeregaPostSerializer
-  attribute :author, serializer: SeregaUserSerializer, many: false
-  attribute :comments, serializer: SeregaCommentSerializer, many: true
+class SeregaPostsSerializer < SeregaPostSerializer
+  config.many = true
+end
+
+class SeregaPostsWithRelationsSerializer < SeregaPostsSerializer
+  attribute :author, serializer: SeregaUserSerializer
+  attribute :comments, serializer: SeregaCommentSerializer
 end
 
 # --- alba ---

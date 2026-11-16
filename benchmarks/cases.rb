@@ -23,7 +23,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(PlainRuby.post(POST)) },
-          "serega" => -> { serega_serializer.to_json(POST, many: false) },
+          "serega" => -> { serega_serializer.to_json(POST) },
           "alba" => -> { alba_serializer.new(POST).serialize },
           "blueprinter" => -> { blueprinter_serializer.render(POST) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POST) },
@@ -32,7 +32,7 @@ module BenchmarkCases
         },
         hash: {
           "plain ruby" => -> { PlainRuby.post(POST) },
-          "serega" => -> { serega_serializer.to_h(POST, many: false) },
+          "serega" => -> { serega_serializer.to_h(POST) },
           "alba" => -> { alba_serializer.new(POST).serializable_hash },
           "blueprinter" => -> { blueprinter_serializer.render_as_hash(POST) },
           "panko_serializer" => -> { panko_serializer.serialize(POST) },
@@ -48,7 +48,7 @@ module BenchmarkCases
       # serializers serialize many times, thus they are prepared once. The others
       # are classes: alba and active_model_serializers make a new instance per
       # collection, blueprinter and oj_serializers serialize with class methods.
-      serega_serializer = SeregaPostSerializer.new
+      serega_serializer = SeregaPostsSerializer.new
       alba_serializer = AlbaPostResource
       blueprinter_serializer = PostBlueprint
       panko_serializer = Panko::ArraySerializer.new([], each_serializer: PankoPostSerializer)
@@ -58,7 +58,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map { |post| PlainRuby.post(post) }) },
-          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_json(POSTS) },
           "alba" => -> { alba_serializer.new(POSTS).serialize },
           "blueprinter" => -> { blueprinter_serializer.render(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
@@ -67,7 +67,7 @@ module BenchmarkCases
         },
         hash: {
           "plain ruby" => -> { POSTS.map { |post| PlainRuby.post(post) } },
-          "serega" => -> { serega_serializer.to_h(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_h(POSTS) },
           "alba" => -> { alba_serializer.new(POSTS).serializable_hash },
           "blueprinter" => -> { blueprinter_serializer.render_as_hash(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize(POSTS) },
@@ -83,7 +83,7 @@ module BenchmarkCases
       # serializers serialize many times, thus they are prepared once. The others
       # are classes: alba and active_model_serializers make a new instance per
       # collection, blueprinter and oj_serializers serialize with class methods.
-      serega_serializer = SeregaPostWithRelationsSerializer.new
+      serega_serializer = SeregaPostsWithRelationsSerializer.new
       alba_serializer = AlbaPostWithRelationsResource
       blueprinter_serializer = PostBlueprint
       panko_serializer = Panko::ArraySerializer.new([], each_serializer: PankoPostWithRelationsSerializer)
@@ -93,7 +93,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map { |post| PlainRuby.post_with_relations(post) }) },
-          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_json(POSTS) },
           "alba" => -> { alba_serializer.new(POSTS).serialize },
           "blueprinter" => -> { blueprinter_serializer.render(POSTS, view: :with_relations) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
@@ -102,7 +102,7 @@ module BenchmarkCases
         },
         hash: {
           "plain ruby" => -> { POSTS.map { |post| PlainRuby.post_with_relations(post) } },
-          "serega" => -> { serega_serializer.to_h(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_h(POSTS) },
           "alba" => -> { alba_serializer.new(POSTS).serializable_hash },
           "blueprinter" => -> { blueprinter_serializer.render_as_hash(POSTS, view: :with_relations) },
           "panko_serializer" => -> { panko_serializer.serialize(POSTS) },
@@ -125,7 +125,7 @@ module BenchmarkCases
       # serializers serialize many times, thus they are prepared once with the
       # field selection. active_model_serializers makes a new instance per
       # collection, thus it gets the field selection in each call.
-      serega_serializer = SeregaPostWithRelationsSerializer.new(only: [:id, :title, {author: :name, comments: :body}])
+      serega_serializer = SeregaPostsWithRelationsSerializer.new(only: [:id, :title, {author: :name, comments: :body}])
       panko_serializer = Panko::ArraySerializer.new(
         [], each_serializer: PankoPostWithRelationsSerializer,
         only: {instance: [:id, :title, :author, :comments], author: [:name], comments: [:body]}
@@ -136,7 +136,7 @@ module BenchmarkCases
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map(&plain_ruby)) },
-          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_json(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) },
           "active_model_serializers" => lambda {
             ActiveModelSerializers::SerializableResource.new(POSTS, serializer: ActiveModel::Serializer::CollectionSerializer, each_serializer: ams_serializer, fields: ams_fields).to_json
@@ -144,7 +144,7 @@ module BenchmarkCases
         },
         hash: {
           "plain ruby" => -> { POSTS.map(&plain_ruby) },
-          "serega" => -> { serega_serializer.to_h(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_h(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize(POSTS) },
           "active_model_serializers" => lambda {
             ActiveModelSerializers::SerializableResource.new(POSTS, serializer: ActiveModel::Serializer::CollectionSerializer, each_serializer: ams_serializer, fields: ams_fields).serializable_hash
@@ -165,18 +165,18 @@ module BenchmarkCases
       # One serializer per gem. serega serializers and panko_serializer array
       # serializers serialize many times, thus they are prepared once with the
       # field selection.
-      serega_serializer = SeregaPostWithRelationsSerializer.new(except: [:body, {comments: :created_at}])
+      serega_serializer = SeregaPostsWithRelationsSerializer.new(except: [:body, {comments: :created_at}])
       panko_serializer = Panko::ArraySerializer.new([], each_serializer: PankoPostWithRelationsSerializer, except: {instance: [:body], comments: [:created_at]})
 
       {
         json: {
           "plain ruby" => -> { JSON.generate(POSTS.map(&plain_ruby)) },
-          "serega" => -> { serega_serializer.to_json(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_json(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize_to_json(POSTS) }
         },
         hash: {
           "plain ruby" => -> { POSTS.map(&plain_ruby) },
-          "serega" => -> { serega_serializer.to_h(POSTS, many: true) },
+          "serega" => -> { serega_serializer.to_h(POSTS) },
           "panko_serializer" => -> { panko_serializer.serialize(POSTS) }
         }
       }
