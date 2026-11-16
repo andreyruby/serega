@@ -121,13 +121,6 @@ UserSerializer.to_h(bruce, only: [:nickname, {friends: :age}])
 # => Serega::AttributeNotExist: Not existing attributes: nickname, friends(age)
 ```
 
-`check_selection: false` skips unknown fields:
-
-```ruby
-UserSerializer.to_h(bruce, only: [:username, :nickname], check_selection: false)
-# => {username: "batman"}
-```
-
 ## Hiding by default
 
 `config.hide_by_default = true` hides every attribute that has no

@@ -255,9 +255,6 @@ See [Presets][presets].
 # Unknown attribute
 UserSerializer.to_h(user, only: [:address])
 # => raises Serega::AttributeNotExist
-
-UserSerializer.to_h(user, only: [:address], check_selection: false)
-# => {}
 ```
 
 ---
@@ -556,7 +553,7 @@ Define a base serializer once, then put shared setup there.
 
 ```ruby
 class AppSerializer < Serega
-  config.check_selection = false # shared by every subclass
+  config.hide_by_default = :auto # shared by every subclass
   config.base_serializer = self # nested serializers from attribute blocks inherit AppSerializer
 end
 
@@ -569,7 +566,7 @@ class PostSerializer < AppSerializer
 end
 ```
 
-Both `UserSerializer` and `PostSerializer` now skip unknown fields — no need to configure them twice.
+Both `UserSerializer` and `PostSerializer` hide relations and batches until requested — no need to configure them twice.
 
 Set defaults in the base class — see [Configuration][configuration].
 
@@ -721,19 +718,6 @@ end
 No default — an attribute block raises an error when no base serializer is
 chosen. Can be set per attribute with the `base_serializer:` option (it wins
 over config). Attributes of the base, if any, are serialized too.
-
-### `config.check_selection` — validate `:only` / `:except` / `:with`
-
-```ruby
-class UserSerializer < Serega
-  config.check_selection = false
-  attribute :name
-end
-UserSerializer.to_h(user, only: [:nope])   # => {}        (silently skipped)
-# default `true` would raise Serega::AttributeNotExist
-```
-
-Common pattern: `false` in production, `true` in dev/test.
 
 ### `config.check_attribute_name` — URL-safe attribute names
 

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **Breaking:** the `check_selection:` option and `config.check_selection` are
+  removed: an unknown field always raises `Serega::AttributeNotExist`. See
+  [Unknown fields](docs/selecting-fields.md#unknown-fields).
 - `config.many` sets how a serializer serializes an object without a `:many`
   option, as the root and as a relation. See [Serializing](docs/serializing.md).
 - The batch loader signature error lists `(objects, ctx)`, which loaders
