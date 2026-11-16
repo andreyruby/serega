@@ -107,6 +107,20 @@ RSpec.describe Serega::SeregaResultCode::RelationPointCode do
       end
     end
 
+    context "with a relation serializer that sets config.many to true" do
+      let(:serializer) do
+        post_serializer = Class.new(Serega) do
+          config.many = true
+          attribute :title
+        end
+        Class.new(Serega) { attribute :posts, serializer: post_serializer }
+      end
+
+      it "returns the loop that gives an empty list for nil" do
+        expect(code).to include("if value_1.nil?\n      0\n")
+      end
+    end
+
     context "with a relation without the :many option" do
       let(:serializer) do
         post_serializer = Class.new(Serega) { attribute :title }

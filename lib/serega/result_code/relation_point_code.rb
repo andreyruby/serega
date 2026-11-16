@@ -74,12 +74,13 @@ class Serega
       private
 
       # Code that appends the sources of `value_N` to `child_sources_N` and
-      # gives its pull, as SeregaEngine::Pulls.append does
+      # gives its pull, as SeregaEngine::Pulls.append does. A nil value gives
+      # the pull 0, an empty list, when the point serializes nil as `[]`.
       def pull_code
         index = @index
         <<~RUBY.chomp
           #{skip_branch}if value_#{index}.nil?
-            nil
+            #{@point.nil_as_empty_list? ? "0" : "nil"}
           #{collection_branch}else
             child_sources_#{index} << value_#{index}
             #{@point.many ? "1" : "Serega::SeregaEngine::Pulls::SINGLE_SOURCE"}

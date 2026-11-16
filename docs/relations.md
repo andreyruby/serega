@@ -60,7 +60,8 @@ attribute :posts, serializer: PostSerializer, many: true
 ```
 
 A relation without `:many` follows `config.many` of its serializer, so a
-serializer with `config.many = false` gets a list as one object.
+serializer with `config.many = false` gets a list as one object, and a
+serializer with `config.many = true` serializes `nil` as `[]`.
 
 `config.require_many = true` requires `:many` on every relation, an
 attribute with `:serializer` or a block. A relation without `:many` raises

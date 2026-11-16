@@ -137,4 +137,45 @@ RSpec.describe Serega::SeregaPlan::Point do
       end
     end
   end
+
+  describe "#nil_as_empty_list?" do
+    subject(:nil_as_empty_list) { point_for(serializer, :posts).nil_as_empty_list? }
+
+    let(:post_serializer) do
+      Class.new(base) do
+        config.many = true
+        attribute :title
+      end
+    end
+
+    let(:serializer) do
+      opts = attribute_opts
+      posts = post_serializer
+      Class.new(base) { attribute :posts, serializer: posts, **opts }
+    end
+
+    let(:attribute_opts) { {} }
+
+    context "when the relation serializer sets config.many to true" do
+      it "returns true" do
+        expect(nil_as_empty_list).to be true
+      end
+    end
+
+    context "with the :many option" do
+      let(:attribute_opts) { {many: false} }
+
+      it "returns false" do
+        expect(nil_as_empty_list).to be false
+      end
+    end
+
+    context "with the :default option" do
+      let(:attribute_opts) { {default: nil} }
+
+      it "returns false" do
+        expect(nil_as_empty_list).to be false
+      end
+    end
+  end
 end
