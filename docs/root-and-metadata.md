@@ -5,6 +5,11 @@
 > you already know, clients select their fields from the root, and they don't
 > depend on plugin options. See
 > [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metadata.md).
+>
+> Loading `plugin :root`, `plugin :metadata` or `plugin :context_metadata`
+> prints a warning with the file and line. To hide it, set
+> `config.deprecation_warnings = false` before the `plugin` call, or once on
+> `Serega` itself before the serializers load.
 
 ## Root key
 

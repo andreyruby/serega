@@ -34,7 +34,8 @@ class Serega
       key_transform: nil,
       batch_id_option: :id,
       base_serializer: nil,
-      hash_access: {default_mode: :symbol, default_allow_missing_key: false}
+      hash_access: {default_mode: :symbol, default_allow_missing_key: false},
+      deprecation_warnings: true
     }.freeze
     # :nocov:
 
@@ -142,6 +143,17 @@ class Serega
       # Sets #compact
       def compact=(value)
         opts[:compact] = checked_boolean(value)
+      end
+
+      # Whether loading a deprecated plugin prints a warning. `true` by
+      # default.
+      def deprecation_warnings
+        opts.fetch(:deprecation_warnings)
+      end
+
+      # Sets #deprecation_warnings
+      def deprecation_warnings=(value)
+        opts[:deprecation_warnings] = checked_boolean(value)
       end
 
       # How attribute names become serialized keys: `nil` (names as they are,
