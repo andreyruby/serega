@@ -12,6 +12,9 @@ clients select its fields from the root.
 }
 ```
 
+This guide is an example: one of many ways to structure API responses. Take
+the parts that fit your API and change the rest.
+
 The steps work in any Ruby app. The sections after them add what depends on
 the records and the framework: ActiveRecord preloads and paging, batch loading
 for other records, and a Rails controller.
@@ -34,6 +37,9 @@ see [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metad
    - [Paging with Kaminari](#paging-with-kaminari)
 - [Without ActiveRecord](#without-activerecord)
 - [Rails](#rails)
+   - [Controllers](#controllers)
+   - [A common context](#a-common-context)
+   - [Flash messages](#flash-messages)
 - [Fields serialized by default](#fields-serialized-by-default)
    - [Another mode for some serializers](#another-mode-for-some-serializers)
 - [Why `many: false`](#why-many-false)
@@ -285,7 +291,10 @@ Records loaded as Hashes read their keys with `hash_access`, see
 
 ## Rails
 
-Controllers keep the response serializers in constants and render JSON:
+### Controllers
+
+Controllers keep the response serializers in constants and render JSON with
+the [common context](#a-common-context):
 
 ```ruby
 class UsersController < ApplicationController
@@ -294,14 +303,64 @@ class UsersController < ApplicationController
 
   def index
     users = User.order(:id).page(params[:page]).per(20)
-    render json: INDEX_SERIALIZER.to_json(users, context: {request_id: request.request_id})
+    render json: INDEX_SERIALIZER.to_json(users, context: serialization_context)
   end
 
   def show
-    render json: SHOW_SERIALIZER.to_json(User.find(params[:id]))
+    render json: SHOW_SERIALIZER.to_json(User.find(params[:id]), context: serialization_context)
   end
 end
 ```
+
+### A common context
+
+Most responses need the same [context](context.md): the current user, the
+request id. Build it in one method of `ApplicationController`, as a serializer
+has no access to the request:
+
+```ruby
+class ApplicationController < ActionController::API
+  private
+
+  # The context of every response
+  def serialization_context
+    {
+      request_id: request.request_id,
+      current_user: proc { current_user } # found only when a serialized field reads it
+    }
+  end
+end
+```
+
+`current_user: current_user` works too, but it finds the user for every
+response. With a proc, a response finds the user only when a requested field
+reads it, so a public response with no user-specific fields skips the lookup:
+
+```ruby
+module Serializers
+  class User < Base
+    attribute :id
+    attribute :name
+    attribute :editable, hide: true, value: proc { |user, ctx| user == ctx[:current_user].call }
+  end
+end
+
+USERS_SERIALIZER.to_json(users, context: serialization_context)
+# => {"data":[{"id":1,"name":"Bruce Wayne"},{"id":2,"name":"Alfred"}],"meta":{"version":"1","request_id":"f3a9"}}
+# The proc is not called, so the user is not found.
+
+USERS_SERIALIZER.to_json(users, with: "data(editable)", context: serialization_context)
+# => {"data":[{"id":1,"name":"Bruce Wayne","editable":true},{"id":2,"name":"Alfred","editable":false}],
+#     "meta":{"version":"1","request_id":"f3a9"}}
+```
+
+A `:value` proc runs once per object, so the proc runs once per user. Rails
+apps usually memoize `current_user`, which keeps the lookup to one query; a
+[batch loader](batch-loading.md#values-for-the-current-user) calls the proc
+once per serialization. Where there is no request, as in a mailer, pass
+`current_user: proc {}`, and the same serializers work.
+
+### Flash messages
 
 `notice` and `alert`, the names of Rails flash messages, go to `meta` the
 same way as `request_id`: pass them in the context, and add them to `Meta`.
@@ -311,9 +370,10 @@ attribute :notice, value: proc { |_object, ctx| ctx[:notice] }, unless_value: :n
 attribute :alert, value: proc { |_object, ctx| ctx[:alert] }, unless_value: :nil?
 ```
 
-API-only apps have no flash, so the controller passes the messages itself:
-`context: {notice: "Users imported"}`; other apps pass
-`context: {notice: flash[:notice], alert: flash[:alert]}`.
+API-only apps have no flash, so the controller adds the messages to the
+common context itself: `context: serialization_context.merge(notice: "Users imported")`.
+Other apps add them to `serialization_context`:
+`notice: flash[:notice], alert: flash[:alert]`.
 
 A serializer named `Serializers::User` lives in a file that your autoloader
 maps to that name, for example `app/serializers/serializers/user.rb`.
