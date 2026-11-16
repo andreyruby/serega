@@ -2,6 +2,10 @@
 
 class Serega
   module SeregaPlugins
+    # Deprecated: a response serializer with `data` and `meta` attributes
+    # replaces it, see `docs/responses.md` in the gem or
+    # [Response Serializers](https://github.com/andreyruby/serega/blob/master/docs/responses.md).
+    #
     # `plugin :root` wraps results in a root key, `:data` by default
     #
     # ```ruby
