@@ -1,5 +1,11 @@
 # Root Key and Metadata
 
+> **Deprecated.** Use [response serializers](responses.md) instead: a
+> serializer with `data` and `meta` attributes. They use the attribute options
+> you already know, clients select their fields from the root, and they don't
+> depend on plugin options. See
+> [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metadata.md).
+
 ## Root key
 
 `plugin :root` wraps results in a root key, `:data` by default.

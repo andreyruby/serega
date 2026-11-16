@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- A response serializer with `data` and `meta` attributes replaces the
+  deprecated `:root` and `:metadata` plugins. See
+  [Response Serializers](docs/responses.md).
 - The gem includes the guides in `docs/`, so they can be read in the
   installed gem, next to README.md. See [Guides](docs/README.md).
 

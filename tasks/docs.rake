@@ -3,7 +3,7 @@
 # Table of contents generation and link checking for the documentation files.
 module DocsTasks
   # Files with a generated table of contents, and the deepest heading level included
-  TOC_FILES = {"CHEATSHEET.md" => 2}.freeze
+  TOC_FILES = {"CHEATSHEET.md" => 2, "docs/responses.md" => 3}.freeze
 
   # Files checked for broken links
   LINK_FILES = (%w[README.md CHEATSHEET.md CHANGELOG.md RELEASE.md] + Dir["docs/*.md"].sort).freeze
