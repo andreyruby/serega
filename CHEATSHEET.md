@@ -844,6 +844,9 @@ end
 
 ## Root Key and Metadata
 
+Deprecated: use a [response serializer](docs/responses.md) with `data` and
+`meta` attributes instead.
+
 ```ruby
 class UserSerializer < Serega
   plugin :root

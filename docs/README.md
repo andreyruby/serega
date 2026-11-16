@@ -7,8 +7,12 @@ see the [Cheatsheet](https://github.com/andreyruby/serega/blob/master/CHEATSHEET
 
 - [Attributes](attributes.md) — define serializers, attributes and relations
 - [Serializing](serializing.md) — `to_h`, `to_struct`, `to_data`
-- [Root Key and Metadata](root-and-metadata.md) — wrap results in `{data: ...}`
-  and add metadata
+- [Response Serializers](responses.md) — wrap results in `{data: ..., meta: ...}`
+  with a serializer
+- [Root Key and Metadata](root-and-metadata.md) — deprecated plugins, see
+  Response Serializers
+- [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metadata.md)
+  — replace the deprecated plugins with a response serializer
 - [Selecting Fields](selecting-fields.md) — `:only`, `:except`, `:with`
 - [Context](context.md) — pass `current_user` and other request data
 - [Conditional Attributes](conditional-attributes.md) — `:if`, `:unless`,
