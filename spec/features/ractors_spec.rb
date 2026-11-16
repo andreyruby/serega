@@ -166,7 +166,7 @@ RSpec.describe Serega do
 
       it "raises an error" do
         expect { run_in_ractor(post_serializer, post) { |serializer, post| serializer.to_h(post) } }
-          .to raise_error Serega::SeregaError, "#{post_serializer} can not serialize in other Ractors. Call `make_shareable!` at the end of its definition"
+          .to raise_error Serega::SeregaError, "#{post_serializer} can not serialize in other Ractors\n(hint: call `make_shareable!` at the end of its definition)"
       end
     end
 
@@ -175,7 +175,7 @@ RSpec.describe Serega do
 
       it "raises an error with the relation serializer name" do
         expect { run_in_ractor(post_serializer, post) { |serializer, post| serializer.to_h(post, only: :comments) } }
-          .to raise_error Serega::SeregaError, "#{comment_serializer} can not serialize in other Ractors. Call `make_shareable!` at the end of its definition"
+          .to raise_error Serega::SeregaError, "#{comment_serializer} can not serialize in other Ractors\n(hint: call `make_shareable!` at the end of its definition)"
       end
     end
 

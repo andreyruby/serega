@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Errors put their advice on a `(hint: ...)` line, as the depth limit errors
+  do: serializing in other Ractors, `:preload` without a preload handler, an
+  attribute block without a base serializer or without attributes, and
+  `:hash_access` with `:delegate`. See [Errors](docs/errors.md).
 - **Breaking:** the `check_selection:` option and `config.check_selection` are
   removed: an unknown field always raises `Serega::AttributeNotExist`. See
   [Unknown fields](docs/selecting-fields.md#unknown-fields).
@@ -18,9 +22,6 @@
   [Root Key and Metadata](docs/root-and-metadata.md).
 - The gem includes the guides in `docs/`, so they can be read in the
   installed gem, next to README.md. See [Guides](docs/README.md).
-- The error of an attribute block without a base serializer puts its advice
-  on a `(hint: ...)` line, as the depth limit errors do. See
-  [Nested serializers](docs/relations.md#nested-serializers-defined-with-a-block).
 
 ## [0.51.1] - 2026-11-16
 

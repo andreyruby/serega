@@ -125,21 +125,21 @@ RSpec.describe Serega do
       }.to raise_error Serega::SeregaError, "Option :serializer can not be used together with block"
     end
 
-    it "prohibits blocks with parameters, explaining the changed block behavior" do
+    it "prohibits blocks with parameters and hints the :value option" do
       expect {
         Class.new(Serega) do
           attribute(:author) { |user| user.author }
         end
-      }.to raise_error Serega::SeregaError, /use the `value: <callable>` option instead/
+      }.to raise_error Serega::SeregaError, /\(hint: to compute the attribute value, use the `value: <callable>` option\)/
     end
 
-    it "prohibits blocks that define no attributes, explaining the changed block behavior" do
+    it "prohibits blocks that define no attributes and hints the :value option" do
       expect {
         Class.new(Serega) do
           config.base_serializer = Serega
           attribute(:full_name) { "Kate Smith" }
         end
-      }.to raise_error Serega::SeregaError, /use the `value: <callable>` option instead/
+      }.to raise_error Serega::SeregaError, /\(hint: to compute the attribute value, use the `value: <callable>` option\)/
     end
 
     it "raises instead of recursing when subclassing a serializer that is its own base and has a block attribute" do
