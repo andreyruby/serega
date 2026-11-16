@@ -32,8 +32,8 @@ A formatter also receives `nil`: `[:iso8601, 3]` on a missing time raises
 <!-- toc -->
 
 - [Formatter kinds](#formatter-kinds)
-- [Formatters without a name](#formatters-without-a-name)
 - [Formatting `nil` values](#formatting-nil-values)
+- [Formatters without a name](#formatters-without-a-name)
 - [Common formatters](#common-formatters)
    - [Times for JavaScript clients (`:iso8601`)](#times-for-javascript-clients-iso8601)
    - [Dates (`:date`)](#dates-date)
@@ -80,19 +80,6 @@ of the value works, from Ruby, ActiveSupport or your own classes.
 A method formatter is called directly in the generated serialization code,
 which makes it the fastest kind.
 
-## Formatters without a name
-
-`:format` also accepts a formatter directly. A Symbol is always a formatter
-name, so a method name alone needs a named formatter.
-
-```ruby
-attribute :rating, format: [:round, 1]
-attribute :email, format: ->(email) { email.downcase }
-attribute :nickname, format: {use: :upcase, allow_nil: true}
-```
-
-`allow_nil:` needs the Hash form, with the formatter under `:use`.
-
 ## Formatting `nil` values
 
 A formatter formats `nil` too: a callable receives `nil`, and a method is
@@ -116,6 +103,19 @@ attribute :rating, format: ->(rating) { rating.to_f.round(1) }, unless_value: :n
 attribute :rating, format: {use: ->(rating) { rating.to_f.round(1) }, allow_nil: true}, unless_value: :nil?
 # => {} for a nil rating
 ```
+
+## Formatters without a name
+
+`:format` also accepts a formatter directly. A Symbol is always a formatter
+name, so a method name alone needs a named formatter.
+
+```ruby
+attribute :rating, format: [:round, 1]
+attribute :email, format: ->(email) { email.downcase }
+attribute :nickname, format: {use: :upcase, allow_nil: true}
+```
+
+`allow_nil:` needs the Hash form, with the formatter under `:use`.
 
 ## Common formatters
 
