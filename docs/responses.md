@@ -1,9 +1,9 @@
 # Response Serializers
 
-A response serializer wraps the records of an API response with `data` and
-adds `meta`, such as paging. It is a plain serializer with a `data` and a
-`meta` attribute, so it uses the attribute options you already know, and
-clients select its fields from the root.
+In this guide, a response serializer wraps the records of an API response
+with `data` and adds `meta`, such as paging. It is a plain serializer with a
+`data` and a `meta` attribute, so it uses the attribute options you already
+know, and clients select its fields from the root.
 
 ```json
 {
@@ -72,9 +72,9 @@ attribute and hides nothing. See
 
 ### 2. Describe `meta`
 
-`Serializers::Meta` serializes `meta` of every response. It receives the
-record or the whole list, and adds any attributes: constants and values from
-the [context](context.md).
+Here `Serializers::Meta` serializes `meta` of every response. It receives
+the record or the whole list, and can add any attributes: constants and
+values from the [context](context.md).
 
 ```ruby
 module Serializers
@@ -146,8 +146,8 @@ USERS_SERIALIZER.to_json(users, context: {request_id: "f3a9"})
 ### Preloads instead of `includes`
 
 `plugin :activerecord_preloads` with `config.auto_preload = true` preloads the
-relations of the serialized fields. Don't add `includes` or `preload` to the
-query: the serializer knows which relations the client requested.
+relations of the serialized fields, so the query needs no `includes` or
+`preload`: the serializer knows which relations the client requested.
 
 ```ruby
 module Serializers
@@ -297,8 +297,8 @@ Records loaded as Hashes read their keys with `hash_access`, see
 
 ### Controllers
 
-Controllers keep the response serializers in constants and render JSON with
-`json`, an `ApplicationController` method that adds the
+In this example, controllers keep the response serializers in constants and
+render JSON with `json`, an `ApplicationController` method that adds the
 [common context](#a-common-context):
 
 ```ruby
@@ -321,10 +321,10 @@ end
 ### A common context
 
 Most responses need the same [context](context.md): the current user, the
-request id. Build it in one method of `ApplicationController`, as a serializer
-has no access to the request. `json` serializes with it, and with the fields
-the request [selects](#selecting-fields) in its `only`, `with`, `except` and
-`preset` parameters:
+request id. This example builds it in one method of `ApplicationController`,
+as a serializer has no access to the request. `json` serializes with it, and
+with the fields the request [selects](#selecting-fields) in its `only`,
+`with`, `except` and `preset` parameters:
 
 ```ruby
 class ApplicationController < ActionController::API
@@ -393,7 +393,7 @@ once per serialization. Where there is no request, as in a mailer, pass
 
 ### Flash messages
 
-`notice` and `alert`, the names of Rails flash messages, go to `meta` the
+`notice` and `alert`, the names of Rails flash messages, can go to `meta` the
 same way as `request_id`: pass them in the context, and add them to `Meta`.
 
 ```ruby
@@ -430,7 +430,7 @@ end
 ```
 
 `create!` and `update!` raise `ActiveRecord::RecordInvalid` for an invalid
-record, so actions don't check for errors. One handler in
+record. Here actions don't check for errors, and one handler in
 `ApplicationController` renders the errors of every action:
 
 ```ruby
@@ -470,8 +470,8 @@ names no fields. Each mode fits its own case:
   `Response` then need `hide: false` to stay in the response.
 - `:auto`: every attribute except those with a preload or a batch loader:
   relations preloaded with `auto_preload`, and batch-loaded values. A response
-  runs no extra query until a client requests such a field. This fits most
-  APIs.
+  runs no extra query until a client requests such a field. Fits APIs whose
+  responses have relations or costly fields.
 
 A plain relation without a preload stays visible with `:auto`, and so do
 `data`, `meta` and `paging`: `method: :itself` is never preloaded. See
