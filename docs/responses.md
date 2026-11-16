@@ -7,7 +7,7 @@ know, and clients select its fields from the root.
 
 ```json
 {
-  "data": [{"id": 1, "name": "Bruce Wayne"}],
+  "data": [{"id": 1, "name": "Felonious Gru"}],
   "meta": {"version": "1", "paging": {"page": 1, "per_page": 20, "total_count": 1, "total_pages": 1}}
 }
 ```
@@ -127,10 +127,10 @@ USER_SERIALIZER = Serializers::Response.one(Serializers::User)
 USERS_SERIALIZER = Serializers::Response.list(Serializers::User)
 
 USER_SERIALIZER.to_json(user)
-# => {"data":{"id":1,"name":"Bruce Wayne"},"meta":{"version":"1"}}
+# => {"data":{"id":1,"name":"Felonious Gru"},"meta":{"version":"1"}}
 
 USERS_SERIALIZER.to_json(users, context: {request_id: "f3a9"})
-# => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1","request_id":"f3a9"}}
+# => {"data":[{"id":1,"name":"Felonious Gru"}],"meta":{"version":"1","request_id":"f3a9"}}
 ```
 
 - Build response serializers once, in constants. Each `one` or `list` call
@@ -172,11 +172,11 @@ end
 users = User.order(:id).limit(20)
 USERS_SERIALIZER.to_json(users)
 # SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
-# => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1"}}
+# => {"data":[{"id":1,"name":"Felonious Gru"}],"meta":{"version":"1"}}
 
 USERS_SERIALIZER.to_json(users, with: "data(posts)") # users are loaded already
 # SELECT "posts".* FROM "posts" WHERE "posts"."user_id" IN (1, 2, ...)
-# => {"data":[{"id":1,"name":"Bruce Wayne","posts":[{"id":1,"title":"Gotham"}]}],"meta":{"version":"1"}}
+# => {"data":[{"id":1,"name":"Felonious Gru","posts":[{"id":1,"title":"Freedonia"}]}],"meta":{"version":"1"}}
 ```
 
 `posts` has a preload, so `hide_by_default = :auto` hides it until a client
@@ -261,7 +261,7 @@ module Serializers
 end
 
 USERS_SERIALIZER.to_json(users, with: "data(avatar_url)")
-# => {"data":[{"id":1,"name":"Bruce Wayne","avatar_url":"https://..."}],"meta":{"version":"1"}}
+# => {"data":[{"id":1,"name":"Felonious Gru","avatar_url":"https://..."}],"meta":{"version":"1"}}
 ```
 
 `avatar_url` has a batch loader, so the service is called only when a client
@@ -374,11 +374,11 @@ end
 
 ```text
 GET /users
-{"data":[{"id":1,"name":"Bruce Wayne"},{"id":2,"name":"Alfred"}],"meta":{"version":"1","request_id":"f3a9"}}
+{"data":[{"id":1,"name":"Felonious Gru"},{"id":2,"name":"Lucy"}],"meta":{"version":"1","request_id":"f3a9"}}
 The proc is not called, so the user is not found.
 
 GET /users?with=data(editable)
-{"data":[{"id":1,"name":"Bruce Wayne","editable":true},{"id":2,"name":"Alfred","editable":false}],
+{"data":[{"id":1,"name":"Felonious Gru","editable":true},{"id":2,"name":"Lucy","editable":false}],
  "meta":{"version":"1","request_id":"f3a9"}}
 
 GET /users?only=data(nickname)
@@ -528,7 +528,7 @@ unless the selection names it:
 
 ```ruby
 USERS_SERIALIZER.to_json(users, only: "data(id,name),meta")
-# => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1","paging":{...}}}
+# => {"data":[{"id":1,"name":"Felonious Gru"}],"meta":{"version":"1","paging":{...}}}
 
 USERS_SERIALIZER.to_json(users, only: "data(id)")
 # => {"data":[{"id":1}]}

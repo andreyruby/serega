@@ -7,7 +7,7 @@ require "support/matchers/run_queries"
 RSpec.describe Serega, :with_rollback do
   subject(:result) { user_serializer.to_h(object) }
 
-  let!(:user1) { AR::User.create!(first_name: "Bruce") }
+  let!(:user1) { AR::User.create!(first_name: "Felonious") }
   let!(:user2) { AR::User.create!(first_name: "Clark") }
   let!(:post) { AR::Post.create!(user: user1, text: "post") }
   let!(:comment1) { AR::Comment.create!(post: post, text: "comment1") }
@@ -65,7 +65,7 @@ RSpec.describe Serega, :with_rollback do
 
   let(:serialized_user1) do
     {
-      first_name: "Bruce",
+      first_name: "Felonious",
       posts: [{text: "post", comments: [{text: "comment1", votes_count: 1}, {text: "comment2", votes_count: 0}]}]
     }
   end
@@ -193,7 +193,7 @@ RSpec.describe Serega, :with_rollback do
 
       it "serializes the user with the created post" do
         expect { result }.to run_queries(3)
-        expect(result).to eq(first_name: "Bruce", posts: [*serialized_user1[:posts], {text: "new post", comments: []}])
+        expect(result).to eq(first_name: "Felonious", posts: [*serialized_user1[:posts], {text: "new post", comments: []}])
       end
     end
 

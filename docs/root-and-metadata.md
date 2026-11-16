@@ -31,8 +31,8 @@ class UserSerializer < Serega
   attribute :username
 end
 
-UserSerializer.to_h(user)   # => {data: {username: "batman"}}
-UserSerializer.to_h([user]) # => {data: [{username: "batman"}]}
+UserSerializer.to_h(user)   # => {data: {username: "gru"}}
+UserSerializer.to_h([user]) # => {data: [{username: "gru"}]}
 ```
 
 Other keys:
@@ -46,8 +46,8 @@ plugin :root, root: nil                          # no root unless given per seri
 Per serialization:
 
 ```ruby
-UserSerializer.to_h(user, root: :user) # => {user: {username: "batman"}}
-UserSerializer.to_h(user, root: nil)   # => {username: "batman"}
+UserSerializer.to_h(user, root: :user) # => {user: {username: "gru"}}
+UserSerializer.to_h(user, root: nil)   # => {username: "gru"}
 ```
 
 `config.root.one` and `config.root.many` read and change the keys in child
@@ -57,7 +57,7 @@ serializers.
 under the root key:
 
 ```ruby
-UserSerializer.to_struct(user) # => {data: #<struct username="batman">}
+UserSerializer.to_struct(user) # => {data: #<struct username="gru">}
 ```
 
 ## Metadata
@@ -102,7 +102,7 @@ class AppSerializer < Serega
 end
 
 UserSerializer.to_h(user, meta: {version: "1.0.1"})
-# => {data: {username: "batman"}, version: "1.0.1"}
+# => {data: {username: "gru"}, version: "1.0.1"}
 ```
 
 `plugin :context_metadata, context_metadata_key: :extra` or

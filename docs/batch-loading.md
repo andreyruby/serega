@@ -13,7 +13,7 @@ end
 
 UserSerializer.to_h(users)
 # SELECT COUNT(*), user_id FROM follows WHERE user_id IN (1, 2, ...) GROUP BY user_id
-# => [{name: "Bruce", followers_count: 7}, {name: "Alfred", followers_count: 3}]
+# => [{name: "Felonious", followers_count: 7}, {name: "Lucy", followers_count: 3}]
 ```
 
 A loader receives the objects and returns a Hash of values by object id. The

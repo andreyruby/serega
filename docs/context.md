@@ -8,7 +8,7 @@ class UserSerializer < Serega
 end
 
 UserSerializer.to_h(user, context: {current_user: user})
-# => {email: "bruce@wayne.com"}
+# => {email: "gru@example.com"}
 ```
 
 The context is available as a second parameter or as the `:ctx` keyword in:

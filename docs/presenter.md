@@ -20,7 +20,7 @@ class UserSerializer < Serega
 end
 
 UserSerializer.to_h(user, context: {current_user_id: 1})
-# => {name: "Bruce Wayne", role: :self}
+# => {name: "Felonious Gru", role: :self}
 ```
 
 The same serializer with `:value` options:

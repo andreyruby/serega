@@ -151,12 +151,12 @@ RSpec.describe Serega::SeregaPresenter do
     serializer.attribute :location
     serializer.presenter do
       def location
-        "Gotham City"
+        "Freedonia"
       end
     end
 
     result = serializer.new.to_h(Struct.new(:location).new("Earth"))
-    expect(result).to eq({location: "Gotham City"})
+    expect(result).to eq({location: "Freedonia"})
   end
 
   it "works for arrays" do
@@ -299,18 +299,18 @@ RSpec.describe Serega::SeregaPresenter do
         attribute :full_name
 
         presenter do
-          def full_name = "#{first_name} Wayne"
+          def full_name = "#{first_name} Gru"
         end
       end
     end
 
-    let(:user) { Struct.new(:first_name).new("Bruce") }
+    let(:user) { Struct.new(:first_name).new("Felonious") }
     let(:only) { :first_name }
 
     before { allow(serializer.presenter).to receive(:new).and_call_original }
 
     it "does not wrap the object" do
-      expect(serialize).to eq(first_name: "Bruce")
+      expect(serialize).to eq(first_name: "Felonious")
       expect(serializer.presenter).not_to have_received(:new)
     end
 
@@ -318,7 +318,7 @@ RSpec.describe Serega::SeregaPresenter do
       let(:only) { %i[first_name full_name] }
 
       it "wraps the object" do
-        expect(serialize).to eq(first_name: "Bruce", full_name: "Bruce Wayne")
+        expect(serialize).to eq(first_name: "Felonious", full_name: "Felonious Gru")
         expect(serializer.presenter).to have_received(:new).once
       end
     end
@@ -403,7 +403,7 @@ RSpec.describe Serega::SeregaPresenter do
       end
     end
 
-    let(:user) { Struct.new(:first_name, :last_name, :full_name).new("Bruce", "Wayne", "Batman") }
+    let(:user) { Struct.new(:first_name, :last_name, :full_name).new("Felonious", "Gru", "Minion") }
 
     before { presenter_class.define_delegators(%i[first_name full_name __ctx__]) }
 
@@ -412,7 +412,7 @@ RSpec.describe Serega::SeregaPresenter do
     end
 
     it "keeps the presenter methods" do
-      expect(presenter_class.new(user).full_name).to eq "Bruce Wayne"
+      expect(presenter_class.new(user).full_name).to eq "Felonious Gru"
     end
   end
 
@@ -469,7 +469,7 @@ RSpec.describe Serega::SeregaPresenter do
     context "when the presenter defines method_missing" do
       let(:presenter_class) do
         Class.new(described_class) do
-          def method_missing(*) = "Batman"
+          def method_missing(*) = "Minion"
 
           def respond_to_missing?(*) = true
         end
@@ -524,7 +524,7 @@ RSpec.describe Serega::SeregaPresenter do
       end
     end
 
-    let(:user) { Struct.new(:first_name, :last_name).new("Bruce", "Wayne") }
+    let(:user) { Struct.new(:first_name, :last_name).new("Felonious", "Gru") }
 
     it "freezes the delegators defined on lock" do
       expect(serializer.presenter::Delegators).to be_frozen
@@ -532,7 +532,7 @@ RSpec.describe Serega::SeregaPresenter do
     end
 
     it "defines delegators of other methods in the presenter subclass of the Ractor" do
-      expect(serializer.to_h(user)).to eq(first_name: "Bruce", full_name: "Bruce Wayne")
+      expect(serializer.to_h(user)).to eq(first_name: "Felonious", full_name: "Felonious Gru")
 
       expect(serializer.local_presenter.superclass).to be serializer.presenter
       expect(serializer.local_presenter::Delegators.instance_methods(false)).to eq [:last_name]

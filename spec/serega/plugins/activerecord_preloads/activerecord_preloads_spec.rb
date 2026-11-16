@@ -20,7 +20,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
   end
 
   context "with batch loads and hidden preloaded attributes", :with_rollback do
-    let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }
+    let(:user1) { AR::User.create!(first_name: "Felonious", last_name: "Gru") }
     let(:user2) { AR::User.create!(first_name: "Clark", last_name: "Kent") }
 
     let(:app_serializer) do
@@ -56,8 +56,8 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       expect { data = users_serializer.call(AR::User.all) }.to run_queries(2)
       expect(data).to eq [
         {
-          first_name: "Bruce",
-          last_name: "Wayne",
+          first_name: "Felonious",
+          last_name: "Gru",
           posts: [{text: "post1"}]
         },
         {
@@ -76,7 +76,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
     # so there is no N+1.
     let(:post_wrapper_class) { Data.define(:post) }
 
-    let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }
+    let(:user1) { AR::User.create!(first_name: "Felonious", last_name: "Gru") }
     let(:post1) { AR::Post.create!(user: user1, text: "post1") }
     let(:comment1) { AR::Comment.create!(post: post1, text: "comment1") }
     let(:comment2) { AR::Comment.create!(post: post1, text: "comment2") }
@@ -121,7 +121,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       # Without the auto-batch, :votes would be loaded one-per-comment (N+1).
       expect { data = user_serializer.call([user1]) }.to run_queries(3)
       expect(data).to eq([{
-        first_name: "Bruce",
+        first_name: "Felonious",
         wrapped_post: {
           comments: [
             {text: "comment1", votes_count: 1},
@@ -133,7 +133,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
   end
 
   context "with two different preloads at one level", :with_rollback do
-    let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }
+    let(:user1) { AR::User.create!(first_name: "Felonious", last_name: "Gru") }
     let(:post1) { AR::Post.create!(user: user1, text: "post1") }
 
     let(:app_serializer) { Class.new(Serega) { plugin :activerecord_preloads } }
@@ -155,12 +155,12 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       data = nil
       # posts + :user + :comments = 3 queries (each association preloaded separately)
       expect { data = post_serializer.call(AR::Post.where(id: post1.id)) }.to run_queries(3)
-      expect(data).to eq([{text: "post1", author_name: "Bruce", comments_count: 1}])
+      expect(data).to eq([{text: "post1", author_name: "Felonious", comments_count: 1}])
     end
   end
 
   context "with a presenter", :with_rollback do
-    let(:user1) { AR::User.create!(first_name: "Bruce", last_name: "Wayne") }
+    let(:user1) { AR::User.create!(first_name: "Felonious", last_name: "Gru") }
     let(:user2) { AR::User.create!(first_name: "Clark", last_name: "Kent") }
 
     let(:app_serializer) do
@@ -196,7 +196,7 @@ RSpec.describe Serega::SeregaPlugins::ActiverecordPreloads do
       data = nil
       expect { data = user_serializer.call(AR::User.all) }.to run_queries(2)
       expect(data).to eq [
-        {full_name: "Bruce Wayne", posts: [{text: "post1"}]},
+        {full_name: "Felonious Gru", posts: [{text: "post1"}]},
         {full_name: "Clark Kent", posts: [{text: "post2"}]}
       ]
     end
