@@ -101,6 +101,7 @@ module Serializers
     # One record under `data`
     def self.one(data:, meta: Meta)
       Class.new(Base) do
+        config.many = false # one {data:, meta:}, not [{data:, meta:}, {data:, meta:}, ...]
         attribute :data, serializer: data, method: :itself # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself
       end
@@ -109,7 +110,7 @@ module Serializers
     # A list under `data`; the `meta` serializer receives the whole list
     def self.list(data:, meta: Meta)
       Class.new(Base) do
-        config.many = false # one response for the whole list
+        config.many = false # one {data:, meta:}, not [{data:, meta:}, {data:, meta:}, ...]
         attribute :data, serializer: data, method: :itself, many: true # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself, many: false # the list as one object
       end
@@ -135,8 +136,9 @@ USERS_SERIALIZER.to_json(users, context: {request_id: "f3a9"})
   builds a new class with its own [plan cache](serializing.md#plan-cache),
   thus a call per request builds the class and its plans again.
 - A constant names the class, so errors show `USERS_SERIALIZER`.
-- `Response.list` sets `config.many = false`, so a call serializes the whole
-  list as one response, see [Why `many: false`](#why-many-false).
+- `Response.one` and `Response.list` set `config.many = false`, so a call
+  serializes the whole list as one response, `{data:, meta:}`, not an Array of
+  responses. See [Why `many: false`](#why-many-false).
 
 ## ActiveRecord
 
@@ -432,8 +434,8 @@ parent's mode. Related serializers follow their own config.
 Serega serializes a scope or an Array as a list. A response serializer gets
 the whole list as one object, thus:
 
-- `config.many = false` in `Response.list` builds one response from the list,
-  not one per user. A `many:` option of a call overrides it;
+- `config.many = false` in `Response` builds one response from the list, not
+  one per user. A `many:` option of a call overrides it;
 - `many: false` on `meta` and `paging` passes the list as one object, so
   `Paging` can call `current_page` and the other Kaminari methods;
 - `many: true` on `data` serializes each user.
