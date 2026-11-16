@@ -100,19 +100,19 @@ module Serializers
   # from a serializer that receives them too
   module Response
     # One record under `data`
-    def self.one(data:, meta: Meta)
+    def self.one(serializer, meta: Meta)
       Class.new(Base) do
         config.many = false # one {data:, meta:}, not [{data:, meta:}, {data:, meta:}, ...]
-        attribute :data, serializer: data, method: :itself # Ruby's Object#itself
+        attribute :data, serializer: serializer, method: :itself # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself
       end
     end
 
     # A list under `data`; the `meta` serializer receives the whole list
-    def self.list(data:, meta: Meta)
+    def self.list(serializer, meta: Meta)
       Class.new(Base) do
         config.many = false # one {data:, meta:}, not [{data:, meta:}, {data:, meta:}, ...]
-        attribute :data, serializer: data, method: :itself, many: true # Ruby's Object#itself
+        attribute :data, serializer: serializer, method: :itself, many: true # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself, many: false # the list as one object
       end
     end
@@ -123,8 +123,8 @@ end
 ### 4. Serialize responses
 
 ```ruby
-USER_SERIALIZER = Serializers::Response.one(data: Serializers::User)
-USERS_SERIALIZER = Serializers::Response.list(data: Serializers::User)
+USER_SERIALIZER = Serializers::Response.one(Serializers::User)
+USERS_SERIALIZER = Serializers::Response.list(Serializers::User)
 
 USER_SERIALIZER.to_json(user)
 # => {"data":{"id":1,"name":"Bruce Wayne"},"meta":{"version":"1"}}
@@ -303,8 +303,8 @@ render JSON with `json`, an `ApplicationController` method that adds the
 
 ```ruby
 class UsersController < ApplicationController
-  USER_SERIALIZER = Serializers::Response.one(data: Serializers::User)
-  USERS_SERIALIZER = Serializers::Response.list(data: Serializers::User)
+  USER_SERIALIZER = Serializers::Response.one(Serializers::User)
+  USERS_SERIALIZER = Serializers::Response.list(Serializers::User)
 
   def index
     users = User.order(:id).page(params[:page]).per(20)
