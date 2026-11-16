@@ -128,6 +128,25 @@ UserSerializer.to_h(bruce, only: [:username, :nickname], check_selection: false)
 # => {username: "batman"}
 ```
 
+`config.check_selection = false` skips unknown fields in every call of a
+serializer. An app can check fields in development and tests, where an unknown
+field is a typo in its own code, and skip them in production:
+
+```ruby
+class AppSerializer < Serega
+  config.check_selection = !Rails.env.production?
+end
+```
+
+Fields that clients send, such as `?fields=`, are input to check in every
+environment. `check_selection: true` in the call checks them despite the
+config; rescue `Serega::AttributeNotExist` and answer with a
+`400 Bad Request` that names `#attributes`:
+
+```ruby
+UserSerializer.to_h(user, only: params[:fields], check_selection: true)
+```
+
 ## Hiding by default
 
 `config.hide_by_default = true` hides every attribute that has no
