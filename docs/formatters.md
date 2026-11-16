@@ -33,6 +33,7 @@ A formatter also receives `nil`: `[:iso8601, 3]` on a missing time raises
 
 - [Formatter kinds](#formatter-kinds)
 - [Formatters without a name](#formatters-without-a-name)
+- [Formatting `nil` values](#formatting-nil-values)
 - [Common formatters](#common-formatters)
    - [Times for JavaScript clients (`:iso8601`)](#times-for-javascript-clients-iso8601)
    - [Dates (`:date`)](#dates-date)
@@ -43,7 +44,6 @@ A formatter also receives `nil`: `[:iso8601, 3]` on a missing time raises
    - [API type names (`:type`)](#api-type-names-type)
    - [Money (`:money`)](#money-money)
 - [Decimals in JSON](#decimals-in-json)
-- [Formatting `nil` values](#formatting-nil-values)
 
 <!-- tocstop -->
 
@@ -92,6 +92,30 @@ attribute :nickname, format: {use: :upcase, allow_nil: true}
 ```
 
 `allow_nil:` needs the Hash form, with the formatter under `:use`.
+
+## Formatting `nil` values
+
+A formatter formats `nil` too: a callable receives `nil`, and a method is
+called on `nil`. With `allow_nil: true` a `nil` value stays `nil`.
+
+```ruby
+formatter :iso8601, [:iso8601, 3], allow_nil: true
+attribute :rating, format: {use: [:round, 1], allow_nil: true}
+```
+
+A [`:default`](attributes.md#default) value is formatted too.
+
+`:if_value` and `:unless_value` check the formatted value. Without
+`allow_nil: true`, a formatter that turns `nil` into `0.0` keeps the
+attribute that `unless_value: :nil?` should skip:
+
+```ruby
+attribute :rating, format: ->(rating) { rating.to_f.round(1) }, unless_value: :nil?
+# => {rating: 0.0} for a nil rating
+
+attribute :rating, format: {use: ->(rating) { rating.to_f.round(1) }, allow_nil: true}, unless_value: :nil?
+# => {} for a nil rating
+```
 
 ## Common formatters
 
@@ -223,27 +247,3 @@ PlaceSerializer.to_json(place)
 A Float keeps about 17 significant digits, thus `to_f` rounds longer decimals:
 `BigDecimal("12345678901234567.89").to_f` is `1.2345678901234568e+16`. For a
 String with every digit, use `format: [:to_s, "F"]`.
-
-## Formatting `nil` values
-
-A formatter formats `nil` too: a callable receives `nil`, and a method is
-called on `nil`. With `allow_nil: true` a `nil` value stays `nil`.
-
-```ruby
-formatter :iso8601, [:iso8601, 3], allow_nil: true
-attribute :rating, format: {use: [:round, 1], allow_nil: true}
-```
-
-A [`:default`](attributes.md#default) value is formatted too.
-
-`:if_value` and `:unless_value` check the formatted value. Without
-`allow_nil: true`, a formatter that turns `nil` into `0.0` keeps the
-attribute that `unless_value: :nil?` should skip:
-
-```ruby
-attribute :rating, format: ->(rating) { rating.to_f.round(1) }, unless_value: :nil?
-# => {rating: 0.0} for a nil rating
-
-attribute :rating, format: {use: ->(rating) { rating.to_f.round(1) }, allow_nil: true}, unless_value: :nil?
-# => {} for a nil rating
-```
