@@ -55,12 +55,16 @@ Steps to release a new version:
 
 10. Add tag and publish
 
+    The release branch has the tag's name, so delete it and push the tag by
+    its full ref. Build the gem again from master, the commit the tag names.
+
     ```bash
     git checkout master
     git pull --rebase origin master
+    git branch -D "v$(cat VERSION)"
     git tag -a "v$(cat VERSION)" -m "v$(cat VERSION)"
-    git push origin master
-    git push origin --tags
+    git push origin "refs/tags/v$(cat VERSION)"
+    gem build serega.gemspec
     gem push "serega-$(cat VERSION).gem"
     ```
 
