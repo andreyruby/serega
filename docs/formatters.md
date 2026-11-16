@@ -23,6 +23,10 @@ Child serializers get the formatters of their parents. Define a formatter
 before the attributes that use it: `format: :money` with no `:money`
 formatter defined yet raises `Serega::SeregaError`.
 
+A formatter also receives `nil`: `[:iso8601, 3]` on a missing time raises
+`NoMethodError`. Add `allow_nil: true` to a formatter of a value that can be
+`nil`, see [Formatting `nil` values](#formatting-nil-values).
+
 ## Table of Contents
 
 <!-- toc -->
@@ -86,6 +90,8 @@ attribute :rating, format: [:round, 1]
 attribute :email, format: ->(email) { email.downcase }
 attribute :nickname, format: {use: :upcase, allow_nil: true}
 ```
+
+`allow_nil:` needs the Hash form, with the formatter under `:use`.
 
 ## Common formatters
 
@@ -229,3 +235,15 @@ attribute :rating, format: {use: [:round, 1], allow_nil: true}
 ```
 
 A [`:default`](attributes.md#default) value is formatted too.
+
+`:if_value` and `:unless_value` check the formatted value. Without
+`allow_nil: true`, a formatter that turns `nil` into `0.0` keeps the
+attribute that `unless_value: :nil?` should skip:
+
+```ruby
+attribute :rating, format: ->(rating) { rating.to_f.round(1) }, unless_value: :nil?
+# => {rating: 0.0} for a nil rating
+
+attribute :rating, format: {use: ->(rating) { rating.to_f.round(1) }, allow_nil: true}, unless_value: :nil?
+# => {} for a nil rating
+```
