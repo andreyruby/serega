@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.52.1] - 2026-11-16
+
+- Documentation changes:
+  [#399](https://github.com/andreyruby/serega/pull/399),
+  [#400](https://github.com/andreyruby/serega/pull/400),
+  [#402](https://github.com/andreyruby/serega/pull/402),
+  [#403](https://github.com/andreyruby/serega/pull/403).
+
 ## [0.52.0] - 2026-11-16
 
 - **Breaking:** the `check_selection:` option and `config.check_selection` are
