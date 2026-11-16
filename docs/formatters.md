@@ -1,8 +1,8 @@
 # Formatters
 
 Formatters format dates, money and other values the same way in every
-serializer. Define named formatters in a base serializer and use them with the
-`:format` attribute option.
+serializer. Named formatters, defined for example in a base serializer, are
+used with the `:format` attribute option.
 
 ```ruby
 class AppSerializer < Serega
@@ -89,9 +89,10 @@ attribute :nickname, format: {use: :upcase, allow_nil: true}
 
 ## Common formatters
 
-Formatters most APIs need. Define the ones you use in your base serializer.
-The names, such as `:round2`, are yours to choose. The methods they call are
-Ruby's: `Time#iso8601`, `Date#iso8601`, `BigDecimal#to_f`, `Float#round` and
+Examples of formatters that many APIs use. Copy the ones you need, for
+example into a base serializer, and change them as you like. The names, such
+as `:round2`, are yours to choose. The methods they call are Ruby's:
+`Time#iso8601`, `Date#iso8601`, `BigDecimal#to_f`, `Float#round` and
 ActiveSupport's `Object#presence`.
 
 ### Times for JavaScript clients (`:iso8601`)

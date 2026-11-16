@@ -57,7 +57,7 @@ UserSerializer.to_h(user) # => {first_name: "Bruce", last_name: "Wayne"}
 
 ## Shared config in a base serializer
 
-Define one base serializer with the plugins and config your app uses. Every
+A base serializer can hold the plugins and config your app uses. Every
 serializer inherits plugins, config and attributes from its superclass.
 
 ```ruby

@@ -136,9 +136,9 @@ CommentSerializer.to_h(comment, except: {user: :posts})
 ## Field selection options of a relation
 
 `:only`, `:with` and `:except` on a relation select the fields of the
-relation by default, like the same options of a call. Use them for a list of
-fields that only this relation needs. A list that several relations or calls
-use belongs in a preset of the relation serializer.
+relation by default, like the same options of a call. They fit a list of
+fields that only this relation needs; a list that several relations or calls
+use fits a preset of the relation serializer.
 
 ```ruby
 class UserSerializer < Serega
@@ -163,7 +163,9 @@ name, a Proc or a block, it raises when the relation is first serialized.
 
 ## When to use a preset
 
-| Need | Use |
+One way to choose between the options:
+
+| Need | Option |
 |---|---|
 | A field is serialized only on request | [`hide: true`](attributes.md#hidden-attributes) |
 | A relation serializes the same fields in every response | [`preset:` on the relation](#preset-on-a-relation) |
