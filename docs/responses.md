@@ -40,6 +40,7 @@ see [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metad
    - [Controllers](#controllers)
    - [A common context](#a-common-context)
    - [Flash messages](#flash-messages)
+   - [Validation errors](#validation-errors)
 - [Fields serialized by default](#fields-serialized-by-default)
    - [Another mode for some serializers](#another-mode-for-some-serializers)
 - [Why `many: false`](#why-many-false)
@@ -300,16 +301,16 @@ the [common context](#a-common-context):
 
 ```ruby
 class UsersController < ApplicationController
-  SHOW_SERIALIZER = Serializers::Response.one(data: Serializers::User)
-  INDEX_SERIALIZER = Serializers::Response.list(data: Serializers::User)
+  USER_SERIALIZER = Serializers::Response.one(data: Serializers::User)
+  USERS_SERIALIZER = Serializers::Response.list(data: Serializers::User)
 
   def index
     users = User.order(:id).page(params[:page]).per(20)
-    render json: INDEX_SERIALIZER.to_json(users, context: serialization_context)
+    render json: USERS_SERIALIZER.to_json(users, context: serialization_context)
   end
 
   def show
-    render json: SHOW_SERIALIZER.to_json(User.find(params[:id]), context: serialization_context)
+    render json: USER_SERIALIZER.to_json(User.find(params[:id]), context: serialization_context)
   end
 end
 ```
@@ -376,6 +377,53 @@ API-only apps have no flash, so the controller adds the messages to the
 common context itself: `context: serialization_context.merge(notice: "Users imported")`.
 Other apps add them to `serialization_context`:
 `notice: flash[:notice], alert: flash[:alert]`.
+
+### Validation errors
+
+This example renders validation errors as `{errors: [...]}`; give them the
+shape your API uses. `ActiveModel::Errors#objects` returns
+`ActiveModel::Error` objects, so a serializer reads them like any records.
+Error serializers inherit `Serega` directly: they need none of the config and
+plugins of `Base`.
+
+```ruby
+module Serializers
+  class Error < Serega
+    attribute :source, method: :attribute
+    attribute :title, method: :message
+  end
+
+  # The errors of one record as one response
+  class Errors < Serega
+    config.many = false # one {errors:}, not one response per error
+    attribute :errors, serializer: Error, method: :objects, many: true # ActiveModel::Error objects
+  end
+end
+```
+
+`create!` and `update!` raise `ActiveRecord::RecordInvalid` for an invalid
+record, so actions don't check for errors. One handler in
+`ApplicationController` renders the errors of every action:
+
+```ruby
+class ApplicationController < ActionController::API
+  rescue_from ActiveRecord::RecordInvalid do |error|
+    render json: Serializers::Errors.to_json(error.record.errors), status: :unprocessable_entity
+  end
+end
+
+class UsersController < ApplicationController
+  def create
+    user = User.create!(user_params) # raises ActiveRecord::RecordInvalid for an invalid user
+    render json: USER_SERIALIZER.to_json(user, context: serialization_context), status: :created
+  end
+end
+```
+
+```text
+POST /users {"user":{"name":""}}
+422 {"errors":[{"source":"name","title":"can't be blank"}]}
+```
 
 A serializer named `Serializers::User` lives in a file that your autoloader
 maps to that name, for example `app/serializers/serializers/user.rb`.
