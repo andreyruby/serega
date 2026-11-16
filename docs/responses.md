@@ -1,9 +1,9 @@
 # Response Serializers
 
-A response serializer wraps the records of an API response with `data` and
-adds `meta`, such as paging. It is a plain serializer with a `data` and a
-`meta` attribute, so it uses the attribute options you already know, and
-clients select its fields from the root.
+In this guide, a response serializer wraps the records of an API response
+with `data` and adds `meta`, such as paging. It is a plain serializer with a
+`data` and a `meta` attribute, so it uses the attribute options you already
+know, and clients select its fields from the root.
 
 ```json
 {
@@ -40,6 +40,7 @@ see [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metad
    - [Controllers](#controllers)
    - [A common context](#a-common-context)
    - [Flash messages](#flash-messages)
+   - [Validation errors](#validation-errors)
 - [Fields serialized by default](#fields-serialized-by-default)
    - [Another mode for some serializers](#another-mode-for-some-serializers)
 - [Why `many: false`](#why-many-false)
@@ -71,9 +72,9 @@ attribute and hides nothing. See
 
 ### 2. Describe `meta`
 
-`Serializers::Meta` serializes `meta` of every response. It receives the
-record or the whole list, and adds any attributes: constants and values from
-the [context](context.md).
+Here `Serializers::Meta` serializes `meta` of every response. It receives
+the record or the whole list, and can add any attributes: constants and
+values from the [context](context.md).
 
 ```ruby
 module Serializers
@@ -99,19 +100,19 @@ module Serializers
   # from a serializer that receives them too
   module Response
     # One record under `data`
-    def self.one(data:, meta: Meta)
+    def self.one(serializer, meta: Meta)
       Class.new(Base) do
         config.many = false # one {data:, meta:}, not [{data:, meta:}, {data:, meta:}, ...]
-        attribute :data, serializer: data, method: :itself # Ruby's Object#itself
+        attribute :data, serializer: serializer, method: :itself # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself
       end
     end
 
     # A list under `data`; the `meta` serializer receives the whole list
-    def self.list(data:, meta: Meta)
+    def self.list(serializer, meta: Meta)
       Class.new(Base) do
         config.many = false # one {data:, meta:}, not [{data:, meta:}, {data:, meta:}, ...]
-        attribute :data, serializer: data, method: :itself, many: true # Ruby's Object#itself
+        attribute :data, serializer: serializer, method: :itself, many: true # Ruby's Object#itself
         attribute :meta, serializer: meta, method: :itself, many: false # the list as one object
       end
     end
@@ -122,8 +123,8 @@ end
 ### 4. Serialize responses
 
 ```ruby
-USER_SERIALIZER = Serializers::Response.one(data: Serializers::User)
-USERS_SERIALIZER = Serializers::Response.list(data: Serializers::User)
+USER_SERIALIZER = Serializers::Response.one(Serializers::User)
+USERS_SERIALIZER = Serializers::Response.list(Serializers::User)
 
 USER_SERIALIZER.to_json(user)
 # => {"data":{"id":1,"name":"Bruce Wayne"},"meta":{"version":"1"}}
@@ -145,8 +146,8 @@ USERS_SERIALIZER.to_json(users, context: {request_id: "f3a9"})
 ### Preloads instead of `includes`
 
 `plugin :activerecord_preloads` with `config.auto_preload = true` preloads the
-relations of the serialized fields. Don't add `includes` or `preload` to the
-query: the serializer knows which relations the client requested.
+relations of the serialized fields, so the query needs no `includes` or
+`preload`: the serializer knows which relations the client requested.
 
 ```ruby
 module Serializers
@@ -168,12 +169,12 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(User.order(:id).limit(20))
+users = User.order(:id).limit(20)
+USERS_SERIALIZER.to_json(users)
 # SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
 # => {"data":[{"id":1,"name":"Bruce Wayne"}],"meta":{"version":"1"}}
 
-USERS_SERIALIZER.to_json(User.order(:id).limit(20), with: "data(posts)")
-# SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 20
+USERS_SERIALIZER.to_json(users, with: "data(posts)") # users are loaded already
 # SELECT "posts".* FROM "posts" WHERE "posts"."user_id" IN (1, 2, ...)
 # => {"data":[{"id":1,"name":"Bruce Wayne","posts":[{"id":1,"title":"Gotham"}]}],"meta":{"version":"1"}}
 ```
@@ -234,7 +235,8 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(User.order(:id).page(1).per(20), only: "meta")
+users = User.order(:id).page(1).per(20)
+USERS_SERIALIZER.to_json(users, only: "meta")
 # => {"meta":{"version":"1","paging":{"page":1,"per_page":20,"total_count":1,"total_pages":1}}}
 ```
 
@@ -295,21 +297,23 @@ Records loaded as Hashes read their keys with `hash_access`, see
 
 ### Controllers
 
-Controllers keep the response serializers in constants and render JSON with
-the [common context](#a-common-context):
+In this example, controllers keep the response serializers in constants and
+render JSON with `json`, an `ApplicationController` method that adds the
+[common context](#a-common-context):
 
 ```ruby
 class UsersController < ApplicationController
-  SHOW_SERIALIZER = Serializers::Response.one(data: Serializers::User)
-  INDEX_SERIALIZER = Serializers::Response.list(data: Serializers::User)
+  USER_SERIALIZER = Serializers::Response.one(Serializers::User)
+  USERS_SERIALIZER = Serializers::Response.list(Serializers::User)
 
   def index
     users = User.order(:id).page(params[:page]).per(20)
-    render json: INDEX_SERIALIZER.to_json(users, context: serialization_context)
+    render json: json(USERS_SERIALIZER, users)
   end
 
   def show
-    render json: SHOW_SERIALIZER.to_json(User.find(params[:id]), context: serialization_context)
+    user = User.find(params[:id])
+    render json: json(USER_SERIALIZER, user)
   end
 end
 ```
@@ -317,11 +321,17 @@ end
 ### A common context
 
 Most responses need the same [context](context.md): the current user, the
-request id. Build it in one method of `ApplicationController`, as a serializer
-has no access to the request:
+request id. This example builds it in one method of `ApplicationController`,
+as a serializer has no access to the request. `json` serializes with it, and
+with the fields the request [selects](#selecting-fields) in its `only`,
+`with`, `except` and `preset` parameters:
 
 ```ruby
 class ApplicationController < ActionController::API
+  rescue_from Serega::AttributeNotExist, Serega::PresetNotExist do |error|
+    render json: {errors: [{source: "fields", title: error.message}]}, status: :bad_request
+  end
+
   private
 
   # The context of every response
@@ -330,6 +340,19 @@ class ApplicationController < ActionController::API
       request_id: request.request_id,
       current_user: proc { current_user } # found only when a serialized field reads it
     }
+  end
+
+  # JSON of the serializer with the fields of the request and the common
+  # context; `context:` adds to it
+  def json(serializer, object, context: {})
+    serializer.to_json(
+      object,
+      only: params[:only],
+      with: params[:with],
+      except: params[:except],
+      preset: params[:preset],
+      context: serialization_context.merge(context)
+    )
   end
 end
 ```
@@ -347,13 +370,19 @@ module Serializers
   end
 end
 
-USERS_SERIALIZER.to_json(users, context: serialization_context)
-# => {"data":[{"id":1,"name":"Bruce Wayne"},{"id":2,"name":"Alfred"}],"meta":{"version":"1","request_id":"f3a9"}}
-# The proc is not called, so the user is not found.
+```
 
-USERS_SERIALIZER.to_json(users, with: "data(editable)", context: serialization_context)
-# => {"data":[{"id":1,"name":"Bruce Wayne","editable":true},{"id":2,"name":"Alfred","editable":false}],
-#     "meta":{"version":"1","request_id":"f3a9"}}
+```text
+GET /users
+{"data":[{"id":1,"name":"Bruce Wayne"},{"id":2,"name":"Alfred"}],"meta":{"version":"1","request_id":"f3a9"}}
+The proc is not called, so the user is not found.
+
+GET /users?with=data(editable)
+{"data":[{"id":1,"name":"Bruce Wayne","editable":true},{"id":2,"name":"Alfred","editable":false}],
+ "meta":{"version":"1","request_id":"f3a9"}}
+
+GET /users?only=data(nickname)
+400 {"errors":[{"source":"fields","title":"Not existing attributes: data(nickname)"}]}
 ```
 
 A `:value` proc runs once per object, so the proc runs once per user. Rails
@@ -364,7 +393,7 @@ once per serialization. Where there is no request, as in a mailer, pass
 
 ### Flash messages
 
-`notice` and `alert`, the names of Rails flash messages, go to `meta` the
+`notice` and `alert`, the names of Rails flash messages, can go to `meta` the
 same way as `request_id`: pass them in the context, and add them to `Meta`.
 
 ```ruby
@@ -372,10 +401,58 @@ attribute :notice, value: proc { |_object, ctx| ctx[:notice] }, unless_value: :n
 attribute :alert, value: proc { |_object, ctx| ctx[:alert] }, unless_value: :nil?
 ```
 
-API-only apps have no flash, so the controller adds the messages to the
-common context itself: `context: serialization_context.merge(notice: "Users imported")`.
-Other apps add them to `serialization_context`:
+API-only apps have no flash, so the controller adds the messages itself:
+`json(USERS_SERIALIZER, users, context: {notice: "Users imported"})`. Other
+apps add them to `serialization_context`:
 `notice: flash[:notice], alert: flash[:alert]`.
+
+### Validation errors
+
+This example renders validation errors as `{errors: [...]}`; give them the
+shape your API uses. `ActiveModel::Errors#objects` returns
+`ActiveModel::Error` objects, so a serializer reads them like any records.
+Error serializers inherit `Serega` directly: they need none of the config and
+plugins of `Base`.
+
+```ruby
+module Serializers
+  class Error < Serega
+    attribute :source, method: :attribute
+    attribute :title, method: :message
+  end
+
+  # The errors of one record as one response
+  class Errors < Serega
+    config.many = false # one {errors:}, not one response per error
+    attribute :errors, serializer: Error, method: :objects, many: true # ActiveModel::Error objects
+  end
+end
+```
+
+`create!` and `update!` raise `ActiveRecord::RecordInvalid` for an invalid
+record. Here actions don't check for errors, and one handler in
+`ApplicationController` renders the errors of every action:
+
+```ruby
+class ApplicationController < ActionController::API
+  rescue_from ActiveRecord::RecordInvalid do |error|
+    errors = error.record.errors
+    render json: Serializers::Errors.to_json(errors), status: :unprocessable_entity
+  end
+end
+
+class UsersController < ApplicationController
+  def create
+    user = User.create!(user_params) # raises ActiveRecord::RecordInvalid for an invalid user
+    render json: json(USER_SERIALIZER, user), status: :created
+  end
+end
+```
+
+```text
+POST /users {"user":{"name":""}}
+422 {"errors":[{"source":"name","title":"can't be blank"}]}
+```
 
 A serializer named `Serializers::User` lives in a file that your autoloader
 maps to that name, for example `app/serializers/serializers/user.rb`.
@@ -393,8 +470,8 @@ names no fields. Each mode fits its own case:
   `Response` then need `hide: false` to stay in the response.
 - `:auto`: every attribute except those with a preload or a batch loader:
   relations preloaded with `auto_preload`, and batch-loaded values. A response
-  runs no extra query until a client requests such a field. This fits most
-  APIs.
+  runs no extra query until a client requests such a field. Fits APIs whose
+  responses have relations or costly fields.
 
 A plain relation without a preload stays visible with `:auto`, and so do
 `data`, `meta` and `paging`: `method: :itself` is never preloaded. See
