@@ -23,11 +23,16 @@ Child serializers get the formatters of their parents. Define a formatter
 before the attributes that use it: `format: :money` with no `:money`
 formatter defined yet raises `Serega::SeregaError`.
 
+A formatter also receives `nil`: `[:iso8601, 3]` on a missing time raises
+`NoMethodError`. Add `allow_nil: true` to a formatter of a value that can be
+`nil`, see [Formatting `nil` values](#formatting-nil-values).
+
 ## Table of Contents
 
 <!-- toc -->
 
 - [Formatter kinds](#formatter-kinds)
+- [Formatting `nil` values](#formatting-nil-values)
 - [Formatters without a name](#formatters-without-a-name)
 - [Common formatters](#common-formatters)
    - [Times for JavaScript clients (`:iso8601`)](#times-for-javascript-clients-iso8601)
@@ -39,7 +44,6 @@ formatter defined yet raises `Serega::SeregaError`.
    - [API type names (`:type`)](#api-type-names-type)
    - [Money (`:money`)](#money-money)
 - [Decimals in JSON](#decimals-in-json)
-- [Formatting `nil` values](#formatting-nil-values)
 
 <!-- tocstop -->
 
@@ -76,6 +80,30 @@ of the value works, from Ruby, ActiveSupport or your own classes.
 A method formatter is called directly in the generated serialization code,
 which makes it the fastest kind.
 
+## Formatting `nil` values
+
+A formatter formats `nil` too: a callable receives `nil`, and a method is
+called on `nil`. With `allow_nil: true` a `nil` value stays `nil`.
+
+```ruby
+formatter :iso8601, [:iso8601, 3], allow_nil: true
+attribute :rating, format: {use: [:round, 1], allow_nil: true}
+```
+
+A [`:default`](attributes.md#default) value is formatted too.
+
+`:if_value` and `:unless_value` check the formatted value. Without
+`allow_nil: true`, a formatter that turns `nil` into `0.0` keeps the
+attribute that `unless_value: :nil?` should skip:
+
+```ruby
+attribute :rating, format: ->(rating) { rating.to_f.round(1) }, unless_value: :nil?
+# => {rating: 0.0} for a nil rating
+
+attribute :rating, format: {use: ->(rating) { rating.to_f.round(1) }, allow_nil: true}, unless_value: :nil?
+# => {} for a nil rating
+```
+
 ## Formatters without a name
 
 `:format` also accepts a formatter directly. A Symbol is always a formatter
@@ -86,6 +114,8 @@ attribute :rating, format: [:round, 1]
 attribute :email, format: ->(email) { email.downcase }
 attribute :nickname, format: {use: :upcase, allow_nil: true}
 ```
+
+`allow_nil:` needs the Hash form, with the formatter under `:use`.
 
 ## Common formatters
 
@@ -205,6 +235,19 @@ writes `"51.501364"`. A formatter gives the same output in both cases.
 
 ```ruby
 class PlaceSerializer < Serega
+  attribute :latitude
+  attribute :longitude
+end
+
+PlaceSerializer.to_json(place)
+# => "{\"latitude\":\"0.51501364e2\",\"longitude\":\"-0.14189e0\"}" without ActiveSupport
+# => "{\"latitude\":\"51.501364\",\"longitude\":\"-0.14189\"}" with ActiveSupport
+```
+
+With a formatter, the decimals are JSON numbers:
+
+```ruby
+class PlaceSerializer < Serega
   # JSON numbers: value.to_f
   attribute :latitude, format: [:to_f]
   attribute :longitude, format: [:to_f]
@@ -217,15 +260,3 @@ PlaceSerializer.to_json(place)
 A Float keeps about 17 significant digits, thus `to_f` rounds longer decimals:
 `BigDecimal("12345678901234567.89").to_f` is `1.2345678901234568e+16`. For a
 String with every digit, use `format: [:to_s, "F"]`.
-
-## Formatting `nil` values
-
-A formatter formats `nil` too: a callable receives `nil`, and a method is
-called on `nil`. With `allow_nil: true` a `nil` value stays `nil`.
-
-```ruby
-formatter :iso8601, [:iso8601, 3], allow_nil: true
-attribute :rating, format: {use: [:round, 1], allow_nil: true}
-```
-
-A [`:default`](attributes.md#default) value is formatted too.
