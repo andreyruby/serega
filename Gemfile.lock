@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    serega (0.52.0)
+    serega (0.52.1)
 
 GEM
   remote: https://rubygems.org/
@@ -72,6 +72,7 @@ GEM
       mixlib-config
       mixlib-shellout
       uri
+    mini_portile2 (2.8.9)
     minitest (6.1.0)
       drb (~> 2.0)
       prism (>= 1.5, < 3)
@@ -170,6 +171,8 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
+    sqlite3 (2.10.2)
+      mini_portile2 (~> 2.8.0)
     sqlite3 (2.10.2-arm64-darwin)
     sqlite3 (2.10.2-x86_64-linux-gnu)
     standard (1.57.0)
