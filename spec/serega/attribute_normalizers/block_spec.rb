@@ -39,9 +39,9 @@ RSpec.describe Serega::AttributeNormalizers::Block do
 
     it "raises an error" do
       expect { nested }.to raise_error Serega::SeregaError,
-        "Attribute block requires a base serializer for the nested serializer." \
-        " Provide the `base_serializer: <SerializerClass>` attribute option" \
-        " or set `config.base_serializer = <SerializerClass>`"
+        "Attribute block requires a base serializer for the nested serializer\n" \
+        "(hint: provide the `base_serializer: <BaseSerializer>` attribute option" \
+        " or set `config.base_serializer = <BaseSerializer>`)"
     end
   end
 

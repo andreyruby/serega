@@ -71,9 +71,9 @@ class Serega
           return base_serializer if base_serializer
 
           raise SeregaError,
-            "Attribute block requires a base serializer for the nested serializer." \
-            " Provide the `base_serializer: <SerializerClass>` attribute option" \
-            " or set `config.base_serializer = <SerializerClass>`"
+            "Attribute block requires a base serializer for the nested serializer\n" \
+            "(hint: provide the `base_serializer: <BaseSerializer>` attribute option" \
+            " or set `config.base_serializer = <BaseSerializer>`)"
         end
       end
     end
