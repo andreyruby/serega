@@ -31,6 +31,7 @@ run.
 
 - [Defining loaders](#defining-loaders)
 - [Using loaders](#using-loaders)
+- [Values for the current user](#values-for-the-current-user)
 - [Defaults and combined loaders](#defaults-and-combined-loaders)
 - [Records without an `id`](#records-without-an-id)
 - [Loading relations in batches](#loading-relations-in-batches)
@@ -52,6 +53,10 @@ class UserSerializer < Serega
   batch :rank, ->(users, ctx:) { Rank.for(users, ctx[:season]) }  # :ctx keyword
 end
 ```
+
+A loader with logic of its own fits a class in its own file, such as
+`app/serializers/loaders/views_count_loader.rb`: any object that responds to
+`#call` works, and it can be tested without a serializer.
 
 ## Using loaders
 
@@ -83,6 +88,37 @@ class UserSerializer < Serega
 end
 ```
 
+## Values for the current user
+
+Values that depend on the current user, such as favorites or likes, read the
+user from the [context](context.md). The loader returns only the ids with a
+value, and `default:` fills in the others. For a guest, it returns an empty
+Hash without a query.
+
+```ruby
+class FavoriteCoursesLoader
+  def self.call(courses, ctx)
+    user = ctx[:current_user]
+    return {} unless user # a guest: no query
+
+    course_ids = Favorite.where(user: user, course: courses).pluck(:course_id)
+    course_ids.to_h { |id| [id, true] }
+  end
+end
+
+class CourseSerializer < Serega
+  attribute :title
+  attribute :favorite, batch: FavoriteCoursesLoader, default: false
+end
+
+CourseSerializer.to_h(courses, context: {current_user: user})
+# SELECT "favorites"."course_id" FROM "favorites" WHERE "favorites"."user_id" = 1 AND "favorites"."course_id" IN (1, 2)
+# => [{title: "Anatomy", favorite: true}, {title: "Figure Drawing", favorite: false}]
+
+CourseSerializer.to_h(courses, context: {current_user: nil})
+# => [{title: "Anatomy", favorite: false}, {title: "Figure Drawing", favorite: false}]
+```
+
 ## Defaults and combined loaders
 
 `:value` builds the value from the loaded batches, for example to set a default
@@ -112,6 +148,26 @@ class AppSerializer < Serega
   config.batch_id_option = :uuid
 end
 ```
+
+A foreign key works the same way. The loader returns the related records by
+their ids, and `id:` names the key to look them up with. Records without the
+key get `nil`, and the loader skips the request when no record has one:
+
+```ruby
+class LessonSerializer < Serega
+  # Streams come from a video service, not the database
+  batch :streams, lambda { |lessons|
+    stream_ids = lessons.filter_map(&:stream_id)
+    stream_ids.empty? ? {} : VideoService.streams(stream_ids).to_h { |stream| [stream.id, stream] }
+  }
+
+  attribute :title
+  attribute :stream, serializer: StreamSerializer, batch: {use: :streams, id: :stream_id}
+end
+```
+
+For an ActiveRecord `belongs_to`, a [preload](preloads.md) does the same: it
+runs no query when every foreign key is `nil`.
 
 ## Loading relations in batches
 
