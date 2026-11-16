@@ -91,7 +91,8 @@ RSpec.describe Serega::SeregaValidations::CheckBatchLoaderParams do
         <<~ERR.strip
           Batch loader arguments should have one of this signatures:
           - (objects)       # one argument
-          - (objects, :ctx) # one argument and one :ctx keyword argument
+          - (objects, ctx)  # two arguments, the second is the context
+          - (objects, ctx:) # one argument and the :ctx keyword argument
         ERR
       end
 
@@ -131,6 +132,14 @@ RSpec.describe Serega::SeregaValidations::CheckBatchLoaderParams do
     context "with valid batch_loader arguments" do
       context "with one positional argument" do
         let(:batch_loader) { proc { |objects| {} } }
+
+        it "allows" do
+          expect { validate }.not_to raise_error
+        end
+      end
+
+      context "with two positional arguments" do
+        let(:batch_loader) { proc { |objects, context| {} } }
 
         it "allows" do
           expect { validate }.not_to raise_error
