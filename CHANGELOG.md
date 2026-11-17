@@ -4,6 +4,8 @@
 
 - `configure do |config| ... end` groups config settings in a block. See
   [Configuration](docs/configuration.md).
+- `formatters do |f| f.add ... end` groups formatter definitions in a block.
+  See [Formatters](docs/formatters.md).
 
 ## [0.52.1] - 2026-11-16
 
