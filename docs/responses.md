@@ -49,7 +49,9 @@ see [Migrating from the Root and Metadata Plugins](migrating-from-root-and-metad
 ```ruby
 module Serializers
   class Base < Serega
-    config.hide_by_default = :auto # relations and batches only on request
+    configure do |config|
+      config.hide_by_default = :auto # relations and batches only on request
+    end
   end
 
   class User < Base
@@ -236,7 +238,9 @@ module Serializers
 
   # Export serializers share their own config, apart from Base
   class ExportBase < Serega
-    config.hide_by_default = true # every export names its fields
+    configure do |config|
+      config.hide_by_default = true # every export names its fields
+    end
   end
 end
 ```

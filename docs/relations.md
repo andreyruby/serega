@@ -69,8 +69,10 @@ attribute with `:serializer` or a block. A relation without `:many` raises
 
 ```ruby
 class AppSerializer < Serega
-  config.require_many = true
-  config.base_serializer = self
+  configure do |config|
+    config.require_many = true
+    config.base_serializer = self
+  end
 end
 
 class PostSerializer < AppSerializer
@@ -186,7 +188,9 @@ serialized as it is, at any depth.
 
 ```ruby
 class AppSerializer < Serega
-  config.depth_limit = 10
+  configure do |config|
+    config.depth_limit = 10
+  end
 end
 
 class UserSerializer < AppSerializer

@@ -135,7 +135,9 @@ nested serializers included:
 
 ```ruby
 class AppSerializer < Serega
-  config.compact = true
+  configure do |config|
+    config.compact = true
+  end
 end
 
 class UserSerializer < AppSerializer

@@ -38,8 +38,11 @@ fields use — in a few queries, with no N+1.
 ```ruby
 class AppSerializer < Serega
   plugin :activerecord_preloads   # preloads associations used by requested fields
-  config.auto_preload = true
-  config.hide_by_default = :auto  # fields that need extra queries are sent on request
+
+  configure do |config|
+    config.auto_preload = true
+    config.hide_by_default = :auto  # fields that need extra queries are sent on request
+  end
 end
 
 class UserSerializer < AppSerializer
@@ -77,7 +80,10 @@ inherits it.
 # app/serializers/app_serializer.rb
 class AppSerializer < Serega
   plugin :activerecord_preloads
-  config.auto_preload = true
+
+  configure do |config|
+    config.auto_preload = true
+  end
 end
 
 # app/serializers/user_serializer.rb

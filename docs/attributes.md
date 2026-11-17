@@ -63,8 +63,11 @@ serializer inherits plugins, config and attributes from its superclass.
 ```ruby
 class AppSerializer < Serega
   plugin :activerecord_preloads
-  config.auto_preload = true
-  config.base_serializer = self # nested serializers defined with a block inherit AppSerializer
+
+  configure do |config|
+    config.auto_preload = true
+    config.base_serializer = self # nested serializers defined with a block inherit AppSerializer
+  end
 end
 
 class UserSerializer < AppSerializer
