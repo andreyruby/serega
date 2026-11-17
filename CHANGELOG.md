@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `configure do |config| ... end` groups config settings in a block. See
+  [Configuration](docs/configuration.md).
+
 ## [0.52.1] - 2026-11-16
 
 - Documentation changes:

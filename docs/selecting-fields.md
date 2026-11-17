@@ -152,8 +152,11 @@ the expensive fields loads nothing:
 ```ruby
 class AppSerializer < Serega
   plugin :activerecord_preloads
-  config.auto_preload = true
-  config.hide_by_default = :auto
+
+  configure do |config|
+    config.auto_preload = true
+    config.hide_by_default = :auto
+  end
 end
 
 UserSerializer.to_h(users)

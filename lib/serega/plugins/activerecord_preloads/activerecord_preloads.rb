@@ -8,7 +8,10 @@ class Serega
     # ```ruby
     # class AppSerializer < Serega
     #   plugin :activerecord_preloads
-    #   config.auto_preload = true
+    #
+    #   configure do |config|
+    #     config.auto_preload = true
+    #   end
     # end
     # ```
     #

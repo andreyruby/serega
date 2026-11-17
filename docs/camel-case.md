@@ -5,7 +5,9 @@ Set it in a base serializer to change the keys of all serializers:
 
 ```ruby
 class AppSerializer < Serega
-  config.key_transform = :camel_case
+  configure do |config|
+    config.key_transform = :camel_case
+  end
 end
 
 class PostSerializer < AppSerializer

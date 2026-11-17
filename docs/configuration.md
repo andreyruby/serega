@@ -5,9 +5,19 @@ it.
 
 ```ruby
 class AppSerializer < Serega
-  config.auto_preload = true
-  config.hide_by_default = :auto
-  config.base_serializer = self
+  configure do |config|
+    config.auto_preload = true
+    config.hide_by_default = :auto
+    config.base_serializer = self
+  end
+end
+```
+
+`config` changes an option without the block too:
+
+```ruby
+class UserSerializer < AppSerializer
+  config.compact = true
 end
 ```
 

@@ -64,7 +64,10 @@ and raises `Serega::SeregaError` for other objects. Other objects need a
 ```ruby
 class AppSerializer < Serega
   plugin :activerecord_preloads
-  config.auto_preload = true
+
+  configure do |config|
+    config.auto_preload = true
+  end
 end
 
 class UserSerializer < AppSerializer

@@ -553,8 +553,10 @@ A base serializer can hold the shared setup.
 
 ```ruby
 class AppSerializer < Serega
-  config.hide_by_default = :auto # shared by every subclass
-  config.base_serializer = self # nested serializers from attribute blocks inherit AppSerializer
+  configure do |config|
+    config.hide_by_default = :auto # shared by every subclass
+    config.base_serializer = self # nested serializers from attribute blocks inherit AppSerializer
+  end
 end
 
 class UserSerializer < AppSerializer
@@ -705,7 +707,9 @@ Default `:id`. See [Batch Loading][batch-loading].
 
 ```ruby
 class AppSerializer < Serega
-  config.base_serializer = self   # usually a settings-only serializer
+  configure do |config|
+    config.base_serializer = self   # usually a settings-only serializer
+  end
 end
 
 class UserSerializer < AppSerializer
@@ -805,8 +809,10 @@ Needs preloads declared on attributes — see [Preloads][preloads].
 
 ```ruby
 class AppSerializer < Serega
-  config.require_many = true
-  config.base_serializer = self # for relations defined with a block
+  configure do |config|
+    config.require_many = true
+    config.base_serializer = self # for relations defined with a block
+  end
 end
 
 class PostSerializer < AppSerializer

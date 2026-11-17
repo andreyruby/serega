@@ -32,8 +32,11 @@ relations of the serialized fields, so the query needs no `includes` or
 module Serializers
   class Base < Serega
     plugin :activerecord_preloads
-    config.auto_preload = true
-    config.hide_by_default = :auto
+
+    configure do |config|
+      config.auto_preload = true
+      config.hide_by_default = :auto
+    end
   end
 
   class Post < Base

@@ -145,7 +145,9 @@ Values are looked up by `object.id`. The `:id` option or
 attribute :likes_count, batch: {use: :likes_count, id: :uuid}
 
 class AppSerializer < Serega
-  config.batch_id_option = :uuid
+  configure do |config|
+    config.batch_id_option = :uuid
+  end
 end
 ```
 

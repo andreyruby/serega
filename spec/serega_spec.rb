@@ -125,6 +125,12 @@ RSpec.describe Serega do
     end
   end
 
+  describe ".configure" do
+    it "yields the config" do
+      expect { |block| serializer_class.configure(&block) }.to yield_with_args(serializer_class.config)
+    end
+  end
+
   describe ".attributes" do
     it "returns empty hash when no attributes added" do
       expect(serializer_class.attributes).to eq({})

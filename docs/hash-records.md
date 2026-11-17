@@ -51,8 +51,10 @@ attribute :age, hash_access: {mode: :string, allow_missing_key: true}
 
 ```ruby
 class AppSerializer < Serega
-  config.hash_access.default_mode = :string           # mode of `hash_access: true`
-  config.hash_access.default_allow_missing_key = true # nil for missing keys
+  configure do |config|
+    config.hash_access.default_mode = :string           # mode of `hash_access: true`
+    config.hash_access.default_allow_missing_key = true # nil for missing keys
+  end
 end
 ```
 

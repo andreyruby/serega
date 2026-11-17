@@ -21,6 +21,8 @@ class Serega
 
     def plugin: (Symbol name, **untyped opts) -> Module
 
+    def configure: () { (SeregaConfig config) -> void } -> nil
+
     def attributes: () -> Hash[Symbol, SeregaAttribute]
 
     def attribute: (Symbol | String name, **untyped opts) ?{ () [self: singleton(Serega)] -> void } -> SeregaAttribute
