@@ -158,6 +158,24 @@ class Serega
       plugin
     end
 
+    #
+    # Groups config settings in a block that receives the config.
+    #
+    # ```ruby
+    # configure do |config|
+    #   config.auto_preload = true
+    #   config.hide_by_default = :auto
+    # end
+    # ```
+    #
+    # See [Configuration](https://github.com/andreyruby/serega/blob/master/docs/configuration.md).
+    #
+    def configure
+      check_unlocked
+      yield config
+      nil
+    end
+
     # Checks plugin is used
     def plugin_used?(name) # :nodoc:
       config.plugins.include?(name)

@@ -11,6 +11,18 @@ class AppSerializer < Serega
 end
 ```
 
+`configure` groups the settings in a block:
+
+```ruby
+class AppSerializer < Serega
+  configure do |config|
+    config.auto_preload = true
+    config.hide_by_default = :auto
+    config.base_serializer = self
+  end
+end
+```
+
 Set config before defining attributes. An attribute reads the config when it is
 defined, so a later change to `auto_preload`, `hide_by_default`,
 `key_transform`, `batch_id_option` or `base_serializer` affects only attributes
