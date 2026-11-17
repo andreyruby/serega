@@ -61,6 +61,7 @@ require_relative "serega/conditions"
 require_relative "serega/formatters"
 require_relative "serega/formatters/callable"
 require_relative "serega/formatters/method"
+require_relative "serega/formatters/group"
 require_relative "serega/attribute"
 require_relative "serega/attribute/serializer_reference"
 require_relative "serega/attribute/value_code"
@@ -207,11 +208,6 @@ class Serega
     # Lists defined batch loaders
     def batch_loaders # :nodoc:
       @batch_loaders
-    end
-
-    # Lists defined formatters
-    def formatters # :nodoc:
-      @formatters
     end
 
     # Cached serialization plans
@@ -363,6 +359,28 @@ class Serega
       value ||= block
       SeregaValidations::CheckFormatter.call(name, value)
       formatters[name] = SeregaFormatters.build({use: value, allow_nil: allow_nil})
+    end
+
+    #
+    # Groups formatter definitions in a block. The block receives an object
+    # whose `add` takes the arguments of `formatter`. Without a block, returns
+    # the defined formatters.
+    #
+    # ```ruby
+    # formatters do |f|
+    #   f.add :iso8601, [:iso8601, 3], allow_nil: true
+    #   f.add(:money) { |cents, ctx| "#{cents / 100.0} #{ctx[:currency]}" }
+    # end
+    # ```
+    #
+    # See [Formatters](https://github.com/andreyruby/serega/blob/master/docs/formatters.md).
+    #
+    def formatters
+      return @formatters unless block_given?
+
+      check_unlocked
+      yield SeregaFormatters::Group.new(self)
+      nil
     end
 
     #

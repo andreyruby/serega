@@ -41,6 +41,9 @@ class Serega
                  | (Symbol name, ?allow_nil: bool) { (untyped value, context context) -> untyped } -> void
                  | (Symbol name, ?allow_nil: bool) { (untyped value, ctx: context) -> untyped } -> void
 
+    def formatters: () -> Hash[Symbol, untyped]
+                  | () { (SeregaFormatters::Group f) -> void } -> nil
+
     def presenter: () -> singleton(SeregaPresenter)?
                  | () { () [self: singleton(SeregaPresenter)] -> void } -> singleton(SeregaPresenter)
 
@@ -78,6 +81,17 @@ class Serega
   # Attribute of a serializer. Its methods are internal.
   class SeregaAttribute
     def initialize: (singleton(Serega) serializer_class, name: Symbol | String, ?opts: Hash[Symbol, untyped], ?block: Proc?, ?location: String?) -> void
+  end
+
+  module SeregaFormatters
+    class Group
+      def initialize: (singleton(Serega) serializer_class) -> void
+
+      def add: (Symbol name, untyped formatter, ?allow_nil: bool) -> nil
+             | (Symbol name, ?allow_nil: bool) { (untyped value) -> untyped } -> nil
+             | (Symbol name, ?allow_nil: bool) { (untyped value, context context) -> untyped } -> nil
+             | (Symbol name, ?allow_nil: bool) { (untyped value, ctx: context) -> untyped } -> nil
+    end
   end
 
   # Parent class of presenters. Its methods are internal.

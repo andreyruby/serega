@@ -6,8 +6,10 @@ used with the `:format` attribute option.
 
 ```ruby
 class AppSerializer < Serega
-  formatter :iso8601, [:iso8601, 3], allow_nil: true
-  formatter :money, ->(cents, ctx) { "#{(cents / 100.0).round(2)} #{ctx[:currency]}" }
+  formatters do |f|
+    f.add :iso8601, [:iso8601, 3], allow_nil: true
+    f.add :money, ->(cents, ctx) { "#{(cents / 100.0).round(2)} #{ctx[:currency]}" }
+  end
 end
 
 class OrderSerializer < AppSerializer
@@ -17,6 +19,14 @@ end
 
 OrderSerializer.to_h(order, context: {currency: "EUR"})
 # => {created_at: "2026-10-18T12:30:15.000Z", total_cents: "19.99 EUR"}
+```
+
+`formatter` defines one formatter without the block too:
+
+```ruby
+class OrderSerializer < AppSerializer
+  formatter :string, :to_s
+end
 ```
 
 Child serializers get the formatters of their parents. Define a formatter
@@ -51,24 +61,26 @@ A formatter also receives `nil`: `[:iso8601, 3]` on a missing time raises
 
 ```ruby
 class AppSerializer < Serega
-  # A method name: value.to_s
-  formatter :string, :to_s
+  formatters do |f|
+    # A method name: value.to_s
+    f.add :string, :to_s
 
-  # A method name with arguments: value.iso8601(3)
-  formatter :iso8601, [:iso8601, 3]
+    # A method name with arguments: value.iso8601(3)
+    f.add :iso8601, [:iso8601, 3]
 
-  # An operator is a method too: value * 100
-  formatter :percent, [:*, 100]
+    # An operator is a method too: value * 100
+    f.add :percent, [:*, 100]
 
-  # A callable with the value
-  formatter :yes_no, ->(value) { value ? "yes" : "no" }
+    # A callable with the value
+    f.add :yes_no, ->(value) { value ? "yes" : "no" }
 
-  # A callable with the value and the context, as a second parameter or the :ctx keyword
-  formatter :money, ->(cents, ctx) { "#{cents / 100.0} #{ctx[:currency]}" }
-  formatter :price, ->(cents, ctx:) { "#{cents / 100.0} #{ctx[:currency]}" }
+    # A callable with the value and the context, as a second parameter or the :ctx keyword
+    f.add :money, ->(cents, ctx) { "#{cents / 100.0} #{ctx[:currency]}" }
+    f.add :price, ->(cents, ctx:) { "#{cents / 100.0} #{ctx[:currency]}" }
 
-  # A block
-  formatter(:upcase) { |value| value.upcase }
+    # A block
+    f.add(:upcase) { |value| value.upcase }
+  end
 end
 ```
 

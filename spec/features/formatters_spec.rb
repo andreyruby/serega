@@ -21,6 +21,24 @@ RSpec.describe Serega do
       end
     end
 
+    context "with formatters defined in a formatters block" do
+      let(:user_serializer) do
+        Class.new(Serega) do
+          formatters do |f|
+            f.add :money, ->(cents) { cents / 100.0 }
+            f.add(:percent) { |score| "#{(score * 100).round}%" }
+          end
+
+          attribute :balance, format: :money
+          attribute :score, format: :percent
+        end
+      end
+
+      it "formats the values" do
+        expect(result).to eq(balance: 12.34, score: "50%")
+      end
+    end
+
     context "with a formatter defined in the parent serializer" do
       let(:base_serializer) do
         Class.new(Serega) do

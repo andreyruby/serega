@@ -37,6 +37,13 @@ RSpec.describe Serega do
       end
     end
 
+    describe ".formatters" do
+      it "raises a SeregaError" do
+        expect { user_serializer.formatters { |f| f.add :string, :to_s } }
+          .to raise_error Serega::SeregaError, locked_error(user_serializer)
+      end
+    end
+
     describe ".configure" do
       it "raises a SeregaError" do
         expect { user_serializer.configure { |config| config.many = false } }

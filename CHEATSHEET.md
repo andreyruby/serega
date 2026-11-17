@@ -315,9 +315,11 @@ For unconditional hiding, prefer `hide: true` — see
 
 ```ruby
 class AppSerializer < Serega
-  formatter :iso8601, [:iso8601, 3], allow_nil: true # value&.iso8601(3)
-  formatter :yes_no, ->(value) { value ? "yes" : "no" }
-  formatter(:money) { |value, ctx| "$#{value / (10**ctx[:digits])}" }
+  formatters do |f|
+    f.add :iso8601, [:iso8601, 3], allow_nil: true # value&.iso8601(3)
+    f.add :yes_no, ->(value) { value ? "yes" : "no" }
+    f.add(:money) { |value, ctx| "$#{value / (10**ctx[:digits])}" }
+  end
 end
 
 class UserSerializer < AppSerializer

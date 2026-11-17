@@ -144,7 +144,9 @@ Format dates, money and other values the same way everywhere.
 
 ```ruby
 class AppSerializer < Serega
-  formatter :iso8601, [:iso8601, 3], allow_nil: true
+  formatters do |f|
+    f.add :iso8601, [:iso8601, 3], allow_nil: true
+  end
 end
 
 class UserSerializer < AppSerializer
